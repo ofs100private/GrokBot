@@ -1,0 +1,19 @@
+# About the user
+
+<!-- Enduring facts: who the user is, how to address them, lasting preferences.
+     Kept in mind every turn. Safe to read, grep, and edit.
+     One fact per line, as "- (YYYY-MM-DD) <fact>". -->
+- (2026-09-01) Live eToro SSO sits on eToro Account agent (id 7b604913-c0fd-49bc-897a-c9ce38589c63), username ofs56etoro. Ask that agent for portfolio/position/watchlist reads. Do not expect a token secret.
+- (2026-09-02) OfersClaw5-PRIYN is REAL MONEY only (~$15k invested) — never demo/virtual. Ignore agentPortfolioVirtualBalance as live cash. Always go through eToro Account on real routes. Report real P&L.
+- (2026-09-02) STANDING ORDER (Ofer via CoS): authorized to buy/sell on OfersClaw5-PRIYN real money. Rules: leverage ×1 only, long only, no crypto, always leave cash uninvested. Prefer biggest US companies then commodities. Before EVERY order, QA Bot (498c78db-a027-4f2c-8126-3c2be6f0a4bb) must PASS the order pack. After fill, send QA the fill audit. Report to CoS: snapshot, X takeaways, planned buys, then each trade+audit. Use eToro Account for live access. Never demo.
+- (2026-09-02) Bound to eToro agent portfolio OfersClaw5-PRIYN (agentPortfolioId 90db6cc2-57e3-48e0-9a12-3cbe82ac49ed, gcid 48149190). REAL MONEY (~$15k). Never print secrets. Trades allowed only under standing order rules with QA Bot PASS.
+- (2026-09-02) eToro Account: Classic REAL mode on for OfersClaw5-PRIYN. Ask that agent for real portfolio/positions/cash. After QA PASS, send authorized orders to eToro Account — they will not block. Real routes only.
+- (2026-09-02) QA Classic gate ACTIVE (Ofer confirmed). May submit order packs to QA Bot; place only after PASS. Sequence: PACK A NVDA 3000 then PACK B META 1500.
+- (2026-09-02) QA Bot artifact rules: before every place and after every fill send side, instrument+id, asset class, leverage, size/amount, cash remaining after, fee estimate, overnight/financing estimate, thesis, prepared-order snapshot, REAL vs demo, then post-fill audit. Hard FAIL if lev≠1, short, crypto, all-in, demo, missing fee/overnight/thesis, or change after prepare.
+- (2026-09-02) HOLD place A and B: eToro Account blocked PACK A — parent SSO cannot place into OfersClaw5-PRIYN without Classic agent-portfolio token. Do not re-authorize place until Ofer unlocks token path.
+- (2026-09-02) Prior PACK A QA PASS is SUSPENDED/unused. When Classic agent-portfolio token path unlocked, resubmit fresh PRE-PLACE artifact (new fee preview + cash + snapshot) for a new PASS before place. Any prepare change needs new PASS.
+- (2026-09-02) Classic place path STILL BLOCKED: OfersClaw5-PRIYN has user-token records but secret not on eToro Account MCP; parent SSO hits ofs56etoro parent book. Need keys-auth Classic MCP attached and eToro Account identity confirm as agent portfolio before any prepare/place.
+- (2026-09-02) Ofer re-authorized Classic trading: Public API REAL only; buy/sell/SL/TP at ×1 only (no leverage). HOLD buys lifted under those constraints. Still NO place until Classic keys-auth identity confirmed on Public API MCP + fresh QA PASS. Then PACK A NVDA 3000 then PACK B META 1500 with cash buffer.
+- (2026-09-02) QA Bot still HOLDs execution PASSes until Ofer confirms lift in QA Bot chat. After keys-auth Classic identity + that QA confirm, then fresh prepare/PASS. Do not place before both.
+- (2026-09-05) STANDING RULE (Ofer): Classic source of truth = ledger A only (parent SSO mirror 11368142 / UI). Never report keys MCP agent-book (B) as Classic. Reads/cash/positions/PnL = mirror A. Keys MCP only for authorized place/SL if action will reflect on A — never treat B-only names/cash as Classic.
+- (2026-09-05) Ofer: named tickers (Mag7, CAT/MU/GE/SNDK, MRK/MRNA/TEVA, etc.) are examples only — Classic may trade any symbol that fits mandate and research (liquid large-cap/ETF, ×1 long, no crypto, diversify, beat SPX after costs).
