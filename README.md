@@ -24,3 +24,8 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - **eToro Account** (`7b604913-c0fd-49bc-897a-c9ce38589c63`)
 
 Restored by importing profiles/skills into Grok Bot; this is a backup, not a live sync.
+
+## App + Daily Brief (2026-09-05)
+- `app/etoroview/` — eToroView UI (Classic params + daily_brief bind)
+- `daily-brief/` — schema-v1.json + latest.json (live-bound; QA-validated snapshot)
+QA Bot PASSed Daily Brief UI data pack before this commit.

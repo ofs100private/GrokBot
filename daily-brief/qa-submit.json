@@ -1,0 +1,156 @@
+{
+  "op": "qa.validate.daily_brief",
+  "path": "/workspace/daily-brief/latest.json",
+  "appPath": "/workspace/etoroview/public/daily-brief.json",
+  "payloadKind": "live",
+  "asOf": "2026-09-05T22:38:41.408552+03:00",
+  "slot": "weekend_adhoc",
+  "fearAndGreed": {
+    "score": 42,
+    "rating": "fear",
+    "previousClose": 35.2,
+    "previous1Week": 52.3,
+    "previous1Month": 60.0,
+    "previous1Year": 61.2,
+    "timestamp": "2026-09-04T23:59:43+00:00"
+  },
+  "components": [
+    {
+      "id": "market_momentum_sp500",
+      "label": "Market momentum (S&P 500)",
+      "score": 36.6,
+      "rating": "fear"
+    },
+    {
+      "id": "stock_price_strength",
+      "label": "Stock price strength",
+      "score": 12.6,
+      "rating": "extreme fear"
+    },
+    {
+      "id": "stock_price_breadth",
+      "label": "Stock price breadth",
+      "score": 46.4,
+      "rating": "neutral"
+    },
+    {
+      "id": "put_call_options",
+      "label": "Put/call options",
+      "score": 45.2,
+      "rating": "neutral"
+    },
+    {
+      "id": "market_volatility_vix",
+      "label": "Market volatility (VIX)",
+      "score": 50.0,
+      "rating": "neutral"
+    },
+    {
+      "id": "junk_bond_demand",
+      "label": "Junk bond demand",
+      "score": 76.2,
+      "rating": "extreme greed"
+    },
+    {
+      "id": "safe_haven_demand",
+      "label": "Safe haven demand",
+      "score": 26.0,
+      "rating": "fear"
+    }
+  ],
+  "commodities": {
+    "oil": {
+      "symbol": "CL=F",
+      "last": 91.48,
+      "dayPct": 0.2,
+      "stance": "wait",
+      "related": "XLE/USO"
+    },
+    "gold": {
+      "symbol": "GC=F",
+      "last": 4476.6,
+      "dayPct": -0.34,
+      "stance": "wait",
+      "related": "GLD"
+    },
+    "silver": {
+      "symbol": "SI=F",
+      "last": 66.75,
+      "dayPct": -0.34,
+      "stance": "wait",
+      "related": "SLV"
+    }
+  },
+  "portfolios": [
+    {
+      "key": "Classic",
+      "name": "OfersClaw5-PRIYN",
+      "mirrorId": 11368142,
+      "card": {
+        "positionCount": 5,
+        "cashPct": 30.6,
+        "deploymentPct": 69.4,
+        "equity": 13235.16,
+        "cash": 4048.21,
+        "invested": 15000.0,
+        "openPnl": -1383.62,
+        "closedPnl": -1541.81,
+        "positions": [
+          {
+            "symbol": "GE",
+            "pctOfEquity": 20.2,
+            "value": 2670.12,
+            "uPnl": 20.29
+          },
+          {
+            "symbol": "NVDA",
+            "pctOfEquity": 19.7,
+            "value": 2603.31,
+            "uPnl": -45.0
+          },
+          {
+            "symbol": "QQQ",
+            "pctOfEquity": 10.6,
+            "value": 1403.48,
+            "uPnl": 80.08
+          },
+          {
+            "symbol": "NEM",
+            "pctOfEquity": 9.5,
+            "value": 1263.07,
+            "uPnl": -6.31
+          },
+          {
+            "symbol": "XLV",
+            "pctOfEquity": 9.4,
+            "value": 1246.94,
+            "uPnl": 109.1
+          }
+        ]
+      },
+      "recommendation": {
+        "buy": [
+          "No Buy Today"
+        ],
+        "sell": [
+          "No Sale"
+        ],
+        "hold": [
+          "GE",
+          "QQQ",
+          "XLV",
+          "NEM",
+          "NVDA"
+        ],
+        "diversificationNote": "GE+NVDA ~40% concentration; keep cash buffer; no TSLA/COIN/HOOD"
+      }
+    }
+  ],
+  "checks": [
+    "F&G score+rating+history match live CNN graphdata",
+    "All 7 mandatory components score+rating match graphdata",
+    "Commodities oil/gold/silver last+dayPct are live (not invented)",
+    "Classic card dollars match live eToro OfersClaw5-PRIYN / mirror 11368142",
+    "No invented portfolio dollars"
+  ]
+}

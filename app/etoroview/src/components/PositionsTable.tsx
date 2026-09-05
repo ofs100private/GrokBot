@@ -1,0 +1,113 @@
+import type { Position, Mirror } from '../data/portfolio'
+import { formatCurrency, formatPercent, formatSigned } from '../utils/format'
+
+/** Deterministic presentation color when live snapshot omits avatarColor. */
+function colorFromSymbol(symbol: string): string {
+  let hash = 0
+  for (let i = 0; i < symbol.length; i++) {
+    hash = (hash * 31 + symbol.charCodeAt(i)) >>> 0
+  }
+  const hue = hash % 360
+  return `hsl(${hue} 55% 42%)`
+}
+
+interface PositionRowProps {
+  item: Position | Mirror
+  isMirror: boolean
+}
+
+function PositionRow({ item, isMirror }: PositionRowProps) {
+  const isPositive = item.unrealizedPnL.pnL >= 0
+  const pnlPercent = (item.unrealizedPnL.pnL / item.amount) * 100
+  const copiedFrom = 'copiedFrom' in item ? item.copiedFrom : undefined
+  const initial = item.symbol.slice(0, 1)
+  const avatarColor = item.avatarColor ?? colorFromSymbol(item.symbol)
+
+  return (
+    <div className="position-row" role="row">
+      <div className="position-cell position-identity">
+        <div className="avatar" style={{ background: avatarColor }}>
+          {initial}
+        </div>
+        <div className="identity-text">
+          <span className="symbol">{item.symbol}</span>
+          <span className="name">
+            {item.instrumentName}
+            {isMirror && copiedFrom && (
+              <span className="mirror-tag">Copied · {copiedFrom}</span>
+            )}
+          </span>
+        </div>
+      </div>
+
+      <div className="position-cell position-meta">
+        <span className="meta-value">{formatCurrency(item.amount)}</span>
+        <span className="meta-label">Invested</span>
+      </div>
+
+      <div className="position-cell position-meta">
+        <span className={`meta-value ${isPositive ? 'positive' : 'negative'}`}>
+          {formatSigned(item.unrealizedPnL.pnL)}
+        </span>
+        <span className={`meta-label ${isPositive ? 'positive' : 'negative'}`}>
+          {formatPercent(pnlPercent)}
+        </span>
+      </div>
+
+      <div className="position-cell position-meta">
+        <span className="meta-value direction-tag">{item.direction}</span>
+        <span className="meta-label">{item.units.toFixed(2)} units</span>
+      </div>
+    </div>
+  )
+}
+
+interface PositionsTableProps {
+  positions: Position[]
+  mirrors: Mirror[]
+}
+
+export function PositionsTable({ positions, mirrors }: PositionsTableProps) {
+  const rows = [
+    ...positions.map((p) => ({ item: p, isMirror: false })),
+    ...mirrors.map((m) => ({ item: m, isMirror: true })),
+  ]
+
+  return (
+    <section className="positions-section" aria-label="Positions and copy traders">
+      <div className="section-header">
+        <h2>Positions</h2>
+        <span className="count-badge">{rows.length}</span>
+      </div>
+
+      <div className="positions-table" role="table">
+        <div className="positions-head" role="rowgroup">
+          <div className="position-row" role="row">
+            <div className="position-cell header-cell" role="columnheader">
+              Asset
+            </div>
+            <div className="position-cell header-cell" role="columnheader">
+              Invested
+            </div>
+            <div className="position-cell header-cell" role="columnheader">
+              P/L
+            </div>
+            <div className="position-cell header-cell" role="columnheader">
+              Direction
+            </div>
+          </div>
+        </div>
+
+        <div className="positions-body" role="rowgroup">
+          {rows.map(({ item, isMirror }) => (
+            <PositionRow
+              key={isMirror ? (item as Mirror).mirrorID : (item as Position).positionID}
+              item={item}
+              isMirror={isMirror}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

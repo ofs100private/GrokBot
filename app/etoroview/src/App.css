@@ -1,0 +1,1325 @@
+/* App shell */
+.app-shell {
+  min-height: 100svh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Account choice screen */
+.account-choice {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, rgba(19, 198, 54, 0.08) 0%, transparent 55%);
+}
+
+.wordmark {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--etoro-text);
+}
+
+.wordmark::first-letter {
+  color: var(--etoro-green);
+}
+
+.account-choice .title {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 32px 0 12px;
+  color: var(--etoro-text);
+  letter-spacing: -0.5px;
+}
+
+.account-choice .subtitle {
+  color: var(--etoro-text-muted);
+  margin-bottom: 40px;
+  max-width: 420px;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 240px);
+  gap: 24px;
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 280px;
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--etoro-border);
+  background: var(--etoro-card);
+  color: var(--etoro-text);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  overflow: hidden;
+}
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.tile-demo::before {
+  background: linear-gradient(180deg, var(--etoro-demo-soft) 0%, transparent 70%);
+}
+.tile-real::before {
+  background: linear-gradient(180deg, var(--etoro-real-soft) 0%, transparent 70%);
+}
+.tile:hover,
+.tile-focused {
+  transform: translateY(-4px);
+  border-color: var(--etoro-border);
+  box-shadow: var(--shadow-soft);
+}
+.tile:hover::before,
+.tile-focused::before {
+  opacity: 1;
+.tile-demo:hover,
+}
+.tile-demo.tile-focused {
+  border-color: var(--etoro-demo);
+}
+
+.tile-real:hover,
+.tile-real.tile-focused {
+  border-color: var(--etoro-green);
+}
+
+.tile-icon {
+  width: 72px;
+  height: 72px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--etoro-elevated);
+  margin-bottom: 8px;
+}
+
+.tile-demo .tile-icon {
+  color: var(--etoro-demo);
+}
+
+.tile-real .tile-icon {
+  color: var(--etoro-green);
+}
+
+.tile-label {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.tile-subtitle {
+  font-size: 14px;
+  color: var(--etoro-text-muted);
+}
+
+.tile-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.tile-badge-demo {
+  color: var(--etoro-demo);
+  background: var(--etoro-demo-soft);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.tile-badge-real {
+  color: var(--etoro-green);
+  background: var(--etoro-real-soft);
+  border: 1px solid rgba(19, 198, 54, 0.3);
+}
+
+.hint {
+  margin-top: 32px;
+  font-size: 13px;
+  color: var(--etoro-text-dim);
+}
+
+/* Dashboard layout */
+.dashboard {
+  flex: 1;
+  display: flex;
+  min-height: 100svh;
+}
+.dashboard-demo {
+  background: radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.06) 0%, var(--etoro-bg) 50%);
+}
+.dashboard-real {
+  background: radial-gradient(ellipse at 50% 0%, rgba(19, 198, 54, 0.06) 0%, var(--etoro-bg) 50%);
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(13, 17, 23, 0.82);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--etoro-border-subtle);
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mode-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+.mode-badge-demo {
+  color: var(--etoro-demo);
+  background: var(--etoro-demo-soft);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.mode-badge-real {
+  color: var(--etoro-green);
+  background: var(--etoro-real-soft);
+  border: 1px solid rgba(19, 198, 54, 0.3);
+}
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.username {
+  color: var(--etoro-text-muted);
+  font-size: 14px;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--etoro-border);
+  background: var(--etoro-card);
+  color: var(--etoro-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.icon-button:hover {
+  background: var(--etoro-elevated);
+  color: var(--etoro-text);
+  border-color: var(--etoro-border);
+}
+
+.switcher-button {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--etoro-border);
+  background: var(--etoro-card);
+  color: var(--etoro-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.switcher-button:hover {
+  background: var(--etoro-elevated);
+  border-color: var(--etoro-green);
+  color: var(--etoro-green);
+}
+
+.dashboard-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Portfolio summary */
+.portfolio-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px;
+  border-radius: var(--radius);
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+.summary-card-main {
+  border-color: var(--etoro-border);
+  background: var(--etoro-elevated);
+}
+
+.summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--etoro-text-muted);
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--etoro-text);
+}
+
+.summary-value.positive {
+  color: var(--etoro-green-light);
+  text-shadow: 0 0 20px var(--etoro-green-glow);
+}
+
+.summary-value.negative {
+  color: var(--etoro-red);
+  text-shadow: 0 0 20px var(--etoro-red-glow);
+}
+
+/* Section headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--etoro-text);
+}
+
+.count-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: var(--etoro-elevated);
+  color: var(--etoro-text-muted);
+  border: 1px solid var(--etoro-border);
+}
+
+/* Positions */
+.positions-section {
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border-subtle);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.positions-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.positions-head .position-row {
+  border-bottom: 1px solid var(--etoro-border);
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+}
+
+.positions-head .header-cell {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--etoro-text-dim);
+}
+
+.position-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--etoro-border-subtle);
+  transition: background 0.15s ease;
+}
+
+.position-row:last-child {
+  border-bottom: none;
+}
+
+.position-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.position-identity {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.symbol {
+  font-weight: 700;
+  color: var(--etoro-text);
+  font-size: 15px;
+}
+
+.name {
+  font-size: 13px;
+  color: var(--etoro-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mirror-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--etoro-green);
+  background: var(--etoro-real-soft);
+  padding: 2px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.position-meta {
+  align-items: flex-end;
+}
+
+.meta-value {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--etoro-text);
+}
+
+.meta-value.positive {
+  color: var(--etoro-green-light);
+}
+
+.meta-value.negative {
+  color: var(--etoro-red);
+}
+
+.meta-label {
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+  margin-top: 2px;
+}
+
+.meta-label.positive {
+  color: var(--etoro-green-light);
+}
+
+.meta-label.negative {
+  color: var(--etoro-red);
+}
+
+.direction-tag {
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--etoro-elevated);
+  color: var(--etoro-text-muted);
+}
+
+/* Morning briefing */
+.briefing-section {
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border-subtle);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.briefing-date {
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+}
+
+.briefing-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.briefing-tone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tone-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--etoro-text-dim);
+}
+
+.tone-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--etoro-green-light);
+}
+
+.briefing-fear-greed {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--etoro-text-muted);
+  margin: 0;
+}
+
+.briefing-divider {
+  height: 1px;
+  background: var(--etoro-border-subtle);
+}
+
+.briefing-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--etoro-text);
+  margin: 0;
+}
+
+.briefing-list,
+.watchlist {
+  margin: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+.briefing-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+}
+
+.source {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--etoro-green);
+}
+
+.take {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--etoro-text-muted);
+}
+
+.watch-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--etoro-border-subtle);
+}
+
+.watch-item:last-child {
+  border-bottom: none;
+}
+
+.watch-label {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--etoro-text);
+}
+
+.watch-detail {
+  font-size: 13px;
+  color: var(--etoro-text-muted);
+}
+
+/* Live Classic loading / error states */
+.live-state-card {
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
+}
+
+.live-state-card p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--etoro-text-muted);
+  margin: 0 0 10px;
+}
+
+.live-state-error {
+  border-color: #c45c5c;
+}
+
+.live-hint {
+  font-size: 12px !important;
+}
+
+.live-retry {
+  margin-top: 8px;
+  background: var(--etoro-green, #13c636);
+  color: #0b1a0f;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.live-retry:hover {
+  filter: brightness(1.08);
+}
+
+/* Connect hint card */
+.connect-card {
+  background: var(--etoro-card);
+  border: 1px dashed var(--etoro-border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.connect-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--etoro-text);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.connect-card p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--etoro-text-muted);
+  margin: 0;
+}
+
+.connect-card code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--etoro-elevated);
+  color: var(--etoro-green-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 0 2px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+}
+  .dashboard-main {
+    grid-template-columns: 1fr;
+}
+  .portfolio-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dashboard-sidebar {
+    order: -1;
+}
+@media (max-width: 640px) {
+}
+  .tiles {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+    width: 100%;
+  }
+  .tile {
+    height: auto;
+    min-height: 200px;
+  }
+  .app-header {
+    padding: 12px 16px;
+}
+  .header-right {
+    gap: 10px;
+}
+  .username {
+    display: none;
+  }
+  .dashboard-main {
+    padding: 16px;
+    gap: 16px;
+}
+  .portfolio-summary {
+    grid-template-columns: 1fr;
+
+}
+  .position-row {
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 14px 0;
+
+}
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .position-identity {
+    gap: 8px;
+  }
+
+  .meta-value {
+    font-size: 13px;
+  }
+
+  .meta-label {
+    font-size: 11px;
+  }
+
+  .summary-value {
+    font-size: 18px;
+  }
+
+/* Daily Brief — v1.0 live panel */
+:root {
+  --fg-extreme-fear: #c62828;
+  --fg-fear: #ef6c00;
+  --fg-neutral: #f9a825;
+  --fg-greed: #7cb342;
+  --fg-extreme-greed: #13c636;
+}
+
+.dashboard-main > .daily-brief-section {
+  grid-column: 1 / -1;
+}
+
+.daily-brief-section {
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border-subtle);
+  border-radius: var(--radius);
+  padding: 18px 20px 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.db-header-slot {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: var(--etoro-green-light);
+  background: var(--etoro-real-soft);
+  border: 1px solid rgba(19, 198, 54, 0.3);
+}
+
+.db-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px 8px 8px;
+}
+
+.db-waiting-dial {
+  width: 140px;
+  height: 72px;
+  border-radius: 140px 140px 0 0;
+  border: 10px solid var(--etoro-border);
+  border-bottom: none;
+  opacity: 0.45;
+  margin-bottom: 8px;
+}
+
+.db-waiting-error {
+  border-top: 1px solid #c45c5c;
+}
+
+.db-live {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.db-hero {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.db-dial-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.db-dial {
+  width: 200px;
+  height: 120px;
+}
+
+.db-dial-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -18px;
+}
+
+.db-score-num {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1;
+}
+
+.db-score-rating {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  opacity: 0.9;
+}
+
+.db-hero-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.db-slot-badge,
+.db-flag-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.db-slot-badge {
+  color: var(--etoro-green-light);
+  background: var(--etoro-real-soft);
+  border: 1px solid rgba(19, 198, 54, 0.3);
+}
+
+.db-slot-next {
+  color: #f9a825;
+  background: rgba(249, 168, 37, 0.12);
+  border-color: rgba(249, 168, 37, 0.35);
+}
+
+.db-flag-badge {
+  color: var(--etoro-text-muted);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border);
+}
+
+.db-asof {
+  margin: 0;
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+}
+
+.db-compare-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.db-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+  min-width: 88px;
+}
+
+.db-chip-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--etoro-text-dim);
+}
+
+.db-chip-value {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.db-chip-positive .db-chip-value { color: var(--etoro-green-light); }
+.db-chip-negative .db-chip-value { color: var(--etoro-red); }
+.db-chip-neutral .db-chip-value { color: var(--etoro-text-muted); }
+
+.db-component-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.db-comp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+  min-width: 0;
+}
+
+.db-comp-score {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.db-comp-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.db-comp-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--etoro-text);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.db-comp-rating {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.db-commodities {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.db-commodity {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+}
+
+.db-commodity-top,
+.db-commodity-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.db-commodity-name {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.db-commodity-price {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.db-commodity-pct {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.db-commodity-related {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--etoro-text-dim);
+}
+
+.db-stance-chip {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 100px;
+}
+
+.stance-yes {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+}
+
+.stance-no {
+  color: #fff;
+  background: var(--etoro-red);
+}
+
+.stance-wait {
+  color: #f9a825;
+  background: rgba(249, 168, 37, 0.14);
+  border: 1px solid rgba(249, 168, 37, 0.35);
+}
+
+.db-signals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.db-signals-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.db-signals-title.buy { color: var(--etoro-green-light); }
+.db-signals-title.sell { color: var(--etoro-red); }
+
+.db-signals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.db-signal {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+}
+
+.db-signal-buy { border-left: 3px solid var(--etoro-green); }
+.db-signal-sell { border-left: 3px solid var(--etoro-red); }
+
+.db-signal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.db-signal-symbol {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.db-side-badge {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 100px;
+}
+
+.side-buy {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+}
+
+.side-sell {
+  color: #fff;
+  background: var(--etoro-red);
+}
+
+.db-signal-ohlc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--etoro-text-muted);
+}
+
+.db-signal-ohlc em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--etoro-text-dim);
+  margin-right: 2px;
+}
+
+.db-signal-rationale {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--etoro-text-muted);
+}
+
+.db-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--etoro-text-dim);
+}
+
+.db-classic-card {
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border);
+}
+
+.db-classic-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.db-classic-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.db-mirror-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--etoro-text-dim);
+  font-family: var(--font-mono);
+}
+
+.db-classic-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.db-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.db-metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--etoro-text-dim);
+}
+
+.db-metric-value {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.db-classic-error {
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #c45c5c;
+  color: var(--etoro-red);
+  font-size: 13px;
+}
+
+.db-classic-pcts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.db-pct-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 100px;
+  background: var(--etoro-card);
+  color: var(--etoro-text-muted);
+  border: 1px solid var(--etoro-border-subtle);
+}
+
+.db-rec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 10px;
+}
+
+.db-rec-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.db-rec-label.buy { color: var(--etoro-green-light); }
+.db-rec-label.sell { color: var(--etoro-red); }
+.db-rec-label.hold { color: var(--etoro-text-muted); }
+
+.db-rec-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.db-rec-tag {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border-subtle);
+}
+
+.db-rec-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-muted);
+}
+
+.db-classic-source {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--etoro-text-dim);
+}
+
+.db-impact-list {
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--etoro-text-muted);
+  font-size: 13px;
+}
+
+.db-source {
+  margin: 0;
+  font-size: 11px;
+  color: var(--etoro-text-dim);
+}
+
+@media (max-width: 1100px) {
+  .db-component-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .db-signals-grid {
+    grid-template-columns: 1fr;
+  }
+  .db-classic-metrics,
+  .db-rec-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .db-hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .db-hero-badges,
+  .db-compare-chips {
+    justify-content: center;
+  }
+  .db-component-strip,
+  .db-commodities,
+  .db-signals,
+  .db-classic-metrics,
+  .db-rec-grid {
+    grid-template-columns: 1fr;
+  }
+  .db-signals-grid {
+    grid-template-columns: 1fr;
+  }
+}
