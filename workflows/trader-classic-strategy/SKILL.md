@@ -3,8 +3,8 @@ name: Trader Classic strategy
 description: >-
   Use this when planning, reviewing, or executing Trader_Classic trades on
   OfersClaw5-PRIYN (ledger A) — any fitting liquid large-cap/ETF, SPX heatmap
-  Change 1D URL, cross-regime diversification, beat-SPX after fees/tax, and hard
-  mandate rules.
+  Change 1D URL, cross-regime diversification, beat-SPX after fees/tax, hard
+  mandate rules, and post-trade self-improvement.
 ---
 # Trader Classic strategy
 
@@ -41,6 +41,11 @@ Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. 
 4. X Tier-1 (small cost; X MCP guide first)
 5. Event calendar (~48h CPI/FOMC/NFP)
 6. getCost / prepare — fees + tax haircut
+7. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
+
+## After every fill / skip / QA FAIL
+
+Run [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop): score Q/A/order/market/X/brief/graph/outcome; write KEEP/AVOID; patch this playbook only when a hard avoid repeats.
 
 ## Beat-SPX filter / regimes / daily checklist / pre-trade / events
 

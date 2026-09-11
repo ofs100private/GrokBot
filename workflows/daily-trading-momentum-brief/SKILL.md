@@ -10,7 +10,8 @@ description: >-
 - Input: `portfolios` — list of agent-portfolio keys the user wants (examples: `Classic` / `OfersClaw5-PRIYN`, `Momentum` / `Momentum-HHHGDTJ`).
 - Support any subset: one, several, or all of the user's agent portfolios. Never hardcode which book.
 - For each selected book, pull LIVE ledger fields via eToro Account / the matching trader agent (invested, equity, cash, open/closed PnL, positions). Do not invent dollar amounts.
-- Default when unspecified: `Classic` (OfersClaw5-PRIYN, mirror 11368142).
+- **Standing default (Ofer):** `portfolios=[Classic, Momentum]` — always produce a separate Portfolio Recommendation card for **Classic** (OfersClaw5-PRIYN / mirror 11368142) **and** **Momentum** (Momentum-HHHGDTJ). Override only if Ofer narrows the list for a run.
+- Classic truth = parent mirror ledger A (not keys-B totals). Momentum truth = Momentum agent book / its live MCP — never mix Classic dollars into Momentum or vice versa.
 
 ## Live data rules
 1. Fetch LIVE only via tools. Preferred F&G: `https://production.dataviz.cnn.io/index/fearandgreed/graphdata`. Fallback: web search / CNN Fear & Greed page.
@@ -33,12 +34,13 @@ description: >-
 10. Section: Oil / Gold / Silver — explicit yes/no/wait for related asset
 11. Section: Impact on Crypto — BTC + daily move; BTC/ETH and crypto-beta (COIN/HOOD); buy vs don’t chase
 12. Section: Expected Daily Impact — 3–6 bullets
-13. Section: `{PORTFOLIO_NAME} Portfolio Recommendation` for EACH selected portfolio — Portfolio card (N names / cash / deployment % — no invented dollars); Buy 0–2 or No Buy Today; Sell/Rotation 1–2 or No Sale; Hold; Diversification note
+13. Section: `{PORTFOLIO_NAME} Portfolio Recommendation` for **EACH** selected portfolio — Portfolio card (N names / cash / deployment % — no invented dollars); Buy 0–2 or No Buy Today; Sell/Rotation 1–2 or No Sale; Hold; Diversification note. With the standing default, that means **two** cards: Classic then Momentum.
 14. Source line with update timestamp
 
 If length pressure: shorten section-9 reasons; keep sections 10–14. A brief that stops early is FAILED — complete through Source.
 
 ## Coordination
 - Use X agent / X tools for Tier-2 analyst tape (estimate cost; keep cheap).
-- Use trader agents + eToro Account for portfolio cards.
-- Deliver the full brief to the user.
+- Use trader agents + eToro Account for portfolio cards (Classic via Trader_Classic / mirror A; Momentum via Trader_momentum / Momentum MCP).
+- After delivery, refresh App JSON dual-write with **both** portfolio cards when both are selected; never write keys-B Classic totals as Classic A.
+- Deliver the full brief to the user (or hand off to Chief of Staff for user delivery when running in an isolated routine).

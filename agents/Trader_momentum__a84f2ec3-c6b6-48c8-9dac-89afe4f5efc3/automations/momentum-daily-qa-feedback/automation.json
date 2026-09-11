@@ -1,0 +1,16 @@
+{
+  "name": "Momentum daily QA feedback",
+  "prompt": "You are Trader_momentum. Daily feedback loop after the EOD session for Momentum-HHHGDTJ.\n\nIntent:\n1) If NYSE was closed today, stay quiet unless audit shows unexpected activity (then flag deviation).\n2) Run `/workspace/screener-venv/bin/python -m momentum_qa.feedback_daily` (optional date arg). Read `/workspace/trading-lessons/momentum/<today>/daily_feedback.md`.\n3) Message QA Bot (498c78db-a027-4f2c-8126-3c2be6f0a4bb) with: counts (actions / QA PASS / FAIL / deviations), top deviation codes, and paths to audit + feedback files. Ask them to confirm or tighten FAIL rules if new breach patterns appear.\n4) Tell Ofer a short summary ONLY if there were fills, QA FAILs, or clear deviations. If clean holiday/HALT/HOLD day with no deviations, stay quiet.\n5) Every lesson must preserve rationales — never drop why an action was taken or blocked.",
+  "schedule": "5 23 * * 1-5",
+  "triggerPresentation": {
+    "version": 1,
+    "trigger": {
+      "type": "cron",
+      "schedule": "5 23 * * 1-5"
+    }
+  },
+  "enabled": true,
+  "provenance": "user",
+  "createdAt": 1789097820959,
+  "lastRunAt": null
+}

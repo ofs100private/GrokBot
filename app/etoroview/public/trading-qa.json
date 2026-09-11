@@ -1,0 +1,608 @@
+{
+  "schemaVersion": "1.0",
+  "asOf": "2026-09-11T08:42:12.452438+03:00",
+  "portfolios": [
+    {
+      "key": "classic",
+      "name": "Classic · OfersClaw5-PRIYN",
+      "mirrorId": 11368142,
+      "agentPortfolioId": "OfersClaw5-PRIYN",
+      "truthNote": "mirror A 11368142 only — never keys/B",
+      "actions": [],
+      "days": [
+        {
+          "schemaVersion": "1.0",
+          "portfolio": "OfersClaw5-PRIYN",
+          "day": "2026-09-06",
+          "asOf": "2026-09-06T17:20:00+03:00",
+          "source": "trading-lessons/2026-09-06/index.json",
+          "counts": {
+            "keep": 7,
+            "avoid": 4
+          },
+          "strategy_aligned": [
+            {
+              "tag": "KEEP",
+              "action": null,
+              "symbol": null,
+              "rationale": "Close B-only crypto after QA+getCost when A is truth"
+            },
+            {
+              "tag": "KEEP",
+              "action": null,
+              "symbol": null,
+              "rationale": "getCost full fee stack before QA"
+            },
+            {
+              "tag": "KEEP",
+              "action": null,
+              "symbol": null,
+              "rationale": "waitingForMarket → watch only, never duplicate"
+            },
+            {
+              "tag": "KEEP",
+              "action": null,
+              "symbol": null,
+              "rationale": "Portfolio card + noNewOpens beat Daily Signals Mag7 buys"
+            },
+            {
+              "tag": "KEEP",
+              "action": null,
+              "symbol": null,
+              "rationale": "Cash buffer is a valid daily move"
+            },
+            {
+              "tag": "KEEP",
+              "action": null,
+              "symbol": null,
+              "rationale": "waitingForMarket→watch only then audit on fill"
+            },
+            {
+              "tag": "KEEP",
+              "action": null,
+              "symbol": null,
+              "rationale": "Close B-only IGV after QA to align with A"
+            }
+          ],
+          "deviations_clear": [
+            {
+              "tag": "AVOID",
+              "action": null,
+              "symbol": null,
+              "rationale": "Report B-only ETH/IGV as Classic"
+            },
+            {
+              "tag": "AVOID",
+              "action": null,
+              "symbol": null,
+              "rationale": "Spread-only fee estimates in QA packs"
+            },
+            {
+              "tag": "AVOID",
+              "action": null,
+              "symbol": null,
+              "rationale": "Chase brief buys across weekend/holiday"
+            },
+            {
+              "tag": "AVOID",
+              "action": null,
+              "symbol": null,
+              "rationale": "Invent heatmap momentum when tiles blank"
+            }
+          ],
+          "top_deviation_codes": [],
+          "lessons": [
+            {
+              "tag": "KEEP",
+              "text": "Close B-only crypto after QA+getCost when A is truth"
+            },
+            {
+              "tag": "KEEP",
+              "text": "getCost full fee stack before QA"
+            },
+            {
+              "tag": "KEEP",
+              "text": "waitingForMarket → watch only, never duplicate"
+            },
+            {
+              "tag": "KEEP",
+              "text": "Portfolio card + noNewOpens beat Daily Signals Mag7 buys"
+            },
+            {
+              "tag": "KEEP",
+              "text": "Cash buffer is a valid daily move"
+            },
+            {
+              "tag": "KEEP",
+              "text": "waitingForMarket→watch only then audit on fill"
+            },
+            {
+              "tag": "KEEP",
+              "text": "Close B-only IGV after QA to align with A"
+            },
+            {
+              "tag": "AVOID",
+              "text": "Report B-only ETH/IGV as Classic"
+            },
+            {
+              "tag": "AVOID",
+              "text": "Spread-only fee estimates in QA packs"
+            },
+            {
+              "tag": "AVOID",
+              "text": "Chase brief buys across weekend/holiday"
+            },
+            {
+              "tag": "AVOID",
+              "text": "Invent heatmap momentum when tiles blank"
+            }
+          ],
+          "WATCH": [
+            "IGV 1578558091 still waitingForMarket (live 2026-09-06 ~20:18 IDT); history fees=0 vs getCost gap on ETH"
+          ],
+          "forwardHook": "ETH+IGV B-only closes QA PASSed. A=GE/NVDA/NEM/QQQ/XLV. No buys until HOLD lift + cash floor + fresh QA PASS.",
+          "evidencePass": "executor live verify 2026-09-06 merged into cases",
+          "caseRefs": [
+            {
+              "caseId": "20260905-ETH-sell-close",
+              "caseScore": 4.0,
+              "status": "scored"
+            },
+            {
+              "caseId": "20260906-daily_brief-afternoon-hold",
+              "caseScore": 4.62,
+              "status": "scored"
+            },
+            {
+              "caseId": "20260908-IGV-sell-close-filled",
+              "caseScore": 4.25,
+              "status": "qa_pass"
+            }
+          ]
+        }
+      ],
+      "classicCases": [
+        {
+          "schemaVersion": "1.0",
+          "caseId": "20260905-ETH-sell-close",
+          "asOf": "2026-09-06T17:20:00+03:00",
+          "portfolio": "OfersClaw5-PRIYN",
+          "position": {
+            "symbol": "ETH",
+            "instrumentId": null,
+            "side": "sell-close",
+            "sizeUsd": 1350,
+            "leverage": 1,
+            "orderId": 1578433188,
+            "positionId": 3562260712,
+            "closeRate": 2452.88,
+            "netProfit": 9.96,
+            "feesActualApprox": 1.43,
+            "feesQaPass": 1.44,
+            "cashAfter": 1358.6,
+            "historyOrderId": 1572435933,
+            "closeOrderId": 1578433188,
+            "historyFeesField": 0.0
+          },
+          "sources": {
+            "qaPack": "QA Bot PASS ETH CLOSE post-fill (memory 2026-09-05)",
+            "fillAudit": "order 1578433188 executed; full close matched prepare; lev1 REAL",
+            "dailyBrief": "/workspace/daily-brief/latest.json (cryptoImpact.stance=dont_chase)",
+            "heatmapUrlOrShot": "n/a for crypto close; TV SPX heatmap not decision driver",
+            "xPosts": [],
+            "auditJsonlWindow": "agent memory log 2026-09-05 ETH/IGV reconcile episode",
+            "ledgerNote": "Closed on keys book (B) to align with parent mirror A (UI truth: no ETH)",
+            "liveVerify": "user-OfersClaw5 keys REAL 2026-09-06: ETH absent; cash 1358.60; history fees 0.0 vs getCost/PASS ~1.43–1.44 (QA: reporting gap)"
+          },
+          "scores": {
+            "Q": {
+              "score": 5,
+              "evidence": "Clear decision: close B-only ETH to honor no-crypto + Ofer UI truth (mirror A)."
+            },
+            "A": {
+              "score": 4,
+              "evidence": "Falsifiable thesis: ETH absent on mirror 11368142; mandate forbids crypto opens; book align."
+            },
+            "O": {
+              "score": 4,
+              "evidence": "QA PASS then place; fees via getCost (~1.43 vs PASS 1.44); lev1 REAL; prepare matched fill."
+            },
+            "M": {
+              "score": 4,
+              "evidence": "Weekend/Labor Day window; compliance close not momentum add; no event-vol size add."
+            },
+            "X": {
+              "score": null,
+              "n/a": true,
+              "evidence": "X not used as trigger; compliance/ledger align."
+            },
+            "B": {
+              "score": 4,
+              "evidence": "Brief cryptoImpact dont_chase + Classic No Buy; close ETH agrees with avoid crypto-beta."
+            },
+            "G": {
+              "score": 2,
+              "evidence": "No asset graph for ETH close; SPX heatmap irrelevant — scored low as graph not set up for this case."
+            },
+            "P": {
+              "score": 4,
+              "evidence": "Net +9.96 after ~1.43 fees; small positive; vs-SPX n/a (hygiene not alpha bet)."
+            },
+            "C": {
+              "score": 5,
+              "evidence": "QA gate, REAL route, no duplicate, secrets redacted."
+            }
+          },
+          "momentumPreId": {
+            "oneLiner": "MOMENTUM: n/a crypto hygiene | ETF n/a | asset RS n/a | brief: agree (dont_chase) | action: trim/close",
+            "note": "Pre-id not applicable; decision was mandate/ledger align, not sector RS."
+          },
+          "mapping": {
+            "action": "sell-close ETH",
+            "daily_brief_hook": "cryptoImpact.stance=dont_chase; Classic recommendation No Buy Today",
+            "tv_graph_hook": "none (crypto out of SPX heatmap scope)",
+            "next_mechanism_change": "Always getCost full fee stack before QA; never treat B-only names as Classic holdings"
+          },
+          "lessons": [
+            {
+              "tag": "KEEP",
+              "text": "When ledger A (mirror) is truth and B holds crypto, close B crypto after QA+getCost to align books."
+            },
+            {
+              "tag": "KEEP",
+              "text": "Fee packs must include transactionFee+markup+spread via getCost — spread-only estimates FAIL QA."
+            },
+            {
+              "tag": "AVOID",
+              "text": "Never report keys-book ETH/IGV (or B cash) as Classic UI portfolio."
+            },
+            {
+              "tag": "WATCH",
+              "text": "Trading-history fees may show 0.0 while getCost/PASS ~1.43 — treat as reporting gap; still require getCost pre-QA, do not “fix” to history fees=0."
+            }
+          ],
+          "playbookPatches": [
+            "Research loop already forbids crypto opens; reinforce: B-only crypto is close-candidate, not hold."
+          ],
+          "caseScore": 4.0
+        },
+        {
+          "schemaVersion": "1.0",
+          "caseId": "20260906-daily_brief-afternoon-hold",
+          "asOf": "2026-09-06T15:53:10+03:00",
+          "portfolio": "OfersClaw5-PRIYN",
+          "position": {
+            "symbol": "BOOK",
+            "side": "hold",
+            "sizeUsd": null,
+            "leverage": 1,
+            "orderId": null,
+            "positionId": null
+          },
+          "sources": {
+            "qaPack": "n/a (no place)",
+            "fillAudit": "n/a",
+            "dailyBrief": "/workspace/daily-brief/latest.json slot afternoon_1530 weekendMode=true noNewOpens=true",
+            "heatmapUrlOrShot": "https://www.tradingview.com/heatmap/stock/#%7B%22dataSource%22%3A%22SPX500%22%2C%22blockColor%22%3A%22change%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22grouping%22%3A%22sector%22%7D ; prior blank failure /workspace/tv-spx-heatmap-failed.png",
+            "xPosts": [
+              {
+                "handle": "unusual_whales",
+                "claim": "Trump lowest interest rate comment",
+                "url": "https://x.com/unusual_whales/status/2096433455571849561"
+              },
+              {
+                "handle": "StockMKTNewz",
+                "claim": "US market closed Labor Day"
+              }
+            ],
+            "auditJsonlWindow": "brief asOf 2026-09-06T15:53 IL"
+          },
+          "scores": {
+            "Q": {
+              "score": 5,
+              "evidence": "Decision question: any Classic size change this Labor Day afternoon? Answer must respect noNewOpens."
+            },
+            "A": {
+              "score": 5,
+              "evidence": "No Buy / No Sale / Hold five — matches F&G Fear 42, weekendMode, cash 30.6% powder."
+            },
+            "O": {
+              "score": 5,
+              "evidence": "No order placed — correct under HOLD/weekend; cash floor intact on A (~4048)."
+            },
+            "M": {
+              "score": 5,
+              "evidence": "Regime: holiday/weekend + Fear; event freeze into Tue open correctly applied."
+            },
+            "X": {
+              "score": 4,
+              "evidence": "Used Labor Day close + rates color; cost-aware via brief/X agent; not sole chase trigger."
+            },
+            "B": {
+              "score": 5,
+              "evidence": "Classic recommendation No Buy Today / No Sale / Hold GE QQQ XLV NEM NVDA — action = hold."
+            },
+            "G": {
+              "score": 3,
+              "evidence": "1D heatmap URL is standard; prior blank tiles → fallback required; not re-pulled this pass."
+            },
+            "P": {
+              "score": null,
+              "n/a": true,
+              "evidence": "Hold — no new outcome window yet."
+            },
+            "C": {
+              "score": 5,
+              "evidence": "No place without QA; mandate cash buffer respected on ledger A."
+            }
+          },
+          "momentumPreId": {
+            "oneLiner": "MOMENTUM: mixed Fear tape | ETF XLV defensive held | Mag7 META listed in brief buys but weekend noNewOpens | brief: agree (No Buy) | action: hold/skip",
+            "hotCold": "Brief: stock_price_strength extreme fear 12.6; junk_bond extreme greed 76.2 — mixed, prefer hold",
+            "avoidFlags": [
+              "noNewOpens",
+              "weekendMode",
+              "laborDayContext",
+              "META dailySignal buy overridden by Classic No Buy"
+            ]
+          },
+          "mapping": {
+            "action": "hold / skip new opens",
+            "daily_brief_hook": "portfolios.Classic.recommendation buy=No Buy Today; sells=No Sale; hold five",
+            "tv_graph_hook": "SPX Change 1D heatmap URL; fallback quotes if blank",
+            "next_mechanism_change": "Tue open: re-run heatmap 1D + sleeve gaps (healthcare MRK/TEVA) only if buys HOLD lifted + cash floor"
+          },
+          "lessons": [
+            {
+              "tag": "KEEP",
+              "text": "When daily_brief Daily Signals list META/AMZN buys but portfolio card says No Buy + noNewOpens, obey the portfolio card / session gate."
+            },
+            {
+              "tag": "KEEP",
+              "text": "Cash ~30% on ledger A into holiday is a valid position — do not force deploy."
+            },
+            {
+              "tag": "AVOID",
+              "text": "Do not chase brief Mag7 buys across weekend/holiday or into CPI/FOMC 48h freeze."
+            },
+            {
+              "tag": "AVOID",
+              "text": "If TradingView heatmap tiles blank, fall back to eToro batch quotes + sector ETFs — never invent momentum colors."
+            }
+          ],
+          "playbookPatches": [
+            "Explicit: Daily Signals ≠ auto-place; Classic card + session gates win."
+          ],
+          "caseScore": 4.62
+        },
+        {
+          "schemaVersion": "1.0",
+          "caseId": "20260908-IGV-sell-close-filled",
+          "asOf": "2026-09-08T16:30:00+03:00",
+          "portfolio": "OfersClaw5-PRIYN",
+          "position": {
+            "symbol": "IGV",
+            "instrumentId": null,
+            "side": "sell-close",
+            "sizeUsd": 750,
+            "leverage": 1,
+            "orderId": 1578558091,
+            "positionId": 3523504410,
+            "status": "filled",
+            "liveVerifyUtc": "2026-09-06T17:18:00Z",
+            "statusID": 11,
+            "stillOpen": false,
+            "unrealizedPnlApprox": 107.8,
+            "closeRate": 103.62,
+            "openRate": 91.46,
+            "units": 8.200306,
+            "netProfit": 99.72,
+            "feesHistory": 0.0,
+            "feesQaPassApprox": 1.37,
+            "historyOrderId": 1540672532,
+            "closeTimeUtc": "2026-09-08T13:30:09.703Z"
+          },
+          "sources": {
+            "qaPack": "QA Bot PASS POST-FILL IGV CLOSE 2026-09-08",
+            "fillAudit": "eToro Account pack 2026-09-08; history fees 0 vs getCost PASS ~1.37",
+            "dailyBrief": "/workspace/daily-brief/latest.json (Classic hold set excludes IGV)",
+            "heatmapUrlOrShot": "/workspace/tradingview_stock_heatmap.png (prior) + failed blank /workspace/tv-spx-heatmap-failed.png",
+            "xPosts": [],
+            "auditJsonlWindow": "memory 2026-09-05; automation watch-igv-close-fill",
+            "liveVerify": "IGV absent keys+A; order 1578558091 gone; cash B ~2207.05"
+          },
+          "scores": {
+            "Q": {
+              "score": 5,
+              "evidence": "Clear: close B-only IGV absent from mirror A truth set."
+            },
+            "A": {
+              "score": 4,
+              "evidence": "Align ledgers with Ofer screenshot; IGV not on Classic UI five."
+            },
+            "O": {
+              "score": 5,
+              "evidence": "QA PASS then waitingForMarket→fill; no duplicate; lev1 REAL; prepare matched."
+            },
+            "M": {
+              "score": 4,
+              "evidence": "Weekend/holiday — waitingForMarket expected; no chase."
+            },
+            "X": {
+              "score": null,
+              "n/a": true,
+              "evidence": "Not tape-driven."
+            },
+            "B": {
+              "score": 4,
+              "evidence": "Classic card holds GE/NVDA/QQQ/NEM/XLV only — IGV close aligns with brief card."
+            },
+            "G": {
+              "score": 3,
+              "evidence": "IGV is software ETF; heatmap evidence mixed/blank historically — used for context only."
+            },
+            "P": {
+              "score": 4,
+              "evidence": "Net +99.72 after history fees 0 (getCost gap); hygiene close aligned A; not vs-SPX alpha bet."
+            },
+            "C": {
+              "score": 5,
+              "evidence": "QA PASS post-fill; REAL ×1; no duplicate; buy HOLD N/A to closes."
+            }
+          },
+          "momentumPreId": {
+            "oneLiner": "MOMENTUM: n/a book-align close | ETF IGV exited | brief: agree (not in Classic hold) | action: close-filled",
+            "note": "Compliance/ledger align complete."
+          },
+          "mapping": {
+            "action": "sell-close IGV (pending)",
+            "daily_brief_hook": "Classic hold list has no IGV; No Sale on UI five",
+            "tv_graph_hook": "prior SPX heatmap shots; blank-tile failure recorded",
+            "next_mechanism_change": "On fill: post-fill audit to QA; never duplicate waitingForMarket orders"
+          },
+          "lessons": [
+            {
+              "tag": "KEEP",
+              "text": "waitingForMarket closes: watch until fill; never duplicate; audit on fill."
+            },
+            {
+              "tag": "KEEP",
+              "text": "Close B-only names absent from mirror A after QA — books align (ETH then IGV)."
+            },
+            {
+              "tag": "WATCH",
+              "text": "History fees=0 vs getCost ~1.37 on IGV — same reporting gap as ETH; require getCost pre-QA still."
+            }
+          ],
+          "playbookPatches": [],
+          "caseScore": 4.25,
+          "status": "qa_pass"
+        }
+      ]
+    },
+    {
+      "key": "momentum",
+      "name": "Momentum · Momentum-HHHGDTJ",
+      "mirrorId": 11630170,
+      "agentPortfolioId": "Momentum-HHHGDTJ",
+      "truthNote": "mirror A copy invested $8000 — not keys B ~9964",
+      "actions": [
+        {
+          "ts_utc": "2026-09-11T03:36:35.411647+00:00",
+          "ts_il": "2026-09-11T06:36:35.411658+03:00",
+          "run_id": "screener-20260911-063634-ad27a54c",
+          "portfolio": "Momentum-HHHGDTJ",
+          "script": "momentum_screener.py",
+          "event": "ACTION",
+          "action": "HALT",
+          "symbol": null,
+          "rationale": "SPX < SMA50 or VIX (17.84) >= 25. No new positions.",
+          "details": {
+            "asset_class": null,
+            "rs_rating": null,
+            "rvol": null,
+            "stop_loss": null,
+            "amount_usd": 1000,
+            "setup": "MARKET_REGIME_RISK",
+            "qa_pack_verdict": "PASS"
+          },
+          "deviation": false,
+          "deviation_code": null,
+          "qa_verdict": "PASS",
+          "qa_reasons": [
+            "Non-buy gate OK: HALT — SPX < SMA50 or VIX (17.84) >= 25. No new positions."
+          ]
+        }
+      ],
+      "auditRows": [
+        {
+          "ts_utc": "2026-09-11T03:36:34.377368+00:00",
+          "ts_il": "2026-09-11T06:36:34.377385+03:00",
+          "run_id": "screener-20260911-063634-ad27a54c",
+          "portfolio": "Momentum-HHHGDTJ",
+          "script": "momentum_screener.py",
+          "event": "RUN_START",
+          "rationale": "Starting momentum_screener.py for Momentum-HHHGDTJ"
+        },
+        {
+          "ts_utc": "2026-09-11T03:36:35.411647+00:00",
+          "ts_il": "2026-09-11T06:36:35.411658+03:00",
+          "run_id": "screener-20260911-063634-ad27a54c",
+          "portfolio": "Momentum-HHHGDTJ",
+          "script": "momentum_screener.py",
+          "event": "ACTION",
+          "action": "HALT",
+          "symbol": null,
+          "rationale": "SPX < SMA50 or VIX (17.84) >= 25. No new positions.",
+          "details": {
+            "asset_class": null,
+            "rs_rating": null,
+            "rvol": null,
+            "stop_loss": null,
+            "amount_usd": 1000,
+            "setup": "MARKET_REGIME_RISK",
+            "qa_pack_verdict": "PASS"
+          },
+          "deviation": false,
+          "deviation_code": null,
+          "qa_verdict": "PASS",
+          "qa_reasons": [
+            "Non-buy gate OK: HALT — SPX < SMA50 or VIX (17.84) >= 25. No new positions."
+          ]
+        },
+        {
+          "ts_utc": "2026-09-11T03:36:35.411808+00:00",
+          "ts_il": "2026-09-11T06:36:35.411813+03:00",
+          "run_id": "screener-20260911-063634-ad27a54c",
+          "portfolio": "Momentum-HHHGDTJ",
+          "script": "momentum_screener.py",
+          "event": "RUN_END",
+          "rationale": "Screener done: pack=PASS, rows=1, executable=1",
+          "details": {
+            "ok": true,
+            "verdict": "PASS",
+            "reasons": [
+              "Screener pack PASS (0 buys, 1 rows)"
+            ],
+            "deviations": []
+          }
+        }
+      ],
+      "days": [
+        {
+          "schemaVersion": "1.0",
+          "portfolio": "Momentum-HHHGDTJ",
+          "day": "2026-09-11",
+          "asOf": "2026-09-11T06:36:35.547812+03:00",
+          "counts": {
+            "audit_rows": 3,
+            "actions": 1,
+            "qa_pass_actions": 1,
+            "qa_fail_actions": 0,
+            "deviations": 0,
+            "errors": 0,
+            "keep": 1,
+            "avoid": 0
+          },
+          "strategy_aligned": [
+            {
+              "tag": "KEEP",
+              "action": "HALT",
+              "symbol": null,
+              "rationale": "SPX < SMA50 or VIX (17.84) >= 25. No new positions."
+            }
+          ],
+          "deviations_clear": [],
+          "top_deviation_codes": [],
+          "lessons": [
+            {
+              "tag": "KEEP",
+              "text": "1 actions matched playbook with rationale + QA PASS"
+            }
+          ],
+          "qa_bot": "498c78db-a027-4f2c-8126-3c2be6f0a4bb"
+        }
+      ]
+    }
+  ]
+}

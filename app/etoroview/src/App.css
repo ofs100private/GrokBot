@@ -158,6 +158,7 @@
 .dashboard {
   flex: 1;
   display: flex;
+  flex-direction: column;
   min-height: 100svh;
 }
 .dashboard-demo {
@@ -171,6 +172,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
@@ -1321,5 +1323,461 @@
   }
   .db-signals-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* —— App view switcher (Portfolio | QA & Lessons) —— */
+.app-view-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px 0;
+  background: transparent;
+}
+
+.app-view-tab {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--etoro-border);
+  background: var(--etoro-card);
+  color: var(--etoro-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-view-tab:hover {
+  color: var(--etoro-text);
+  border-color: var(--etoro-border);
+  background: var(--etoro-elevated);
+}
+
+.app-view-tab-active {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+  border-color: var(--etoro-green);
+}
+
+.app-view-tab-active:hover {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+  filter: brightness(1.06);
+}
+
+.app-view-mode-chip {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
+.app-view-mode-chip.demo {
+  color: var(--etoro-demo);
+  background: var(--etoro-demo-soft);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.app-view-mode-chip.real {
+  color: var(--etoro-green);
+  background: var(--etoro-real-soft);
+  border: 1px solid rgba(19, 198, 54, 0.3);
+}
+
+/* —— Trading QA + Self-Improvement —— */
+.tqa-main {
+  display: block !important;
+  grid-template-columns: none !important;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.tqa-root {
+  width: 100%;
+  padding: 8px 0 32px;
+}
+
+.tqa-page-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.tqa-page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--etoro-text);
+}
+
+.tqa-asof {
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+}
+
+.tqa-blend-note {
+  margin: 0 0 18px;
+  font-size: 12px;
+  color: var(--etoro-text-muted);
+}
+
+.tqa-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.tqa-portfolio {
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border);
+  border-radius: var(--radius);
+  padding: 18px 18px 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.tqa-classic {
+  border-top: 3px solid var(--etoro-green);
+}
+
+.tqa-momentum {
+  border-top: 3px solid #3b82f6;
+}
+
+.tqa-portfolio-header {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--etoro-border-subtle);
+}
+
+.tqa-portfolio-header h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--etoro-text);
+}
+
+.tqa-portfolio-header > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tqa-truth-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-muted);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--etoro-elevated);
+  border: 1px dashed var(--etoro-border);
+}
+
+.tqa-block {
+  margin-top: 16px;
+}
+
+.tqa-block-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-muted);
+}
+
+.tqa-empty {
+  font-size: 13px;
+  color: var(--etoro-text-dim);
+  padding: 14px;
+  border-radius: 8px;
+  background: var(--etoro-elevated);
+  border: 1px dashed var(--etoro-border-subtle);
+}
+
+.tqa-empty-inline {
+  margin: 0;
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+}
+
+.tqa-action-list,
+.tqa-case-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tqa-action-row,
+.tqa-case-card {
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.tqa-action-top,
+.tqa-case-top,
+.tqa-case-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.tqa-action-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 100px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.tqa-action-halt {
+  background: rgba(249, 168, 37, 0.15);
+  color: #f9a825;
+  border-color: rgba(249, 168, 37, 0.4);
+}
+
+.tqa-action-buy {
+  background: var(--etoro-real-soft);
+  color: var(--etoro-green-light);
+  border-color: rgba(19, 198, 54, 0.35);
+}
+
+.tqa-action-sell,
+.tqa-action-sell-close {
+  background: rgba(196, 92, 92, 0.15);
+  color: var(--etoro-red);
+  border-color: rgba(196, 92, 92, 0.35);
+}
+
+.tqa-verdict-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.tqa-verdict-pass {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+}
+
+.tqa-verdict-fail {
+  color: #fff;
+  background: var(--etoro-red, #c45c5c);
+}
+
+.tqa-verdict-unknown {
+  color: var(--etoro-text-muted);
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border);
+}
+
+.tqa-symbol {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--etoro-text);
+}
+
+.tqa-symbol-muted {
+  color: var(--etoro-text-dim);
+  font-weight: 500;
+}
+
+.tqa-size-lev {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--etoro-text-muted);
+}
+
+.tqa-meta-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border-subtle);
+  color: var(--etoro-text-muted);
+}
+
+.tqa-rationale {
+  margin: 4px 0 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--etoro-text);
+}
+
+.tqa-reasons {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-muted);
+}
+
+.tqa-deviation {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: var(--etoro-red, #c45c5c);
+}
+
+.tqa-deviation code,
+.tqa-code-chip,
+.tqa-case-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--etoro-card);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--etoro-green-light);
+}
+
+.tqa-timestamps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--etoro-text-dim);
+}
+
+.tqa-lessons-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tqa-lessons-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tqa-counts {
+  font-size: 12px;
+  color: var(--etoro-text-muted);
+}
+
+.tqa-section-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--etoro-text-dim);
+  margin-bottom: 6px;
+}
+
+.tqa-code-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tqa-lessons-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.tqa-col-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.tqa-col-keep {
+  color: var(--etoro-green-light);
+}
+
+.tqa-col-avoid {
+  color: var(--etoro-red, #c45c5c);
+}
+
+.tqa-lesson-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tqa-lesson-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.tqa-lesson-text {
+  color: var(--etoro-text);
+}
+
+.tqa-tag {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 100px;
+}
+
+.tqa-tag-keep {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+}
+
+.tqa-tag-avoid {
+  color: #fff;
+  background: var(--etoro-red, #c45c5c);
+}
+
+.tqa-tag-watch {
+  color: #1a1200;
+  background: #f9a825;
+}
+
+.tqa-tag-note {
+  color: var(--etoro-text-muted);
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border);
+}
+
+.tqa-case-score {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--etoro-green-light);
+}
+
+@media (max-width: 960px) {
+  .tqa-grid,
+  .tqa-lessons-cols {
+    grid-template-columns: 1fr;
+  }
+
+  .app-view-nav {
+    padding: 10px 16px 0;
   }
 }

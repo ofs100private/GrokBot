@@ -40,7 +40,8 @@ export interface CommoditiesBlock {
 export interface SignalCard {
   symbol: string
   side: SignalSide
-  open: number
+  open: number | null
+  openNote?: string
   prevClose: number
   last: number
   dayPct: number
@@ -192,10 +193,20 @@ function parseSignal(raw: unknown, index: number, sideHint: string): SignalCard 
   if (side !== 'buy' && side !== 'sell') {
     throw new Error(`dailySignals.${sideHint}[${index}]: invalid side`)
   }
+  const openRaw = raw.open
+  let open: number | null
+  if (openRaw === null || openRaw === undefined) {
+    open = null
+  } else if (typeof openRaw === 'number' && !Number.isNaN(openRaw)) {
+    open = openRaw
+  } else {
+    throw new Error(`dailySignals.${sideHint}[${index}]: missing or invalid number "open"`)
+  }
   return {
     symbol: requireString(raw, 'symbol', `dailySignals.${sideHint}[${index}]`),
     side,
-    open: requireNumber(raw, 'open', `dailySignals.${sideHint}[${index}]`),
+    open,
+    openNote: typeof raw.openNote === 'string' ? raw.openNote : undefined,
     prevClose: requireNumber(raw, 'prevClose', `dailySignals.${sideHint}[${index}]`),
     last: requireNumber(raw, 'last', `dailySignals.${sideHint}[${index}]`),
     dayPct: requireNumber(raw, 'dayPct', `dailySignals.${sideHint}[${index}]`),

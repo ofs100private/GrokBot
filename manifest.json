@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-09-05",
+  "exportedAt": "2026-09-11",
   "source": "Grok Bot agent-data (sanitized)",
   "omitted": [
     "store.db",
@@ -7,7 +7,9 @@
     "attachments binaries",
     "credentials",
     "MCP secrets",
-    "raw tokens"
+    "raw tokens",
+    "channels/connection secrets",
+    "audit lines with secret patterns"
   ],
   "agents": [
     {
@@ -20,7 +22,19 @@
       "folder": "Chief_of_Staff__b66054dc-f163-418d-a43c-59faef4ea103",
       "id": "b66054dc-f163-418d-a43c-59faef4ea103",
       "name": "Chief of Staff",
-      "description": "Manages your other Bots and pulls you in for decisions The user works with Microsoft 365, LinkedIn, GitHub every day \u2014 start with those tools when suggesting connectors or taking on work."
+      "description": "Manages your other Bots and pulls you in for decisions The user works with Microsoft 365, LinkedIn, GitHub every day — start with those tools when suggesting connectors or taking on work."
+    },
+    {
+      "folder": "daily_brief__415a6f9a-2638-4735-b33b-6a6b14ba09ac",
+      "id": "415a6f9a-2638-4735-b33b-6a6b14ba09ac",
+      "name": "daily_brief",
+      "description": "Runs Ofer's daily trading momentum brief (Fear & Greed + commodities + X + portfolio recommendations). Portfolio scope is a dynamic parameter: one or more agent portfolios (e.g. Classic OfersClaw5-PRIYN, Momentum-HHHGDTJ, or any subset). Live data only — no hardcoded portfolio numbers. Coordinate with Trader_Classic / Trader_momentum / eToro Account for ledger reads and X for tape. Deliver the full brief to the user; stop only after the Source line. Weekend = recs for next US session, no new opens. Never print secrets."
+    },
+    {
+      "folder": "eToro_Account__7b604913-c0fd-49bc-897a-c9ce38589c63",
+      "id": "7b604913-c0fd-49bc-897a-c9ce38589c63",
+      "name": "eToro Account",
+      "description": "Your eToro account: portfolio, positions, watchlists, and trades."
     },
     {
       "folder": "New_Bot__2b453fd3-f6fc-4f41-abcc-524b4c5340fc",
@@ -38,7 +52,7 @@
       "folder": "Trader_Classic__17bca140-8156-4306-944e-27264c7e1524",
       "id": "17bca140-8156-4306-944e-27264c7e1524",
       "name": "Trader_Classic",
-      "description": "Manages Ofer's eToro agent portfolio OfersClaw5-PRIYN (id 90db6cc2-57e3-48e0-9a12-3cbe82ac49ed). REAL MONEY only (~$15k invested) \u2014 never demo/virtual. Use eToro Account for live account access. Report real P&L. Standing order: buy/sell yourself under \u00d71 long-only, no crypto, keep cash buffer; QA Bot PASS before every order. Never print secrets."
+      "description": "Manages Ofer's eToro agent portfolio OfersClaw5-PRIYN (id 90db6cc2-57e3-48e0-9a12-3cbe82ac49ed). REAL MONEY only (~$15k invested) — never demo/virtual. Use eToro Account for live account access. Report real P&L. Standing order: buy/sell yourself under ×1 long-only, no crypto, keep cash buffer; QA Bot PASS before every order. Never print secrets."
     },
     {
       "folder": "Trader_momentum__a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3",
@@ -51,18 +65,21 @@
       "id": "4fb6dd40-86cb-43b3-b5be-16ad1fbc00b3",
       "name": "X",
       "description": ""
-    },
-    {
-      "folder": "eToro_Account__7b604913-c0fd-49bc-897a-c9ce38589c63",
-      "id": "7b604913-c0fd-49bc-897a-c9ce38589c63",
-      "name": "eToro Account",
-      "description": "Your eToro account: portfolio, positions, watchlists, and trades."
     }
   ],
   "workflows": [
+    "classic-portfolio-data-qa-gate",
     "classic-real-money-order-qa-gate",
+    "daily-trading-momentum-brief",
     "etoro-login-qa-gate",
+    "momentum-real-money-qa-gate",
     "trader-classic-strategy",
+    "trading-self-improvement-loop",
     "x-market-watch-tiers"
-  ]
+  ],
+  "app": {
+    "etoroview": true
+  },
+  "dailyBrief": true,
+  "scrubHitCount": 13
 }

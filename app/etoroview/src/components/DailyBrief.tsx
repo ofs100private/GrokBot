@@ -187,8 +187,8 @@ function SignalTile({ signal }: { signal: SignalCard }) {
         <span className={`db-side-badge side-${signal.side}`}>{signal.side}</span>
       </div>
       <div className="db-signal-ohlc">
-        <span>
-          <em>O</em> {signal.open.toFixed(2)}
+        <span title={signal.open === null ? signal.openNote : undefined}>
+          <em>O</em> {signal.open === null ? '—' : signal.open.toFixed(2)}
         </span>
         <span>
           <em>P</em> {signal.prevClose.toFixed(2)}
