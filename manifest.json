@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-09-11",
+  "exportedAt": "2026-09-17",
   "source": "Grok Bot agent-data (sanitized)",
   "omitted": [
     "store.db",
@@ -9,7 +9,8 @@
     "MCP secrets",
     "raw tokens",
     "channels/connection secrets",
-    "audit lines with secret patterns"
+    "audit lines with secret patterns",
+    ".env / bearer tokens / x-user-key values"
   ],
   "agents": [
     {
@@ -43,6 +44,12 @@
       "description": ""
     },
     {
+      "folder": "ofersGrokBot__ea5eed38-4dec-4587-a8c5-68c397b50b90",
+      "id": "ea5eed38-4dec-4587-a8c5-68c397b50b90",
+      "name": "ofersGrokBot",
+      "description": "Ofer’s eToro work Grok Bot. Primary focus: Microsoft Teams for eToro (search, read, draft, and send chats and channel messages on Ofer’s behalf when asked). Also helps with day-to-day eToro work coordination. Speak as Ofer when acting through his accounts. Never place trades or touch Classic/Momentum money — that stays with Trader_Classic / Trader_momentum / QA Bot."
+    },
+    {
       "folder": "QA_Bot__498c78db-a027-4f2c-8126-3c2be6f0a4bb",
       "id": "498c78db-a027-4f2c-8126-3c2be6f0a4bb",
       "name": "QA Bot",
@@ -58,7 +65,7 @@
       "folder": "Trader_momentum__a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3",
       "id": "a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3",
       "name": "Trader_momentum",
-      "description": ""
+      "description": "Manages REAL MONEY Momentum-HHHGDTJ (mirror 11630170, $8k basis). FULL AUTO: after QA PASS, buy/sell without waiting for Ofer in chat. Playbook 2026-09-15: 3 stocks + 1 sector ETF, split regime, full SPX EOD scan."
     },
     {
       "folder": "X__4fb6dd40-86cb-43b3-b5be-16ad1fbc00b3",
@@ -73,13 +80,53 @@
     "daily-trading-momentum-brief",
     "etoro-login-qa-gate",
     "momentum-real-money-qa-gate",
+    "momentum-screener-run-qa",
     "trader-classic-strategy",
+    "trader-momentum-strategy",
     "trading-self-improvement-loop",
     "x-market-watch-tiers"
   ],
   "app": {
-    "etoroview": true
+    "etoroview": true,
+    "distJson": [
+      "daily-brief.json",
+      "classic-portfolio.json",
+      "daily-brief.schema-v1.json",
+      "trading-qa.json"
+    ]
   },
   "dailyBrief": true,
-  "scrubHitCount": 13
+  "momentum": {
+    "count": 22,
+    "files": [
+      "momentum_screener.py",
+      "position_manager.py",
+      "nyse_session.py",
+      "sp500_symbols.json",
+      "momentum_qa/__init__.py",
+      "momentum_qa/eod_miss_check.py",
+      "momentum_qa/validate.py",
+      "momentum_qa/event_calendar.py",
+      "momentum_qa/audit.py",
+      "momentum_qa/test_validate.py",
+      "momentum_qa/feedback_daily.py",
+      "momentum_audit/2026-09-11.jsonl",
+      "momentum_audit/2026-09-14.jsonl",
+      "momentum_audit/2026-09-15.jsonl",
+      "momentum_audit/2026-09-16.jsonl",
+      "momentum_audit/diagnosis-2026-09-15.md",
+      "momentum_audit/near-miss-2026-09-15.json",
+      "momentum_audit/near-miss-2026-09-16.json",
+      "momentum_audit/playbook-2026-09-15.md",
+      "momentum_audit/playbook-2026-09-16-full-fix.md",
+      "momentum_audit/screener-run-screener-20260915-232911-cfe51102.json",
+      "momentum_audit/screener-run-screener-20260916-224313-cb8b4ee3.json"
+    ]
+  },
+  "scrubHitCount": 13,
+  "notes": [
+    "ofersGrokBot (serverId 3640370) included — Teams connector for eToro work (no secrets)",
+    "morning brief dual-write: workspace/daily-brief + etoroview/public",
+    "Momentum playbook 2026-09-16 full fix included under momentum/momentum_audit/"
+  ]
 }

@@ -15,3 +15,6 @@
 - (2026-09-11) Momentum-HHHGDTJ mandated copy/total basis is $8000 (Ofer 2026-09-11); report live equity separately; never invent Momentum dollars; CoS may treat Momentum figures as reliable only after QA Bot PASS.
 - (2026-09-11) QA Bot role (Ofer): verify information to 100% reliability before CoS accepts/reports numbers or allows Momentum places; CoS must not treat unverified MCP/agent figures as truth until QA PASS.
 - (2026-09-11) Momentum-HHHGDTJ reporting truth is parent copy mirror 11630170 (invested/copy size $8000); live equity/cash come from that mirror; keys MCP user-Momentum-HHHGDTJ (~$10k shape) is execution ledger B only — never report keys totals as the $8000 Momentum allocation.
+- (2026-09-12) The user's name is Ofer Sasson.
+- (2026-09-12) Trader_momentum agent id is a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3 (bound to Momentum-HHHGDTJ).
+- (2026-09-14) QA Bot id is 498c78db-a027-4f2c-8126-3c2be6f0a4bb.

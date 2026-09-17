@@ -1,0 +1,76 @@
+{
+  "slot": "afternoon_1530",
+  "date": "2026-09-16",
+  "asOfIL": "2026-09-16T15:58:16+03:00",
+  "request": "QA Bot review of afternoon_1530 Fear & Greed + momentum brief — evidence pack only (do NOT auto-PASS)",
+  "artifacts": {
+    "briefJson": "/workspace/daily-brief/afternoon-0916.json",
+    "briefTxt": "/workspace/daily-brief/afternoon-0916-brief.txt",
+    "latestJson": "/workspace/daily-brief/latest.json",
+    "classicLive": "/workspace/daily-brief/classic-live-0916-pm.json",
+    "momentumLive": "/workspace/daily-brief/momentum-live-0916-pm.json",
+    "appDailyBrief": "/workspace/etoroview/public/daily-brief.json",
+    "appDailyBriefDist": "/workspace/etoroview/dist/daily-brief.json",
+    "fgLive": "/workspace/fg-live-0916-pm.json",
+    "yahoo": "/workspace/daily-brief/yahoo-0916-pm.json"
+  },
+  "liveSources": {
+    "cnnFearGreed": {
+      "score": 28,
+      "rating": "fear",
+      "timestamp": "2026-09-16T12:35:46+00:00"
+    },
+    "classicMirrorA": {
+      "mirrorId": 11368142,
+      "path": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+      "ssoStamp": "2026-09-16T12:56:23.7960898Z",
+      "equity": 12777.12,
+      "cash": 4937.04,
+      "openPnl": -1816.33,
+      "closedPnl": -1870.67,
+      "names": [
+        "CVX.US",
+        "XLI",
+        "QQQ",
+        "XLV"
+      ],
+      "catAbsent": true
+    },
+    "classicKeysB_REJECTED": {
+      "rejected": true,
+      "note": "REJECT keys-B — not Classic A"
+    },
+    "momentumMirror": {
+      "mirrorId": 11630170,
+      "path": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+      "ssoStamp": "2026-09-16T12:56:23.7960898Z",
+      "equity": 7913.5,
+      "cash": 3957.8,
+      "openPnl": -76.86,
+      "closedPnl": -24.76,
+      "names": [
+        "XLE",
+        "XLK",
+        "CRWD",
+        "COP",
+        "EXPD",
+        "ETH"
+      ]
+    },
+    "momentumKeysMCP_REJECTED": {
+      "rejected": true,
+      "note": "REJECT keys MCP ~9.9k — not $8k mirror allocation"
+    }
+  },
+  "checksForQA": [
+    "Classic card dollars MUST match mirror A 11368142 (equity 12777.12 cash 4937.04) — NOT keys-B",
+    "Momentum card dollars MUST match mirror 11630170 (equity 7913.5 cash 3957.8) — NOT keys MCP",
+    "Classic names CVX/XLI/QQQ/XLV; CAT must be ABSENT",
+    "Momentum names XLE/XLK/CRWD/COP/EXPD + tiny ETH",
+    "F&G score 28 Fear with all 7 components present",
+    "No invented dollars; App dual-write to latest + public + dist",
+    "Do not fabricate QA PASS — verify live evidence paths",
+    "Brief user-facing text used ~15:53 mirror stamps; App JSON refreshed to SSO 12:56Z — small mark-to-market drift OK"
+  ],
+  "verdict": "PENDING_QA — submission pack only"
+}

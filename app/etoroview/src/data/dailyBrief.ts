@@ -368,17 +368,46 @@ export function parseDailyBriefPayload(raw: unknown): DailyBriefPayload {
   }
 }
 
+/** Parent Momentum mirror — keep separate from Classic (11368142). */
+export const MOMENTUM_MIRROR_ID = 11630170
+
+function mirrorIdEquals(mirrorId: number | string, expected: number): boolean {
+  return Number(mirrorId) === expected || String(mirrorId) === String(expected)
+}
+
+function looksLikeMomentum(p: DailyBriefPortfolio): boolean {
+  return (
+    p.key === 'Momentum' ||
+    mirrorIdEquals(p.mirrorId, MOMENTUM_MIRROR_ID) ||
+    /momentum/i.test(p.key) ||
+    /momentum/i.test(p.name)
+  )
+}
+
+function looksLikeClassic(p: DailyBriefPortfolio): boolean {
+  return (
+    p.key === 'Classic' ||
+    mirrorIdEquals(p.mirrorId, CLASSIC_MIRROR_ID) ||
+    (/classic/i.test(p.key) || /classic/i.test(p.name)) && !looksLikeMomentum(p)
+  )
+}
+
 export function findClassicPortfolio(
   payload: DailyBriefPayload,
 ): DailyBriefPortfolio | undefined {
-  return (
-    payload.portfolios.find(
-      (p) =>
-        p.key === 'Classic' ||
-        Number(p.mirrorId) === CLASSIC_MIRROR_ID ||
-        String(p.mirrorId) === String(CLASSIC_MIRROR_ID),
-    ) ?? payload.portfolios[0]
-  )
+  const found = payload.portfolios.find(looksLikeClassic)
+  if (found) return found
+  // Legacy single-portfolio payloads only — never fall back onto Momentum.
+  if (payload.portfolios.length === 1 && !looksLikeMomentum(payload.portfolios[0])) {
+    return payload.portfolios[0]
+  }
+  return undefined
+}
+
+export function findMomentumPortfolio(
+  payload: DailyBriefPayload,
+): DailyBriefPortfolio | undefined {
+  return payload.portfolios.find(looksLikeMomentum)
 }
 
 export async function fetchDailyBrief(

@@ -7,9 +7,8 @@ import type {
   FearGreedComponent,
   SignalCard,
 } from '../data/dailyBrief'
-import { findClassicPortfolio } from '../data/dailyBrief'
+import { findClassicPortfolio, findMomentumPortfolio } from '../data/dailyBrief'
 import type { ClassicLiveLoadState, ClassicLiveSnapshot } from '../data/classicLive'
-import { CLASSIC_MIRROR_ID } from '../data/classicLive'
 import { formatCurrency, formatPercent, formatSigned } from '../utils/format'
 
 interface DailyBriefProps {
@@ -203,15 +202,34 @@ function SignalTile({ signal }: { signal: SignalCard }) {
   )
 }
 
-function ClassicImpactCard({
+function portfolioImpactTitle(portfolio: DailyBriefPortfolio): string {
+  const key = portfolio.key.trim()
+  const name = portfolio.name.trim()
+  if (!name) return key || 'Portfolio'
+  if (!key) return name
+  if (name.toLowerCase().includes(key.toLowerCase())) return name
+  return `${key} ${name}`
+}
+
+function PortfolioImpactCard({
   portfolio,
-  classic,
+  kind,
+  classicLive,
 }: {
   portfolio: DailyBriefPortfolio | undefined
-  classic: ClassicLiveLoadState
+  kind: 'classic' | 'momentum'
+  /** Classic-only live dollars — never passed for Momentum (books stay separate). */
+  classicLive?: ClassicLiveLoadState
 }) {
+  const label =
+    portfolio != null
+      ? portfolioImpactTitle(portfolio)
+      : kind === 'classic'
+        ? 'Classic'
+        : 'Momentum'
   const rec = portfolio?.recommendation
   const cardPct = portfolio?.card
+  const mirrorId = portfolio?.mirrorId
 
   let dollars: {
     equity: number
@@ -221,8 +239,9 @@ function ClassicImpactCard({
     source: 'classic-live' | 'brief-card'
   } | null = null
 
-  if (classic.status === 'ready') {
-    const cp = classic.snapshot.clientPortfolio
+  // Classic may overlay /classic-portfolio.json dollars; Momentum uses brief card only.
+  if (kind === 'classic' && classicLive?.status === 'ready') {
+    const cp = classicLive.snapshot.clientPortfolio
     dollars = {
       equity: cp.equity,
       cash: cp.availableCash,
@@ -246,17 +265,33 @@ function ClassicImpactCard({
     }
   }
 
-  const classicMissing =
-    classic.status === 'pending' || classic.status === 'error' || classic.status === 'loading'
+  const classicLiveMissing =
+    kind === 'classic' &&
+    classicLive != null &&
+    (classicLive.status === 'pending' ||
+      classicLive.status === 'error' ||
+      classicLive.status === 'loading')
 
   return (
-    <div className="db-classic-card">
+    <div className={`db-classic-card db-impact-card db-impact-${kind}`}>
       <div className="db-classic-head">
-        <h3>Classic portfolio impact</h3>
-        <span className="db-mirror-badge">mirror {CLASSIC_MIRROR_ID}</span>
+        <div className="db-impact-titles">
+          <h3>{label}</h3>
+          {mirrorId != null ? (
+            <span className="db-impact-subtitle">mirror {mirrorId}</span>
+          ) : (
+            <span className="db-impact-subtitle">portfolio impact</span>
+          )}
+        </div>
       </div>
 
-      {dollars ? (
+      {!portfolio ? (
+        <div className="db-classic-error" role="status">
+          {kind === 'classic' ? 'Classic' : 'Momentum'} portfolio not present in daily brief.
+        </div>
+      ) : null}
+
+      {portfolio && dollars ? (
         <div className="db-classic-metrics">
           <div className="db-metric">
             <span className="db-metric-label">Equity</span>
@@ -279,17 +314,20 @@ function ClassicImpactCard({
             </span>
           </div>
         </div>
-      ) : (
+      ) : null}
+
+      {portfolio && !dollars ? (
         <div className="db-classic-error" role="alert">
-          Classic dollars unavailable
-          {classic.status === 'pending' || classic.status === 'error'
-            ? ` — ${classic.message}`
-            : classicMissing
+          {label} dollars unavailable
+          {kind === 'classic' &&
+          (classicLive?.status === 'pending' || classicLive?.status === 'error')
+            ? ` — ${classicLive.message}`
+            : classicLiveMissing
               ? ' — loading /classic-portfolio.json'
-              : ''}
+              : ' — card equity/cash/invested/openPnl missing'}
           . No invented amounts.
         </div>
-      )}
+      ) : null}
 
       {cardPct && (cardPct.cashPct != null || cardPct.deploymentPct != null) ? (
         <div className="db-classic-pcts">
@@ -305,45 +343,53 @@ function ClassicImpactCard({
         </div>
       ) : null}
 
-      <div className="db-rec-grid">
-        <div className="db-rec-col">
-          <span className="db-rec-label buy">Buy</span>
-          <div className="db-rec-tags">
-            {(rec?.buy?.length ? rec.buy : ['—']).map((t) => (
-              <span className="db-rec-tag" key={`b-${t}`}>
-                {t}
-              </span>
-            ))}
+      {portfolio ? (
+        <>
+          <div className="db-rec-grid">
+            <div className="db-rec-col">
+              <span className="db-rec-label buy">Buy</span>
+              <div className="db-rec-tags">
+                {(rec?.buy?.length ? rec.buy : ['—']).map((t) => (
+                  <span className="db-rec-tag" key={`${kind}-b-${t}`}>
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="db-rec-col">
+              <span className="db-rec-label sell">Sell</span>
+              <div className="db-rec-tags">
+                {(rec?.sell?.length ? rec.sell : ['—']).map((t) => (
+                  <span className="db-rec-tag" key={`${kind}-s-${t}`}>
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="db-rec-col db-rec-hold">
+              <span className="db-rec-label hold">Hold</span>
+              <div className="db-rec-tags">
+                {(rec?.hold?.length ? rec.hold : ['—']).map((t) => (
+                  <span className="db-rec-tag" key={`${kind}-h-${t}`}>
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="db-rec-col">
-          <span className="db-rec-label sell">Sell</span>
-          <div className="db-rec-tags">
-            {(rec?.sell?.length ? rec.sell : ['—']).map((t) => (
-              <span className="db-rec-tag" key={`s-${t}`}>
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="db-rec-col db-rec-hold">
-          <span className="db-rec-label hold">Hold</span>
-          <div className="db-rec-tags">
-            {(rec?.hold?.length ? rec.hold : ['—']).map((t) => (
-              <span className="db-rec-tag" key={`h-${t}`}>
-                {t}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-      {rec?.diversificationNote ? (
-        <p className="db-rec-note">{rec.diversificationNote}</p>
+          {rec?.diversificationNote ? (
+            <p className="db-rec-note">{rec.diversificationNote}</p>
+          ) : null}
+        </>
       ) : null}
-      {dollars?.source === 'classic-live' && classic.status === 'ready' ? (
+
+      {dollars?.source === 'classic-live' && classicLive?.status === 'ready' ? (
         <p className="db-classic-source">
-          Dollars from live Classic · {(classic.snapshot as ClassicLiveSnapshot).account.username}
+          Dollars from live Classic ·{' '}
+          {(classicLive.snapshot as ClassicLiveSnapshot).account.username}
         </p>
+      ) : dollars?.source === 'brief-card' ? (
+        <p className="db-classic-source">Dollars from daily-brief.json card</p>
       ) : null}
     </div>
   )
@@ -358,6 +404,7 @@ function LiveBriefBody({
 }) {
   const fg = payload.fearAndGreed
   const classicPf = findClassicPortfolio(payload)
+  const momentumPf = findMomentumPortfolio(payload)
   const badge = slotBadgeLabel(payload)
   const nextSession =
     payload.weekendMode || payload.slot === 'weekend_adhoc' || /next/i.test(badge)
@@ -414,7 +461,14 @@ function LiveBriefBody({
         </div>
       </div>
 
-      <ClassicImpactCard portfolio={classicPf} classic={classic} />
+      <div className="db-portfolio-impacts" aria-label="Portfolio impact cards">
+        <PortfolioImpactCard
+          kind="classic"
+          portfolio={classicPf}
+          classicLive={classic}
+        />
+        <PortfolioImpactCard kind="momentum" portfolio={momentumPf} />
+      </div>
 
       {payload.expectedDailyImpact && payload.expectedDailyImpact.length > 0 ? (
         <ul className="db-impact-list">

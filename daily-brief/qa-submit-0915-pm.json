@@ -1,0 +1,89 @@
+{
+  "slot": "afternoon_1530",
+  "date": "2026-09-15",
+  "asOfIL": "2026-09-15T15:48:38+03:00",
+  "request": "QA Bot review of afternoon_1530 Fear & Greed + dual-portfolio brief — evidence pack only (do NOT auto-PASS)",
+  "artifacts": {
+    "briefJson": "/workspace/daily-brief/afternoon-0915.json",
+    "briefTxt": "/workspace/daily-brief/afternoon-0915-brief.txt",
+    "latestJson": "/workspace/daily-brief/latest.json",
+    "fgRaw": "/workspace/daily-brief/fg-raw-0915-pm.json",
+    "classicLive": "/workspace/daily-brief/afternoon-0915.json",
+    "momentumLive": "/workspace/daily-brief/afternoon-0915.json",
+    "yahoo": "/workspace/daily-brief/yahoo-0915-pm.json",
+    "classicSnapshot": "/workspace/daily-brief/classic-snapshot-0915-pm.json",
+    "appDailyBrief": "/workspace/etoroview/public/daily-brief.json",
+    "appClassicPortfolio": "/workspace/etoroview/public/classic-portfolio.json"
+  },
+  "liveSources": {
+    "cnnFearGreed": {
+      "score": 30,
+      "rating": "fear",
+      "timestamp": "2026-09-15T12:25:31+00:00",
+      "fetch": "CNN graphdata Tue afternoon refresh (fg-raw-0915-pm.json)"
+    },
+    "classicMirrorA": {
+      "mirrorId": 11368142,
+      "path": "user-etoro parent SSO copiedTraders",
+      "ssoStamp": "2026-09-15T12:46:21.0567891Z",
+      "positionsStamp": "2026-09-15T12:46:33.445047Z",
+      "equity": 12768.0,
+      "cash": 4937.04,
+      "openPnl": -1825.45,
+      "closedPnl": -1870.67,
+      "names": [
+        "CVX.US",
+        "XLI",
+        "QQQ",
+        "XLV"
+      ],
+      "catAbsent": true
+    },
+    "classicKeysB_REJECTED": {
+      "rejected": true,
+      "totalValue": 7181.91,
+      "note": "REJECT keys-B — not Classic A"
+    },
+    "momentumMirror": {
+      "mirrorId": 11630170,
+      "path": "user-etoro parent SSO copiedTraders",
+      "ssoStamp": "2026-09-15T12:46:21.0567891Z",
+      "equity": 7947.6,
+      "cash": 6361.34,
+      "invested": 8000.0,
+      "openPnl": -46.36,
+      "closedPnl": -24.76,
+      "names": [
+        "XLE",
+        "XLK",
+        "ETH"
+      ]
+    },
+    "momentumKeysMCP_REJECTED": {
+      "rejected": true,
+      "totalValue": 9934.58,
+      "note": "REJECT keys MCP ~9934.58 — disagree with parent mirror 11630170 agent-book truth for reporting"
+    },
+    "x": {
+      "trumpLatestId": "2098610807877595502",
+      "trumpNote": "media-only since Sat; freshness ~81.6h (Tue afternoon IL)"
+    },
+    "etoroQuotes": "eToro quotes batch + Yahoo Mon opens (Tue open TBA)"
+  },
+  "checksForQA": [
+    "Classic card dollars MUST match mirror A 11368142 (equity 12768 cash 4937.04 openPnl -1825.45) — NOT keys-B 7181.91",
+    "Momentum card dollars MUST match mirror 11630170 (equity 7947.60 cash 6361.34 invested 8000) — NOT keys MCP 9934.58",
+    "Classic names CVX/XLI/QQQ/XLV; CAT must be ABSENT",
+    "F&G score 30 Fear with all 7 components present",
+    "portfolios[] MUST include BOTH Classic and Momentum recommendation cards",
+    "Commodities oil/gold/silver stance wait; crypto dont_chase",
+    "No invented dollars; App dual-write injected (daily-brief + classic-portfolio)",
+    "Do not fabricate QA PASS — verify live evidence paths"
+  ],
+  "inject": {
+    "dailyBrief": "node scripts/inject-daily-brief.mjs /workspace/daily-brief/afternoon-0915.json",
+    "classicSnapshot": "node scripts/inject-classic-snapshot.mjs /workspace/daily-brief/classic-snapshot-0915-pm.json",
+    "momentumInjectPath": "none dedicated — portfolios[] in daily-brief.json covers Momentum"
+  },
+  "verdict": "PENDING_QA — submission pack only"
+}

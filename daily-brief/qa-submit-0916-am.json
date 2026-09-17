@@ -1,0 +1,72 @@
+{
+  "slot": "morning_0530",
+  "date": "2026-09-16",
+  "asOfIL": "2026-09-16T05:44:34.033159+03:00",
+  "request": "QA Bot review of morning_0530 Fear & Greed + momentum brief — evidence pack only (do NOT auto-PASS)",
+  "artifacts": {
+    "briefJson": "/workspace/daily-brief/morning-0916.json",
+    "briefTxt": "/workspace/daily-brief/morning-0916-brief.txt",
+    "latestJson": "/workspace/daily-brief/latest.json",
+    "classicLive": "/workspace/daily-brief/classic-live-0916-am.json",
+    "momentumLive": "/workspace/daily-brief/momentum-live-0916-am.json",
+    "classicSnapshot": "/workspace/daily-brief/classic-snapshot-0916.json",
+    "appDailyBrief": "/workspace/etoroview/public/daily-brief.json",
+    "appDailyBriefDist": "/workspace/etoroview/dist/daily-brief.json"
+  },
+  "liveSources": {
+    "cnnFearGreed": {
+      "score": 29,
+      "rating": "fear",
+      "timestamp": "2026-09-15T23:59:00+00:00"
+    },
+    "classicMirrorA": {
+      "mirrorId": 11368142,
+      "path": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+      "ssoStamp": "2026-09-16T02:43:19.1883363+00:00",
+      "equity": 12779.84,
+      "cash": 4937.04,
+      "openPnl": -1813.61,
+      "closedPnl": -1870.67,
+      "names": [
+        "CVX.US",
+        "XLI",
+        "QQQ",
+        "XLV"
+      ],
+      "catAbsent": true
+    },
+    "classicKeysB_REJECTED": {
+      "rejected": true,
+      "note": "REJECT keys-B — not Classic A"
+    },
+    "momentumMirror": {
+      "mirrorId": 11630170,
+      "path": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+      "ssoStamp": "2026-09-16T02:43:19.1883363+00:00",
+      "equity": 7926.42,
+      "cash": 3957.8,
+      "names": [
+        "XLE",
+        "XLK",
+        "CRWD",
+        "COP",
+        "EXPD",
+        "ETH"
+      ]
+    },
+    "momentumKeysMCP_REJECTED": {
+      "rejected": true,
+      "note": "REJECT keys MCP ~9.9k — not $8k mirror allocation"
+    }
+  },
+  "checksForQA": [
+    "Classic card dollars MUST match mirror A 11368142 (equity 12779.84 cash 4937.04) — NOT keys-B",
+    "Momentum card dollars MUST match mirror 11630170 (equity 7926.42 cash 3957.8) — NOT keys MCP",
+    "Classic names CVX/XLI/QQQ/XLV; CAT must be ABSENT",
+    "Momentum names include overnight CRWD/COP/EXPD adds + XLE/XLK + tiny ETH",
+    "F&G score 29 Fear with all 7 components present",
+    "No invented dollars; App dual-write to latest + public + dist",
+    "Do not fabricate QA PASS — verify live evidence paths"
+  ],
+  "verdict": "PENDING_QA — submission pack only"
+}

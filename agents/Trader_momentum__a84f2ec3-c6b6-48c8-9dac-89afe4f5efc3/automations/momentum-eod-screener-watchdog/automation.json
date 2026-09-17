@@ -1,0 +1,16 @@
+{
+  "name": "Momentum EOD screener watchdog",
+  "prompt": "You are Trader_momentum. Watchdog against EOD_SCREENER_MISSED (incident 2026-09-11).\n\nIntent:\n1) If NYSE closed today, stay quiet.\n2) Soft nudge: run `python -c \"from momentum_qa.eod_miss_check import soft_nudge_after_pm; import json; print(json.dumps(soft_nudge_after_pm()))\"`. If nudge=true (PM ended, no screener START within ~2m), start screener immediately without waiting for hard 22:50 miss.\n3) Hard: run `python -m momentum_qa.eod_miss_check`. If miss=false, stay quiet (unless soft already handled).\n4) If miss=true: log EOD_SCREENER_MISSED, message QA Bot + CoS, run screener with QA (DWM is hard gate — SKIP not BUY for week/month red), FULL AUTO place only qa.PASS BUYs. Never Classic.\n5) Tell Ofer only on miss/catch-up.",
+  "schedule": "50 22 * * 1-5",
+  "triggerPresentation": {
+    "version": 1,
+    "trigger": {
+      "type": "cron",
+      "schedule": "50 22 * * 1-5"
+    }
+  },
+  "enabled": true,
+  "provenance": "untrusted",
+  "createdAt": 1789156430865,
+  "lastRunAt": 1789416748002
+}

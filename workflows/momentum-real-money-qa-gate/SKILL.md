@@ -6,58 +6,48 @@ description: >-
 ---
 # Momentum real-money QA gate
 
-Independent validation for **Trader_momentum** on portfolio **Momentum-HHHGDTJ** (REAL MONEY). QA Bot co-owns the gate; the trader must not self-grade as PASS without evidence.
+Independent validation for Momentum-HHHGDTJ (REAL MONEY). QA Bot co-owns the gate; the trader must not self-grade as PASS without evidence.
+
+**Also run** [Momentum screener run QA](sand-workflow:momentum-screener-run-qa) on every screener execution (full S&P ≥400, TRACE, FAIL→rerun).
+
+Playbook **2026-09-16 full fix**: breakout sleeve primary, VCP secondary, event-vol freeze, soft-regime harden, TRAIL_SL @ 1R. See `/workspace/momentum_audit/playbook-2026-09-16-full-fix.md`.
 
 ## When to run
 
-- Before every EOD BUY from `momentum_screener.py`
-- Before every CLOSE / MOVE_SL_BREAKEVEN from `position_manager.py`
-- After every fill (post-audit)
-- Daily feedback at ~23:05 Israel (`momentum_qa.feedback_daily`)
+- Before every EOD BUY (after screener-run QA PASS)
+- Before every CLOSE / MOVE_SL_BREAKEVEN / **TRAIL_SL**
+- After every fill
+- Daily feedback ~23:05 IL; miss checks ~22:50 IL
 
-## Code gate (must run)
+## Pack / sleeve FAIL if
 
-```bash
-/workspace/screener-venv/bin/python /workspace/momentum_screener.py
-/workspace/screener-venv/bin/python /workspace/position_manager.py --positions-json '...'
-/workspace/screener-venv/bin/python -m momentum_qa.feedback_daily
-```
+- stock_buys > 3 or etf_buys > 1 or buy_count > 4
+- more than **2** `MOMENTUM_BREAKOUT` buys
+- `MOMENTUM_BREAKOUT` with RVOL < 2.0 (soft regime: < 2.5)
+- Soft-regime VCP / quiet volume BUY (`REGIME_SOFT_VCP_BLOCK` required instead)
+- Any BUY on `EVENT_VOL_FREEZE` or HARD_HALT day
+- ETF BUY in SOFT regime
+- DWM week/month red on BUY
+- leverage ≠ 1, amount > $1000, demo, short, bad mcp/stop shape
 
-Audit JSONL: `/workspace/momentum_audit/YYYY-MM-DD.jsonl`  
-Lessons: `/workspace/trading-lessons/momentum/YYYY-MM-DD/`
+## Regime
 
-Every ACTION in the audit must include a non-empty **rationale**. Every strategy breach is a **DEVIATION** with `deviation_code`.
+- EVENT_VOL_FREEZE (today or next NYSE session FOMC/CPI/NFP): 0 BUY; SKIP/HALT OK; scan+near-miss required
+- HARD_HALT (VIX≥25 or SPX<0.98×SMA50): 0 BUY; scan+near-miss required
+- SOFT: STOCK only MOMENTUM_BREAKOUT + RVOL≥2.5 + RS≥90 + DWM
+- HEALTHY: breakout + VCP under pack rules
 
-## Hard FAIL (any one)
+## Exits
 
-- Portfolio ≠ Momentum-HHHGDTJ / touching Classic
-- leverage ≠ 1; short / sell-to-open; demo account
-- Missing rationale on BUY / CLOSE / BE
-- mcp_order_params missing account/direction/orderType/stopLossType or using isBuy/isTakeProfitEnabled
-- stopLossRate looks like percent (not absolute price)
-- STOCK VOLUME_BREAKOUT with RVOL &lt; 1.5
-- ETF/commodity outside allowlists
-- amount &gt; $1000 allocation cap / more than 3 buys
-- Place during Israel 16:30–18:30 intraday ban
-- Place on NYSE holiday
-- BUY while regime HALT (SPX &lt; SMA50 or VIX ≥ 25)
-- CLOSE without BELOW_SMA50 evidence; BE without HIT_2R (R≥2)
+- CLOSE below SMA50
+- MOVE_SL_BREAKEVEN at ≥2R
+- TRAIL_SL at ≥1R (new stop ≥ prior; cites 1R; 10d-low floor)
+- Priority: CLOSE > BE > TRAIL > HOLD
 
-## PASS
+## FULL AUTO
 
-Only long ×1 real Momentum actions with rationale + evidence that clear every hard fail. FULL AUTO still requires PASS before place.
-
-## Daily feedback loop
-
-1. Read today's audit JSONL
-2. Split KEEP (aligned + QA PASS) vs AVOID (deviations / QA FAIL) — each with clear rationale
-3. Write `daily_feedback.json` + `.md` under trading-lessons/momentum
-4. Message QA Bot with FAIL counts / top deviation codes; tell Ofer only if material deviations or fills
+After PASS, Trader_momentum places without user/CoS chat confirmation. QA never places. Tell user on FAIL and on fills.
 
 ## Verdict routing
 
-1. FAIL / PASS with reasons → Trader_momentum (this agent)
-2. Copy material FAIL to QA Bot `498c78db-a027-4f2c-8126-3c2be6f0a4bb`
-3. Tell Ofer on FAIL, and on PASS when a fill occurred
-
-Compose with [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) for scoring after the day.
+FAIL/PASS → Momentum trader; material FAIL → CoS; fills → user after the fact.
