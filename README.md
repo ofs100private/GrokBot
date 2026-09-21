@@ -7,6 +7,8 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - Shared workflows/skills under `workflows/`
 - Shared user-memory text shards
 - Momentum screener / position manager / QA / audit playbooks under `momentum/`
+- Classic RSI 1H package under `classic_rsi/` (liquid+rising-volume universe, audit)
+- Breakout TA package under `breakout_ta/` when present
 - App (eToroView) + daily_brief dual-write snapshots
 
 ## Omitted (on purpose)

@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-09-17",
+  "exportedAt": "2026-09-21",
   "source": "Grok Bot agent-data (sanitized)",
   "omitted": [
     "store.db",
@@ -23,13 +23,13 @@
       "folder": "Chief_of_Staff__b66054dc-f163-418d-a43c-59faef4ea103",
       "id": "b66054dc-f163-418d-a43c-59faef4ea103",
       "name": "Chief of Staff",
-      "description": "Manages your other Bots and pulls you in for decisions The user works with Microsoft 365, LinkedIn, GitHub every day — start with those tools when suggesting connectors or taking on work."
+      "description": "Manages your other Bots and pulls you in for decisions The user works with Microsoft 365, LinkedIn, GitHub every day \u2014 start with those tools when suggesting connectors or taking on work."
     },
     {
       "folder": "daily_brief__415a6f9a-2638-4735-b33b-6a6b14ba09ac",
       "id": "415a6f9a-2638-4735-b33b-6a6b14ba09ac",
       "name": "daily_brief",
-      "description": "Runs Ofer's daily trading momentum brief (Fear & Greed + commodities + X + portfolio recommendations). Portfolio scope is a dynamic parameter: one or more agent portfolios (e.g. Classic OfersClaw5-PRIYN, Momentum-HHHGDTJ, or any subset). Live data only — no hardcoded portfolio numbers. Coordinate with Trader_Classic / Trader_momentum / eToro Account for ledger reads and X for tape. Deliver the full brief to the user; stop only after the Source line. Weekend = recs for next US session, no new opens. Never print secrets."
+      "description": "Runs Ofer's daily trading momentum brief (Fear & Greed + commodities + X + portfolio recommendations). Portfolio scope is a dynamic parameter: one or more agent portfolios (e.g. Classic OfersClaw5-PRIYN, Momentum-HHHGDTJ, or any subset). Live data only \u2014 no hardcoded portfolio numbers. Coordinate with Trader_Classic / Trader_momentum / eToro Account for ledger reads and X for tape. Deliver the full brief to the user; stop only after the Source line. Weekend = recs for next US session, no new opens. Never print secrets."
     },
     {
       "folder": "eToro_Account__7b604913-c0fd-49bc-897a-c9ce38589c63",
@@ -47,7 +47,7 @@
       "folder": "ofersGrokBot__ea5eed38-4dec-4587-a8c5-68c397b50b90",
       "id": "ea5eed38-4dec-4587-a8c5-68c397b50b90",
       "name": "ofersGrokBot",
-      "description": "Ofer’s eToro work Grok Bot. Primary focus: Microsoft Teams for eToro (search, read, draft, and send chats and channel messages on Ofer’s behalf when asked). Also helps with day-to-day eToro work coordination. Speak as Ofer when acting through his accounts. Never place trades or touch Classic/Momentum money — that stays with Trader_Classic / Trader_momentum / QA Bot."
+      "description": "Ofer\u2019s eToro work Grok Bot. Primary focus: Microsoft Teams for eToro (search, read, draft, and send chats and channel messages on Ofer\u2019s behalf when asked). Also helps with day-to-day eToro work coordination. Speak as Ofer when acting through his accounts. Never place trades or touch Classic/Momentum money \u2014 that stays with Trader_Classic / Trader_momentum / QA Bot."
     },
     {
       "folder": "QA_Bot__498c78db-a027-4f2c-8126-3c2be6f0a4bb",
@@ -59,7 +59,7 @@
       "folder": "Trader_Classic__17bca140-8156-4306-944e-27264c7e1524",
       "id": "17bca140-8156-4306-944e-27264c7e1524",
       "name": "Trader_Classic",
-      "description": "Manages Ofer's eToro agent portfolio OfersClaw5-PRIYN (id 90db6cc2-57e3-48e0-9a12-3cbe82ac49ed). REAL MONEY only (~$15k invested) — never demo/virtual. Use eToro Account for live account access. Report real P&L. Standing order: buy/sell yourself under ×1 long-only, no crypto, keep cash buffer; QA Bot PASS before every order. Never print secrets."
+      "description": "Manages Ofer's eToro agent portfolio OfersClaw5-PRIYN (id 90db6cc2-57e3-48e0-9a12-3cbe82ac49ed). REAL MONEY only (~$15k invested) \u2014 never demo/virtual. Use eToro Account for live account access. Report real P&L. Standing order: buy/sell yourself under \u00d71 long-only, no crypto, keep cash buffer; QA Bot PASS before every order. Never print secrets."
     },
     {
       "folder": "Trader_momentum__a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3",
@@ -75,12 +75,18 @@
     }
   ],
   "workflows": [
+    "breakout-ta-tab-data-qa-gate",
+    "breakout-technical-analysis",
+    "classic-bot-tab-data-qa-gate",
     "classic-portfolio-data-qa-gate",
     "classic-real-money-order-qa-gate",
+    "classic-rsi-1h-run-qa",
+    "classic-rsi-four-level-1h",
     "daily-trading-momentum-brief",
     "etoro-login-qa-gate",
     "momentum-real-money-qa-gate",
     "momentum-screener-run-qa",
+    "rsi-four-level-entries",
     "trader-classic-strategy",
     "trader-momentum-strategy",
     "trading-self-improvement-loop",
@@ -125,7 +131,7 @@
   },
   "scrubHitCount": 13,
   "notes": [
-    "ofersGrokBot (serverId 3640370) included — Teams connector for eToro work (no secrets)",
+    "ofersGrokBot (serverId 3640370) included \u2014 Teams connector for eToro work (no secrets)",
     "morning brief dual-write: workspace/daily-brief + etoroview/public",
     "Momentum playbook 2026-09-16 full fix included under momentum/momentum_audit/"
   ]
