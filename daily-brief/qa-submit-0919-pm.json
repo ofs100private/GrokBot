@@ -1,0 +1,119 @@
+{
+  "gate": "classic-portfolio-data-qa-gate + momentum mirror A",
+  "slot": "afternoon_1530",
+  "asOfIDT": "2026-09-19 15:36 IDT",
+  "request": "QA PASS vs live parent SSO user-etoro (mirrors 11368142 + 11630170). Do NOT accept keys-B totals as Classic or as Momentum $8k allocation. Weekend: No Buy Today / no new opens. Material: Classic CVX ABSENT on mirror A (keys-B may still list CVX \u2014 reject).",
+  "liveSource": "user-etoro get-my-portfolio-summary xRequestId=f3832240-dd45-40eb-9a91-a19437e9c6a6 timestamp=2026-09-19T12:36:12.5155369Z + get-my-positions-and-orders xRequestId=31f37a24-a86c-4d62-a76e-1d501f13e55a timestamp=2026-09-19T12:34:42.0673917Z",
+  "classic": {
+    "mirrorId": 11368142,
+    "figures": {
+      "equity": 12733.77,
+      "cash": 7438.61,
+      "invested": 15000.0,
+      "openPnl": -1847.93,
+      "closedPnl": -2019.54,
+      "cashPct": 58.4,
+      "deploymentPct": 41.6,
+      "symbols": [
+        "SMH",
+        "QQQ",
+        "XLV"
+      ]
+    },
+    "checks": {
+      "equity": {
+        "expected": 12733.77,
+        "live": 12733.77,
+        "pass": true
+      },
+      "cash": {
+        "expected": 7438.61,
+        "live": 7438.61,
+        "pass": true
+      },
+      "invested": {
+        "expected": 15000.0,
+        "live": 15000.0,
+        "pass": true
+      },
+      "openPnl": {
+        "expected": -1847.93,
+        "live": -1847.93,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -2019.54,
+        "live": -2019.54,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "SMH",
+          "QQQ",
+          "XLV"
+        ],
+        "live": [
+          "SMH",
+          "QQQ",
+          "XLV"
+        ],
+        "note": "CVX ABSENT on mirror A; CAT ABSENT; XLI ABSENT (rotated Fri); ledger A only"
+      },
+      "rejected_keysB": true,
+      "keysB_note": "user-OfersClaw5 keys totalValue~$7168 and CVX position NOT used as Classic A"
+    },
+    "verdict": "PASS"
+  },
+  "momentum": {
+    "mirrorId": 11630170,
+    "basis": 8000,
+    "figures": {
+      "equity": 7825.29,
+      "cash": 651.27,
+      "invested": 8000.0,
+      "openPnl": -153.22,
+      "closedPnl": -127.69,
+      "cashPct": 8.3,
+      "deploymentPct": 91.7,
+      "symbols": [
+        "PSX",
+        "XLK",
+        "DE",
+        "PFG",
+        "VTRS",
+        "XLE",
+        "TGT",
+        "CRWD",
+        "EXPD"
+      ]
+    },
+    "checks": {
+      "equity": {
+        "expected": 7825.29,
+        "live": 7825.29,
+        "pass": true
+      },
+      "cash": {
+        "expected": 651.27,
+        "live": 651.27,
+        "pass": true
+      },
+      "invested_basis": {
+        "expected": 8000.0,
+        "live": 8000.0,
+        "pass": true
+      },
+      "positions_count": {
+        "expected": 9,
+        "live": 9,
+        "pass": true
+      },
+      "no_ETH_on_mirror": true,
+      "rejected_keysB_totals": true,
+      "keysB_note": "user-Momentum-HHHGDTJ keys totalValue~$9783 is execution ledger B only \u2014 not $8k allocation"
+    },
+    "verdict": "PASS"
+  },
+  "overall": "PASS",
+  "reason": "App JSON Classic+Momentum totals and symbols match live parent mirror A 11368142/11630170; keys-B totals rejected."
+}

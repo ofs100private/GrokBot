@@ -40,8 +40,9 @@ Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. 
 3. Rel performance vs SPX/QQQ; beat SPX after costs
 4. X Tier-1 (small cost; X MCP guide first)
 5. Event calendar (~48h CPI/FOMC/NFP)
-6. getCost / prepare — fees + tax haircut
-7. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
+6. Optional timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close; **does not** bypass Fear/cash/weekend
+7. getCost / prepare — fees + tax haircut
+8. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
 
 ## After every fill / skip / QA FAIL
 
@@ -53,4 +54,4 @@ Unchanged intent: hold cash if unsure; event-vol freeze; risk-off lean healthcar
 
 ## Do not
 
-Report B as Classic; crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set.
+Report B as Classic; crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts.

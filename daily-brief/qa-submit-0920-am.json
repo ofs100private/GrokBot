@@ -1,0 +1,155 @@
+{
+  "gate": "classic-portfolio-data-qa-gate + momentum mirror A",
+  "slot": "morning_0530",
+  "asOfIDT": "2026-09-20 05:42 IDT",
+  "request": "QA PASS vs live parent SSO user-etoro (mirrors 11368142 + 11630170). Do NOT accept keys-B totals as Classic or as Momentum $8k allocation. Weekend: No Buy Today / no new opens. Material: Classic CVX ABSENT on mirror A (keys-B may still list CVX \u2014 reject).",
+  "liveSource": "user-etoro get-my-portfolio-summary xRequestId=0e610343-c03b-46c7-a738-1fbdc6f6cf1c timestamp=2026-09-20T02:39:12.7303891Z + get-my-positions-and-orders xRequestId=8c06cd70-be84-403f-9a73-dbb094862132 timestamp=2026-09-20T02:39:13.1767653Z",
+  "classic": {
+    "mirrorId": 11368142,
+    "figures": {
+      "equity": 12733.77,
+      "cash": 7438.61,
+      "invested": 15000.0,
+      "openPnl": -1847.93,
+      "closedPnl": -2019.54,
+      "cashPct": 58.4,
+      "deploymentPct": 41.6,
+      "symbols": [
+        "SMH",
+        "QQQ",
+        "XLV"
+      ]
+    },
+    "checks": {
+      "equity": {
+        "expected": 12733.77,
+        "live": 12733.77,
+        "pass": true
+      },
+      "cash": {
+        "expected": 7438.61,
+        "live": 7438.61,
+        "pass": true
+      },
+      "invested": {
+        "expected": 15000.0,
+        "live": 15000.0,
+        "pass": true
+      },
+      "openPnl": {
+        "expected": -1847.93,
+        "live": -1847.93,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -2019.54,
+        "live": -2019.54,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "SMH",
+          "QQQ",
+          "XLV"
+        ],
+        "live": [
+          "SMH",
+          "QQQ",
+          "XLV"
+        ],
+        "note": "CVX ABSENT on mirror A; CAT ABSENT; XLI ABSENT (rotated Fri); ledger A only"
+      },
+      "rejected_keysB": true,
+      "keysB_note": "user-OfersClaw5 keys totalValue~$7168 and CVX position NOT used as Classic A"
+    },
+    "verdict": "PASS_PENDING_QA_BOT"
+  },
+  "momentum": {
+    "mirrorId": 11630170,
+    "basis": 8000,
+    "figures": {
+      "equity": 7825.29,
+      "cash": 651.27,
+      "invested": 8000.0,
+      "openPnl": -153.22,
+      "closedPnl": -127.69,
+      "cashPct": 8.3,
+      "deploymentPct": 91.7,
+      "symbols": [
+        "PSX",
+        "XLK",
+        "DE",
+        "PFG",
+        "VTRS",
+        "XLE",
+        "TGT",
+        "CRWD",
+        "EXPD"
+      ]
+    },
+    "checks": {
+      "equity": {
+        "expected": 7825.29,
+        "live": 7825.29,
+        "pass": true
+      },
+      "cash": {
+        "expected": 651.27,
+        "live": 651.27,
+        "pass": true
+      },
+      "invested": {
+        "expected": 8000.0,
+        "live": 8000.0,
+        "pass": true
+      },
+      "openPnl": {
+        "expected": -153.22,
+        "live": -153.22,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -127.69,
+        "live": -127.69,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "PSX",
+          "XLK",
+          "DE",
+          "PFG",
+          "VTRS",
+          "XLE",
+          "TGT",
+          "CRWD",
+          "EXPD"
+        ],
+        "live": [
+          "PSX",
+          "XLK",
+          "DE",
+          "PFG",
+          "VTRS",
+          "XLE",
+          "TGT",
+          "CRWD",
+          "EXPD"
+        ],
+        "note": "no ETH on mirror A; keys-B may show tiny ETH \u2014 ignore for $8k card"
+      },
+      "rejected_keysB": true,
+      "keysB_note": "user-Momentum-HHHGDTJ keys totalValue~$9783 NOT reported as $8k allocation"
+    },
+    "verdict": "PASS_PENDING_QA_BOT"
+  },
+  "weekend": {
+    "noNewOpens": true,
+    "nextSession": "Monday US cash open"
+  },
+  "fg": {
+    "score": 29,
+    "rating": "Fear",
+    "stamp": "2026-09-18"
+  }
+}

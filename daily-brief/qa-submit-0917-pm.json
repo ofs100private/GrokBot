@@ -1,0 +1,94 @@
+{
+  "gate": "classic-portfolio-data-qa-gate + momentum mirror A",
+  "slot": "afternoon_1530",
+  "asOfIDT": "2026-09-17 17:16 IDT",
+  "liveSource": "user-etoro get-my-portfolio-summary xRequestId=725c8c07-c6c8-49a0-a496-b0de4190adff timestamp=2026-09-17T14:16:16.3824609Z",
+  "classic": {
+    "mirrorId": 11368142,
+    "checks": {
+      "cash": {
+        "expected": 4937.04,
+        "live": 4937.04,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -1870.67,
+        "live": -1870.67,
+        "pass": true
+      },
+      "invested": {
+        "expected": 15000.0,
+        "live": 15000.0,
+        "pass": true
+      },
+      "equity_app_refreshed": {
+        "app": 12749.39,
+        "live": 12749.39,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "CVX",
+          "XLI",
+          "QQQ",
+          "XLV"
+        ],
+        "note": "cash unchanged \u2192 no fill since brief; symbols from mirror positions read"
+      },
+      "rejected_keysB": true
+    },
+    "verdict": "PASS"
+  },
+  "momentum": {
+    "mirrorId": 11630170,
+    "basis": 8000,
+    "checks": {
+      "cash": {
+        "expected": 3109.79,
+        "live": 3109.79,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -77.25,
+        "live": -77.25,
+        "pass": true
+      },
+      "invested": {
+        "expected": 8000.0,
+        "live": 8000.0,
+        "pass": true
+      },
+      "equity_app_refreshed": {
+        "app": 7895.03,
+        "live": 7895.03,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "CRWD",
+          "VTRS",
+          "PSX",
+          "XLK",
+          "XLE",
+          "EXPD"
+        ],
+        "note": "mirror A; no ETH"
+      },
+      "rejected_keysB_totals": true
+    },
+    "verdict": "PASS"
+  },
+  "overall": "PASS",
+  "note": "Brief markdown keeps ~17:11 IDT snapshot dollars; App JSON dual-write refreshed to 17:16 IDT live equity/open PnL. Cash/closed exact match.",
+  "files": [
+    "/workspace/etoroview/public/classic-portfolio.json",
+    "/workspace/etoroview/dist/classic-portfolio.json",
+    "/workspace/GrokBot/app/etoroview/public/classic-portfolio.json",
+    "/workspace/etoroview/public/momentum-portfolio.json",
+    "/workspace/etoroview/dist/momentum-portfolio.json",
+    "/workspace/GrokBot/app/etoroview/public/momentum-portfolio.json",
+    "/workspace/etoroview/public/daily-brief.json",
+    "/workspace/etoroview/dist/daily-brief.json",
+    "/workspace/GrokBot/app/etoroview/public/daily-brief.json"
+  ]
+}

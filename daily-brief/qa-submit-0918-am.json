@@ -1,0 +1,132 @@
+{
+  "gate": "classic-portfolio-data-qa-gate + momentum mirror A",
+  "slot": "morning_0530",
+  "asOfIDT": "2026-09-18 05:45 IDT",
+  "request": "QA Bot PASS vs live parent SSO user-etoro (mirrors 11368142 + 11630170). Do NOT accept keys-B totals as Classic or as Momentum $8k allocation.",
+  "liveSource": "user-etoro get-my-portfolio-summary xRequestId=aca46db4-eadc-4670-82e1-6e50251c364b timestamp=2026-09-18T02:43:04.0809224Z + get-my-positions-and-orders xRequestId=197a2451-eabd-4834-96d2-bd6920347c23 timestamp=2026-09-18T02:43:07.0239733Z",
+  "classic": {
+    "mirrorId": 11368142,
+    "figures": {
+      "equity": 12742.64,
+      "cash": 4937.04,
+      "invested": 15000.0,
+      "openPnl": -1850.81,
+      "closedPnl": -1870.67,
+      "cashPct": 38.7,
+      "deploymentPct": 61.3,
+      "symbols": [
+        "CVX",
+        "XLI",
+        "QQQ",
+        "XLV"
+      ]
+    },
+    "checks": {
+      "cash": {
+        "expected": 4937.04,
+        "live": 4937.04,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -1870.67,
+        "live": -1870.67,
+        "pass": true
+      },
+      "invested": {
+        "expected": 15000.0,
+        "live": 15000.0,
+        "pass": true
+      },
+      "equity": {
+        "expected": 12742.64,
+        "live": 12742.64,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "CVX",
+          "XLI",
+          "QQQ",
+          "XLV"
+        ],
+        "note": "CAT ABSENT; ledger A only"
+      },
+      "rejected_keysB": true
+    },
+    "verdict": "PENDING_QA"
+  },
+  "momentum": {
+    "mirrorId": 11630170,
+    "basis": 8000,
+    "figures": {
+      "equity": 7855.23,
+      "cash": 1504.71,
+      "invested": 8000.0,
+      "openPnl": -126.8,
+      "closedPnl": -77.61,
+      "cashPct": 19.2,
+      "deploymentPct": 80.8,
+      "symbols": [
+        "CRWD",
+        "VTRS",
+        "PSX",
+        "XLK",
+        "XLE",
+        "TGT",
+        "NUE",
+        "EXPD"
+      ]
+    },
+    "checks": {
+      "cash": {
+        "expected": 1504.71,
+        "live": 1504.71,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -77.61,
+        "live": -77.61,
+        "pass": true
+      },
+      "invested": {
+        "expected": 8000.0,
+        "live": 8000.0,
+        "pass": true
+      },
+      "equity": {
+        "expected": 7855.23,
+        "live": 7855.23,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "CRWD",
+          "VTRS",
+          "PSX",
+          "XLK",
+          "XLE",
+          "TGT",
+          "NUE",
+          "EXPD"
+        ],
+        "note": "overnight TGT/NUE; no ETH on mirror A"
+      },
+      "rejected_keysB_totals": true
+    },
+    "verdict": "PENDING_QA"
+  },
+  "overall": "PENDING_QA",
+  "note": "Morning 0530 brief dollars from parent SSO mirrors only. Momentum cash dropped vs Thu PM after TGT/NUE overnight adds. Request QA Bot PASS before CoS treats figures as final.",
+  "files": [
+    "/workspace/daily-brief/morning-0918-brief.txt",
+    "/workspace/daily-brief/morning-0918.json",
+    "/workspace/daily-brief/classic-live-0918-am.json",
+    "/workspace/daily-brief/momentum-live-0918-am.json",
+    "/workspace/etoroview/public/daily-brief.json",
+    "/workspace/etoroview/public/classic-portfolio.json",
+    "/workspace/etoroview/public/momentum-portfolio.json",
+    "/workspace/GrokBot/app/etoroview/public/daily-brief.json",
+    "/workspace/GrokBot/app/etoroview/public/classic-portfolio.json",
+    "/workspace/GrokBot/app/etoroview/public/momentum-portfolio.json"
+  ]
+}
