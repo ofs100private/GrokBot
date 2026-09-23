@@ -13,9 +13,20 @@ Changelog: `/workspace/momentum_audit/playbook-2026-09-16-full-fix.md` (supersed
 
 ## FULL AUTO (Ofer)
 
-**Buy and sell without waiting for the user in chat.** After [Momentum screener run QA](sand-workflow:momentum-screener-run-qa) PASS and [Momentum real-money QA gate](sand-workflow:momentum-real-money-qa-gate) PASS, **prepare then place immediately**. No confirm widget. No waiting for CoS/Ofer “go.” Report fills after the fact.
+**Buy and sell without waiting for the user in chat.** After [Momentum screener run QA](sand-workflow:momentum-screener-run-qa) PASS and [Momentum real-money QA gate](sand-workflow:momentum-real-money-qa-gate) PASS **from QA Bot**, **prepare then place immediately**. No confirm widget. No waiting for CoS/Ofer “go.” Report fills after the fact.
 
 Same auto rule for position_manager **CLOSE**, **MOVE_SL_BREAKEVEN**, and **TRAIL_SL** when QA PASS. HOLD needs no place. Platform Auto-review cards are the host gate, not chat confirmation. `WaitingForMarket` = leave working order; do not re-place.
+
+### Cash-block → recheck (CoS / QA Bot 2026-09-22)
+
+`INSUFFICIENT_CASH` place-QA FAIL is a **GATE_OK** protective reject (audit FAIL row OK; **not** a playbook AVOID).
+
+If cash later frees (e.g. after `LOSS_PCT_GE_4` / SMA50 closes) and a prior pack name becomes placeable:
+
+1. Pull **fresh** mirror A `11630170` availableCash (eToro Account / mirror truth — never keys alone).
+2. **Re-ask QA Bot** for place-QA citing the new cash + book state + exact amount/SL.
+3. Place **only** on that **new** PASS. Do **not** self-PASS, reuse the earlier FAIL pack, or treat cash-freed as authority to place.
+4. Process AVOID if violated: `PLACE_WITHOUT_QA_BOT_RECHECK`.
 
 ## Mandate
 
@@ -43,7 +54,7 @@ Near-miss high-RS names that fail both sleeves: `NO_BREAKOUT_NO_VCP`.
 
 ## Exits (EOD position manager)
 
-Priority per name: **CLOSE** (last < SMA50) → **MOVE_SL_BREAKEVEN** (≥ 2R to entry) → **TRAIL_SL** (≥ 1R: trail to max(prior stop, min(entry, 10-day low)); never lower stop) → **HOLD**
+Priority per name: **CLOSE** (last < SMA50 **or** unrealized PnL% ≤ −4 vs avg open → `LOSS_PCT_GE_4`) → **MOVE_SL_BREAKEVEN** (≥ 2R to entry) → **TRAIL_SL** (≥ 1R: trail to max(prior stop, min(entry, 10-day low)); never lower stop) → **HOLD**
 
 ## EOD chain
 
@@ -51,4 +62,4 @@ Weekdays IL: **22:40** PM → same-wake screener → **22:45** backup → **22:5
 
 ## Do not
 
-Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat keys MCP as the $8k book. Double-buy a name filled this session.
+Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat keys MCP as the $8k book. Double-buy a name filled this session. Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).

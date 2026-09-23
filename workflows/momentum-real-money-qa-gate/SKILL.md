@@ -39,14 +39,16 @@ Playbook **2026-09-16 full fix**: breakout sleeve primary, VCP secondary, event-
 
 ## Exits
 
-- CLOSE below SMA50
+- CLOSE below SMA50 **or** unrealized PnL% ≤ −4 (`LOSS_PCT_GE_4`)
 - MOVE_SL_BREAKEVEN at ≥2R
 - TRAIL_SL at ≥1R (new stop ≥ prior; cites 1R; 10d-low floor)
-- Priority: CLOSE > BE > TRAIL > HOLD
+- Priority: CLOSE (SMA50 or −4%) > BE > TRAIL > HOLD
 
 ## FULL AUTO
 
 After PASS, Trader_momentum places without user/CoS chat confirmation. QA never places. Tell user on FAIL and on fills.
+
+**Cash / state change:** `INSUFFICIENT_CASH` = GATE_OK (not process AVOID). After cash frees or book changes, trader must send a **new** place-QA request with the new mirror A cash snapshot; prior FAIL/no-fill guidance is not authority to place. Flag `PLACE_WITHOUT_QA_BOT_RECHECK` if they self-PASS.
 
 ## Verdict routing
 
