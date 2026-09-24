@@ -97,8 +97,10 @@ APP_FEED_NAME = "breakout-ta.json"
 APP_ROOTS = [
     Path("/workspace/etoroview/public"),
     Path("/workspace/etoroview/dist"),
+    Path("/workspace/etoroview/latest"),
     Path("/workspace/GrokBot/app/etoroview/public"),
     Path("/workspace/GrokBot/app/etoroview/dist"),
+    Path("/workspace/GrokBot/app/etoroview/latest"),
 ]
 
 
@@ -216,10 +218,12 @@ def write_app_feed(payload: dict[str, Any]) -> list[str]:
         dest = root / APP_FEED_NAME
         dest.write_text(text)
         written.append(str(dest))
-    # also under breakout_ta
-    local = Path("/workspace/breakout_ta") / APP_FEED_NAME
-    local.write_text(text)
-    written.append(str(local))
+    # also under breakout_ta package trees (workspace + GrokBot mirror)
+    for local_root in (Path("/workspace/breakout_ta"), Path("/workspace/GrokBot/breakout_ta")):
+        local_root.mkdir(parents=True, exist_ok=True)
+        local = local_root / APP_FEED_NAME
+        local.write_text(text)
+        written.append(str(local))
     payload["app_feed"] = written
     payload["comparison"] = comparison
     return written

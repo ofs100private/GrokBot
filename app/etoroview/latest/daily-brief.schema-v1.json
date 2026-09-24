@@ -1,0 +1,484 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DailyTradingMomentumBrief",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "slot",
+    "asOf",
+    "timezone",
+    "fearAndGreed",
+    "components",
+    "commodities",
+    "dailySignals",
+    "portfolios",
+    "source"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "slot": {
+      "type": "string",
+      "enum": [
+        "morning_0530",
+        "afternoon_1530",
+        "weekend_adhoc"
+      ]
+    },
+    "slotBadge": {
+      "type": "string",
+      "description": "UI badge e.g. Morning 05:30 IL / Afternoon 15:30 IL / Weekend"
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "timezone": {
+      "type": "string",
+      "const": "Asia/Jerusalem"
+    },
+    "weekendMode": {
+      "type": "boolean"
+    },
+    "noNewOpens": {
+      "type": "boolean"
+    },
+    "fearAndGreed": {
+      "type": "object",
+      "required": [
+        "score",
+        "rating",
+        "previousClose",
+        "previous1Week",
+        "previous1Month",
+        "previous1Year",
+        "timestamp"
+      ],
+      "properties": {
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "rating": {
+          "type": "string"
+        },
+        "previousClose": {
+          "type": "number"
+        },
+        "previous1Week": {
+          "type": "number"
+        },
+        "previous1Month": {
+          "type": "number"
+        },
+        "previous1Year": {
+          "type": "number"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "score",
+          "rating"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "market_momentum_sp500",
+              "stock_price_strength",
+              "stock_price_breadth",
+              "put_call_options",
+              "market_volatility_vix",
+              "junk_bond_demand",
+              "safe_haven_demand"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "rating": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "commodities": {
+      "type": "object",
+      "required": [
+        "oil",
+        "gold",
+        "silver"
+      ],
+      "properties": {
+        "oil": {
+          "$ref": "#/$defs/commodity"
+        },
+        "gold": {
+          "$ref": "#/$defs/commodity"
+        },
+        "silver": {
+          "$ref": "#/$defs/commodity"
+        }
+      }
+    },
+    "trump": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "quote": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "marketRelevance": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "analystScore": {
+      "type": "object",
+      "properties": {
+        "bullets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 6
+        },
+        "nothingSpecial": {
+          "type": "boolean"
+        }
+      }
+    },
+    "dailySignals": {
+      "type": "object",
+      "required": [
+        "buys",
+        "sells"
+      ],
+      "properties": {
+        "buys": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/signalCard"
+          }
+        },
+        "sells": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/signalCard"
+          }
+        }
+      }
+    },
+    "cryptoImpact": {
+      "type": "object",
+      "properties": {
+        "btc": {
+          "$ref": "#/$defs/priceMove"
+        },
+        "eth": {
+          "$ref": "#/$defs/priceMove"
+        },
+        "stance": {
+          "type": "string",
+          "enum": [
+            "buy",
+            "hold",
+            "dont_chase",
+            "avoid"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "expectedDailyImpact": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 6
+    },
+    "portfolios": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "mirrorId",
+          "recommendation"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Classic | Momentum | ..."
+          },
+          "name": {
+            "type": "string"
+          },
+          "mirrorId": {
+            "type": [
+              "integer",
+              "string"
+            ]
+          },
+          "agentPortfolioId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "card": {
+            "type": "object",
+            "description": "Live fields only \u2014 omit dollars if unread; never invent",
+            "properties": {
+              "positionCount": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "cashPct": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "deploymentPct": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "equity": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "cash": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "invested": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "openPnl": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "closedPnl": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "positions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "symbol": {
+                      "type": "string"
+                    },
+                    "pctOfEquity": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "uPnl": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "recommendation": {
+            "type": "object",
+            "required": [
+              "buy",
+              "sell",
+              "hold",
+              "diversificationNote"
+            ],
+            "properties": {
+              "buy": {
+                "type": "array",
+                "maxItems": 2,
+                "items": {
+                  "type": "string"
+                },
+                "description": "Empty or ['No Buy Today']"
+              },
+              "sell": {
+                "type": "array",
+                "maxItems": 2,
+                "items": {
+                  "type": "string"
+                }
+              },
+              "hold": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "diversificationNote": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "commodity": {
+      "type": "object",
+      "required": [
+        "symbol",
+        "last",
+        "dayPct",
+        "stance"
+      ],
+      "properties": {
+        "symbol": {
+          "type": "string"
+        },
+        "last": {
+          "type": "number"
+        },
+        "dayPct": {
+          "type": "number"
+        },
+        "stance": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "wait"
+          ]
+        },
+        "related": {
+          "type": "string"
+        }
+      }
+    },
+    "signalCard": {
+      "type": "object",
+      "required": [
+        "symbol",
+        "side",
+        "open",
+        "prevClose",
+        "last",
+        "dayPct",
+        "rationale"
+      ],
+      "properties": {
+        "symbol": {
+          "type": "string"
+        },
+        "side": {
+          "type": "string",
+          "enum": [
+            "buy",
+            "sell"
+          ]
+        },
+        "open": {
+          "type": "number"
+        },
+        "prevClose": {
+          "type": "number"
+        },
+        "last": {
+          "type": "number"
+        },
+        "dayPct": {
+          "type": "number"
+        },
+        "rationale": {
+          "type": "string"
+        }
+      }
+    },
+    "priceMove": {
+      "type": "object",
+      "properties": {
+        "last": {
+          "type": "number"
+        },
+        "dayPct": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

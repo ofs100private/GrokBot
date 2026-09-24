@@ -60,6 +60,16 @@ Priority per name: **CLOSE** (last < SMA50 **or** unrealized PnL% ≤ −4 vs av
 
 Weekdays IL: **22:40** PM → same-wake screener → **22:45** backup → **22:50** watchdog. If skipped, `eod_miss_check.next_job` (PM first). QA PASS → place.
 
+### Daily feedback miss scoring (QA / CoS 2026-09-23)
+
+Do **not** tighten the miss rule. Score `EOD_SCREENER_MISSED` as follows:
+
+1. **On-time (not a miss):** any `momentum_screener` **ACTION** (`BUY` / `HALT` / `SKIP` / `ERROR`) with `ts_il` ≤ **22:50 IDT** that NYSE day clears the gate — including early/manual runs (T21+). Implemented in `momentum_qa.eod_miss_check.screener_actions_by_deadline` + `feedback_daily`.
+2. **True miss AVOID:** no screener ACTION ≤22:50 IDT. A post-22:50 **catch-up** does **not** clear a true miss (still log process hygiene, but keep AVOID for the miss).
+3. **Optional soft flag** `SCHEDULED_2245_LATE`: scheduled 22:40/22:45 cron was late or skipped, but an earlier ACTION ≤22:50 still existed — cron hygiene only; **not** `EOD_SCREENER_MISSED`.
+
+False-positive example (2026-09-23): early ACTION BUY GILD ~21:52 IDT before gate; scorer wrongly flagged miss because it only counted the 23:04 catch-up.
+
 ## Do not
 
 Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat keys MCP as the $8k book. Double-buy a name filled this session. Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).

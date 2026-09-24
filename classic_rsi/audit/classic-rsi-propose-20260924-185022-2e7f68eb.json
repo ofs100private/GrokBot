@@ -1,0 +1,3917 @@
+{
+  "run_id": "classic-rsi-propose-20260924-185022-2e7f68eb",
+  "kind": "propose",
+  "asOfIDT": "2026-09-24 18:50:22 IDT",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mirrorId": 11368142,
+  "timeframe": "1H",
+  "long_only": true,
+  "params": {
+    "rsi_levels": {
+      "over_buy": 79.9,
+      "resistance": 67.9,
+      "support": 34.9,
+      "over_sold": 19.9,
+      "length": 14
+    },
+    "strong_candle": {
+      "body_sma_lookback": 20,
+      "body_mult": 1.2
+    },
+    "atr_levels": {
+      "atr_length": 14,
+      "sl_mult": 1.5,
+      "tp_mult": 2.0
+    },
+    "period": "60d",
+    "symbols": [
+      "GDDY",
+      "GEN",
+      "FSLR",
+      "MCHP",
+      "MGM",
+      "PEP",
+      "PH",
+      "AME",
+      "WYNN",
+      "CI",
+      "ILMN",
+      "TKO",
+      "BALL",
+      "DDOG",
+      "DVA",
+      "MET",
+      "BE",
+      "ORCL",
+      "GS",
+      "PEG",
+      "XYL",
+      "COO",
+      "CBRE",
+      "CCI",
+      "EXE",
+      "ROL",
+      "FCX",
+      "STX",
+      "BX",
+      "F",
+      "MOS",
+      "PPL",
+      "CRL",
+      "UPS",
+      "ARES",
+      "KR",
+      "FDX",
+      "P",
+      "VLTO",
+      "CRH",
+      "APTV",
+      "DASH",
+      "BAC",
+      "NTAP",
+      "HUM",
+      "FE",
+      "LVS",
+      "WY",
+      "ADSK",
+      "URI",
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "suggested_notional_usd": null,
+    "confirmed_only": true
+  },
+  "params_fingerprint": "e454d3d59c6b0ef7",
+  "symbols": [
+    "GDDY",
+    "GEN",
+    "FSLR",
+    "MCHP",
+    "MGM",
+    "PEP",
+    "PH",
+    "AME",
+    "WYNN",
+    "CI",
+    "ILMN",
+    "TKO",
+    "BALL",
+    "DDOG",
+    "DVA",
+    "MET",
+    "BE",
+    "ORCL",
+    "GS",
+    "PEG",
+    "XYL",
+    "COO",
+    "CBRE",
+    "CCI",
+    "EXE",
+    "ROL",
+    "FCX",
+    "STX",
+    "BX",
+    "F",
+    "MOS",
+    "PPL",
+    "CRL",
+    "UPS",
+    "ARES",
+    "KR",
+    "FDX",
+    "P",
+    "VLTO",
+    "CRH",
+    "APTV",
+    "DASH",
+    "BAC",
+    "NTAP",
+    "HUM",
+    "FE",
+    "LVS",
+    "WY",
+    "ADSK",
+    "URI",
+    "SMH",
+    "QQQ",
+    "XLV"
+  ],
+  "buy_packs_count": 2,
+  "risk_off_count": 1,
+  "qa_gate": "classic-real-money-order-qa-gate",
+  "do_not_place": true,
+  "payload": {
+    "asOfIDT": "2026-09-24 18:50:22 IDT",
+    "portfolio": "OfersClaw5-PRIYN",
+    "mirrorId": 11368142,
+    "timeframe": "1H",
+    "long_only": true,
+    "qa_gate": "classic-real-money-order-qa-gate",
+    "do_not_place": true,
+    "symbols": [
+      "GDDY",
+      "GEN",
+      "FSLR",
+      "MCHP",
+      "MGM",
+      "PEP",
+      "PH",
+      "AME",
+      "WYNN",
+      "CI",
+      "ILMN",
+      "TKO",
+      "BALL",
+      "DDOG",
+      "DVA",
+      "MET",
+      "BE",
+      "ORCL",
+      "GS",
+      "PEG",
+      "XYL",
+      "COO",
+      "CBRE",
+      "CCI",
+      "EXE",
+      "ROL",
+      "FCX",
+      "STX",
+      "BX",
+      "F",
+      "MOS",
+      "PPL",
+      "CRL",
+      "UPS",
+      "ARES",
+      "KR",
+      "FDX",
+      "P",
+      "VLTO",
+      "CRH",
+      "APTV",
+      "DASH",
+      "BAC",
+      "NTAP",
+      "HUM",
+      "FE",
+      "LVS",
+      "WY",
+      "ADSK",
+      "URI",
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "invocation": {
+      "next": [
+        "Attach fee_estimate + overnight_financing_estimate via prepare/getCost",
+        "Set size respecting cash floor \u2265~$2.5k and sleeve caps",
+        "Submit each buy_pack to QA Bot (classic-real-money-order-qa-gate) citing run_id",
+        "Place only after QA PASS + mandate gates clear"
+      ],
+      "never": [
+        "Do not short from RISK_OFF / Sell triangles",
+        "Do not bypass QA",
+        "Do not use FX pip SL/TP",
+        "Do not touch Momentum from this module"
+      ]
+    },
+    "buy_packs": [
+      {
+        "gate": "classic-real-money-order-qa-gate",
+        "portfolio": "OfersClaw5-PRIYN",
+        "mirrorId": 11368142,
+        "route": "REAL",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "instrument": {
+          "symbol": "BALL",
+          "assetClass": "equity_or_etf"
+        },
+        "leverage": 1,
+        "timeframe": "1H",
+        "bar_confirmed": true,
+        "bar_time": "2026-09-24 14:30:00+00:00",
+        "rsi_rule": {
+          "raw_signal": "BUY_80",
+          "strength_tag": "EXTREME_80",
+          "zone": "OVER_SOLD",
+          "rsi": 15.854982674014309,
+          "label_note": "80/70 are rule labels, not win rates"
+        },
+        "levels": {
+          "entry": 57.404998779296875,
+          "stop_loss": 56.689471575657045,
+          "take_profit": 58.359035050816644,
+          "atr": 0.47701813575988566,
+          "sl_mult": 1.5,
+          "tp_mult": 2.0,
+          "risk_per_share": 0.7155272036398301,
+          "reward_per_share": 0.9540362715197688,
+          "r_multiple": 1.3333333333333268,
+          "units": "price"
+        },
+        "sizing": {
+          "suggested_notional_usd": null,
+          "note": "Trader_Classic sets size; cash floor \u2265~$2.5k after fill; \u00d71 only"
+        },
+        "thesis": "Classic RSI four-level EXTREME_80 on 1H confirmed bar: Over Sold touch \u2014 candidate long entry/add timing after mandate gates. ATR SL/TP (not pips). Timing overlay only.",
+        "mandate_reminders": [
+          "long-only \u00d71",
+          "no crypto",
+          "cash floor \u2265 ~$2.5k after add",
+          "weekend: no new opens unless Ofer overrides",
+          "Fear / regime gates unchanged \u2014 still apply",
+          "QA PASS required before place"
+        ],
+        "fee_estimate": null,
+        "overnight_financing_estimate": null,
+        "prepared_order": null,
+        "status": "PROPOSE_ONLY",
+        "do_not_place": true,
+        "run_id": "classic-rsi-propose-20260924-185022-2e7f68eb"
+      },
+      {
+        "gate": "classic-real-money-order-qa-gate",
+        "portfolio": "OfersClaw5-PRIYN",
+        "mirrorId": 11368142,
+        "route": "REAL",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "instrument": {
+          "symbol": "ROL",
+          "assetClass": "equity_or_etf"
+        },
+        "leverage": 1,
+        "timeframe": "1H",
+        "bar_confirmed": true,
+        "bar_time": "2026-09-24 14:30:00+00:00",
+        "rsi_rule": {
+          "raw_signal": "BUY_80",
+          "strength_tag": "EXTREME_80",
+          "zone": "OVER_SOLD",
+          "rsi": 17.348297867619408,
+          "label_note": "80/70 are rule labels, not win rates"
+        },
+        "levels": {
+          "entry": 30.235000610351562,
+          "stop_loss": 29.656706634918084,
+          "take_profit": 31.006059244262868,
+          "atr": 0.3855293169556529,
+          "sl_mult": 1.5,
+          "tp_mult": 2.0,
+          "risk_per_share": 0.5782939754334784,
+          "reward_per_share": 0.7710586339113057,
+          "r_multiple": 1.3333333333333355,
+          "units": "price"
+        },
+        "sizing": {
+          "suggested_notional_usd": null,
+          "note": "Trader_Classic sets size; cash floor \u2265~$2.5k after fill; \u00d71 only"
+        },
+        "thesis": "Classic RSI four-level EXTREME_80 on 1H confirmed bar: Over Sold touch \u2014 candidate long entry/add timing after mandate gates. ATR SL/TP (not pips). Timing overlay only.",
+        "mandate_reminders": [
+          "long-only \u00d71",
+          "no crypto",
+          "cash floor \u2265 ~$2.5k after add",
+          "weekend: no new opens unless Ofer overrides",
+          "Fear / regime gates unchanged \u2014 still apply",
+          "QA PASS required before place"
+        ],
+        "fee_estimate": null,
+        "overnight_financing_estimate": null,
+        "prepared_order": null,
+        "status": "PROPOSE_ONLY",
+        "do_not_place": true,
+        "run_id": "classic-rsi-propose-20260924-185022-2e7f68eb"
+      }
+    ],
+    "risk_off": [
+      {
+        "symbol": "ILMN",
+        "timeframe": "1H",
+        "bar_time": "2026-09-24 14:30:00+00:00",
+        "action": "RISK_OFF",
+        "raw_signal": "SELL_70",
+        "strength_tag": "ZONE_70",
+        "zone": "RESISTANCE",
+        "rsi": 73.26150143173355,
+        "close": 263.44000244140625,
+        "note": "Resistance + strong bearish \u2014 pause adds / no chase (not a short)",
+        "never_short": true,
+        "suggested": "no new adds / skip chase on this name; optional tighten trail on existing long"
+      }
+    ],
+    "per_symbol": [
+      {
+        "symbol": "GDDY",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 99.78500366210938,
+        "last_rsi": 52.865485468282465,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-28 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.40478732150908,
+            "zone": "RESISTANCE",
+            "close": 101.17500305175781,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-31 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 16.77199927661549,
+            "zone": "OVER_SOLD",
+            "close": 78.08000183105469,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-31 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 25.76077107470627,
+            "zone": "SUPPORT",
+            "close": 81.19010162353516,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-13 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.1903766107662,
+            "zone": "OVER_BUY",
+            "close": 100.5,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 17:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 72.74271961267596,
+            "zone": "RESISTANCE",
+            "close": 103.75,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "GEN",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 24.43000030517578,
+        "last_rsi": 15.681393950358569,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-28 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 77.36093505358966,
+            "zone": "RESISTANCE",
+            "close": 31.0,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 17:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.45851223926755,
+            "zone": "RESISTANCE",
+            "close": 31.274999618530273,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-22 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.678788497102616,
+            "zone": "OVER_SOLD",
+            "close": 27.559999465942383,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-22 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 25.818730849166144,
+            "zone": "SUPPORT",
+            "close": 27.299999237060547,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 13.426369747719164,
+            "zone": "OVER_SOLD",
+            "close": 24.309999465942383,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "FSLR",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 176.24000549316406,
+        "last_rsi": 16.322979409227457,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-17 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.93228285121849,
+            "zone": "SUPPORT",
+            "close": 210.5800018310547,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-03 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 81.86035721953358,
+            "zone": "OVER_BUY",
+            "close": 240.99000549316406,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-26 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.856312943855315,
+            "zone": "SUPPORT",
+            "close": 205.58999633789062,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.631674169472277,
+            "zone": "OVER_SOLD",
+            "close": 189.89999389648438,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.58462503174323,
+            "zone": "OVER_SOLD",
+            "close": 181.43499755859375,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "MCHP",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 73.36000061035156,
+        "last_rsi": 43.465167661306914,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-17 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 28.222507526737672,
+            "zone": "SUPPORT",
+            "close": 80.3499984741211,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-27 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.6958834883705,
+            "zone": "SUPPORT",
+            "close": 77.5199966430664,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-24 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.55241044356961,
+            "zone": "SUPPORT",
+            "close": 73.88500213623047,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-22 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 70.89867612768752,
+            "zone": "RESISTANCE",
+            "close": 75.5199966430664,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "MGM",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 34.03919982910156,
+        "last_rsi": 16.064603885780485,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-31 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 16.82408339058796,
+            "zone": "OVER_SOLD",
+            "close": 41.6150016784668,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-31 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 24.68064563972618,
+            "zone": "SUPPORT",
+            "close": 41.82500076293945,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-31 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.5024609940633,
+            "zone": "OVER_SOLD",
+            "close": 41.349998474121094,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-01 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.320006198444148,
+            "zone": "SUPPORT",
+            "close": 41.630001068115234,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 16.80602328446139,
+            "zone": "OVER_SOLD",
+            "close": 34.30509948730469,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "PEP",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 129.22999572753906,
+        "last_rsi": 37.16550182707183,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-28 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 73.76249815804155,
+            "zone": "RESISTANCE",
+            "close": 143.42999267578125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-17 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.91533053614218,
+            "zone": "SUPPORT",
+            "close": 133.625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-18 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.785356178185793,
+            "zone": "OVER_SOLD",
+            "close": 130.10000610351562,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.70665886291826,
+            "zone": "OVER_SOLD",
+            "close": 128.63999938964844,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 28.54510342309557,
+            "zone": "SUPPORT",
+            "close": 129.41070556640625,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "PH",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 971.8099975585938,
+        "last_rsi": 66.4158714387577,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-20 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.5425438633511,
+            "zone": "SUPPORT",
+            "close": 1021.7650146484375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-01 16:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.10010376553629,
+            "zone": "OVER_SOLD",
+            "close": 953.375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-10 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.784246019063787,
+            "zone": "OVER_SOLD",
+            "close": 931.094970703125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-10 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.316406808243656,
+            "zone": "SUPPORT",
+            "close": 934.8400268554688,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 31.815861668172417,
+            "zone": "SUPPORT",
+            "close": 923.885009765625,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "AME",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 245.60000610351562,
+        "last_rsi": 61.37525426365635,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-20 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.003205127451693,
+            "zone": "OVER_SOLD",
+            "close": 239.64999389648438,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-21 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 27.193422200297675,
+            "zone": "SUPPORT",
+            "close": 239.36000061035156,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-01 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.624582280395586,
+            "zone": "OVER_SOLD",
+            "close": 232.19000244140625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.09614315083343,
+            "zone": "RESISTANCE",
+            "close": 241.22000122070312,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.91906217931259,
+            "zone": "OVER_BUY",
+            "close": 248.44000244140625,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "WYNN",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 77.45500183105469,
+        "last_rsi": 17.919966570736236,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-05 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 82.39050481091036,
+            "zone": "OVER_BUY",
+            "close": 108.19000244140625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-05 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.98492871273001,
+            "zone": "RESISTANCE",
+            "close": 105.66500091552734,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-27 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 16.940441904569354,
+            "zone": "OVER_SOLD",
+            "close": 93.5999984741211,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-01 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.909011427213144,
+            "zone": "SUPPORT",
+            "close": 91.90499877929688,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.230956781824958,
+            "zone": "OVER_SOLD",
+            "close": 77.58499908447266,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "CI",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 265.04998779296875,
+        "last_rsi": 22.995496829329042,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-16 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.86230991293428,
+            "zone": "SUPPORT",
+            "close": 283.9800109863281,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-28 18:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 82.03617369073658,
+            "zone": "OVER_BUY",
+            "close": 304.45001220703125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-28 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 68.99934527818297,
+            "zone": "RESISTANCE",
+            "close": 301.1300048828125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-04 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.810773886608914,
+            "zone": "SUPPORT",
+            "close": 274.0,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 16:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.04559695960259,
+            "zone": "RESISTANCE",
+            "close": 288.20001220703125,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "ILMN",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 263.44000244140625,
+        "last_rsi": 73.26150143173355,
+        "last_zone": "RESISTANCE",
+        "buy_packs": [],
+        "risk_off": [
+          {
+            "symbol": "ILMN",
+            "timeframe": "1H",
+            "bar_time": "2026-09-24 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "zone": "RESISTANCE",
+            "rsi": 73.26150143173355,
+            "close": 263.44000244140625,
+            "note": "Resistance + strong bearish \u2014 pause adds / no chase (not a short)",
+            "never_short": true,
+            "suggested": "no new adds / skip chase on this name; optional tighten trail on existing long"
+          }
+        ],
+        "recent_signals": [
+          {
+            "bar_time": "2026-09-15 18:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 68.86363799181616,
+            "zone": "RESISTANCE",
+            "close": 222.41000366210938,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-17 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 82.43067854365884,
+            "zone": "OVER_BUY",
+            "close": 243.89500427246094,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-18 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 76.65780293706165,
+            "zone": "RESISTANCE",
+            "close": 243.60809326171875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 82.29542069569881,
+            "zone": "OVER_BUY",
+            "close": 267.2799987792969,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 73.26150143173355,
+            "zone": "RESISTANCE",
+            "close": 263.44000244140625,
+            "is_latest_bar": true
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "TKO",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 180.97000122070312,
+        "last_rsi": 22.78041739288689,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-06 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 14.65868738571578,
+            "zone": "OVER_SOLD",
+            "close": 191.8000030517578,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-10 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.51825812160372,
+            "zone": "SUPPORT",
+            "close": 186.41000366210938,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-14 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.75044218491185,
+            "zone": "OVER_BUY",
+            "close": 201.97999572753906,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "BALL",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 57.404998779296875,
+        "last_rsi": 15.854982674014309,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [
+          {
+            "gate": "classic-real-money-order-qa-gate",
+            "portfolio": "OfersClaw5-PRIYN",
+            "mirrorId": 11368142,
+            "route": "REAL",
+            "side": "buy",
+            "action": "CANDIDATE_LONG",
+            "instrument": {
+              "symbol": "BALL",
+              "assetClass": "equity_or_etf"
+            },
+            "leverage": 1,
+            "timeframe": "1H",
+            "bar_confirmed": true,
+            "bar_time": "2026-09-24 14:30:00+00:00",
+            "rsi_rule": {
+              "raw_signal": "BUY_80",
+              "strength_tag": "EXTREME_80",
+              "zone": "OVER_SOLD",
+              "rsi": 15.854982674014309,
+              "label_note": "80/70 are rule labels, not win rates"
+            },
+            "levels": {
+              "entry": 57.404998779296875,
+              "stop_loss": 56.689471575657045,
+              "take_profit": 58.359035050816644,
+              "atr": 0.47701813575988566,
+              "sl_mult": 1.5,
+              "tp_mult": 2.0,
+              "risk_per_share": 0.7155272036398301,
+              "reward_per_share": 0.9540362715197688,
+              "r_multiple": 1.3333333333333268,
+              "units": "price"
+            },
+            "sizing": {
+              "suggested_notional_usd": null,
+              "note": "Trader_Classic sets size; cash floor \u2265~$2.5k after fill; \u00d71 only"
+            },
+            "thesis": "Classic RSI four-level EXTREME_80 on 1H confirmed bar: Over Sold touch \u2014 candidate long entry/add timing after mandate gates. ATR SL/TP (not pips). Timing overlay only.",
+            "mandate_reminders": [
+              "long-only \u00d71",
+              "no crypto",
+              "cash floor \u2265 ~$2.5k after add",
+              "weekend: no new opens unless Ofer overrides",
+              "Fear / regime gates unchanged \u2014 still apply",
+              "QA PASS required before place"
+            ],
+            "fee_estimate": null,
+            "overnight_financing_estimate": null,
+            "prepared_order": null,
+            "status": "PROPOSE_ONLY",
+            "do_not_place": true
+          }
+        ],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-28 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 82.40290069764967,
+            "zone": "OVER_BUY",
+            "close": 67.47000122070312,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-28 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 74.69749651660361,
+            "zone": "RESISTANCE",
+            "close": 66.88999938964844,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-09 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.04615980467976,
+            "zone": "SUPPORT",
+            "close": 60.54999923706055,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 15.854982674014309,
+            "zone": "OVER_SOLD",
+            "close": 57.404998779296875,
+            "is_latest_bar": true
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "DDOG",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 255.35499572753906,
+        "last_rsi": 70.67063247966114,
+        "last_zone": "RESISTANCE",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-06 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 21.209721757284257,
+            "zone": "SUPPORT",
+            "close": 240.46499633789062,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-06 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.042055293609565,
+            "zone": "OVER_SOLD",
+            "close": 233.6300048828125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-07 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.17093680847425,
+            "zone": "SUPPORT",
+            "close": 238.85000610351562,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-08 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 31.664119533022486,
+            "zone": "SUPPORT",
+            "close": 208.2100067138672,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-22 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 67.93014941126671,
+            "zone": "RESISTANCE",
+            "close": 247.50999450683594,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "DVA",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 176.97000122070312,
+        "last_rsi": 26.985929252448997,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-05 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 13.96940787247837,
+            "zone": "OVER_SOLD",
+            "close": 188.0,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-06 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.89876722994218,
+            "zone": "OVER_SOLD",
+            "close": 185.5,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-07 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.511960805973956,
+            "zone": "OVER_SOLD",
+            "close": 178.9600067138672,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 18:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 81.06126611551429,
+            "zone": "OVER_BUY",
+            "close": 194.10499572753906,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-17 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 72.20262135939285,
+            "zone": "RESISTANCE",
+            "close": 193.1649932861328,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "MET",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 97.4800033569336,
+        "last_rsi": 57.92570004578996,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-06 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 97.17182972957772,
+            "zone": "OVER_BUY",
+            "close": 90.80000305175781,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-07 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 85.28111982340121,
+            "zone": "OVER_BUY",
+            "close": 92.12000274658203,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "BE",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 256.3393859863281,
+        "last_rsi": 30.460231235357128,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.911892952970135,
+            "zone": "SUPPORT",
+            "close": 195.64999389648438,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-04 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 79.96412127109886,
+            "zone": "OVER_BUY",
+            "close": 244.6999969482422,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-04 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 81.41370606196188,
+            "zone": "OVER_BUY",
+            "close": 252.8699951171875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-08 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 79.4773223787782,
+            "zone": "RESISTANCE",
+            "close": 277.091796875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.35049658548192,
+            "zone": "SUPPORT",
+            "close": 260.1300048828125,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "ORCL",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 137.3800048828125,
+        "last_rsi": 25.952800450639216,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-03 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 81.89231205066915,
+            "zone": "OVER_BUY",
+            "close": 140.21499633789062,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-10 17:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.42693918097453,
+            "zone": "RESISTANCE",
+            "close": 150.4250030517578,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-08 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 77.16889593621477,
+            "zone": "RESISTANCE",
+            "close": 163.13999938964844,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "GS",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 917.385009765625,
+        "last_rsi": 25.688524569304207,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-14 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 78.30798226832952,
+            "zone": "RESISTANCE",
+            "close": 1123.81005859375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-15 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.01641087954337,
+            "zone": "OVER_BUY",
+            "close": 1142.75,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-15 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 73.56593533254102,
+            "zone": "RESISTANCE",
+            "close": 1134.260009765625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-29 16:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.414086826030328,
+            "zone": "SUPPORT",
+            "close": 998.3499755859375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-15 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.93405565738415,
+            "zone": "OVER_SOLD",
+            "close": 963.1500244140625,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "PEG",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 66.83999633789062,
+        "last_rsi": 14.906185381098098,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-24 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.687452408070158,
+            "zone": "SUPPORT",
+            "close": 72.96050262451172,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-15 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.66078475343356,
+            "zone": "OVER_SOLD",
+            "close": 70.20999908447266,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-15 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.616087865714775,
+            "zone": "SUPPORT",
+            "close": 70.70999908447266,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.345213817294976,
+            "zone": "SUPPORT",
+            "close": 69.6449966430664,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.102231125401943,
+            "zone": "OVER_SOLD",
+            "close": 67.66999816894531,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "XYL",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 103.85009765625,
+        "last_rsi": 23.351086879718267,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-28 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.37457105123683,
+            "zone": "OVER_BUY",
+            "close": 126.80999755859375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-28 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 73.8103704767724,
+            "zone": "RESISTANCE",
+            "close": 125.77999877929688,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-18 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 16.806657480870854,
+            "zone": "OVER_SOLD",
+            "close": 114.30999755859375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-18 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 26.181654730979773,
+            "zone": "SUPPORT",
+            "close": 114.33000183105469,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-02 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.260439268413435,
+            "zone": "SUPPORT",
+            "close": 107.08000183105469,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "COO",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 55.11000061035156,
+        "last_rsi": 48.674574347231406,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-27 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.05448270968246,
+            "zone": "OVER_SOLD",
+            "close": 71.61499786376953,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-28 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.624900695497047,
+            "zone": "SUPPORT",
+            "close": 71.30000305175781,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-31 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.5328891543995,
+            "zone": "SUPPORT",
+            "close": 70.21499633789062,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-08 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 31.250218104298455,
+            "zone": "SUPPORT",
+            "close": 68.11000061035156,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-09 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 14.913197446479856,
+            "zone": "OVER_SOLD",
+            "close": 63.76499938964844,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "CBRE",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 136.18499755859375,
+        "last_rsi": 35.576407821212456,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-07 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 79.9166922148758,
+            "zone": "OVER_BUY",
+            "close": 144.78500366210938,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-28 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.56744128082279,
+            "zone": "OVER_BUY",
+            "close": 148.0,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-01 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 26.679156006250295,
+            "zone": "SUPPORT",
+            "close": 145.4499969482422,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-02 16:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 31.448896873563328,
+            "zone": "SUPPORT",
+            "close": 143.0500030517578,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "CCI",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 67.66000366210938,
+        "last_rsi": 16.292799331282183,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-07 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 70.73469550545074,
+            "zone": "RESISTANCE",
+            "close": 77.2249984741211,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-13 17:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 70.05360082008072,
+            "zone": "RESISTANCE",
+            "close": 80.08999633789062,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-15 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.00874515413946,
+            "zone": "SUPPORT",
+            "close": 72.4000015258789,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.353088265831474,
+            "zone": "OVER_SOLD",
+            "close": 68.39009857177734,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "EXE",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 87.04000091552734,
+        "last_rsi": 41.987245899037326,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-10 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.452149963654293,
+            "zone": "SUPPORT",
+            "close": 85.98999786376953,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-23 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 72.0595954854219,
+            "zone": "RESISTANCE",
+            "close": 93.44000244140625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-11 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 71.17388069326279,
+            "zone": "RESISTANCE",
+            "close": 96.99500274658203,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.51180900906523,
+            "zone": "OVER_SOLD",
+            "close": 85.75,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.335004474569942,
+            "zone": "SUPPORT",
+            "close": 86.63500213623047,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "ROL",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 30.235000610351562,
+        "last_rsi": 17.348297867619408,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [
+          {
+            "gate": "classic-real-money-order-qa-gate",
+            "portfolio": "OfersClaw5-PRIYN",
+            "mirrorId": 11368142,
+            "route": "REAL",
+            "side": "buy",
+            "action": "CANDIDATE_LONG",
+            "instrument": {
+              "symbol": "ROL",
+              "assetClass": "equity_or_etf"
+            },
+            "leverage": 1,
+            "timeframe": "1H",
+            "bar_confirmed": true,
+            "bar_time": "2026-09-24 14:30:00+00:00",
+            "rsi_rule": {
+              "raw_signal": "BUY_80",
+              "strength_tag": "EXTREME_80",
+              "zone": "OVER_SOLD",
+              "rsi": 17.348297867619408,
+              "label_note": "80/70 are rule labels, not win rates"
+            },
+            "levels": {
+              "entry": 30.235000610351562,
+              "stop_loss": 29.656706634918084,
+              "take_profit": 31.006059244262868,
+              "atr": 0.3855293169556529,
+              "sl_mult": 1.5,
+              "tp_mult": 2.0,
+              "risk_per_share": 0.5782939754334784,
+              "reward_per_share": 0.7710586339113057,
+              "r_multiple": 1.3333333333333355,
+              "units": "price"
+            },
+            "sizing": {
+              "suggested_notional_usd": null,
+              "note": "Trader_Classic sets size; cash floor \u2265~$2.5k after fill; \u00d71 only"
+            },
+            "thesis": "Classic RSI four-level EXTREME_80 on 1H confirmed bar: Over Sold touch \u2014 candidate long entry/add timing after mandate gates. ATR SL/TP (not pips). Timing overlay only.",
+            "mandate_reminders": [
+              "long-only \u00d71",
+              "no crypto",
+              "cash floor \u2265 ~$2.5k after add",
+              "weekend: no new opens unless Ofer overrides",
+              "Fear / regime gates unchanged \u2014 still apply",
+              "QA PASS required before place"
+            ],
+            "fee_estimate": null,
+            "overnight_financing_estimate": null,
+            "prepared_order": null,
+            "status": "PROPOSE_ONLY",
+            "do_not_place": true
+          }
+        ],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-23 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 12.8651928621575,
+            "zone": "OVER_SOLD",
+            "close": 39.190101623535156,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-23 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 24.71883756305114,
+            "zone": "SUPPORT",
+            "close": 39.43000030517578,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-30 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.42445419227225,
+            "zone": "SUPPORT",
+            "close": 37.437198638916016,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.030988924486564,
+            "zone": "SUPPORT",
+            "close": 32.685001373291016,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.348297867619408,
+            "zone": "OVER_SOLD",
+            "close": 30.235000610351562,
+            "is_latest_bar": true
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "FCX",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 71.68499755859375,
+        "last_rsi": 45.327993686612885,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-05 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 83.67617668927709,
+            "zone": "OVER_BUY",
+            "close": 70.13999938964844,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-05 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 73.36200935420018,
+            "zone": "RESISTANCE",
+            "close": 69.02999877929688,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-21 17:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 81.14659452400521,
+            "zone": "OVER_BUY",
+            "close": 76.7249984741211,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-25 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.16783280474378,
+            "zone": "OVER_BUY",
+            "close": 78.41500091552734,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 26.961418977554132,
+            "zone": "SUPPORT",
+            "close": 68.5999984741211,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "STX",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 914.268798828125,
+        "last_rsi": 62.365131876329535,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-15 16:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.43769337618809,
+            "zone": "SUPPORT",
+            "close": 807.1649780273438,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-17 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 27.22543442101839,
+            "zone": "SUPPORT",
+            "close": 747.0399780273438,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-24 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.250625410355525,
+            "zone": "SUPPORT",
+            "close": 803.0700073242188,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.5490321109086,
+            "zone": "SUPPORT",
+            "close": 799.6224975585938,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 76.55308362286043,
+            "zone": "RESISTANCE",
+            "close": 873.2100219726562,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "BX",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 115.83499908447266,
+        "last_rsi": 20.839130359069173,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-11 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 83.6413746423318,
+            "zone": "OVER_BUY",
+            "close": 145.88999938964844,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-10 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.75349958634864,
+            "zone": "OVER_SOLD",
+            "close": 126.41999816894531,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-10 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.50464388790023,
+            "zone": "OVER_SOLD",
+            "close": 125.63999938964844,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.88602367640773,
+            "zone": "SUPPORT",
+            "close": 123.41000366210938,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.21422546045949,
+            "zone": "SUPPORT",
+            "close": 121.03500366210938,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "F",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 12.734999656677246,
+        "last_rsi": 29.656515051668407,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-29 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.48487115281338,
+            "zone": "OVER_BUY",
+            "close": 15.765000343322754,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-29 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.0567091489296,
+            "zone": "RESISTANCE",
+            "close": 15.515000343322754,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.53192852885378,
+            "zone": "SUPPORT",
+            "close": 13.364999771118164,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "MOS",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 23.395000457763672,
+        "last_rsi": 30.703929948277818,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-13 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.247525326115905,
+            "zone": "SUPPORT",
+            "close": 21.780000686645508,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-17 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.24714070162696,
+            "zone": "SUPPORT",
+            "close": 21.225000381469727,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-21 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 81.9798480112882,
+            "zone": "OVER_BUY",
+            "close": 24.15999984741211,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-24 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.66470028485001,
+            "zone": "OVER_BUY",
+            "close": 24.920000076293945,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "PPL",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 31.989999771118164,
+        "last_rsi": 14.885122235162711,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-09-15 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.901917097387738,
+            "zone": "OVER_SOLD",
+            "close": 33.31999969482422,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-15 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 26.023957082982378,
+            "zone": "SUPPORT",
+            "close": 33.40999984741211,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.616440314363572,
+            "zone": "OVER_SOLD",
+            "close": 32.5099983215332,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.349954820315475,
+            "zone": "OVER_SOLD",
+            "close": 32.275001525878906,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "CRL",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 289.6199951171875,
+        "last_rsi": 60.964015351634465,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-05 17:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 71.78070227207361,
+            "zone": "RESISTANCE",
+            "close": 255.69500732421875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-10 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.18550053023712,
+            "zone": "OVER_BUY",
+            "close": 277.010009765625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-11 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.6286272647528,
+            "zone": "OVER_BUY",
+            "close": 277.7950134277344,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-12 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 72.49752854936973,
+            "zone": "RESISTANCE",
+            "close": 284.29998779296875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-31 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.815022952107356,
+            "zone": "SUPPORT",
+            "close": 288.2349853515625,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "UPS",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 92.8949966430664,
+        "last_rsi": 21.652061345240554,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-30 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.628912770183234,
+            "zone": "SUPPORT",
+            "close": 104.58999633789062,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-18 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.120178459818774,
+            "zone": "SUPPORT",
+            "close": 102.41500091552734,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-09 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.75283683438066,
+            "zone": "OVER_SOLD",
+            "close": 99.618896484375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-09 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.83952123323479,
+            "zone": "OVER_SOLD",
+            "close": 99.22000122070312,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.54273144858891,
+            "zone": "SUPPORT",
+            "close": 98.79000091552734,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "ARES",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 116.98999786376953,
+        "last_rsi": 23.069052594379613,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-06 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.69482572158651,
+            "zone": "OVER_BUY",
+            "close": 121.4000015258789,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-04 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.8367443756091,
+            "zone": "OVER_BUY",
+            "close": 140.57000732421875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-05 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 77.71787758693695,
+            "zone": "RESISTANCE",
+            "close": 142.125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.256278723172414,
+            "zone": "SUPPORT",
+            "close": 124.30000305175781,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "KR",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 59.345001220703125,
+        "last_rsi": 51.998009065147514,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-07 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 79.28747587334585,
+            "zone": "RESISTANCE",
+            "close": 58.849998474121094,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-08 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.12448205498467,
+            "zone": "OVER_BUY",
+            "close": 59.849998474121094,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-10 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 81.33373493085189,
+            "zone": "OVER_BUY",
+            "close": 61.189998626708984,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-10 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 74.62557957468425,
+            "zone": "RESISTANCE",
+            "close": 60.82500076293945,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-23 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 28.18085278761228,
+            "zone": "SUPPORT",
+            "close": 55.61000061035156,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "FDX",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 283.2699890136719,
+        "last_rsi": 20.06049631155409,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-06 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.12289002304333,
+            "zone": "OVER_BUY",
+            "close": 312.375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-11 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 74.8643642182391,
+            "zone": "RESISTANCE",
+            "close": 325.3500061035156,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-13 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.95242811260134,
+            "zone": "OVER_BUY",
+            "close": 331.6199951171875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-14 15:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 70.13588125407796,
+            "zone": "RESISTANCE",
+            "close": 335.7250061035156,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 31.10602109609981,
+            "zone": "SUPPORT",
+            "close": 301.7200012207031,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "P",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 128.9600067138672,
+        "last_rsi": 81.59865623294718,
+        "last_zone": "OVER_BUY",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-12 16:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 79.92515333020822,
+            "zone": "OVER_BUY",
+            "close": 111.6449966430664,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-13 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 83.41103748788407,
+            "zone": "OVER_BUY",
+            "close": 116.55999755859375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-14 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 68.7358857963218,
+            "zone": "RESISTANCE",
+            "close": 115.45999908447266,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-24 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.030914643035388,
+            "zone": "OVER_SOLD",
+            "close": 103.05000305175781,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-24 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.48067386209202,
+            "zone": "OVER_BUY",
+            "close": 127.18499755859375,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "VLTO",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 97.18000030517578,
+        "last_rsi": 71.73064246441119,
+        "last_zone": "RESISTANCE",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-28 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.53325529708636,
+            "zone": "OVER_BUY",
+            "close": 97.09500122070312,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-29 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 76.78213450802275,
+            "zone": "RESISTANCE",
+            "close": 98.23500061035156,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "CRH",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 83.58000183105469,
+        "last_rsi": 27.880744332053126,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-23 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.159098188143474,
+            "zone": "SUPPORT",
+            "close": 98.33000183105469,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-28 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 70.12468600834801,
+            "zone": "RESISTANCE",
+            "close": 103.18000030517578,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-31 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.56805066134045,
+            "zone": "SUPPORT",
+            "close": 95.95500183105469,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-01 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.464597916823777,
+            "zone": "SUPPORT",
+            "close": 91.88500213623047,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.886840284428146,
+            "zone": "SUPPORT",
+            "close": 87.75,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "APTV",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 43.5099983215332,
+        "last_rsi": 37.38212166788227,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-06 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.23650586252859,
+            "zone": "OVER_SOLD",
+            "close": 59.25,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-08 16:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.6614653654086,
+            "zone": "SUPPORT",
+            "close": 57.720001220703125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-04 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.93821754655255,
+            "zone": "OVER_SOLD",
+            "close": 48.23500061035156,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-04 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 23.29339017935665,
+            "zone": "SUPPORT",
+            "close": 47.665000915527344,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-28 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.46795160304244,
+            "zone": "SUPPORT",
+            "close": 45.505001068115234,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "DASH",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 185.17999267578125,
+        "last_rsi": 33.31618452807466,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-09-04 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 12.934499580543516,
+            "zone": "OVER_SOLD",
+            "close": 214.9600067138672,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-04 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 20.55743203083337,
+            "zone": "SUPPORT",
+            "close": 216.38999938964844,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-04 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.66241343981396,
+            "zone": "OVER_SOLD",
+            "close": 214.85000610351562,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-09 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 21.734227147383265,
+            "zone": "SUPPORT",
+            "close": 196.4149932861328,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.50075024137847,
+            "zone": "SUPPORT",
+            "close": 196.4600067138672,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "BAC",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 56.0,
+        "last_rsi": 35.181749778907275,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-09-14 16:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.75192834554275,
+            "zone": "OVER_SOLD",
+            "close": 60.07500076293945,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 24.473723609735927,
+            "zone": "SUPPORT",
+            "close": 59.470001220703125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.192863886262558,
+            "zone": "OVER_SOLD",
+            "close": 57.31999969482422,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-16 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 28.480316141691475,
+            "zone": "SUPPORT",
+            "close": 57.88999938964844,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-22 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.845977908885487,
+            "zone": "SUPPORT",
+            "close": 56.53499984741211,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "NTAP",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 201.41000366210938,
+        "last_rsi": 65.85143272911161,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-09 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.14983309202752,
+            "zone": "RESISTANCE",
+            "close": 168.28500366210938,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-03 19:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 72.5485527616395,
+            "zone": "RESISTANCE",
+            "close": 182.92999267578125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-04 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.4571304897245,
+            "zone": "OVER_BUY",
+            "close": 187.4949951171875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-04 18:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 71.16382732818226,
+            "zone": "RESISTANCE",
+            "close": 191.3300018310547,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-24 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 31.160226937023438,
+            "zone": "SUPPORT",
+            "close": 188.1999969482422,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "HUM",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 377.9100036621094,
+        "last_rsi": 49.87498597945545,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-29 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.91631306531991,
+            "zone": "SUPPORT",
+            "close": 365.6400146484375,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "FE",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 43.36000061035156,
+        "last_rsi": 14.761114801310441,
+        "last_zone": "OVER_SOLD",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-07 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.724087750081168,
+            "zone": "SUPPORT",
+            "close": 47.130001068115234,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.85769434255731,
+            "zone": "OVER_SOLD",
+            "close": 43.915000915527344,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.51526012679696,
+            "zone": "OVER_SOLD",
+            "close": 43.81990051269531,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "LVS",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 38.17499923706055,
+        "last_rsi": 21.472567808695615,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-15 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.831138762924297,
+            "zone": "SUPPORT",
+            "close": 44.55500030517578,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-18 16:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.32127518579489,
+            "zone": "OVER_SOLD",
+            "close": 39.939998626708984,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 29.511244251980585,
+            "zone": "SUPPORT",
+            "close": 39.93000030517578,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "WY",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 20.545000076293945,
+        "last_rsi": 22.897800402191294,
+        "last_zone": "SUPPORT",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-27 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.37434272053602,
+            "zone": "SUPPORT",
+            "close": 23.915000915527344,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-28 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 31.77014381274715,
+            "zone": "SUPPORT",
+            "close": 23.604999542236328,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-04 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.1572094644703,
+            "zone": "SUPPORT",
+            "close": 22.940000534057617,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-10 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 16.42101142976523,
+            "zone": "OVER_SOLD",
+            "close": 22.014999389648438,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-10 19:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 25.175449434939225,
+            "zone": "SUPPORT",
+            "close": 22.010000228881836,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "ADSK",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 214.61000061035156,
+        "last_rsi": 38.36067838178267,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-28 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 82.08515390864729,
+            "zone": "OVER_BUY",
+            "close": 239.24000549316406,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-07-28 18:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.00940685192762,
+            "zone": "RESISTANCE",
+            "close": 236.1999969482422,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-07 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 69.78191720226788,
+            "zone": "RESISTANCE",
+            "close": 249.5749969482422,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-04 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 14.062888866675365,
+            "zone": "OVER_SOLD",
+            "close": 220.05999755859375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-09 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 19.187815678859877,
+            "zone": "OVER_SOLD",
+            "close": 207.86099243164062,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "URI",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 1016.030029296875,
+        "last_rsi": 38.85504656379454,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-28 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 17.298470210890983,
+            "zone": "OVER_SOLD",
+            "close": 1017.97998046875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-28 17:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.587332610170606,
+            "zone": "SUPPORT",
+            "close": 1029.4150390625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-03 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 18.03981584987912,
+            "zone": "OVER_SOLD",
+            "close": 970.97998046875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-22 17:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 74.31556658734756,
+            "zone": "RESISTANCE",
+            "close": 1048.4375,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-23 16:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 68.55625772817197,
+            "zone": "RESISTANCE",
+            "close": 1050.56005859375,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "SMH",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 591.75,
+        "last_rsi": 50.60154447190344,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-07-28 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.44043137804529,
+            "zone": "SUPPORT",
+            "close": 529.5900268554688,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-24 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.36172275133377,
+            "zone": "SUPPORT",
+            "close": 548.469970703125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-08 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 72.01899982054833,
+            "zone": "RESISTANCE",
+            "close": 575.5700073242188,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 28.390170306553145,
+            "zone": "SUPPORT",
+            "close": 543.33251953125,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.09257017955358,
+            "zone": "OVER_BUY",
+            "close": 586.510009765625,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "QQQ",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 735.1599731445312,
+        "last_rsi": 47.922052388333505,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-20 18:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 30.115497046206613,
+            "zone": "SUPPORT",
+            "close": 710.9299926757812,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-24 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.24950101465869,
+            "zone": "SUPPORT",
+            "close": 706.8300170898438,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-10 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 32.873062987466994,
+            "zone": "SUPPORT",
+            "close": 710.4099731445312,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-14 13:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.496235300828516,
+            "zone": "SUPPORT",
+            "close": 705.780029296875,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-21 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 80.9181113221172,
+            "zone": "OVER_BUY",
+            "close": 734.969970703125,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      },
+      {
+        "symbol": "XLV",
+        "timeframe": "1H",
+        "confirmed_only": true,
+        "last_bar_time": "2026-09-24 14:30:00+00:00",
+        "last_close": 169.83999633789062,
+        "last_rsi": 54.84549257527182,
+        "last_zone": "NEUTRAL",
+        "buy_packs": [],
+        "risk_off": [],
+        "recent_signals": [
+          {
+            "bar_time": "2026-08-19 13:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_80",
+            "strength_tag": "EXTREME_80",
+            "rsi": 86.63947772191175,
+            "zone": "OVER_BUY",
+            "close": 176.29010009765625,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-19 14:30:00+00:00",
+            "action": "RISK_OFF",
+            "raw_signal": "SELL_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 75.09042048803514,
+            "zone": "RESISTANCE",
+            "close": 174.75999450683594,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-28 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 33.28215996833454,
+            "zone": "SUPPORT",
+            "close": 171.27000427246094,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-08-31 14:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 34.87853844659554,
+            "zone": "SUPPORT",
+            "close": 170.46580505371094,
+            "is_latest_bar": false
+          },
+          {
+            "bar_time": "2026-09-08 15:30:00+00:00",
+            "action": "CANDIDATE_LONG",
+            "raw_signal": "BUY_70",
+            "strength_tag": "ZONE_70",
+            "rsi": 28.515521658726172,
+            "zone": "SUPPORT",
+            "close": 167.74989318847656,
+            "is_latest_bar": false
+          }
+        ],
+        "qa_gate": "classic-real-money-order-qa-gate",
+        "place": false,
+        "notes": [
+          "Never emit shorts; Sell tags \u2192 RISK_OFF only.",
+          "Trader_Classic must still clear Fear/cash/weekend/\u00d71/no-crypto before QA.",
+          "QA Bot must PASS before any place."
+        ]
+      }
+    ],
+    "run_id": "classic-rsi-propose-20260924-185022-2e7f68eb",
+    "audit_dir": "/workspace/classic_rsi/audit"
+  },
+  "qa_cite": "Cite run_id=classic-rsi-propose-20260924-185022-2e7f68eb in Classic RSI order thesis / QA pack."
+}

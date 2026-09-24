@@ -18,6 +18,7 @@ Playbook **2026-09-16 full fix**: breakout sleeve primary, VCP secondary, event-
 - Before every CLOSE / MOVE_SL_BREAKEVEN / **TRAIL_SL**
 - After every fill
 - Daily feedback ~23:05 IL; miss checks ~22:50 IL
+- `EOD_SCREENER_MISSED` HIGH AVOID only if no screener ACTION ≤22:50 IL (early/manual counts; catch-up never clears). Soft `SCHEDULED_2245_LATE` if cron late but gate already cleared — see trader-momentum-strategy EOD feedback scoring.
 
 ## Pack / sleeve FAIL if
 
