@@ -1,0 +1,88 @@
+{
+  "gate": "breakout-ta-tab-data-qa-gate",
+  "verdict": "PASS",
+  "asOf_utc": "2026-09-24T20:16:45Z",
+  "run_id": "breakout-auto-20260924-231526-1c632528",
+  "gates": {
+    "G1_dual_write": {
+      "pass": true,
+      "sha256": "7aeaa532d2acb5ee3705b71e73ef8a77d3aa1646d7bbda83e283e260e811ed72",
+      "copies": 6,
+      "feed_run_id_match": true
+    },
+    "G2_audit_integrity": {
+      "pass": true,
+      "latest_eq_run_file": true,
+      "index_jsonl": true,
+      "counts": {
+        "confirmed": 4,
+        "watch": 6,
+        "failed": 3,
+        "symbols": 20
+      },
+      "do_not_place": true,
+      "place": false
+    },
+    "G3_signal_honesty": {
+      "pass": true,
+      "confirmed": [
+        "VTRS",
+        "INTC",
+        "AMD",
+        "META"
+      ],
+      "all_1D": true,
+      "levels_entry_stop_target": true,
+      "volume_ratio": true,
+      "doNotPlaceFromThisUi": true,
+      "no_shorts": true
+    },
+    "G4_comparison": {
+      "pass": true,
+      "methods": [
+        "breakout_ta",
+        "classic_rsi",
+        "momentum_breakout"
+      ],
+      "overlap_subseteq_universe": true,
+      "invented_dollars": false,
+      "place_authorized_false": true
+    },
+    "G5_live_book_overlap": {
+      "pass": true,
+      "detail": {
+        "confirmed_classic": [],
+        "confirmed_momentum": [
+          "VTRS"
+        ],
+        "watch_classic": [
+          "QQQ",
+          "SMH"
+        ],
+        "watch_momentum": [
+          "PLTR",
+          "XLK"
+        ],
+        "confirmed_classic_ok": true,
+        "confirmed_momentum_ok": true,
+        "watch_classic_ok": true,
+        "watch_momentum_ok": true
+      },
+      "classic_mirror": 11368142,
+      "momentum_mirror": 11630170,
+      "keys_B_rejected": true
+    }
+  },
+  "soft": [
+    "classic_rsi.book_symbols omits live CVX + IGV (lists PANW/QQQ/SMH/XLV) \u2014 method snapshot soft, overlap claims still correct",
+    "momentum_breakout.book_symbols omits live P (+ tiny ETH) \u2014 method snapshot soft; overlap VTRS/PLTR/XLK verified on live Momentum"
+  ],
+  "hard_fail": false,
+  "hard_fail_codes": [],
+  "qa_places": false,
+  "artifacts": {
+    "feed_public": "/workspace/etoroview/public/breakout-ta.json",
+    "audit": "/workspace/breakout_ta/audit/breakout-auto-20260924-231526-1c632528.json",
+    "latest": "/workspace/breakout_ta/audit/latest-auto.json"
+  }
+}
