@@ -1,0 +1,115 @@
+{
+  "gate": "breakout-ta-tab-data-qa-gate",
+  "verdict": "PASS",
+  "asOf_utc": "2026-09-25T20:20:51Z",
+  "asOf_idt": "2026-09-25 ~23:20 IDT",
+  "run_id": "breakout-auto-20260925-231854-a256ab7c",
+  "gates": {
+    "G1_dual_write": {
+      "pass": true,
+      "sha256": "7a726ae506b11b9fd9296560386fc3e50dd80b4a236279a2217c0272ca0f3660",
+      "copies": 6,
+      "paths": [
+        "/workspace/etoroview/public/breakout-ta.json",
+        "/workspace/etoroview/dist/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/public/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/dist/breakout-ta.json",
+        "/workspace/etoroview/latest/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/latest/breakout-ta.json"
+      ],
+      "feed_run_id_match": true
+    },
+    "G2_audit_integrity": {
+      "pass": true,
+      "latest_eq_run_file": true,
+      "index_jsonl": true,
+      "counts": {
+        "confirmed": 2,
+        "watch": 9,
+        "failed": 2,
+        "symbols": 22
+      },
+      "do_not_place": true,
+      "place": false
+    },
+    "G3_signal_honesty": {
+      "pass": true,
+      "confirmed": [
+        "VTRS",
+        "MSFT"
+      ],
+      "all_1D": true,
+      "levels_entry_stop_target": true,
+      "volume_ratio": true,
+      "doNotPlaceFromThisUi": true,
+      "no_shorts": true,
+      "breakout_ta_place_false": true
+    },
+    "G4_comparison": {
+      "pass": true,
+      "methods": [
+        "breakout_ta",
+        "classic_rsi",
+        "momentum_breakout"
+      ],
+      "overlap_subseteq_universe": true,
+      "invented_dollars": false,
+      "place_authorized_false": true
+    },
+    "G5_live_book_overlap": {
+      "pass": true,
+      "detail": {
+        "confirmed_classic": [],
+        "confirmed_momentum": [
+          "VTRS"
+        ],
+        "watch_classic": [
+          "QQQ",
+          "SMH",
+          "XLV"
+        ],
+        "watch_momentum": [
+          "P",
+          "PLTR",
+          "XLK"
+        ],
+        "confirmed_classic_ok": true,
+        "confirmed_momentum_ok": true,
+        "watch_classic_ok": true,
+        "watch_momentum_ok": true,
+        "classic_live_symbols": [
+          "IGV",
+          "QQQ",
+          "SMH",
+          "XLV"
+        ],
+        "momentum_live_symbols": [
+          "CRWD",
+          "DE",
+          "JNJ",
+          "P",
+          "PLTR",
+          "TGT",
+          "VTRS",
+          "XLK"
+        ],
+        "source": "user-etoro get-my-positions-and-orders mirrors (NOT keys-B / OfersClaw5 / Momentum MCP cash)"
+      },
+      "classic_mirror": 11368142,
+      "momentum_mirror": 11630170,
+      "keys_B_rejected": true
+    }
+  },
+  "soft": [
+    "classic_rsi.book_symbols=['IGV', 'PANW', 'QQQ', 'SMH', 'XLV'] vs live Classic mirror 11368142=['IGV', 'QQQ', 'SMH', 'XLV'] \u2014 snapshot EXTRA (ABSENT live): ['PANW'] \u2014 method snapshot soft; overlap claims still correct",
+    "momentum_breakout.book_symbols exact match live Momentum mirror 11630170"
+  ],
+  "hard_fail": false,
+  "hard_fail_codes": [],
+  "qa_places": false,
+  "artifacts": {
+    "feed_public": "/workspace/etoroview/public/breakout-ta.json",
+    "audit": "/workspace/breakout_ta/audit/breakout-auto-20260925-231854-a256ab7c.json",
+    "latest": "/workspace/breakout_ta/audit/latest-auto.json"
+  }
+}
