@@ -1,0 +1,350 @@
+{
+  "op": "qa.verdict.daily_brief",
+  "slot": "afternoon_1530",
+  "asOf": "2026-09-28T16:56:49+03:00",
+  "qaAt": "2026-09-28T16:59:08+03:00",
+  "briefPath": "/workspace/daily-brief/daily-brief.json",
+  "submitPath": "/workspace/daily-brief/qa-submit.json",
+  "revalidate_after_dual_write_fix": true,
+  "revalidate_after_app_fix": false,
+  "revalidate_after_sidecar_fix": false,
+  "revalidate_after_live_restamp": true,
+  "revalidate_after_live_sso": true,
+  "post_aapl_restamp": true,
+  "aapl_postfill_qa_pass": true,
+  "verdict": "PASS",
+  "fail_codes": [],
+  "prior_fail_codes_cleared": [
+    "CASH_MISMATCH_CLASSIC",
+    "CASH_MISMATCH_MOMENTUM",
+    "SYMBOL_MISMATCH_CLASSIC",
+    "SYMBOL_MISMATCH_MOMENTUM",
+    "STALE_MOMENTUM_SHA",
+    "STALE_BRIEF_SHA"
+  ],
+  "soft_notes": [
+    "Post-AAPL dual-write QA @ 2026-09-28T16:59:08+03:00: required shas only (classic f48f0177\u2026 / momentum a4cf6351\u2026 / brief dc9e1a41\u2026)",
+    "Standing dual-write byte-identical: classic 8/8, momentum 8/8, brief 11/11",
+    "Rejected stale shas: momentum 7bf362e2/dcc7ad7a and brief 4fd9b55c/450878c2 absent from standing paths",
+    "Classic cash PASS pack 7285.54 vs live 7285.54 (diff 0.0)",
+    "Momentum cash PASS pack 2150.1 vs live 2150.1 (diff 0.0)",
+    "Classic symbols PASS pack ['QQQ', 'SMH', 'XLV'] == live ['QQQ', 'SMH', 'XLV']; IGV absent",
+    "Momentum symbols PASS pack ['AAPL', 'CRWD', 'DE', 'JNJ', 'P', 'VTRS', 'XLK'] includes AAPL+JNJ+DE+XLK+VTRS+CRWD+P; TGT+PLTR absent",
+    "Classic equity MTM soft: pack 12804.25 vs live 12802.42 (diff 1.83)",
+    "Momentum equity MTM soft: pack 7818.93 vs live 7822.61 (diff -3.68)",
+    "AAPL mirror pos 3589579686 invested 718.76 @ 342.39 SL 320.79 (copy-scaled OK); keys 3589579685 $900 fills-ledger only \u2014 rejected",
+    "Cash truth = SSO mirror A only (11368142 / 11630170); keys-B rejected",
+    "QA never places; no place-trade",
+    "Audit folder live-restamp-2026-09-28-pm/ retains pre-AAPL snapshot (dcc7ad7a) \u2014 not standing dual-write"
+  ],
+  "dual_write": {
+    "status": "PASS",
+    "N_of_N": "8/8",
+    "standing_paths": 8,
+    "daily_brief": {
+      "identical": true,
+      "sha256": "dc9e1a41add1be91de76e266cd510b5c6d72e2cbf735505a2a623167f83c15f7",
+      "path_count": 11,
+      "standing_8_identical": true,
+      "aliases_match": true,
+      "paths": [
+        "/workspace/daily-brief/daily-brief.json",
+        "/workspace/etoroview/public/daily-brief.json",
+        "/workspace/etoroview/dist/daily-brief.json",
+        "/workspace/etoroview/latest/daily-brief.json",
+        "/workspace/GrokBot/app/etoroview/public/daily-brief.json",
+        "/workspace/GrokBot/app/etoroview/dist/daily-brief.json",
+        "/workspace/GrokBot/app/etoroview/latest/daily-brief.json",
+        "/workspace/GrokBot/daily-brief/daily-brief.json",
+        "/workspace/daily-brief/afternoon-0928.json",
+        "/workspace/daily-brief/afternoon-1530-2026-09-28.json",
+        "/workspace/daily-brief/latest.json"
+      ]
+    },
+    "classic-portfolio.json": {
+      "identical": true,
+      "sha256": "f48f01770b187ee41696a3cd1a3d0391b9266d9fc43ac80d3455bba0a2ab4d77",
+      "path_count": 8,
+      "asOf": "2026-09-28T16:54:51+03:00",
+      "slot": "afternoon_1530",
+      "paths": [
+        "/workspace/daily-brief/classic-portfolio.json",
+        "/workspace/etoroview/public/classic-portfolio.json",
+        "/workspace/etoroview/dist/classic-portfolio.json",
+        "/workspace/etoroview/latest/classic-portfolio.json",
+        "/workspace/GrokBot/app/etoroview/public/classic-portfolio.json",
+        "/workspace/GrokBot/app/etoroview/dist/classic-portfolio.json",
+        "/workspace/GrokBot/app/etoroview/latest/classic-portfolio.json",
+        "/workspace/GrokBot/daily-brief/classic-portfolio.json"
+      ]
+    },
+    "momentum-portfolio.json": {
+      "identical": true,
+      "sha256": "a4cf6351c496fd32710bce451531f1f931c167be37e88160a0a7f1e3ff3a6ec3",
+      "path_count": 8,
+      "asOf": "2026-09-28T16:56:49+03:00",
+      "slot": "afternoon_1530",
+      "paths": [
+        "/workspace/daily-brief/momentum-portfolio.json",
+        "/workspace/etoroview/public/momentum-portfolio.json",
+        "/workspace/etoroview/dist/momentum-portfolio.json",
+        "/workspace/etoroview/latest/momentum-portfolio.json",
+        "/workspace/GrokBot/app/etoroview/public/momentum-portfolio.json",
+        "/workspace/GrokBot/app/etoroview/dist/momentum-portfolio.json",
+        "/workspace/GrokBot/app/etoroview/latest/momentum-portfolio.json",
+        "/workspace/GrokBot/daily-brief/momentum-portfolio.json"
+      ]
+    },
+    "counts": {
+      "classic": "8/8",
+      "momentum": "8/8",
+      "daily_brief": "11/11"
+    }
+  },
+  "pack_checks": {
+    "status": "PASS",
+    "classic": {
+      "mirrorId": 11368142,
+      "equity": 12804.25,
+      "cash": 7285.54,
+      "openPnl": -1768.6,
+      "closedPnl": -2163.75,
+      "symbols": [
+        "QQQ",
+        "XLV",
+        "SMH"
+      ],
+      "absent": [
+        "IGV",
+        "PANW",
+        "CVX",
+        "CAT",
+        "XLI"
+      ],
+      "reject_keys_B_totals": true,
+      "xRequestId": "f08ed8bc-3089-44c9-b1b8-502ed1ad0360",
+      "positionsXRequestId": "46880b0a-ccbf-4c2d-acde-0649d6287490",
+      "ssoTimestamp": "2026-09-28T13:54:51.4186894Z"
+    },
+    "momentum": {
+      "mirrorId": 11630170,
+      "basis": 8000,
+      "equity": 7818.93,
+      "cash": 2150.1,
+      "openPnl": -150.7,
+      "closedPnl": -301.28,
+      "symbols": [
+        "CRWD",
+        "VTRS",
+        "P",
+        "XLK",
+        "JNJ",
+        "DE",
+        "AAPL"
+      ],
+      "absent": [
+        "TGT",
+        "PLTR",
+        "PSX",
+        "PFG",
+        "EXPD",
+        "XLE",
+        "ETH"
+      ],
+      "aapl": {
+        "symbol": "AAPL",
+        "orderId": 1597282198,
+        "positionId": 3589579686,
+        "openRate": 342.39,
+        "units": 2.099244,
+        "invested": 718.76,
+        "stopLossRate": 320.79,
+        "cosReportedInvested": 900,
+        "cosReportedUnits": 2.628581,
+        "cosReportedPositionId": 3589579685
+      },
+      "reject_keys_B_totals": true,
+      "xRequestId": "a3f9abf6-55f9-4f13-98ae-1b5114c9cc0b",
+      "positionsXRequestId": "ea3e39e6-9929-4a12-842c-dceedd62e8f8",
+      "ssoTimestamp": "2026-09-28T13:56:29.4727207Z"
+    },
+    "separate_cards": true,
+    "fearAndGreed": {
+      "score": 37,
+      "rating": "Fear",
+      "components": null
+    },
+    "weekendMode": false,
+    "noNewOpens": false,
+    "no_place_trade": true,
+    "recommendations": {
+      "Classic": {
+        "buy": [
+          "No Buy Today"
+        ],
+        "sell": [
+          "No Sale"
+        ]
+      },
+      "Momentum": {
+        "buy": [
+          "No Buy Today"
+        ],
+        "sell": [
+          "No Sale"
+        ]
+      }
+    },
+    "documented_equity": {
+      "Classic": 12804.25,
+      "Momentum": 7818.93
+    }
+  },
+  "pack_vs_live": {
+    "status": "PASS",
+    "soft_only": false,
+    "reason": "Post-AAPL live SSO mirror A cash+symbols match required-sha pack; equity MTM within soft band; AAPL copy-scaled present",
+    "cash_tolerance_usd": 1.0,
+    "equity_mtm_soft_usd": 100,
+    "classic": {
+      "pack": {
+        "mirrorId": 11368142,
+        "equity": 12804.25,
+        "cash": 7285.54,
+        "symbols": [
+          "QQQ",
+          "XLV",
+          "SMH"
+        ],
+        "rejectedKeysB": true
+      },
+      "live_sso": {
+        "mirrorId": 11368142,
+        "username": "OfersClaw5-PRIYN",
+        "equity": 12802.42,
+        "cash": 7285.54,
+        "invested": 15000.0,
+        "openPnl": -1770.43,
+        "closedPnl": -2163.75,
+        "symbols": [
+          "QQQ",
+          "XLV",
+          "SMH"
+        ],
+        "positionCount": 3,
+        "source": "user-etoro get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
+        "xRequestId": "54620666-b7f9-44c9-ac59-dbfca364acda",
+        "positionsXRequestId": "798d02f0-0806-4ad0-845b-47433af555f6",
+        "portfolioTimestamp": "2026-09-28T13:57:41.538778Z",
+        "positionsTimestamp": "2026-09-28T13:57:58.2820454Z",
+        "authChannel": "bearer_sso"
+      },
+      "diffs": {
+        "equity_vs_live": 1.83,
+        "cash_vs_live": 0.0,
+        "symbols_only_pack": [],
+        "symbols_only_live": [],
+        "cash_pass": true,
+        "equity_mtm_soft_ok": true,
+        "symbols_match": true
+      }
+    },
+    "momentum": {
+      "pack": {
+        "mirrorId": 11630170,
+        "equity": 7818.93,
+        "cash": 2150.1,
+        "basis": 8000,
+        "symbols": [
+          "CRWD",
+          "VTRS",
+          "P",
+          "XLK",
+          "JNJ",
+          "DE",
+          "AAPL"
+        ],
+        "rejectedKeysB": true,
+        "aapl_positionId": 3589579686
+      },
+      "live_sso": {
+        "mirrorId": 11630170,
+        "username": "Momentum-HHHGDTJ",
+        "equity": 7822.61,
+        "cash": 2150.1,
+        "invested": 8000.0,
+        "basis": 8000,
+        "openPnl": -147.02,
+        "closedPnl": -301.28,
+        "symbols": [
+          "AAPL",
+          "JNJ",
+          "DE",
+          "XLK",
+          "VTRS",
+          "CRWD",
+          "P"
+        ],
+        "positionCount": 7,
+        "aapl": {
+          "positionId": 3589579686,
+          "invested": 718.76,
+          "openRate": 342.39,
+          "stopLossRate": 320.79,
+          "units": 2.099244,
+          "note": "copy-scaled mirror; keys pos 3589579685 $900 is fills-ledger only \u2014 rejected as book truth"
+        },
+        "source": "user-etoro get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
+        "xRequestId": "54620666-b7f9-44c9-ac59-dbfca364acda",
+        "positionsXRequestId": "798d02f0-0806-4ad0-845b-47433af555f6",
+        "portfolioTimestamp": "2026-09-28T13:57:41.538778Z",
+        "positionsTimestamp": "2026-09-28T13:57:58.2820454Z",
+        "authChannel": "bearer_sso"
+      },
+      "diffs": {
+        "equity_vs_live": -3.68,
+        "cash_vs_live": 0.0,
+        "symbols_only_pack": [],
+        "symbols_only_live": [],
+        "cash_pass": true,
+        "equity_mtm_soft_ok": true,
+        "symbols_match": true,
+        "aapl_present_live": true,
+        "aapl_present_pack": true
+      }
+    },
+    "parent_balances": {
+      "totalValue": 34852.2,
+      "availableCash": 1107.67,
+      "note": "parent Trading totals \u2014 NOT Classic/Momentum book truth",
+      "xRequestId": "54620666-b7f9-44c9-ac59-dbfca364acda"
+    }
+  },
+  "keysB_rejected_confirmed": true,
+  "no_place_flags": true,
+  "weekendMode": false,
+  "fearAndGreed": {
+    "score": 37,
+    "rating": "Fear",
+    "components": null
+  },
+  "artifact": "/workspace/daily-brief/qa/afternoon-1530-2026-09-28-qa.json",
+  "recommendations": {
+    "Classic": {
+      "buy": "No Buy Today",
+      "sell": "No Sale"
+    },
+    "Momentum": {
+      "buy": "No Buy Today",
+      "sell": "No Sale"
+    }
+  },
+  "xRequestIds": {
+    "live_summary": "54620666-b7f9-44c9-ac59-dbfca364acda",
+    "live_positions": "798d02f0-0806-4ad0-845b-47433af555f6",
+    "pack_classic": "f08ed8bc-3089-44c9-b1b8-502ed1ad0360",
+    "pack_classic_positions": "46880b0a-ccbf-4c2d-acde-0649d6287490",
+    "pack_momentum": "a3f9abf6-55f9-4f13-98ae-1b5114c9cc0b",
+    "pack_momentum_positions": "ea3e39e6-9929-4a12-842c-dceedd62e8f8"
+  }
+}

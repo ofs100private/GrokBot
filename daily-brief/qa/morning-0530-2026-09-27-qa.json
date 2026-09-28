@@ -1,0 +1,165 @@
+{
+  "op": "qa.verdict.daily_brief",
+  "slot": "morning_0530",
+  "asOf": "2026-09-27T05:25:00+03:00",
+  "qaAt": "2026-09-27T05:30:43+03:00",
+  "revalidate_after_app_fix": true,
+  "verdict": "PASS",
+  "fail_codes": [],
+  "prior_fail_codes_cleared": [
+    "DUAL_WRITE_SIDECAR_LAG",
+    "GROKBOT_DIST_LAG"
+  ],
+  "soft_notes": [
+    "Classic equity exact live 12891.16 vs pack 12891.16 (\u03940); cash exact 4690.22",
+    "Momentum equity exact live 7827.60 vs pack 7827.60 (\u03940); cash exact 904.64; basis 8000",
+    "App dual-write fix confirmed: classic + momentum sidecars now byte-identical across 7 paths each (asOf 2026-09-27T05:25:00+03:00)",
+    "daily-brief.json dual-write still PASS: 10 paths = claimed sha256",
+    "P ticker = Everpure Inc (instrumentId 6823) on mirror A \u2014 name soft-ok",
+    "Keys-B / user-OfersClaw5 and keys MCP correctly rejected; mirror A ids 11368142 / 11630170 only",
+    "weekendMode true OK for Sunday; No Buy Today / No Sale both books"
+  ],
+  "dualWrite": {
+    "daily_brief_sha256": "acfceb390c2def60d495afcb619b5b385d2fe61d2258743c89545208c352abd5",
+    "daily_brief_paths_ok": true,
+    "path_count": 10,
+    "claimed_match": true,
+    "sidecars": {
+      "classic-portfolio.json": {
+        "identical": true,
+        "sha256": "bfd96b885318f04ff4561df71ee7b5b23d9ae7d2eeac28b131d6b853ab9334d3",
+        "asOf": "2026-09-27T05:25:00+03:00",
+        "path_count": 7,
+        "paths": [
+          "/workspace/daily-brief/classic-portfolio.json",
+          "/workspace/etoroview/public/classic-portfolio.json",
+          "/workspace/etoroview/dist/classic-portfolio.json",
+          "/workspace/etoroview/latest/classic-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/public/classic-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/dist/classic-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/latest/classic-portfolio.json"
+        ]
+      },
+      "momentum-portfolio.json": {
+        "identical": true,
+        "sha256": "b6f1ebdcc8cf1451aead43ed469d5d693d7ee88193c9ffa3451e7ff2a518d26c",
+        "asOf": "2026-09-27T05:25:00+03:00",
+        "path_count": 7,
+        "paths": [
+          "/workspace/daily-brief/momentum-portfolio.json",
+          "/workspace/etoroview/public/momentum-portfolio.json",
+          "/workspace/etoroview/dist/momentum-portfolio.json",
+          "/workspace/etoroview/latest/momentum-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/public/momentum-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/dist/momentum-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/latest/momentum-portfolio.json"
+        ]
+      }
+    }
+  },
+  "pack_vs_live": {
+    "classic": {
+      "pack": {
+        "mirrorId": 11368142,
+        "equity": 12891.16,
+        "cash": 4690.22,
+        "symbols": [
+          "QQQ",
+          "XLV",
+          "SMH",
+          "IGV"
+        ],
+        "rejectedKeysB": true,
+        "note": "ledger A only \u2014 REJECT user-OfersClaw5 keys-B totals; PANW/CVX/CAT ABSENT"
+      },
+      "live_sso": {
+        "mirrorId": 11368142,
+        "availableCash": 4690.22,
+        "value": 12891.16,
+        "invested": 15000.0,
+        "symbols": [
+          "QQQ",
+          "XLV",
+          "SMH",
+          "IGV"
+        ],
+        "source": "user-etoro parent SSO get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
+        "xRequestId": "09f1f392-d42b-4072-a2f2-afd3dac76237",
+        "positionsXRequestId": "a1f8a30f-abd7-4ac1-9014-9f4754ddbe7b",
+        "timestamp": "2026-09-27T02:30:28.3176411Z"
+      },
+      "cash_match": true,
+      "symbols_match": true,
+      "equity_delta": 0.0
+    },
+    "momentum": {
+      "pack": {
+        "mirrorId": 11630170,
+        "equity": 7827.6,
+        "cash": 904.64,
+        "basis": 8000,
+        "symbols": [
+          "JNJ",
+          "TGT",
+          "DE",
+          "XLK",
+          "VTRS",
+          "CRWD",
+          "P",
+          "PLTR"
+        ],
+        "rejectedKeysB": true,
+        "note": "mirror A $8k basis \u2014 REJECT user-Momentum-HHHGDTJ keys MCP; P=6823 Everpure; no ETH"
+      },
+      "live_sso": {
+        "mirrorId": 11630170,
+        "availableCash": 904.64,
+        "value": 7827.6,
+        "invested": 8000.0,
+        "basis": 8000,
+        "symbols": [
+          "JNJ",
+          "TGT",
+          "DE",
+          "XLK",
+          "VTRS",
+          "CRWD",
+          "P",
+          "PLTR"
+        ],
+        "source": "user-etoro parent SSO get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
+        "xRequestId": "09f1f392-d42b-4072-a2f2-afd3dac76237",
+        "positionsXRequestId": "a1f8a30f-abd7-4ac1-9014-9f4754ddbe7b",
+        "timestamp": "2026-09-27T02:30:28.3176411Z"
+      },
+      "cash_match": true,
+      "symbols_match": true,
+      "equity_delta": 0.0
+    }
+  },
+  "fearAndGreed": {
+    "score": 37,
+    "rating": "Fear",
+    "components": 7
+  },
+  "recommendations": {
+    "Classic": {
+      "buy": "No Buy Today",
+      "sell": "No Sale"
+    },
+    "Momentum": {
+      "buy": "No Buy Today",
+      "sell": "No Sale"
+    }
+  },
+  "weekendMode": true,
+  "keysB_rejected_confirmed": true,
+  "submit_paths": {
+    "userJson": "/workspace/daily-brief-2026-09-27-0530.json",
+    "latest": "/workspace/daily-brief/latest.json",
+    "briefMd": "/workspace/daily-brief/daily-brief-0530-2026-09-27.md",
+    "all_exist": true,
+    "json_coherent": true
+  },
+  "submit": "/workspace/daily-brief/qa-submit-0927-am.json"
+}

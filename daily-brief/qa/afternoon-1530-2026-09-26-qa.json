@@ -1,0 +1,123 @@
+{
+  "op": "qa.validate.daily_brief",
+  "slot": "afternoon_1530",
+  "asOf": "2026-09-26T15:43:00+03:00",
+  "timezone": "Asia/Jerusalem",
+  "weekendMode": true,
+  "noNewOpens": true,
+  "nextSession": "Monday US cash session",
+  "sha256_daily_brief_json": "0802dded6672ce39c1d07dabc22638f88a8f79de3aeb7d9054ee2d96ca800887",
+  "dualWritePaths": [
+    "/workspace/etoroview/public/daily-brief.json",
+    "/workspace/etoroview/dist/daily-brief.json",
+    "/workspace/etoroview/latest/daily-brief.json",
+    "/workspace/GrokBot/app/etoroview/public/daily-brief.json",
+    "/workspace/GrokBot/app/etoroview/dist/daily-brief.json",
+    "/workspace/GrokBot/app/etoroview/latest/daily-brief.json"
+  ],
+  "briefMd": "/workspace/daily-brief/daily-brief-1530-2026-09-26.md",
+  "envelope": "/workspace/daily-brief/afternoon-1530-2026-09-26.json",
+  "liveChecksumNotes": {
+    "classic": {
+      "mirrorId": 11368142,
+      "equity": 12891.16,
+      "cash": 4690.22,
+      "cashPct": 36.4,
+      "deploymentPct": 63.6,
+      "openPnl": -1685.58,
+      "closedPnl": -2091.72,
+      "symbols": [
+        "QQQ",
+        "XLV",
+        "SMH",
+        "IGV"
+      ],
+      "absent": [
+        "PANW",
+        "CVX",
+        "CAT"
+      ],
+      "source": "user-etoro get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
+      "xRequestId": "e5a63c28-04ee-4ec3-94be-9e522c6233f3",
+      "positionsXRequestId": "2b1bec1d-e3da-4047-a801-5814ca8029a2",
+      "rejected": "keys-B / user-OfersClaw5 totals NOT used as Classic"
+    },
+    "momentum": {
+      "mirrorId": 11630170,
+      "basis": 8000,
+      "equity": 7827.6,
+      "cash": 904.64,
+      "cashPct": 11.6,
+      "deploymentPct": 88.4,
+      "openPnl": -146.06,
+      "closedPnl": -269.74,
+      "symbols": [
+        "JNJ",
+        "TGT",
+        "DE",
+        "XLK",
+        "VTRS",
+        "CRWD",
+        "P",
+        "PLTR"
+      ],
+      "source": "user-etoro parent mirror 11630170",
+      "xRequestId": "e5a63c28-04ee-4ec3-94be-9e522c6233f3",
+      "rejected": "user-Momentum-HHHGDTJ keys totals NOT used as $8000 allocation"
+    }
+  },
+  "checks": [
+    {
+      "id": "fg_score",
+      "pass": true,
+      "evidence": "CNN graphdata score 37 fear; prevClose 36; week 30; month 60; year 51"
+    },
+    {
+      "id": "fg_7_components",
+      "pass": true,
+      "evidence": "momentum 36 Fear; strength 0 EF; breadth 0 EF; put/call 58 Greed; vix 50 Neutral; junk 60 Greed; safe_haven 55 Neutral"
+    },
+    {
+      "id": "classic_mirror_A_only",
+      "pass": true,
+      "evidence": "mirror 11368142 equity 12891.16 cash 4690.22; 4 names QQQ/XLV/SMH/IGV; PANW ABSENT; matches morning 0530 card"
+    },
+    {
+      "id": "momentum_mirror_8000_basis",
+      "pass": true,
+      "evidence": "mirror 11630170 equity 7827.60 cash 904.64 invested 8000; 8 names; keys-B rejected"
+    },
+    {
+      "id": "no_mix_books",
+      "pass": true,
+      "evidence": "Classic dollars != Momentum dollars; separate cards"
+    },
+    {
+      "id": "weekend_no_new_opens",
+      "pass": true,
+      "evidence": "weekendMode true; No Buy Today both; recs for Mon"
+    },
+    {
+      "id": "commodities_live",
+      "pass": true,
+      "evidence": "eToro OIL 94.07 +1.77%; GOLD 4285.88 -0.20%; SILVER 64.27 -0.49%; Yahoo CL=F 92.41"
+    },
+    {
+      "id": "crypto_live",
+      "pass": true,
+      "evidence": "BTC 84038 +0.27%; ETH 2686.41 +0.14%; COIN -2.25%; HOOD -1.18%"
+    },
+    {
+      "id": "dual_write_identical",
+      "pass": true,
+      "evidence": "sha256=0802dded6672ce39c1d07dabc22638f88a8f79de3aeb7d9054ee2d96ca800887; bad=[]"
+    },
+    {
+      "id": "x_tier2",
+      "pass": true,
+      "evidence": "X credits 0.02 blocked Tier-2; public analyst bullets + Truth Social Trump; noted in brief"
+    }
+  ],
+  "verdict": "PASS",
+  "failReasons": []
+}

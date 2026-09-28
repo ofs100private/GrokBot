@@ -1,0 +1,181 @@
+{
+  "op": "qa.verdict.daily_brief",
+  "slot": "morning_0530",
+  "asOf": "2026-09-28T05:30:00+03:00",
+  "qaAt": "2026-09-28T05:31:58+03:00",
+  "revalidate_after_app_fix": false,
+  "revalidate_after_sidecar_fix": true,
+  "verdict": "PASS",
+  "fail_codes": [],
+  "prior_fail_codes_cleared": [
+    "DUAL_WRITE_SIDECAR_LAG"
+  ],
+  "soft_notes": [
+    "Sidecar fix confirmed: /workspace/daily-brief/ + /workspace/GrokBot/daily-brief/ classic|momentum now asOf 2026-09-28T05:30:00+03:00 and byte-identical with etoroview + GrokBot app (7-path standing set + GrokBot/daily-brief)",
+    "Classic equity live 12882.53 vs pack 12882.46 (\u0394+0.07); cash exact 4690.22; closedPnl \u22122091.72; symbols QQQ XLV SMH IGV",
+    "Momentum equity live 7813.07 vs pack 7813.58 (\u0394\u22120.51); cash exact 904.64; basis 8000; closedPnl \u2212269.74; 8 names match",
+    "daily-brief.json dual-write PASS: 10+ paths = claimed sha256 77720cd\u2026 unchanged",
+    "P ticker = Everpure Inc (instrumentId 6823) on mirror A \u2014 name soft-ok",
+    "Keys-B / user-OfersClaw5 and keys MCP correctly rejected; mirror A ids 11368142 / 11630170 only",
+    "FG 37 Fear OK; separate Classic+Momentum cards; No Buy Today / No Sale both; no place flags; weekendMode false OK Mon"
+  ],
+  "dualWrite": {
+    "daily_brief_sha256": "77720cd39ff95f648379c326718422681886b6eacf10855d7d873c2bcc79dd1e",
+    "daily_brief_paths_ok": true,
+    "path_count": 10,
+    "claimed_match": true,
+    "sidecars": {
+      "classic-portfolio.json": {
+        "identical": true,
+        "sha256": "37fa2b3cec0639a42c4dd5a9a30aa5f6013ef1872c7744b4ba7d82ba0e60cca3",
+        "asOf": "2026-09-28T05:30:00+03:00",
+        "path_count": 7,
+        "paths": [
+          "/workspace/daily-brief/classic-portfolio.json",
+          "/workspace/etoroview/public/classic-portfolio.json",
+          "/workspace/etoroview/dist/classic-portfolio.json",
+          "/workspace/etoroview/latest/classic-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/public/classic-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/dist/classic-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/latest/classic-portfolio.json"
+        ]
+      },
+      "momentum-portfolio.json": {
+        "identical": true,
+        "sha256": "9368cc52478c7c5e6477829988791caf2de91cc1cbf4b226b082818806f61adc",
+        "asOf": "2026-09-28T05:30:00+03:00",
+        "path_count": 7,
+        "paths": [
+          "/workspace/daily-brief/momentum-portfolio.json",
+          "/workspace/etoroview/public/momentum-portfolio.json",
+          "/workspace/etoroview/dist/momentum-portfolio.json",
+          "/workspace/etoroview/latest/momentum-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/public/momentum-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/dist/momentum-portfolio.json",
+          "/workspace/GrokBot/app/etoroview/latest/momentum-portfolio.json"
+        ]
+      }
+    },
+    "extra_paths_also_ok": {
+      "classic": [
+        "/workspace/GrokBot/daily-brief/classic-portfolio.json",
+        "/workspace/daily-brief-0530-2026-09-28/classic-portfolio.json"
+      ],
+      "momentum": [
+        "/workspace/GrokBot/daily-brief/momentum-portfolio.json",
+        "/workspace/daily-brief-0530-2026-09-28/momentum-portfolio.json"
+      ]
+    }
+  },
+  "pack_vs_live": {
+    "classic": {
+      "pack": {
+        "mirrorId": 11368142,
+        "equity": 12882.46,
+        "cash": 4690.22,
+        "symbols": [
+          "QQQ",
+          "XLV",
+          "SMH",
+          "IGV"
+        ],
+        "rejectedKeysB": true,
+        "note": "ledger A only \u2014 REJECT user-OfersClaw5 keys-B totals; PANW/CVX/CAT/XLI ABSENT"
+      },
+      "live_sso": {
+        "mirrorId": 11368142,
+        "availableCash": 4690.22,
+        "value": 12882.53,
+        "invested": 15000.0,
+        "openPnl": -1694.21,
+        "closedPnl": -2091.72,
+        "symbols": [
+          "QQQ",
+          "XLV",
+          "SMH",
+          "IGV"
+        ],
+        "source": "user-etoro parent SSO get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
+        "xRequestId": "432447a3-2021-4ea5-bfbf-6b2499a22d67",
+        "positionsXRequestId": "95e81605-7dfc-4756-a21e-05596a5c1701",
+        "timestamp": "2026-09-28T02:31:32.6516509Z"
+      },
+      "cash_match": true,
+      "symbols_match": true,
+      "equity_delta": 0.07
+    },
+    "momentum": {
+      "pack": {
+        "mirrorId": 11630170,
+        "equity": 7813.58,
+        "cash": 904.64,
+        "basis": 8000,
+        "symbols": [
+          "JNJ",
+          "TGT",
+          "DE",
+          "XLK",
+          "VTRS",
+          "CRWD",
+          "P",
+          "PLTR"
+        ],
+        "rejectedKeysB": true,
+        "note": "mirror A $8k basis \u2014 REJECT user-Momentum-HHHGDTJ keys MCP; P=6823 Everpure; no ETH"
+      },
+      "live_sso": {
+        "mirrorId": 11630170,
+        "availableCash": 904.64,
+        "value": 7813.07,
+        "invested": 8000.0,
+        "basis": 8000,
+        "openPnl": -160.59,
+        "closedPnl": -269.74,
+        "symbols": [
+          "JNJ",
+          "TGT",
+          "DE",
+          "XLK",
+          "VTRS",
+          "CRWD",
+          "P",
+          "PLTR"
+        ],
+        "source": "user-etoro parent SSO get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
+        "xRequestId": "432447a3-2021-4ea5-bfbf-6b2499a22d67",
+        "positionsXRequestId": "95e81605-7dfc-4756-a21e-05596a5c1701",
+        "timestamp": "2026-09-28T02:31:32.6516509Z"
+      },
+      "cash_match": true,
+      "symbols_match": true,
+      "equity_delta": -0.51
+    }
+  },
+  "fearAndGreed": {
+    "score": 37,
+    "rating": "Fear",
+    "components": 7
+  },
+  "recommendations": {
+    "Classic": {
+      "buy": "No Buy Today",
+      "sell": "No Sale"
+    },
+    "Momentum": {
+      "buy": "No Buy Today",
+      "sell": "No Sale"
+    }
+  },
+  "weekendMode": false,
+  "keysB_rejected_confirmed": true,
+  "no_place_flags": true,
+  "submit_paths": {
+    "userJson": "/workspace/daily-brief-2026-09-28-0530.json",
+    "latest": "/workspace/daily-brief/daily-brief.json",
+    "briefMd": "/workspace/daily-brief-0530-2026-09-28/brief.md",
+    "datedFolder": "/workspace/daily-brief-0530-2026-09-28/",
+    "all_exist": true,
+    "json_coherent": true
+  },
+  "submit": "/workspace/daily-brief/qa/morning-0530-2026-09-28-qa.json"
+}

@@ -1,124 +1,99 @@
 {
-  "op": "qa.validate.daily_brief",
+  "op": "qa.verdict.daily_brief",
   "slot": "afternoon_1530",
-  "asOf": "2026-09-27T15:50:00+03:00",
-  "timezone": "Asia/Jerusalem",
-  "weekendMode": true,
-  "noNewOpens": true,
-  "nextSession": "Monday US cash open (Mon Sep 28, 2026)",
-  "sha256_daily_brief_json": "5c3f7315827bcf33f1e3543b39f7ed3c62117b6aeaf41935d8bd2987541c26c1",
-  "dualWritePaths": [
-    "/workspace/etoroview/public/daily-brief.json",
-    "/workspace/etoroview/dist/daily-brief.json",
-    "/workspace/etoroview/latest/daily-brief.json",
-    "/workspace/GrokBot/app/etoroview/public/daily-brief.json",
-    "/workspace/GrokBot/app/etoroview/dist/daily-brief.json",
-    "/workspace/GrokBot/app/etoroview/latest/daily-brief.json"
+  "asOf": "2026-09-28T16:56:49+03:00",
+  "qaAt": "2026-09-28T16:59:08+03:00",
+  "verdict": "PASS",
+  "fail_codes": [],
+  "prior_fail_codes_cleared": [
+    "CASH_MISMATCH_CLASSIC",
+    "CASH_MISMATCH_MOMENTUM",
+    "SYMBOL_MISMATCH_CLASSIC",
+    "SYMBOL_MISMATCH_MOMENTUM",
+    "STALE_MOMENTUM_SHA",
+    "STALE_BRIEF_SHA"
   ],
-  "briefMd": "/workspace/daily-brief/daily-brief-1530-2026-09-27.md",
-  "envelope": "/workspace/daily-brief/afternoon-1530-2026-09-27.json",
-  "liveChecksumNotes": {
+  "post_aapl_restamp": true,
+  "aapl_postfill_qa_pass": true,
+  "revalidate_after_live_restamp": true,
+  "dual_write": "classic 8/8 \u00b7 momentum 8/8 \u00b7 brief 11/11 PASS",
+  "dual_write_shas": {
+    "daily-brief.json": "dc9e1a41add1be91de76e266cd510b5c6d72e2cbf735505a2a623167f83c15f7",
+    "classic-portfolio.json": "f48f01770b187ee41696a3cd1a3d0391b9266d9fc43ac80d3455bba0a2ab4d77",
+    "momentum-portfolio.json": "a4cf6351c496fd32710bce451531f1f931c167be37e88160a0a7f1e3ff3a6ec3"
+  },
+  "live": {
     "classic": {
       "mirrorId": 11368142,
-      "equity": 12891.16,
-      "cash": 4690.22,
-      "cashPct": 36.4,
-      "deploymentPct": 63.6,
-      "openPnl": -1685.58,
-      "closedPnl": -2091.72,
+      "equity": 12802.42,
+      "cash": 7285.54,
       "symbols": [
         "QQQ",
         "XLV",
-        "SMH",
-        "IGV"
-      ],
-      "absent": [
-        "PANW",
-        "CVX",
-        "CAT"
-      ],
-      "source": "user-etoro get-my-portfolio-summary copiedTraders + get-my-positions-and-orders mirrors",
-      "xRequestId": "dd3bad28-1a14-4a65-8d2e-3c41f21a0c3e",
-      "positionsXRequestId": "36f64ab3-66af-4334-a01f-bbe48ece999e",
-      "rejected": "keys-B / user-OfersClaw5 totals NOT used as Classic"
+        "SMH"
+      ]
     },
     "momentum": {
       "mirrorId": 11630170,
-      "basis": 8000,
-      "equity": 7827.6,
-      "cash": 904.64,
-      "cashPct": 11.6,
-      "deploymentPct": 88.4,
-      "openPnl": -146.06,
-      "closedPnl": -269.74,
+      "equity": 7822.61,
+      "cash": 2150.1,
       "symbols": [
+        "AAPL",
         "JNJ",
-        "TGT",
         "DE",
         "XLK",
         "VTRS",
         "CRWD",
-        "P",
-        "PLTR"
+        "P"
       ],
-      "source": "user-etoro parent mirror 11630170",
-      "xRequestId": "dd3bad28-1a14-4a65-8d2e-3c41f21a0c3e",
-      "positionsXRequestId": "36f64ab3-66af-4334-a01f-bbe48ece999e",
-      "rejected": "user-Momentum-HHHGDTJ keys totals NOT used as $8000 allocation"
+      "aapl_positionId": 3589579686,
+      "aapl_invested": 718.76
+    },
+    "xRequestId_summary": "54620666-b7f9-44c9-ac59-dbfca364acda",
+    "xRequestId_positions": "798d02f0-0806-4ad0-845b-47433af555f6",
+    "timestamp": "2026-09-28T13:57:41.538778Z"
+  },
+  "pack": {
+    "classic": {
+      "equity": 12804.25,
+      "cash": 7285.54,
+      "symbols": [
+        "QQQ",
+        "XLV",
+        "SMH"
+      ]
+    },
+    "momentum": {
+      "equity": 7818.93,
+      "cash": 2150.1,
+      "symbols": [
+        "CRWD",
+        "VTRS",
+        "P",
+        "XLK",
+        "JNJ",
+        "DE",
+        "AAPL"
+      ],
+      "aapl_positionId": 3589579686
     }
   },
-  "checks": [
-    {
-      "id": "fg_score",
-      "pass": true,
-      "evidence": "CNN graphdata score 37 fear; prevClose 36; week 30; month 60; year 51"
+  "diffs": {
+    "classic": {
+      "equity": 1.83,
+      "cash": 0.0,
+      "symbols_ok": true,
+      "cash_ok": true
     },
-    {
-      "id": "fg_7_components",
-      "pass": true,
-      "evidence": "momentum 36 Fear; strength 0 EF; breadth 0 EF; put/call 58 Greed; vix 50 Neutral; junk 60 Greed; safe_haven 55 Neutral"
-    },
-    {
-      "id": "classic_mirror_A_only",
-      "pass": true,
-      "evidence": "mirror 11368142 equity 12891.16 cash 4690.22; 4 names QQQ/XLV/SMH/IGV; PANW ABSENT; xRequestId dd3bad28-1a14-4a65-8d2e-3c41f21a0c3e"
-    },
-    {
-      "id": "momentum_mirror_8000_basis",
-      "pass": true,
-      "evidence": "mirror 11630170 equity 7827.60 cash 904.64 invested 8000; 8 names; keys-B rejected; xRequestId dd3bad28-1a14-4a65-8d2e-3c41f21a0c3e"
-    },
-    {
-      "id": "no_mix_books",
-      "pass": true,
-      "evidence": "Classic dollars != Momentum dollars; separate cards"
-    },
-    {
-      "id": "weekend_no_new_opens",
-      "pass": true,
-      "evidence": "weekendMode true; noNewOpens true; No Buy Today both; recs for Mon Sep 28"
-    },
-    {
-      "id": "commodities_live",
-      "pass": true,
-      "evidence": "eToro OIL 93.88 -0.08%; GOLD 4283.68 -0.03%; SILVER 64.19 -0.23%; Yahoo CL=F 92.41"
-    },
-    {
-      "id": "crypto_live",
-      "pass": true,
-      "evidence": "BTC 84956.64 +0.78%; ETH 2713.69 +0.98%; COIN -2.25%; HOOD -1.18%"
-    },
-    {
-      "id": "dual_write_identical",
-      "pass": true,
-      "evidence": "sha256=5c3f7315827bcf33f1e3543b39f7ed3c62117b6aeaf41935d8bd2987541c26c1; bad=[]"
-    },
-    {
-      "id": "x_tier2",
-      "pass": true,
-      "evidence": "X credits 0.02 blocked Tier-2; public analyst bullets + Truth Social Trump (15:09 IDT jobs post); noted in brief"
+    "momentum": {
+      "equity": -3.68,
+      "cash": 0.0,
+      "symbols_ok": true,
+      "cash_ok": true
     }
-  ],
-  "verdict": "PASS",
-  "failReasons": []
+  },
+  "artifact": "/workspace/daily-brief/qa/afternoon-1530-2026-09-28-qa.json",
+  "keysB_rejected": true,
+  "no_place": true,
+  "weekendMode": false
 }
