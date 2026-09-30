@@ -1,0 +1,1 @@
+classic-keys-B-closed-trades.csv = OfersClaw5 keys-B execution history. NOT Mirror A 11368142. Classic Mirror A closed moves = parent-etoro-closed-20260501.json (prefer isMirrorTrade:true). fully_loaded = netProfit - fees.
