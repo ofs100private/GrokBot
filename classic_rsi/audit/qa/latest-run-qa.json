@@ -1,65 +1,114 @@
 {
-  "skill": "classic-rsi-1h-run-qa",
+  "run_id": "classic-rsi-auto-20260930-194443-e56a4d55",
   "verdict": "PASS",
-  "run_id": "classic-rsi-auto-20260929-204222-34e3828e",
-  "propose_run_id": "classic-rsi-propose-20260929-204224-4d351538",
-  "asOfIDT": "2026-09-29 20:42:24 IDT",
-  "asOfET": "2026-09-29 13:42:24 ET",
-  "kind": "auto",
+  "deviation_codes": [],
   "status": "PROPOSE",
+  "buy_packs_count": 1,
+  "timestamp": "2026-09-30 19:45:12 IDT",
+  "kind": "auto",
   "timeframe": "1H",
-  "long_only": true,
   "confirmed_close": true,
+  "long_only": true,
   "do_not_place": true,
   "place": false,
-  "buy_packs_count": 0,
-  "risk_off_count": 0,
-  "risk_off_symbols": [],
-  "buy_pack_symbols": [],
-  "symbols_count": 21,
-  "mirrorId": "11368142",
+  "mirrorId": 11368142,
   "portfolio": "OfersClaw5-PRIYN",
-  "mandate_gates": {
-    "weekend": false,
-    "us_rth": true,
-    "available_cash": null,
-    "cash_floor_usd": 2500.0,
-    "blocks": [],
-    "allow_new_buys": true,
-    "force": false,
-    "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
-  },
-  "universe_meta": {
-    "liquid_count": 489,
-    "rising_count": 18,
-    "used_fallback": false,
-    "pool_size": 502,
-    "fallback_reason": null,
-    "book_count": 3,
-    "universe_size": 21,
-    "override": null
-  },
-  "book_summary": {},
-  "book_symbols": [
-    "SMH",
-    "QQQ",
-    "XLV"
-  ],
-  "pack_details": [],
-  "auto_never_places": true,
-  "index_row_present": true,
-  "latest_auto_matches": true,
-  "deviation_codes": [],
-  "notes": [
-    "latest-auto matches run_id",
-    "audit_json_present",
-    "index_row_present",
-    "confirmed_close=True; status=PROPOSE",
-    "mirror 11368142",
-    "auto never places",
-    "universe ok liquid=489 rising=18 syms=21 fallback=False",
-    "PASS run-level; buy_packs=0 \u2014 no order-QA; stop (auto never places)",
-    "keys-B rejected: envelope cites mirror 11368142 / OfersClaw5-PRIYN only"
-  ],
-  "validated_by": "classic-rsi-1h-auto automation (skill classic-rsi-1h-run-qa checklist; no SendToAgent in this run \u2014 CoS parent should confirm with QA Bot if independent agent stamp required)"
+  "evidence": {
+    "audit_path": "/workspace/classic_rsi/audit/classic-rsi-auto-20260930-194443-e56a4d55.json",
+    "latest_auto_path": "/workspace/classic_rsi/audit/latest-auto.json",
+    "latest_auto_matches_run_id": true,
+    "index_jsonl_row": true,
+    "hard_fail_checks": {
+      "RSI_RUN_MISSING": false,
+      "RSI_AUDIT_INCOMPLETE": false,
+      "RSI_TF_NOT_1H": false,
+      "RSI_UNCONFIRMED_BARS": [],
+      "RSI_SHORT_OR_PIP": false,
+      "RSI_CRYPTO": false,
+      "RSI_KEYS_B": false,
+      "RSI_PLACE_FROM_AUTO": false,
+      "RSI_RUN_CRASH": false
+    },
+    "pack_summary": [
+      {
+        "symbol": "F",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "leverage": 1,
+        "bar_confirmed": true,
+        "rsi_rule": {
+          "raw_signal": "BUY_80",
+          "strength_tag": "EXTREME_80",
+          "zone": "OVER_SOLD",
+          "rsi": 17.341695616945984,
+          "label_note": "80/70 are rule labels, not win rates"
+        },
+        "levels": {
+          "entry": 11.975000381469727,
+          "stop_loss": 11.8001593305308,
+          "take_profit": 12.208121782721628,
+          "atr": 0.11656070062595071,
+          "sl_mult": 1.5,
+          "tp_mult": 2.0,
+          "risk_per_share": 0.17484105093892666,
+          "reward_per_share": 0.23312140125190162,
+          "r_multiple": 1.33333333333333,
+          "units": "price"
+        },
+        "sizing": {
+          "suggested_notional_usd": null,
+          "note": "Trader_Classic sets size; cash floor \u2265~$2.5k after fill; \u00d71 only"
+        },
+        "status": "PROPOSE_ONLY",
+        "do_not_place": true,
+        "run_id": "classic-rsi-propose-20260930-194446-e7995032",
+        "gate": "classic-real-money-order-qa-gate",
+        "route": "REAL",
+        "instrument": {
+          "symbol": "F",
+          "assetClass": "equity_or_etf"
+        }
+      }
+    ],
+    "mandate_gates": {
+      "weekend": false,
+      "us_rth": true,
+      "available_cash": null,
+      "cash_floor_usd": 2500.0,
+      "blocks": [],
+      "allow_new_buys": true,
+      "force": false,
+      "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
+    },
+    "universe_meta": {
+      "pool_size": 502,
+      "liquid_count": 490,
+      "rising_count": 27,
+      "book_count": 3,
+      "universe_size": 30,
+      "used_fallback": false,
+      "fallback_reason": null,
+      "asOf": "2026-09-30 19:44:15 IDT"
+    },
+    "risk_off_summary": [
+      {
+        "symbol": "RVTY",
+        "action": "RISK_OFF",
+        "raw_signal": "SELL_70",
+        "strength_tag": "ZONE_70",
+        "zone": "RESISTANCE",
+        "rsi": 68.79466434695853,
+        "never_short": true
+      }
+    ],
+    "soft_notes": [
+      "book_summary empty in envelope; mirrorId=11368142 / OfersClaw5-PRIYN \u2014 no keys-B dollars used.",
+      "Dynamic universe healthy (30 symbols, rising=27, liquid=490, used_fallback=False); not fixed-6 fallback."
+    ],
+    "further_action": "order_qa_then_trader_classic",
+    "rerun_count_this_hour": 0,
+    "validator": "classic-rsi-1h-run-qa",
+    "slot": "classic-rsi-1h-auto 12:35 ET 2026-09-30",
+    "propose_run_id": "classic-rsi-propose-20260930-194446-e7995032"
+  }
 }
