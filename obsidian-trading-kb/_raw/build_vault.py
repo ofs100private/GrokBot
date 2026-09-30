@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Rebuild Obsidian trading KB per QA FAIL fixes (CLOSED_MOVE_MISMATCH, MISSING_70K_PLAN, MISSING_LEDGER_TAGS, MISSING_NOTES)."""
+"""Rebuild Obsidian trading KB per QA FAIL fixes (CLOSED_MOVE_MISMATCH, MISSING_70K_PLAN, MISSING_LEDGER_TAGS, MISSING_NOTES).
+
+Job-Runs notes are written separately by Scripts/write_job_run.py
+(CLI args, --stdin JSON, or --backfill). See README + Process/Improvement-Process.md.
+"""
 from __future__ import annotations
 
 import csv

@@ -27,4 +27,4 @@ Equity **$7,807.78** · Cash **$549.77** · Open [[Positions/Momentum/CRWD|CRWD]
 
 ## Indexes
 
-[[Indexes/MOC-Vault]] · [[Indexes/MOC-Trades]] · [[Indexes/MOC-Portfolios]] · [[Feedback/Feedback-Loop]]
+[[Indexes/MOC-Vault]] · [[Indexes/MOC-Trades]] · [[Indexes/MOC-Portfolios]] · [[Indexes/MOC-Job-Runs]] · [[Feedback/Feedback-Loop]] · [[Process/Improvement-Process]]

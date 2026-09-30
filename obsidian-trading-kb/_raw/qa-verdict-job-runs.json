@@ -1,0 +1,94 @@
+{
+  "gate": "OBSIDIAN_JOB_RUNS_SCHEMA_GATE",
+  "as_of": "2026-09-30T19:57:28+03:00",
+  "timezone": "Asia/Jerusalem",
+  "verdict": "PASS",
+  "qa_places": false,
+  "deviation_codes": [],
+  "checks": {
+    "claimed_notes_exist": {
+      "pass": true,
+      "claimed": 91,
+      "found_run_notes": 91,
+      "by_folder": {
+        "Breakout-TA": 9,
+        "Classic-RSI": 57,
+        "Daily-Brief": 5,
+        "Daily-Trader": 4,
+        "Momentum-EOD": 15,
+        "QA-Gates": 1
+      },
+      "missing_on_disk": [],
+      "note": "Excluded _index.md and _templates/; total .md under Job-Runs/ = 99 including 7 indexes + 1 template"
+    },
+    "frontmatter_schema": {
+      "pass": true,
+      "sample_size": 91,
+      "required_fields": [
+        "bot",
+        "job",
+        "run_id",
+        "status"
+      ],
+      "status_enum": [
+        "success",
+        "fail",
+        "blocked",
+        "partial",
+        "other"
+      ],
+      "fm_issues": 0,
+      "bad_status": 0,
+      "missing_audit_path_or_content": 0,
+      "status_dist": {
+        "success": 89,
+        "blocked": 1,
+        "partial": 1
+      }
+    },
+    "run_id_provenance": {
+      "pass": true,
+      "sampled": 91,
+      "invented": 0,
+      "audit_path_exists_on_disk": 91,
+      "note": "Every sampled run_id has a resolvable audit_path on disk (classic_rsi/audit, breakout_ta/audit, daily_trader/audit, momentum_audit, daily-brief packs, etc.)"
+    },
+    "improvement_process": {
+      "pass": true,
+      "path": "Process/Improvement-Process.md",
+      "exists": true
+    },
+    "feedback_loop_mentions_job_runs": {
+      "pass": true,
+      "path": "Feedback/Feedback-Loop.md",
+      "mentions_job_runs": true,
+      "evidence": "Purpose + cadence steps explicitly reference Job-Runs and Scripts/write_job_run.py"
+    },
+    "write_script": {
+      "pass": true,
+      "path": "Scripts/write_job_run.py",
+      "exists": true,
+      "non_empty": true,
+      "bytes": 37420
+    }
+  },
+  "inventory": {
+    "note_count": 91,
+    "sample_size": 91,
+    "total_md_under_job_runs": 99,
+    "indexes": 7,
+    "templates": 1
+  },
+  "evidence_paths": [
+    "/workspace/obsidian-trading-kb/_raw/qa-pack-job-runs.json",
+    "/workspace/obsidian-trading-kb/Job-Runs/",
+    "/workspace/obsidian-trading-kb/Process/Improvement-Process.md",
+    "/workspace/obsidian-trading-kb/Feedback/Feedback-Loop.md",
+    "/workspace/obsidian-trading-kb/Scripts/write_job_run.py",
+    "/workspace/classic_rsi/audit/",
+    "/workspace/breakout_ta/audit/",
+    "/workspace/daily_trader/audit/",
+    "/workspace/momentum_audit/"
+  ],
+  "notes": "LIGHT QA OBSIDIAN_JOB_RUNS_SCHEMA_GATE: all 91 claimed Job-Runs notes present with valid frontmatter (bot/job/run_id/status); status enum clean; all run_ids backed by existing audit_path files (0 invented); Improvement-Process + Feedback-Loop Job-Runs refs + write_job_run.py OK. qa_places=false; no trades placed."
+}
