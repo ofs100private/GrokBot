@@ -70,6 +70,21 @@ Do **not** tighten the miss rule. Score `EOD_SCREENER_MISSED` as follows:
 
 False-positive example (2026-09-23): early ACTION BUY GILD ~21:52 IDT before gate; scorer wrongly flagged miss because it only counted the 23:04 catch-up.
 
+## Post place-QA execution ACK (CoS / Ops 2026-10-01)
+
+Wed 2026-09-30: place-QA **PASS** for JNJ CLOSE + CRWD BE, but Mirror A next day still held JNJ and CRWD SL stayed 230.85 (cash still ~$549.77). Root: keys MCP mixed-auth 422 + no Trader place wake after PASS; watchdog marked CLEAN because screener/PM ran, not because fills landed.
+
+**Mandatory after any place-QA PASS (CLOSE / MOVE_SL_BREAKEVEN / TRAIL_SL / BUY):**
+
+1. Trader_momentum prepares+places in the **same wake** (FULL AUTO). Do not end the wake on PASS alone.
+2. Write audit `place_ack` row: `PLACED` | `WAITING_FOR_MARKET` | `BLOCKED_KEYS_MCP` | `SKIPPED_REASON` with mirror A positionId + xRequestId.
+3. **Sticky pending queue:** once authorize_place PASS for CLOSE/BE/TRAIL, keep until Mirror A confirms (position gone / SL ≥ new_stop / cash freed). Re-attempt next EOD even if live R later slips below 2R (missed BE is still debt).
+4. Watchdog / eod_miss_check: if `authorize_place_now` has no matching place_ack within ~15m → **`EOD_PLACE_NOT_ACKED`** (not CLEAN). Scan/PM ACTION alone is insufficient.
+5. Execution path: keys MCP must be keys-only (no mixed OAuth). If keys broken, route place via documented working Real path — never silent skip after PASS.
+6. Thin cash (&lt;~$1000) + ≥8 names: log `CASH_RECYCLE_REQUIRED`; BUY pack is advisory until a CLOSE frees room; then **fresh** place-QA (existing cash-block rule).
+
+See `/workspace/momentum_audit/improvement-2026-10-01.md`.
+
 ## Do not
 
 Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat keys MCP as the $8k book. Double-buy a name filled this session. Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).

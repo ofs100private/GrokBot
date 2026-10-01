@@ -1,0 +1,124 @@
+{
+  "schema": "qa-verdict-v1",
+  "run": "daily_brief",
+  "slot": "afternoon_1530",
+  "date": "2026-10-01",
+  "asOf": "2026-10-01T15:50:00+03:00",
+  "asOf_qa": "2026-10-01T15:52:00+03:00",
+  "weekendMode": false,
+  "us_session_day": true,
+  "overall": "PASS",
+  "verdict": "PASS",
+  "hard_fail": false,
+  "hard_fail_gates": [],
+  "qa_places": false,
+  "brief_places": false,
+  "selfCheck": true,
+  "independentLiveRevalidate": true,
+  "note": "Executor live revalidate vs CNN graphdata file + user-etoro SSO aggregate written this run. qa_places=false; never place. Classic mirror A 11368142 only; Momentum mirror A 11630170 $8k basis; keys-B REJECTED.",
+  "deviation_codes": [],
+  "mismatches": [],
+  "fg": {
+    "score": 31,
+    "rating": "Fear",
+    "raw": 30.7428571428571,
+    "timestamp": "2026-10-01T12:29:01+00:00",
+    "compare": {
+      "previousClose": 31,
+      "week": 36,
+      "month": 45,
+      "year": 52
+    },
+    "components": {
+      "market_momentum_sp500": {
+        "score": 26,
+        "rating": "Fear"
+      },
+      "stock_price_strength": {
+        "score": 1,
+        "rating": "Extreme Fear"
+      },
+      "stock_price_breadth": {
+        "score": 0,
+        "rating": "Extreme Fear"
+      },
+      "put_call_options": {
+        "score": 37,
+        "rating": "Fear"
+      },
+      "market_volatility_vix": {
+        "score": 50,
+        "rating": "Neutral"
+      },
+      "junk_bond_demand": {
+        "score": 55,
+        "rating": "Neutral"
+      },
+      "safe_haven_demand": {
+        "score": 46,
+        "rating": "Neutral"
+      }
+    }
+  },
+  "classic": {
+    "mirrorId": 11368142,
+    "equity": 12831.99,
+    "cash": 7285.54,
+    "cashPct": 56.8,
+    "symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "xRequestId": "6a268b1e-08b5-4f49-8668-8212121bafdd"
+  },
+  "momentum": {
+    "mirrorId": 11630170,
+    "equity": 7791.68,
+    "cash": 549.77,
+    "cashPct": 7.1,
+    "symbols": [
+      "CRWD",
+      "VTRS",
+      "P",
+      "XLK",
+      "DE",
+      "FTNT",
+      "JNJ",
+      "AAPL",
+      "NDSN"
+    ],
+    "basis": 8000,
+    "xRequestId": "6a268b1e-08b5-4f49-8668-8212121bafdd"
+  },
+  "commodities_stance": {
+    "oil": "wait",
+    "gold": "wait",
+    "silver": "wait"
+  },
+  "dual_write": {
+    "ok": true,
+    "sha256_daily_brief": "f5b8c532c889912e2f61f1e95520d046e6fa5d09cd89eeea9db11dd86785f1bc",
+    "manifest": "/workspace/daily-brief-1530-2026-10-01/written-manifest.json"
+  },
+  "gates": {
+    "1_cnn_fg_live": {
+      "verdict": "PASS"
+    },
+    "2_classic_mirror_A": {
+      "verdict": "PASS"
+    },
+    "3_momentum_mirror_A": {
+      "verdict": "PASS"
+    },
+    "4_commodities_wait": {
+      "verdict": "PASS"
+    },
+    "5_brief_integrity": {
+      "verdict": "PASS"
+    },
+    "6_app_dual_write": {
+      "verdict": "PASS"
+    }
+  }
+}

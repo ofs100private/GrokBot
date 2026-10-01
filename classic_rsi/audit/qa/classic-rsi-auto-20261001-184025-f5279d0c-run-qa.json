@@ -1,0 +1,111 @@
+{
+  "run_id": "classic-rsi-auto-20261001-184025-f5279d0c",
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "status": "PROPOSE",
+  "buy_packs_count": 2,
+  "risk_off_count": 1,
+  "timestamp": "2026-10-01 18:41:33 IDT",
+  "kind": "auto",
+  "timeframe": "1H",
+  "confirmed_close": true,
+  "long_only": true,
+  "do_not_place": true,
+  "place": false,
+  "mirrorId": 11368142,
+  "portfolio": "OfersClaw5-PRIYN",
+  "propose_run_id": "classic-rsi-propose-20261001-184030-ba204fc6",
+  "mandate_gates": {
+    "weekend": false,
+    "us_rth": true,
+    "available_cash": null,
+    "cash_floor_usd": 2500.0,
+    "blocks": [],
+    "allow_new_buys": true,
+    "force": false,
+    "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
+  },
+  "universe_meta_summary": {
+    "universe_size": 53,
+    "liquid_count": 490,
+    "rising_count": 50,
+    "book_count": 3,
+    "used_fallback": false,
+    "fallback_reason": null
+  },
+  "soft_notes": [
+    "universe healthy: size=53 liquid=490 rising=50 fallback=False",
+    "packs: ['KMB', 'KVUE'] (BUY_70 SUPPORT); risk_off=['ACN']",
+    "available_cash null in mandate_gates \u2014 Trader_Classic must apply live Fear/cash/sleeve before prepare"
+  ],
+  "evidence": {
+    "audit_path": "/workspace/classic_rsi/audit/classic-rsi-auto-20261001-184025-f5279d0c.json",
+    "latest_auto_path": "/workspace/classic_rsi/audit/latest-auto.json",
+    "latest_auto_matches_run_id": true,
+    "index_jsonl_row": true,
+    "envelope_source": "latest-auto",
+    "hard_fail_checks": {
+      "RSI_RUN_MISSING": false,
+      "RSI_AUDIT_INCOMPLETE": false,
+      "RSI_TF_NOT_1H": false,
+      "RSI_UNCONFIRMED_BARS": [],
+      "RSI_SHORT_OR_PIP": false,
+      "RSI_CRYPTO": false,
+      "RSI_KEYS_B": false,
+      "RSI_PLACE_FROM_AUTO": false,
+      "RSI_RUN_CRASH": false
+    },
+    "pack_summary": [
+      {
+        "symbol": "KMB",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "leverage": 1,
+        "entry": 95.20899963378906,
+        "sl": 94.04052893708933,
+        "tp": 96.76696056272203,
+        "atr": 0.7789804644664873,
+        "units": "price",
+        "rsi_rule": "BUY_70",
+        "pack_run_id": "classic-rsi-propose-20261001-184030-ba204fc6",
+        "do_not_place": true,
+        "mirrorId": 11368142,
+        "atr_sl_math_ok": true,
+        "assetClass": "equity_or_etf",
+        "bar_confirmed": true
+      },
+      {
+        "symbol": "KVUE",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "leverage": 1,
+        "entry": 17.360000610351562,
+        "sl": 17.176801459381757,
+        "tp": 17.60426614497797,
+        "atr": 0.12213276731320385,
+        "units": "price",
+        "rsi_rule": "BUY_70",
+        "pack_run_id": "classic-rsi-propose-20261001-184030-ba204fc6",
+        "do_not_place": true,
+        "mirrorId": 11368142,
+        "atr_sl_math_ok": true,
+        "assetClass": "equity_or_etf",
+        "bar_confirmed": true
+      }
+    ],
+    "risk_off_symbols": [
+      "ACN"
+    ],
+    "rejected_keys_B": true,
+    "qa_skill": "classic-rsi-1h-run-qa",
+    "validator": "classic-rsi-1h-auto automation (CoS standing order; QA Bot skill applied in-run)"
+  },
+  "next": {
+    "action": "Trader_Classic Fear/cash/sleeve live gates \u2192 prepare \u2192 classic-real-money-order-qa-gate \u2192 place only on PASS",
+    "buy_symbols": [
+      "KMB",
+      "KVUE"
+    ],
+    "auto_never_places": true
+  }
+}

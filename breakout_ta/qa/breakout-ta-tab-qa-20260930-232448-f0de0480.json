@@ -1,0 +1,201 @@
+{
+  "gate": "breakout-ta-tab-data-qa-gate",
+  "verdict": "PASS",
+  "asOf_utc": "2026-09-30T20:26:37Z",
+  "asOf_idt": "2026-09-30 ~23:26 IDT",
+  "run_id": "breakout-auto-20260930-232448-f0de0480",
+  "gates": {
+    "G1_dual_write": {
+      "status": "PASS",
+      "pass": true,
+      "sha256": "2d3f557274c8a636414bb242e88089f26f78efbdf8502accea0befcd9164033f",
+      "copies": 8,
+      "paths": [
+        "/workspace/etoroview/public/breakout-ta.json",
+        "/workspace/etoroview/dist/breakout-ta.json",
+        "/workspace/etoroview/latest/breakout-ta.json",
+        "/workspace/breakout_ta/breakout-ta.json",
+        "/workspace/GrokBot/breakout_ta/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/public/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/dist/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/latest/breakout-ta.json"
+      ],
+      "all_identical": true,
+      "feed_run_id": "breakout-auto-20260930-232448-f0de0480",
+      "feed_run_id_match": true
+    },
+    "G2_audit_integrity": {
+      "status": "PASS",
+      "pass": true,
+      "latest_eq_run_file": true,
+      "audit_sha256": "454b649e0d048469a0c3c2c58301d4ac66b2a156782a4d41fcce9f585fb4bc1a",
+      "index_jsonl": true,
+      "index_entry": {
+        "run_id": "breakout-auto-20260930-232448-f0de0480",
+        "asOfIDT": "2026-09-30 23:24:50 IDT",
+        "path": "/workspace/breakout_ta/audit/breakout-auto-20260930-232448-f0de0480.json",
+        "n_symbols": 20,
+        "confirmed": 0,
+        "watch": 9,
+        "failed": 1
+      },
+      "counts": {
+        "confirmed": 0,
+        "watch": 9,
+        "failed": 1,
+        "symbols": 20
+      },
+      "feed_counts": {
+        "confirmed": 0,
+        "watch": 9,
+        "failed": 1,
+        "symbols": 20
+      },
+      "do_not_place": true,
+      "place": false,
+      "doNotPlaceFromThisUi": true,
+      "asOfIDT": "2026-09-30 23:24:50 IDT"
+    },
+    "G3_signal_honesty": {
+      "status": "PASS",
+      "pass": true,
+      "confirmed": [],
+      "confirmed_count": 0,
+      "all_1D": true,
+      "levels_entry_stop_target": true,
+      "volume_ratio": true,
+      "confirmed_detail": [],
+      "doNotPlaceFromThisUi": true,
+      "no_shorts": true,
+      "breakout_ta_place_false": true,
+      "note": "confirmed=0 \u2192 zero CONFIRMED rows (expected)"
+    },
+    "G4_comparison": {
+      "status": "PASS",
+      "pass": true,
+      "methods": [
+        "breakout_ta",
+        "classic_rsi",
+        "momentum_breakout"
+      ],
+      "overlap_subseteq_universe": true,
+      "invented_dollars": false,
+      "place_authorized_false": true,
+      "diff_notes_authorize_place": false,
+      "breakout_ta_place": false,
+      "overlap": {
+        "breakout_confirmed_in_classic_book": [],
+        "breakout_confirmed_in_momentum_book": [],
+        "breakout_watch_in_classic_book": [
+          "QQQ",
+          "SMH"
+        ],
+        "breakout_watch_in_momentum_book": [
+          "CRWD",
+          "FTNT",
+          "NDSN",
+          "P",
+          "XLK"
+        ],
+        "classic_rsi_buy_also_breakout_confirmed": [],
+        "classic_rsi_buy_also_breakout_watch": []
+      }
+    },
+    "G5_live_book_overlap": {
+      "status": "PASS",
+      "pass": true,
+      "detail": {
+        "confirmed_classic": [],
+        "confirmed_momentum": [],
+        "watch_classic": [
+          "QQQ",
+          "SMH"
+        ],
+        "watch_momentum": [
+          "CRWD",
+          "FTNT",
+          "NDSN",
+          "P",
+          "XLK"
+        ],
+        "confirmed_classic_ok": true,
+        "confirmed_momentum_ok": true,
+        "watch_classic_ok": true,
+        "watch_momentum_ok": true,
+        "classic_live_symbols": [
+          "QQQ",
+          "SMH",
+          "XLV"
+        ],
+        "momentum_live_symbols": [
+          "AAPL",
+          "CRWD",
+          "DE",
+          "FTNT",
+          "JNJ",
+          "NDSN",
+          "P",
+          "VTRS",
+          "XLK"
+        ],
+        "classic_book_symbols_feed": [
+          "QQQ",
+          "SMH",
+          "XLV"
+        ],
+        "momentum_book_symbols_feed": [
+          "AAPL",
+          "CRWD",
+          "DE",
+          "FTNT",
+          "JNJ",
+          "NDSN",
+          "P",
+          "VTRS",
+          "XLK"
+        ],
+        "classic_book_exact": true,
+        "momentum_book_exact": true,
+        "classic_live_only": [],
+        "momentum_live_only": [],
+        "classic_feed_only": [],
+        "momentum_feed_only": [],
+        "source": "user-etoro get-my-positions-and-orders + get-my-portfolio-summary mirrors (NOT keys-B / OfersClaw5 / Momentum MCP cash)",
+        "xRequestIds": {
+          "get-my-positions-and-orders": "2bccf2b6-5206-4915-939e-8195aee9e3c5",
+          "get-my-portfolio-summary": "ec97449a-de5e-451d-89bf-94b83bad5791"
+        },
+        "copied_traders": {
+          "11368142": "OfersClaw5-PRIYN",
+          "11630170": "Momentum-HHHGDTJ ($8k invested)"
+        }
+      },
+      "classic_mirror": 11368142,
+      "momentum_mirror": 11630170,
+      "keys_B_rejected": true
+    }
+  },
+  "soft": [
+    "classic_rsi.book_symbols exact match live Classic mirror 11368142",
+    "momentum_breakout.book_symbols exact match live Momentum mirror 11630170 ($8k)"
+  ],
+  "hard_fail": false,
+  "hard_fail_codes": [],
+  "deviation_codes": [],
+  "qa_places": false,
+  "cos_claims_verified": {
+    "confirmed": 0,
+    "watch": 9,
+    "failed": 1,
+    "do_not_place": true,
+    "doNotPlaceFromThisUi": true,
+    "match": true
+  },
+  "mismatches": [],
+  "artifacts": {
+    "feed_public": "/workspace/etoroview/public/breakout-ta.json",
+    "audit": "/workspace/breakout_ta/audit/breakout-auto-20260930-232448-f0de0480.json",
+    "latest": "/workspace/breakout_ta/audit/latest-auto.json",
+    "qa": "/workspace/breakout_ta/qa/breakout-ta-tab-qa-20260930-232448-f0de0480.json"
+  }
+}
