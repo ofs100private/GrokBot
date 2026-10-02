@@ -1,0 +1,148 @@
+{
+  "run_id": "classic-rsi-auto-20261002-194111-fe2a12d4",
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "status": "PROPOSE",
+  "buy_packs_count": 2,
+  "risk_off_count": 0,
+  "timestamp": "2026-10-02 19:42:29 IDT",
+  "timestamp_iso": "2026-10-02T19:42:29.627562+03:00",
+  "kind": "auto",
+  "timeframe": "1H",
+  "confirmed_close": true,
+  "long_only": true,
+  "do_not_place": true,
+  "place": false,
+  "mirrorId": 11368142,
+  "portfolio": "OfersClaw5-PRIYN",
+  "propose_run_id": "classic-rsi-propose-20261002-194114-9c40083a",
+  "mandate_gates": {
+    "weekend": false,
+    "us_rth": true,
+    "available_cash": null,
+    "cash_floor_usd": 2500.0,
+    "blocks": [],
+    "allow_new_buys": true,
+    "force": false,
+    "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
+  },
+  "universe_meta_summary": {
+    "universe_size": 30,
+    "liquid_count": 490,
+    "rising_count": 27,
+    "book_count": 3,
+    "used_fallback": false,
+    "fallback_reason": null,
+    "pool_size": 502
+  },
+  "soft_notes": [
+    "universe healthy: size=30 liquid=490 rising=27 fallback=False",
+    "packs: ['WDC', 'STX'] (2 buys); risk_off=[]",
+    "LIVE mirror A equity=$12,944.04 cash=$7,285.54; book QQQ/XLV/SMH confirmed",
+    "autos this IDT hour (20261002-19): 1 (initial only; no reruns)",
+    "ATR SL/TP verified 1.5/2.0\u00d7 on WDC+STX; lev\u00d71 long-only; do_not_place=True",
+    "PASS with buy_packs \u2014 hand Trader_Classic Fear/cash/sleeve then classic-real-money-order-qa-gate before place"
+  ],
+  "live_mirror_check": {
+    "source": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+    "mirrorId": 11368142,
+    "username": "OfersClaw5-PRIYN",
+    "equity": 12944.04,
+    "availableCash": 7285.54,
+    "invested": 15000.0,
+    "book_symbols_live": [
+      "QQQ",
+      "XLV",
+      "SMH"
+    ],
+    "audit_book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "keys_B_rejected": true,
+    "note": "LIVE dollars from parent mirror 11368142 only; not user-OfersClaw5 keys. Direct holdings ignored for Classic truth."
+  },
+  "evidence": {
+    "audit_path": "/workspace/classic_rsi/audit/classic-rsi-auto-20261002-194111-fe2a12d4.json",
+    "latest_auto_path": "/workspace/classic_rsi/audit/latest-auto.json",
+    "latest_auto_matches_run_id": true,
+    "index_jsonl_row": true,
+    "envelope_source": "payload+latest-auto",
+    "hard_fail_checks": {
+      "RSI_RUN_MISSING": false,
+      "RSI_AUDIT_INCOMPLETE": false,
+      "RSI_TF_NOT_1H": false,
+      "RSI_UNCONFIRMED_BARS": false,
+      "RSI_SHORT_OR_PIP": false,
+      "RSI_CRYPTO": false,
+      "RSI_KEYS_B": false,
+      "RSI_PLACE_FROM_AUTO": false,
+      "RSI_RUN_CRASH": false
+    }
+  },
+  "buy_pack_symbols": [
+    "WDC",
+    "STX"
+  ],
+  "buy_packs_summary": [
+    {
+      "symbol": "WDC",
+      "side": "buy",
+      "leverage": 1,
+      "rsi_rule": {
+        "raw_signal": "BUY_70",
+        "strength_tag": "ZONE_70",
+        "zone": "SUPPORT",
+        "rsi": 28.621780274480813,
+        "label_note": "80/70 are rule labels, not win rates"
+      },
+      "levels": {
+        "entry": 405.1380920410156,
+        "stop_loss": 388.96591482130526,
+        "take_profit": 426.7009950006294,
+        "atr": 10.781451479806904,
+        "sl_mult": 1.5,
+        "tp_mult": 2.0,
+        "risk_per_share": 16.172177219710363,
+        "reward_per_share": 21.56290295961378,
+        "r_multiple": 1.333333333333331,
+        "units": "price"
+      },
+      "bar_confirmed": true,
+      "do_not_place": true,
+      "pack_run_id": "classic-rsi-propose-20261002-194114-9c40083a"
+    },
+    {
+      "symbol": "STX",
+      "side": "buy",
+      "leverage": 1,
+      "rsi_rule": {
+        "raw_signal": "BUY_70",
+        "strength_tag": "ZONE_70",
+        "zone": "SUPPORT",
+        "rsi": 31.328041724468846,
+        "label_note": "80/70 are rule labels, not win rates"
+      },
+      "levels": {
+        "entry": 825.6701049804688,
+        "stop_loss": 788.0708119885076,
+        "take_profit": 875.802495636417,
+        "atr": 25.06619532797413,
+        "sl_mult": 1.5,
+        "tp_mult": 2.0,
+        "risk_per_share": 37.59929299196119,
+        "reward_per_share": 50.13239065594826,
+        "r_multiple": 1.3333333333333333,
+        "units": "price"
+      },
+      "bar_confirmed": true,
+      "do_not_place": true,
+      "pack_run_id": "classic-rsi-propose-20261002-194114-9c40083a"
+    }
+  ],
+  "risk_off_symbols": [],
+  "qa_skill": "classic-rsi-1h-run-qa",
+  "qa_actor": "Chief of Staff automation classic-rsi-1h-auto (inline run-QA; SendToAgent unavailable)",
+  "next_action": "HAND_OFF Trader_Classic \u2014 PASS with buy_packs WDC+STX; apply Fear/cash/sleeve live gates, prepare, then classic-real-money-order-qa-gate before any place. Auto never places."
+}

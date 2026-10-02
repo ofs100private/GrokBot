@@ -1,0 +1,161 @@
+{
+  "run_id": "classic-rsi-auto-20261002-173850-ed4d7903",
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "status": "PROPOSE",
+  "buy_packs_count": 3,
+  "risk_off_count": 4,
+  "timestamp": "2026-10-02 17:40:07 IDT",
+  "timestamp_iso": "2026-10-02T17:40:07.626316+03:00",
+  "kind": "auto",
+  "timeframe": "1H",
+  "confirmed_close": true,
+  "long_only": true,
+  "do_not_place": true,
+  "place": false,
+  "mirrorId": 11368142,
+  "portfolio": "OfersClaw5-PRIYN",
+  "propose_run_id": "classic-rsi-propose-20261002-173856-d08bc137",
+  "mandate_gates": {
+    "weekend": false,
+    "us_rth": true,
+    "available_cash": null,
+    "cash_floor_usd": 2500.0,
+    "blocks": [],
+    "allow_new_buys": true,
+    "force": false,
+    "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
+  },
+  "universe_meta_summary": {
+    "universe_size": 53,
+    "liquid_count": 490,
+    "rising_count": 50,
+    "book_count": 3,
+    "used_fallback": false,
+    "fallback_reason": null,
+    "pool_size": 502
+  },
+  "soft_notes": [
+    "universe healthy: size=53 liquid=490 rising=50 fallback=False",
+    "packs: ['STX', 'NKE', 'PRU'] (3 buys); risk_off=['ON', 'TER', 'MRVL', 'SMH']",
+    "3 buy_packs \u2014 parent must WakeParent / message Trader_Classic for Fear/cash/sleeve + classic-real-money-order-qa-gate before place",
+    "  STX: ATR SL/TP ok=True sl_mult=1.5 tp_mult=2.0 bar_confirmed=True cites_run=False",
+    "  NKE: ATR SL/TP ok=True sl_mult=1.5 tp_mult=2.0 bar_confirmed=True cites_run=False",
+    "  PRU: ATR SL/TP ok=True sl_mult=1.5 tp_mult=2.0 bar_confirmed=True cites_run=False",
+    "available_cash null in mandate_gates \u2014 Trader_Classic must apply live Fear/cash/sleeve before prepare",
+    "LIVE mirror A equity=$12,959.86 cash=$7,285.54; book QQQ/SMH/XLV confirmed",
+    "autos this IDT hour (20261002-17): 1 (initial only; no reruns)",
+    "SOFT: pack STX JSON does not embed run_id string (envelope/qa_cite covers cite requirement)",
+    "SOFT: pack NKE JSON does not embed run_id string (envelope/qa_cite covers cite requirement)",
+    "SOFT: pack PRU JSON does not embed run_id string (envelope/qa_cite covers cite requirement)"
+  ],
+  "live_mirror_check": {
+    "source": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+    "mirrorId": 11368142,
+    "username": "OfersClaw5-PRIYN",
+    "equity": 12959.86,
+    "availableCash": 7285.54,
+    "invested": 15000.0,
+    "book_symbols_live": [
+      "QQQ",
+      "XLV",
+      "SMH"
+    ],
+    "audit_book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "keys_B_rejected": true,
+    "note": "LIVE dollars from parent mirror 11368142 only; not user-OfersClaw5 keys. Direct holdings ignored for Classic truth."
+  },
+  "evidence": {
+    "audit_path": "/workspace/classic_rsi/audit/classic-rsi-auto-20261002-173850-ed4d7903.json",
+    "latest_auto_path": "/workspace/classic_rsi/audit/latest-auto.json",
+    "latest_auto_matches_run_id": true,
+    "index_jsonl_row": true,
+    "envelope_source": "payload+latest-auto",
+    "hard_fail_checks": {
+      "RSI_RUN_MISSING": false,
+      "RSI_AUDIT_INCOMPLETE": false,
+      "RSI_TF_NOT_1H": false,
+      "RSI_UNCONFIRMED_BARS": [],
+      "RSI_SHORT_OR_PIP": false,
+      "RSI_CRYPTO": false,
+      "RSI_KEYS_B": false,
+      "RSI_PLACE_FROM_AUTO": false,
+      "RSI_RUN_CRASH": false
+    },
+    "pack_summary": [
+      {
+        "symbol": "STX",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "assetClass": "equity_or_etf",
+        "leverage": 1,
+        "bar_confirmed": true,
+        "atr": 23.465880507498838,
+        "stop_loss": 801.1861890043767,
+        "take_profit": 883.3167707806226,
+        "sl_mult": 1.5,
+        "tp_mult": 2.0,
+        "atr_levels_ok": true,
+        "mirrorId": 11368142,
+        "pack_cites_run_id": false,
+        "rsi": 28.705174491528126,
+        "raw_signal": "BUY_70"
+      },
+      {
+        "symbol": "NKE",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "assetClass": "equity_or_etf",
+        "leverage": 1,
+        "bar_confirmed": true,
+        "atr": 0.5578002965837429,
+        "stop_loss": 32.43339919501696,
+        "take_profit": 34.385700233060064,
+        "sl_mult": 1.5,
+        "tp_mult": 2.0,
+        "atr_levels_ok": true,
+        "mirrorId": 11368142,
+        "pack_cites_run_id": false,
+        "rsi": 21.605187393923103,
+        "raw_signal": "BUY_70"
+      },
+      {
+        "symbol": "PRU",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "assetClass": "equity_or_etf",
+        "leverage": 1,
+        "bar_confirmed": true,
+        "atr": 0.8571209112172432,
+        "stop_loss": 111.11432015905304,
+        "take_profit": 114.1142433483134,
+        "sl_mult": 1.5,
+        "tp_mult": 2.0,
+        "atr_levels_ok": true,
+        "mirrorId": 11368142,
+        "pack_cites_run_id": false,
+        "rsi": 33.46913707469321,
+        "raw_signal": "BUY_70"
+      }
+    ],
+    "risk_off_symbols": [
+      "ON",
+      "TER",
+      "MRVL",
+      "SMH"
+    ],
+    "stdout": "auto_1h status=PROPOSE run_id=classic-rsi-auto-20261002-173850-ed4d7903 syms=53 liquid=490 rising=50 fallback=False buys=3 risk_off=4 gates=clear do_not_place=True",
+    "reruns": 0,
+    "autos_this_hour_idt": [
+      "classic-rsi-auto-20261002-173850-ed4d7903"
+    ],
+    "missing_envelope_fields": []
+  },
+  "qa_skill": "classic-rsi-1h-run-qa",
+  "validator": "classic-rsi-1h-auto automation (CoS subagent; skill applied inline)",
+  "next": "wake_trader_classic_order_qa"
+}

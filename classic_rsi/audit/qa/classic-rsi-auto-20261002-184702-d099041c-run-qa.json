@@ -1,0 +1,91 @@
+{
+  "run_id": "classic-rsi-auto-20261002-184702-d099041c",
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "status": "PROPOSE",
+  "buy_packs_count": 0,
+  "risk_off_count": 1,
+  "timestamp": "2026-10-02 18:47:57 IDT",
+  "timestamp_iso": "2026-10-02T18:47:57.514602+03:00",
+  "kind": "auto",
+  "timeframe": "1H",
+  "confirmed_close": true,
+  "long_only": true,
+  "do_not_place": true,
+  "place": false,
+  "mirrorId": 11368142,
+  "portfolio": "OfersClaw5-PRIYN",
+  "propose_run_id": "classic-rsi-propose-20261002-184707-976e4dc4",
+  "mandate_gates": {
+    "weekend": false,
+    "us_rth": true,
+    "available_cash": null,
+    "cash_floor_usd": 2500.0,
+    "blocks": [],
+    "allow_new_buys": true,
+    "force": false,
+    "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
+  },
+  "universe_meta_summary": {
+    "universe_size": 53,
+    "liquid_count": 490,
+    "rising_count": 50,
+    "book_count": 3,
+    "used_fallback": false,
+    "fallback_reason": null,
+    "pool_size": 502
+  },
+  "soft_notes": [
+    "universe healthy: size=53 liquid=490 rising=50 fallback=False",
+    "packs: [] (0 buys); risk_off=['SMH']",
+    "0 buy_packs \u2014 no order-QA / no place; stop after run PASS",
+    "LIVE mirror A equity=$12,949.26 cash=$7,285.54; book QQQ/XLV/SMH confirmed",
+    "autos this IDT hour (20261002-18): 1 (initial only; no reruns)",
+    "risk_off SMH: RISK_OFF / SELL_70 / never_short=True (not a short)"
+  ],
+  "live_mirror_check": {
+    "source": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+    "mirrorId": 11368142,
+    "username": "OfersClaw5-PRIYN",
+    "equity": 12949.26,
+    "availableCash": 7285.54,
+    "invested": 15000.0,
+    "book_symbols_live": [
+      "QQQ",
+      "XLV",
+      "SMH"
+    ],
+    "audit_book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "keys_B_rejected": true,
+    "note": "LIVE dollars from parent mirror 11368142 only; not user-OfersClaw5 keys. Direct holdings ignored for Classic truth."
+  },
+  "evidence": {
+    "audit_path": "/workspace/classic_rsi/audit/classic-rsi-auto-20261002-184702-d099041c.json",
+    "latest_auto_path": "/workspace/classic_rsi/audit/latest-auto.json",
+    "latest_auto_matches_run_id": true,
+    "index_jsonl_row": true,
+    "envelope_source": "payload+latest-auto",
+    "hard_fail_checks": {
+      "RSI_RUN_MISSING": false,
+      "RSI_AUDIT_INCOMPLETE": false,
+      "RSI_TF_NOT_1H": false,
+      "RSI_UNCONFIRMED_BARS": false,
+      "RSI_SHORT_OR_PIP": false,
+      "RSI_CRYPTO": false,
+      "RSI_KEYS_B": false,
+      "RSI_PLACE_FROM_AUTO": false,
+      "RSI_RUN_CRASH": false
+    }
+  },
+  "buy_pack_symbols": [],
+  "risk_off_symbols": [
+    "SMH"
+  ],
+  "qa_skill": "classic-rsi-1h-run-qa",
+  "qa_actor": "Chief of Staff automation classic-rsi-1h-auto (inline run-QA; SendToAgent unavailable)",
+  "next_action": "STOP \u2014 PASS with 0 buy_packs; no Trader_Classic prepare/place"
+}

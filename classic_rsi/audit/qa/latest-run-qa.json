@@ -1,11 +1,12 @@
 {
-  "run_id": "classic-rsi-auto-20261001-203814-95943e97",
+  "run_id": "classic-rsi-auto-20261002-203612-afe9e9ce",
   "verdict": "PASS",
   "deviation_codes": [],
   "status": "PROPOSE",
   "buy_packs_count": 0,
   "risk_off_count": 0,
-  "timestamp": "2026-10-01 20:39:01 IDT",
+  "timestamp": "2026-10-02 20:37:08 IDT",
+  "timestamp_iso": "2026-10-02T20:37:08.695082+03:00",
   "kind": "auto",
   "timeframe": "1H",
   "confirmed_close": true,
@@ -14,7 +15,7 @@
   "place": false,
   "mirrorId": 11368142,
   "portfolio": "OfersClaw5-PRIYN",
-  "propose_run_id": "classic-rsi-propose-20261001-203817-292ed0fa",
+  "propose_run_id": "classic-rsi-propose-20261002-203614-8aa38d34",
   "mandate_gates": {
     "weekend": false,
     "us_rth": true,
@@ -26,39 +27,62 @@
     "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
   },
   "universe_meta_summary": {
-    "universe_size": 40,
+    "universe_size": 14,
     "liquid_count": 490,
-    "rising_count": 37,
+    "rising_count": 11,
     "book_count": 3,
     "used_fallback": false,
-    "fallback_reason": null
+    "fallback_reason": null,
+    "pool_size": 502
   },
   "soft_notes": [
-    "universe healthy: size=40 liquid=490 rising=37 fallback=False",
+    "universe healthy: size=14 liquid=490 rising=11 fallback=False",
     "packs: [] (0 buys); risk_off=[]",
-    "0 buy_packs \u2014 no order-QA / place path",
-    "available_cash null in mandate_gates \u2014 Trader_Classic must apply live Fear/cash/sleeve before prepare"
+    "LIVE mirror A equity=$12,936.15 cash=$7,285.54; book QQQ/XLV/SMH confirmed",
+    "autos this IDT hour (20261002-20): 1 (initial only; no reruns)",
+    "do_not_place=True; place=False; confirmed_close=True; long_only \u00d71; mirrorId=11368142",
+    "PASS with 0 buy_packs \u2014 no order-QA / place; stop"
   ],
+  "live_mirror_check": {
+    "source": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders",
+    "mirrorId": 11368142,
+    "username": "OfersClaw5-PRIYN",
+    "equity": 12936.15,
+    "availableCash": 7285.54,
+    "invested": 15000.0,
+    "book_symbols_live": [
+      "QQQ",
+      "XLV",
+      "SMH"
+    ],
+    "audit_book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "keys_B_rejected": true,
+    "note": "LIVE dollars from parent mirror 11368142 only; not user-OfersClaw5 keys. Direct holdings ignored for Classic truth."
+  },
   "evidence": {
-    "audit_path": "/workspace/classic_rsi/audit/classic-rsi-auto-20261001-203814-95943e97.json",
+    "audit_path": "/workspace/classic_rsi/audit/classic-rsi-auto-20261002-203612-afe9e9ce.json",
     "latest_auto_path": "/workspace/classic_rsi/audit/latest-auto.json",
     "latest_auto_matches_run_id": true,
     "index_jsonl_row": true,
-    "envelope_source": "latest-auto",
+    "envelope_source": "payload+latest-auto",
     "hard_fail_checks": {
       "RSI_RUN_MISSING": false,
       "RSI_AUDIT_INCOMPLETE": false,
       "RSI_TF_NOT_1H": false,
-      "RSI_UNCONFIRMED_BARS": [],
+      "RSI_UNCONFIRMED_BARS": false,
       "RSI_SHORT_OR_PIP": false,
       "RSI_CRYPTO": false,
       "RSI_KEYS_B": false,
       "RSI_PLACE_FROM_AUTO": false,
       "RSI_RUN_CRASH": false
-    },
-    "pack_summary": []
+    }
   },
-  "qa_skill": "classic-rsi-1h-run-qa",
-  "validator": "classic-rsi-1h-auto automation (CoS subagent; SendToAgent unavailable \u2014 skill applied inline)",
-  "next": "stop"
+  "buy_pack_symbols": [],
+  "skill": "classic-rsi-1h-run-qa",
+  "qa_actor": "Chief of Staff automation (classic-rsi-1h-auto) standing Classic RSI 1H run QA",
+  "next_action": "stop \u2014 0 packs; no Trader_Classic prepare/place"
 }
