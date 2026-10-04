@@ -4,7 +4,7 @@ description: >-
   Use this when planning, reviewing, or executing Trader_Classic trades on
   OfersClaw5-PRIYN (ledger A) — any fitting liquid large-cap/ETF, SPX heatmap
   Change 1D URL, cross-regime diversification, beat-SPX after fees/tax, hard
-  mandate rules, and post-trade self-improvement.
+  mandate rules, Fear-as-dip window, and post-trade self-improvement.
 ---
 # Trader Classic strategy
 
@@ -20,8 +20,17 @@ Standing playbook for **Trader_Classic** on portfolio **OfersClaw5-PRIYN** (REAL
 - Prefer large liquid US companies / sector ETFs, then commodities
 - Cash floor ≥ **~$2.5k** after adds; never all-in
 - REAL only; QA PASS → place → fill audit → CoS
-- No place under buy HOLD or without auth after PASS
+- No place under an explicit Ofer/CoS buy HOLD or without auth after PASS
 - Weekend: no new size unless Ofer overrides
+
+## Fear is the dip window (Ofer 2026-10-04)
+
+When CNN Fear & Greed is **Fear or Extreme Fear**, that is the **best time to look for the dip** — not a reason to sit out.
+
+- Hunt quality liquid longs on **confirmed weakness** (RSI Support / Over Sold, beaten large-caps and gap sleeves). Do not chase names already extended (RSI Over Buy / risk-off on that name).
+- A daily_brief **No Buy Today** that exists only because F&G is Fear does **not** block this search. Do not re-ask Ofer for a Fear override.
+- Still required: cash floor, ×1 long-only, no crypto, weekend freeze, sleeve caps, QA PASS before place. Size smaller into Extreme Fear; leave the cash buffer.
+- Explicit Ofer hold, event-vol freeze, and cash-floor fails still block. Fear alone does not.
 
 ## Universe
 
@@ -29,7 +38,7 @@ Named tickers are **examples only** — trade **any** fitting liquid large-cap/E
 
 ## Diversification
 
-Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. Caps: name ≤~25–30% open invested; sleeve ≤~40–45%; cash ≥~$2.5k. Prefer gap sleeves.
+Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. Caps: name ≤~25–30% open invested; sleeve ≤~40–45%; cash ≥~$2.5k. Prefer gap sleeves. In Fear, prefer the sleeve that is actually on sale, not another add to an extended winner.
 
 ## Research loop
 
@@ -40,7 +49,7 @@ Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. 
 3. Rel performance vs SPX/QQQ; beat SPX after costs
 4. X Tier-1 (small cost; X MCP guide first)
 5. Event calendar (~48h CPI/FOMC/NFP)
-6. Optional timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close; **does not** bypass Fear/cash/weekend
+6. Timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close. **In Fear, Support/Over Sold buys are the dip.** RSI still does not bypass cash, weekend, or an explicit hold.
 7. getCost / prepare — fees + tax haircut
 8. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
 
@@ -50,8 +59,8 @@ Run [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop)
 
 ## Beat-SPX filter / regimes / daily checklist / pre-trade / events
 
-Unchanged intent: hold cash if unsure; event-vol freeze; risk-off lean healthcare+hard assets; risk-on small liquid adds after QA; NVDA no-add default; any fit symbol when buys reopen.
+Hold cash if the dip is not clean; event-vol freeze; in Fear lean into quality dips (healthcare, hard assets, and beaten large-caps) rather than a blanket no-buy; risk-on small liquid adds after QA; NVDA no-add default; any fit symbol when the dip is real.
 
 ## Do not
 
-Report B as Classic; crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts.
+Report B as Classic; crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts.

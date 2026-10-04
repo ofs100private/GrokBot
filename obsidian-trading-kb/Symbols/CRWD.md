@@ -8,7 +8,7 @@ symbol: CRWD
 
 ## Momentum open (mirror-A)
 
-[[Positions/Momentum/CRWD]] · PnL $71.40
+[[Positions/Momentum/CRWD]] · PnL $92.63
 
 ## Classic keys-B closes
 

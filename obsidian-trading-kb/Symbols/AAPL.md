@@ -1,14 +1,10 @@
 ---
 tags: [symbol]
-ledger: mirror-A
+ledger: keys-B
 symbol: AAPL
 ---
 
 # AAPL
-
-## Momentum open (mirror-A)
-
-[[Positions/Momentum/AAPL]] · PnL -$25.17
 
 ## Classic keys-B closes
 

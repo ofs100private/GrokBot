@@ -811,7 +811,7 @@ def backfill(since: str = "20260916", dry_run: bool = False, cap: int = 500) -> 
             )
 
     # Daily briefs — folders with qa-verdict
-    for folder in sorted(Path("/workspace").glob("daily-brief-*-2026-09-*")):
+    for folder in sorted(Path("/workspace").glob("daily-brief-*-2026-*-*")):
         if not folder.is_dir():
             continue
         m = re.match(r"daily-brief-(0530|1530)-(20\d{2}-\d{2}-\d{2})$", folder.name)
@@ -846,8 +846,12 @@ def backfill(since: str = "20260916", dry_run: bool = False, cap: int = 500) -> 
                     }
                 )
             continue
+        # Prefer final > recheck > newest mtime (final is the authoritative Gate-D close)
+        finals = [v for v in verdicts if "final" in v.name.lower()]
         rechecks = [v for v in verdicts if "recheck" in v.name.lower()]
-        if rechecks:
+        if finals:
+            vf = max(finals, key=lambda x: x.stat().st_mtime)
+        elif rechecks:
             vf = max(rechecks, key=lambda x: x.stat().st_mtime)
         else:
             vf = max(verdicts, key=lambda x: x.stat().st_mtime)

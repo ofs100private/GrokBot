@@ -8,4 +8,4 @@ symbol: VTRS
 
 ## Momentum open (mirror-A)
 
-[[Positions/Momentum/VTRS]] · PnL $44.81
+[[Positions/Momentum/VTRS]] · PnL $30.66

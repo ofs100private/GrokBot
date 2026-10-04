@@ -1,7 +1,7 @@
 ---
 tags: [moc, symbols]
 ledger: mirror-A
-count: 116
+count: 112
 ---
 # Symbols MOC
 
@@ -32,7 +32,6 @@ count: 116
 - [[Symbols/CLSK]]
 - [[Symbols/COP]]
 - [[Symbols/CRWD]]
-- [[Symbols/DE]]
 - [[Symbols/DELL]]
 - [[Symbols/DIMO]]
 - [[Symbols/DOX]]
@@ -40,7 +39,6 @@ count: 116
 - [[Symbols/ETH]]
 - [[Symbols/EXPD]]
 - [[Symbols/F]]
-- [[Symbols/FTNT]]
 - [[Symbols/GD]]
 - [[Symbols/GE]]
 - [[Symbols/GHM]]
@@ -58,7 +56,6 @@ count: 116
 - [[Symbols/INTC]]
 - [[Symbols/IRDM]]
 - [[Symbols/IWM]]
-- [[Symbols/JNJ]]
 - [[Symbols/KBE]]
 - [[Symbols/KBR]]
 - [[Symbols/KLAC]]
@@ -74,7 +71,6 @@ count: 116
 - [[Symbols/MRNA]]
 - [[Symbols/MSFT]]
 - [[Symbols/MU]]
-- [[Symbols/NDSN]]
 - [[Symbols/NEM]]
 - [[Symbols/NFLX]]
 - [[Symbols/NSDQ100]]

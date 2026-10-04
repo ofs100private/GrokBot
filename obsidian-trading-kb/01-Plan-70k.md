@@ -2,55 +2,69 @@
 tags: [plan, 70k]
 ledger: mirror-A
 starting_capital: 20649.39
-classic_equity: 12841.61
-momentum_equity: 7807.78
+classic_equity_start: 12841.61
+momentum_equity_start: 7807.78
+live_classic: 12930.08
+live_momentum: 7847.5
+live_combined: 20777.58
 target: 70000
-gap: 49350.61
-asOf: "2026-09-30T15:53:30+03:00"
+gap_live: 49222.42
+delta_vs_start: 128.19
+asOf: "2026-10-04T15:51:00+03:00"
 ---
 # Plan · $70k from Mirror A capital
 
-## Starting capital (reporting truth)
+## Starting capital (FROZEN — do not overwrite)
 
 | Component | Equity | Source | Ledger |
 |-----------|--------|--------|--------|
-| Classic Mirror A `11368142` | **$12,841.61** | `_raw/classic-portfolio.json` | mirror-A |
-| Momentum Mirror A `11630170` | **$7,807.78** | `_raw/momentum-portfolio.json` | mirror-A |
-| **Sum (start)** | **$20,649.39** | classic.equity + momentum.equity | mirror-A |
+| Classic Mirror A `11368142` | **$12,841.61** | 2026-09-30 afternoon Mirror A | mirror-A |
+| Momentum Mirror A `11630170` | **$7,807.78** | 2026-09-30 afternoon Mirror A | mirror-A |
+| **Sum (start)** | **$20,649.39** | 12841.61 + 7807.78 | mirror-A |
 
 ```
 starting_capital = 12841.61 + 7807.78 = 20649.39
 ```
 
-**REJECT** keys-B equities (OfersClaw5 ~7246 / Momentum keys ~9843) in this plan.
+**REJECT** keys-B equities (OfersClaw5 / Momentum keys MCP) in this plan.
+
+## Live Mirror A snapshot
+
+| Component | Equity | Cash | Names | Source |
+|-----------|--------|------|-------|--------|
+| Classic `11368142` | **$12,930.08** | $7,285.54 | SMH, QQQ, XLV | `_raw/classic-portfolio.json` |
+| Momentum `11630170` | **$7,847.50** | $4,361.46 | CRWD, VTRS, P, XLK | `_raw/momentum-portfolio.json` |
+| **Live combined** | **$20,777.58** | — | — | live classic + momentum |
+| Δ vs frozen start | $128.19 | — | — | live_combined − 20649.39 |
 
 ## Target
 
 | Item | Value |
 |------|-------|
 | Target | **$70,000** |
-| Gap | **$49,350.61** |
-| Multiple vs start | 3.39× |
+| Gap from **live** | **$49,222.42** (`70000 − 20777.58`) |
+| Multiple vs frozen start | 3.39× |
 
 ## Path (no invented PnL)
 
 1. Keep Classic cash buffer discipline (mandate cash floor); grow via quality longs after QA PASS.
-2. Momentum: breakout/VCP FULL AUTO after QA; protect thin cash (~7.0% now).
+2. Momentum: breakout/VCP FULL AUTO after QA; cash now ~55.6%.
 3. Compound **only** Mirror A marked equity; never count keys-B as progress toward $70k.
-4. Review weekly in [[Journals/2026-09]] + [[Feedback/Feedback-Loop]].
+4. Review weekly in [[Journals/2026-10-04-weekly-rollup]] + [[Feedback/Feedback-Loop]].
 
 ## As-of
 
-Sidecar slot `afternoon_1530` · `2026-09-30T15:53:30+03:00`. Live marks may drift; plan baseline stays afternoon Mirror A sidecars until next vault refresh.
+Sidecar slot `afternoon_1530` · `2026-10-04T15:51:00+03:00`. Frozen start stays 2026-09-30; live marks refresh from sidecars.
 
-## Reality check (92 days to 2026-12-31)
+## Reality check (to 2026-12-31)
 
 | Math | Value |
 |------|-------|
-| Days left | 92 |
-| Required multiple | 3.39× |
-| Pure trading CAGR to hit $70k | ~+239% in ~3 months |
-| Implied ~daily compound | ~1.4%/day |
+| Frozen start | $20,649.39 |
+| Live combined (asOf sidecar) | see Live Mirror A snapshot above |
+| Target | $70,000 |
+| Gap from live | see Target table above |
+| Multiple vs frozen start | 3.39× |
 
 Under Classic ×1 long-only + Fear/No Buy gates, **Path A alone is not realistic**. Do not force size into Fear to "catch up."
 
@@ -62,7 +76,7 @@ Under Classic ×1 long-only + Fear/No Buy gates, **Path A alone is not realistic
 
 ### Path B · Hybrid deposits + bot alpha (**recommended**)
 - Treat Mirror A bots as **alpha engines**, not magic 3× machines.
-- Example split of the **$49,351 gap** (illustrative schedule — adjust deposits to cash you actually add):
+- Example split of the live gap (illustrative schedule — adjust deposits to cash you actually add):
   - Oct: +$10k deposit · bots target +3–6% on deployed risk
   - Nov: +$10k deposit · bots target +3–6%
   - Dec: +$8–15k deposit · bots protect capital into year-end
@@ -71,8 +85,8 @@ Under Classic ×1 long-only + Fear/No Buy gates, **Path A alone is not realistic
 
 ### Path C · Risk-off honest
 - Stay No Buy in Extreme Fear / Fear until F&G recovers; cash is a position.
-- Deploy Classic cash (~$7.3k) only on QA PASS + cleared gates.
-- Momentum: trail winners (CRWD/VTRS/P…); free cash before new ~$1k sleeves.
+- Deploy Classic cash only on QA PASS + cleared gates.
+- Momentum: trail winners (CRWD/VTRS/P/XLK); free cash before new ~$800–$1k sleeves.
 
 ## Monthly milestones (Mirror A combined equity)
 
@@ -91,7 +105,7 @@ Milestones count **deposits + Mirror A equity**. Never count keys-B.
 4. Combined Mirror A DD &gt; 15% from post-deposit peak → pause new risk, review lessons.
 
 ## What was missing (now fixed)
-- No per-move MD store → 467 notes with `ledger:` tags
+- No per-move MD store → notes with `ledger:` tags
 - keys-B CSV mislabeled as Mirror A → retagged `classic-keys-B-closed-trades.csv`
 - Lessons skill unused systematically → weekly Feedback loop
 - Dual-write / number drift → QA number gate before accept
@@ -102,4 +116,3 @@ Milestones count **deposits + Mirror A equity**. Never count keys-B.
 - Weekly rollup only (not hourly self-improve)
 - Skip paid X when credits near zero
 - One QA gate per vault refresh, not chatter loops
-

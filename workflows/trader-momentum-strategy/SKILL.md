@@ -3,7 +3,7 @@ name: Trader Momentum strategy
 description: >-
   use this when planning, reviewing, or executing Trader_momentum EOD buys/sells
   on Momentum-HHHGDTJ — full auto after QA PASS, no user confirmation, playbook
-  2026-09-16 breakout sleeve + event freeze + 1R trail
+  2026-09-16 breakout sleeve + event freeze + 1R trail, Fear-as-dip window
 ---
 # Trader Momentum strategy
 
@@ -37,6 +37,14 @@ If cash later frees (e.g. after `LOSS_PCT_GE_4` / SMA50 closes) and a prior pack
 - REAL only; never Classic; never demo
 - Intraday ban 16:30–18:30 Israel; skip NYSE holidays
 
+## Fear is the dip window (Ofer 2026-10-04)
+
+When CNN Fear & Greed is **Fear or Extreme Fear**, that is the **best time to look for the dip** — not a reason to skip the scan or zero the pack.
+
+- Prefer names already pulled back that still qualify (breakout retest, VCP, high RS off a dip) over chasing the few names still extended.
+- A daily_brief **No Buy Today** that exists only because F&G is Fear does **not** block dip candidates. Do not re-ask Ofer for a Fear override.
+- Still required: ×1, ≤$1,000, DWM, sleeve rules, cash, QA PASS, then FULL AUTO place. **EVENT_VOL_FREEZE** and **HARD_HALT** (VIX ≥ 25 or SPX < 0.98×SMA50) still mean 0 new buys — those are not the Fear index.
+
 ## Sleeves (stocks) — playbook 2026-09-16
 
 1. **MOMENTUM_BREAKOUT** (preferred, max **2** of 3 stock slots): RS ≥ 90, RVOL ≥ 2.0, new 20-day close high, close in upper third of day’s range, DWM day+week+month ≥ 0
@@ -51,6 +59,7 @@ Near-miss high-RS names that fail both sleeves: `NO_BREAKOUT_NO_VCP`.
 - **HARD_HALT**: VIX ≥ 25 or SPX < 0.98×SMA50 → 0 buys; scan + near-miss
 - **SOFT**: SPX under SMA50 but ≥ 0.98×SMA50 → STOCK BUY only if **MOMENTUM_BREAKOUT** with RVOL ≥ 2.5; quiet VCP → `REGIME_SOFT_VCP_BLOCK`; no new ETF
 - **HEALTHY**: both sleeves under pack rules
+- CNN Fear / Extreme Fear is a **dip bias inside** the regime above. It does not itself set HARD_HALT or cancel a sleeve that already qualifies.
 
 ## Exits (EOD position manager)
 
@@ -87,4 +96,4 @@ See `/workspace/momentum_audit/improvement-2026-10-01.md`.
 
 ## Do not
 
-Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat keys MCP as the $8k book. Double-buy a name filled this session. Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).
+Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat CNN Fear as an automatic no-buy. Treat keys MCP as the $8k book. Double-buy a name filled this session. Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).

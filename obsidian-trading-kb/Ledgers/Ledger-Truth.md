@@ -1,7 +1,7 @@
 ---
 tags: [ledger, policy]
 ledger: mirror-A
-asOf: "2026-09-30T15:53:30+03:00"
+asOf: "2026-10-04T15:51:00+03:00"
 ---
 # Ledger Truth
 

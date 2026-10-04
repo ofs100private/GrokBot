@@ -8,4 +8,4 @@ symbol: P
 
 ## Momentum open (mirror-A)
 
-[[Positions/Momentum/P]] · PnL $45.83
+[[Positions/Momentum/P]] · PnL $111.72

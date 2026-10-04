@@ -1,7 +1,7 @@
 ---
 tags: [dashboard]
 ledger: mirror-A
-asOf: "2026-09-30T15:53:30+03:00"
+asOf: "2026-10-04T15:51:00+03:00"
 slot: afternoon_1530
 ---
 # Trading Home
@@ -11,20 +11,20 @@ slot: afternoon_1530
 
 ## Market
 
-- F&G **29 — Fear** · Wed afternoon · US session day · Fear 29 · No Buy · cash open ~16:30 IDT
+- F&G **31 — Fear** · Sun afternoon · WEEKEND · Fear 31 · No Buy · next Mon Oct 5
 
 ## Classic · mirror-A `11368142`
 
-Equity **$12,841.61** · Cash **$7,285.54** · Open [[Positions/Classic/SMH|SMH]], [[Positions/Classic/QQQ|QQQ]], [[Positions/Classic/XLV|XLV]]
+Equity **$12,930.08** · Cash **$7,285.54** · Open [[Positions/Classic/SMH|SMH]], [[Positions/Classic/QQQ|QQQ]], [[Positions/Classic/XLV|XLV]]
 
 ## Momentum · mirror-A `11630170` · basis $8,000.00
 
-Equity **$7,807.78** · Cash **$549.77** · Open [[Positions/Momentum/CRWD|CRWD]], [[Positions/Momentum/VTRS|VTRS]], [[Positions/Momentum/P|P]], [[Positions/Momentum/XLK|XLK]], [[Positions/Momentum/DE|DE]], [[Positions/Momentum/FTNT|FTNT]], [[Positions/Momentum/JNJ|JNJ]], [[Positions/Momentum/AAPL|AAPL]], [[Positions/Momentum/NDSN|NDSN]]
+Equity **$7,847.50** · Cash **$4,361.46** · Open [[Positions/Momentum/CRWD|CRWD]], [[Positions/Momentum/VTRS|VTRS]], [[Positions/Momentum/P|P]], [[Positions/Momentum/XLK|XLK]]
 
 ## Plan
 
-[[01-Plan-70k]] — starting capital **$20,649.39** (Classic A + Momentum A).
+[[01-Plan-70k]] — frozen start **$20,649.39** · live combined **$20,777.58** (gap to $70k **$49,222.42**).
 
 ## Indexes
 
-[[Indexes/MOC-Vault]] · [[Indexes/MOC-Trades]] · [[Indexes/MOC-Portfolios]] · [[Indexes/MOC-Job-Runs]] · [[Feedback/Feedback-Loop]] · [[Process/Improvement-Process]]
+[[Indexes/MOC-Vault]] · [[Indexes/MOC-Trades]] · [[Indexes/MOC-Portfolios]] · [[Feedback/Feedback-Loop]]

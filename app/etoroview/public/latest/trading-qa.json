@@ -1,0 +1,139 @@
+{
+  "gate": "classic-portfolio-data-qa-gate + momentum mirror A",
+  "slot": "afternoon_1530",
+  "asOfIDT": "2026-09-18 15:57 IDT",
+  "request": "QA Bot PASS vs live parent SSO user-etoro (mirrors 11368142 + 11630170). Do NOT accept keys-B totals as Classic or as Momentum $8k allocation. Material: Classic CVX closed since morning.",
+  "liveSource": "user-etoro get-my-portfolio-summary xRequestId=b642ec23-9047-4168-9bc0-59204d2b4505 timestamp=2026-09-18T12:55:35.8438351Z + get-my-positions-and-orders xRequestId=4eea5cff-c12a-4908-a6e0-3257c9416d27 timestamp=2026-09-18T12:55:35.8047242Z",
+  "classic": {
+    "mirrorId": 11368142,
+    "figures": {
+      "equity": 12733.43,
+      "cash": 7495.6,
+      "invested": 15000.0,
+      "openPnl": -1856.18,
+      "closedPnl": -1975.4,
+      "cashPct": 58.9,
+      "deploymentPct": 41.1,
+      "symbols": [
+        "XLI",
+        "QQQ",
+        "XLV"
+      ]
+    },
+    "checks": {
+      "cash": {
+        "expected": 7495.6,
+        "live": 7495.6,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -1975.4,
+        "live": -1975.4,
+        "pass": true
+      },
+      "invested": {
+        "expected": 15000.0,
+        "live": 15000.0,
+        "pass": true
+      },
+      "equity_app_refreshed": {
+        "app": 12733.43,
+        "live": 12733.43,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "XLI",
+          "QQQ",
+          "XLV"
+        ],
+        "note": "CVX ABSENT (closed since morning); CAT ABSENT; ledger A only"
+      },
+      "rejected_keysB": true
+    },
+    "verdict": "PASS"
+  },
+  "momentum": {
+    "mirrorId": 11630170,
+    "basis": 8000,
+    "figures": {
+      "equity": 7870.31,
+      "cash": 1504.71,
+      "invested": 8000.0,
+      "openPnl": -111.72,
+      "closedPnl": -77.61,
+      "cashPct": 19.1,
+      "deploymentPct": 80.9,
+      "symbols": [
+        "PSX",
+        "CRWD",
+        "XLK",
+        "XLE",
+        "VTRS",
+        "TGT",
+        "NUE",
+        "EXPD"
+      ]
+    },
+    "checks": {
+      "cash": {
+        "expected": 1504.71,
+        "live": 1504.71,
+        "pass": true
+      },
+      "closedPnl": {
+        "expected": -77.61,
+        "live": -77.61,
+        "pass": true
+      },
+      "invested": {
+        "expected": 8000.0,
+        "live": 8000.0,
+        "pass": true
+      },
+      "equity_app_refreshed": {
+        "app": 7870.31,
+        "live": 7870.31,
+        "pass": true
+      },
+      "positions_symbols": {
+        "app": [
+          "PSX",
+          "CRWD",
+          "XLK",
+          "XLE",
+          "VTRS",
+          "TGT",
+          "NUE",
+          "EXPD"
+        ],
+        "note": "mirror A; no ETH"
+      },
+      "rejected_keysB_totals": true
+    },
+    "verdict": "PASS"
+  },
+  "overall": "PASS",
+  "note": "Afternoon 1530 App JSON dual-write refreshed to live equity/open PnL. Cash/closed exact match. Classic material change: CVX closed (cash 4937.04\u21927495.60; closed PnL \u22121870.67\u2192\u22121975.40; 3 names). Brief markdown keeps ~15:52 IDT snapshot; App uses ~15:55 live.",
+  "files": [
+    "/workspace/daily-brief/classic-live-0918-pm.json",
+    "/workspace/daily-brief/momentum-live-0918-pm.json",
+    "/workspace/daily-brief/afternoon-0918-app.json",
+    "/workspace/app-refresh-2026-09-18/classic-portfolio.json",
+    "/workspace/app-refresh-2026-09-18/momentum-portfolio.json",
+    "/workspace/app-refresh-2026-09-18/afternoon-0918.json",
+    "/workspace/etoroview/public/classic-portfolio.json",
+    "/workspace/etoroview/dist/classic-portfolio.json",
+    "/workspace/GrokBot/app/etoroview/public/classic-portfolio.json",
+    "/workspace/etoroview/public/momentum-portfolio.json",
+    "/workspace/etoroview/dist/momentum-portfolio.json",
+    "/workspace/GrokBot/app/etoroview/public/momentum-portfolio.json",
+    "/workspace/etoroview/public/daily-brief.json",
+    "/workspace/etoroview/dist/daily-brief.json",
+    "/workspace/GrokBot/app/etoroview/public/daily-brief.json",
+    "/workspace/daily-brief/latest.json",
+    "/workspace/daily-brief/afternoon-0918-brief.txt",
+    "/workspace/daily-brief/afternoon-0918.json",
+    "/workspace/daily-brief/afternoon-0918-portfolios.json"
+  ]
+}

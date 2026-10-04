@@ -8,4 +8,4 @@ symbol: SMH
 
 ## Classic open (mirror-A)
 
-[[Positions/Classic/SMH]] · PnL $207.43
+[[Positions/Classic/SMH]] · PnL $310.93

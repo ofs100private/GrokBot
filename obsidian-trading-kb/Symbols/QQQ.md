@@ -8,4 +8,4 @@ symbol: QQQ
 
 ## Classic open (mirror-A)
 
-[[Positions/Classic/QQQ]] · PnL $121.13
+[[Positions/Classic/QQQ]] · PnL $139.29

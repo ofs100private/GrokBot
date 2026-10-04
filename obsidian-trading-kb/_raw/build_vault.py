@@ -156,10 +156,18 @@ def main():
 
     as_of = classic.get("asOf") or brief.get("asOf")
     slot = classic.get("slot") or brief.get("slot")
-    start_capital = round(float(classic["equity"]) + float(momentum["equity"]), 2)
+    # Frozen 70k-plan START (2026-09-30 afternoon Mirror A) — never overwrite from live marks
+    FROZEN_CLASSIC_START = 12841.61
+    FROZEN_MOMENTUM_START = 7807.78
+    start_capital = round(FROZEN_CLASSIC_START + FROZEN_MOMENTUM_START, 2)
     assert start_capital == 20649.39, start_capital
+    live_classic = float(classic["equity"])
+    live_momentum = float(momentum["equity"])
+    live_combined = round(live_classic + live_momentum, 2)
     target_70k = 70000.0
-    gap_to_70k = round(target_70k - start_capital, 2)
+    # Live gap to $70k from current Mirror A marks (plan start stays frozen)
+    gap_to_70k = round(target_70k - live_combined, 2)
+    gap_from_start = round(live_combined - start_capital, 2)
 
     # ---- claims ----
     for key, src, led in [
@@ -197,11 +205,15 @@ def main():
         claim(f"momentum.pos.{p['symbol']}.pnl", p["pnl"], "_raw/momentum-portfolio.json", str(p["positionId"]), LEDGER_MIRROR_A)
         claim(f"momentum.pos.{p['symbol']}.invested", p["invested"], "_raw/momentum-portfolio.json", "", LEDGER_MIRROR_A)
 
-    claim("plan70k.starting_capital", start_capital, "_raw/classic-portfolio.json + _raw/momentum-portfolio.json", "classic.equity + momentum.equity", LEDGER_MIRROR_A)
-    claim("plan70k.classic_component", classic["equity"], "_raw/classic-portfolio.json", "", LEDGER_MIRROR_A)
-    claim("plan70k.momentum_component", momentum["equity"], "_raw/momentum-portfolio.json", "", LEDGER_MIRROR_A)
+    claim("plan70k.starting_capital", start_capital, "01-Plan-70k.md frozen 2026-09-30", "12841.61 + 7807.78 (do not overwrite from live)", LEDGER_MIRROR_A)
+    claim("plan70k.classic_component_start", FROZEN_CLASSIC_START, "01-Plan-70k.md frozen 2026-09-30", "", LEDGER_MIRROR_A)
+    claim("plan70k.momentum_component_start", FROZEN_MOMENTUM_START, "01-Plan-70k.md frozen 2026-09-30", "", LEDGER_MIRROR_A)
+    claim("plan70k.live_classic", live_classic, "_raw/classic-portfolio.json", "live Mirror A mark", LEDGER_MIRROR_A)
+    claim("plan70k.live_momentum", live_momentum, "_raw/momentum-portfolio.json", "live Mirror A mark", LEDGER_MIRROR_A)
+    claim("plan70k.live_combined", live_combined, "_raw/classic-portfolio.json + _raw/momentum-portfolio.json", "live classic.equity + momentum.equity", LEDGER_MIRROR_A)
     claim("plan70k.target", target_70k, "01-Plan-70k.md", "plan target not a live book figure", LEDGER_MIRROR_A)
-    claim("plan70k.gap", gap_to_70k, "01-Plan-70k.md", "70000 - starting_capital", LEDGER_MIRROR_A)
+    claim("plan70k.gap_live", gap_to_70k, "01-Plan-70k.md", "70000 - live_combined", LEDGER_MIRROR_A)
+    claim("plan70k.delta_vs_start", gap_from_start, "01-Plan-70k.md", "live_combined - starting_capital", LEDGER_MIRROR_A)
 
     c_np = round(sum(t["netProfit"] for t in classic_keys_trades), 2)
     c_fees = round(sum(t["fees"] for t in classic_keys_trades), 2)
@@ -319,7 +331,7 @@ Vault for Ofer Sasson trading books. Times in **Asia/Jerusalem (IDT)**.
 ## Start here
 
 - [[Home]] — dashboard
-- [[01-Plan-70k]] — path from Mirror A capital **{money(start_capital)}** → $70k
+- [[01-Plan-70k]] — frozen start **{money(start_capital)}** · live **{money(live_combined)}** → $70k
 - [[Indexes/MOC-Vault]] · [[Indexes/MOC-Trades]] · [[Indexes/MOC-Portfolios]]
 - [[Ledgers/Ledger-Truth]]
 - [[Feedback/Feedback-Loop]]
@@ -331,7 +343,8 @@ Vault for Ofer Sasson trading books. Times in **Asia/Jerusalem (IDT)**.
 |------|--------|------|--------|
 | Classic A `{classic['mirrorId']}` | {money(classic['equity'])} | {money(classic['cash'])} | mirror-A |
 | Momentum A `{momentum['mirrorId']}` | {money(momentum['equity'])} | {money(momentum['cash'])} | mirror-A |
-| **Combined start (70k plan)** | **{money(start_capital)}** | — | mirror-A |
+| **Live combined (Mirror A)** | **{money(live_combined)}** | — | mirror-A |
+| **Frozen 70k-plan START** | **{money(start_capital)}** | — | mirror-A (2026-09-30) |
 """,
     )
 
@@ -357,7 +370,7 @@ Equity **{money(momentum['equity'])}** · Cash **{money(momentum['cash'])}** · 
 
 ## Plan
 
-[[01-Plan-70k]] — starting capital **{money(start_capital)}** (Classic A + Momentum A).
+[[01-Plan-70k]] — frozen start **{money(start_capital)}** · live combined **{money(live_combined)}** (gap to $70k **{money(gap_to_70k)}**).
 
 ## Indexes
 
@@ -368,57 +381,79 @@ Equity **{money(momentum['equity'])}** · Cash **{money(momentum['cash'])}** · 
     # 01-Plan-70k (also copy under Plans/)
     plan_body = f"""# Plan · $70k from Mirror A capital
 
-## Starting capital (reporting truth)
+## Starting capital (FROZEN — do not overwrite)
 
 | Component | Equity | Source | Ledger |
 |-----------|--------|--------|--------|
-| Classic Mirror A `{classic['mirrorId']}` | **{money(classic['equity'])}** | `_raw/classic-portfolio.json` | mirror-A |
-| Momentum Mirror A `{momentum['mirrorId']}` | **{money(momentum['equity'])}** | `_raw/momentum-portfolio.json` | mirror-A |
-| **Sum (start)** | **{money(start_capital)}** | classic.equity + momentum.equity | mirror-A |
+| Classic Mirror A `11368142` | **{money(FROZEN_CLASSIC_START)}** | 2026-09-30 afternoon Mirror A | mirror-A |
+| Momentum Mirror A `11630170` | **{money(FROZEN_MOMENTUM_START)}** | 2026-09-30 afternoon Mirror A | mirror-A |
+| **Sum (start)** | **{money(start_capital)}** | 12841.61 + 7807.78 | mirror-A |
 
 ```
 starting_capital = 12841.61 + 7807.78 = 20649.39
 ```
 
-**REJECT** keys-B equities (OfersClaw5 ~7246 / Momentum keys ~9843) in this plan.
+**REJECT** keys-B equities (OfersClaw5 / Momentum keys MCP) in this plan.
+
+## Live Mirror A snapshot
+
+| Component | Equity | Cash | Names | Source |
+|-----------|--------|------|-------|--------|
+| Classic `{classic['mirrorId']}` | **{money(live_classic)}** | {money(classic['cash'])} | {', '.join(classic['symbols'])} | `_raw/classic-portfolio.json` |
+| Momentum `{momentum['mirrorId']}` | **{money(live_momentum)}** | {money(momentum['cash'])} | {', '.join(momentum['symbols'])} | `_raw/momentum-portfolio.json` |
+| **Live combined** | **{money(live_combined)}** | — | — | live classic + momentum |
+| Δ vs frozen start | {money(gap_from_start)} | — | — | live_combined − 20649.39 |
 
 ## Target
 
 | Item | Value |
 |------|-------|
 | Target | **$70,000** |
-| Gap | **{money(gap_to_70k)}** |
-| Multiple vs start | {round(target_70k / start_capital, 2)}× |
+| Gap from **live** | **{money(gap_to_70k)}** (`70000 − {live_combined}`) |
+| Multiple vs frozen start | {round(target_70k / start_capital, 2)}× |
 
 ## Path (no invented PnL)
 
 1. Keep Classic cash buffer discipline (mandate cash floor); grow via quality longs after QA PASS.
-2. Momentum: breakout/VCP FULL AUTO after QA; protect thin cash (~{pct(momentum['cashPct'])} now).
+2. Momentum: breakout/VCP FULL AUTO after QA; cash now ~{pct(momentum['cashPct'])}.
 3. Compound **only** Mirror A marked equity; never count keys-B as progress toward $70k.
-4. Review weekly in [[Journals/2026-09]] + [[Feedback/Feedback-Loop]].
+4. Review weekly in [[Journals/2026-10-04-weekly-rollup]] + [[Feedback/Feedback-Loop]].
 
 ## As-of
 
-Sidecar slot `{slot}` · `{as_of}`. Live marks may drift; plan baseline stays afternoon Mirror A sidecars until next vault refresh.
+Sidecar slot `{slot}` · `{as_of}`. Frozen start stays 2026-09-30; live marks refresh from sidecars.
 """
-    write(
-        ROOT / "01-Plan-70k.md",
+    plan_path = ROOT / "01-Plan-70k.md"
+    preserved_tail = ""
+    if plan_path.exists():
+        existing = plan_path.read_text(encoding="utf-8")
+        marker = "## Reality check"
+        if marker in existing:
+            preserved_tail = "\n" + marker + existing.split(marker, 1)[1]
+    plan_full = (
         fm(
             tags=["plan", "70k"],
             ledger=LEDGER_MIRROR_A,
             starting_capital=start_capital,
-            classic_equity=classic["equity"],
-            momentum_equity=momentum["equity"],
+            classic_equity_start=FROZEN_CLASSIC_START,
+            momentum_equity_start=FROZEN_MOMENTUM_START,
+            live_classic=live_classic,
+            live_momentum=live_momentum,
+            live_combined=live_combined,
             target=70000,
-            gap=gap_to_70k,
+            gap_live=gap_to_70k,
+            delta_vs_start=gap_from_start,
             asOf=as_of,
         )
-        + plan_body,
+        + plan_body
+        + preserved_tail
     )
+    write(plan_path, plan_full)
     write(
         ROOT / "Plans/01-Plan-70k.md",
-        fm(tags=["plan", "70k"], ledger=LEDGER_MIRROR_A, starting_capital=start_capital, asOf=as_of)
+        fm(tags=["plan", "70k"], ledger=LEDGER_MIRROR_A, starting_capital=start_capital, live_combined=live_combined, asOf=as_of)
         + plan_body
+        + preserved_tail
         + "\nCanonical note: [[01-Plan-70k]]\n",
     )
 
@@ -993,22 +1028,22 @@ Not Classic Mirror A closed-move set.
 
 F&G **{fg.get('score')} — {fg.get('rating')}** · {brief.get('slotBadge','')}
 
-Classic A equity {money(classic['equity'])} · Momentum A equity {money(momentum['equity'])} · Combined {money(start_capital)}
+Classic A equity {money(classic['equity'])} · Momentum A equity {money(momentum['equity'])} · Live combined {money(live_combined)} · Frozen start {money(start_capital)}
 
 [[Portfolios/Classic]] · [[Portfolios/Momentum]] · [[01-Plan-70k]]
 """,
     )
-    write(
-        ROOT / "Journals/2026-09.md",
-        fm(tags=["journal"], ledger=LEDGER_MIRROR_A, month="2026-09")
-        + f"""# Journal · 2026-09
+    j09 = ROOT / "Journals/2026-09.md"
+    if not j09.exists():
+        write(
+            j09,
+            fm(tags=["journal"], ledger=LEDGER_MIRROR_A, month="2026-09")
+            + f"""# Journal · 2026-09
 
-- Classic A: {money(classic['equity'])} / cash {money(classic['cash'])} · {', '.join(classic['symbols'])}
-- Momentum A: {money(momentum['equity'])} / cash {money(momentum['cash'])} · {', '.join(momentum['symbols'])}
-- 70k plan start: {money(start_capital)}
+- Frozen 70k-plan START: {money(start_capital)} (Classic {money(FROZEN_CLASSIC_START)} + Momentum {money(FROZEN_MOMENTUM_START)})
 - Classic mirror-A closes in window: {len(classic_mirror_a_closes)} · keys-B classic closes: {len(classic_keys_trades)}
 """,
-    )
+        )
     write(
         ROOT / "Playbooks/Classic-Mandate.md",
         fm(tags=["playbook", "classic"], ledger=LEDGER_MIRROR_A)
@@ -1025,6 +1060,14 @@ Mirror A `11368142` only for reporting. Long ×1 · no crypto · cash floor · Q
 Mirror A `11630170` $8k basis. Breakout + VCP · trail after 1R · EOD FULL AUTO after QA PASS. keys-B = execution only.
 """,
     )
+
+    # Drop stale open-position notes no longer in live sidecars
+    for book, live_syms in (("Classic", set(classic["symbols"])), ("Momentum", set(momentum["symbols"]))):
+        pos_dir = ROOT / "Positions" / book
+        if pos_dir.is_dir():
+            for md in pos_dir.glob("*.md"):
+                if md.stem not in live_syms:
+                    md.unlink()
 
     # .obsidian
     write(ROOT / ".obsidian/app.json", json.dumps({"alwaysUpdateLinks": True}, indent=2))
@@ -1086,6 +1129,8 @@ Mirror A `11630170` $8k basis. Breakout + VCP · trail after 1R · EOD FULL AUTO
             "momentum.equity": momentum["equity"],
             "momentum.cash": momentum["cash"],
             "plan70k.starting_capital": start_capital,
+            "plan70k.live_combined": live_combined,
+            "plan70k.gap_live": gap_to_70k,
             "classic_mirrorA_closes.n": len(classic_mirror_a_closes),
             "classic_keysB_closes.n": len(classic_keys_trades),
             "momentum_keysB_closes.n": len(mom_key_trades),
@@ -1118,6 +1163,8 @@ Mirror A `11630170` $8k basis. Breakout + VCP · trail after 1R · EOD FULL AUTO
                 "classic_mirror_a_moves": len(classic_mirror_a_closes),
                 "classic_keys_b_moves": len(classic_keys_trades),
                 "start_capital": start_capital,
+                "live_combined": live_combined,
+                "gap_live": gap_to_70k,
                 "csv": str(new),
                 "old_csv_gone": not old.exists(),
                 "claims": len(CLAIMS),

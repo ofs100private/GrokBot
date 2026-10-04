@@ -1,3 +1,14 @@
+---
+tags: [improvement, momentum, place-gap]
+status: open
+owner_bot: Trader_momentum
+job: momentum-eod
+run_id: place-qa-eod-20260930-jnj-crwd-rvty
+priority: P0
+created_at: 2026-10-01T00:00:00+03:00
+updated_at: 2026-10-04T19:00:12+03:00
+ledger: mirror-A
+---
 # Momentum process improvement — 2026-10-01 (IDT)
 
 **Scope:** process/docs only. CoS does NOT place. No prepare/place in this ticket.
@@ -40,3 +51,18 @@
 - No prepare-close / place-close / SL patch.
 - No RVTY place.
 - CoS reports only; Trader places only after CoS/Ofer chain + working execution MCP.
+
+## Update · 2026-10-04 weekly rollup (Mirror A live sidecar)
+
+Evidence: `_raw/momentum-portfolio.json` asOf `2026-10-04T15:51:00+03:00` (mirror `11630170`).
+
+| Field | Live |
+|-------|------|
+| Equity | $7,847.50 |
+| Cash | **$4,361.46** (~55.6%) |
+| Open symbols | **CRWD / VTRS / P / XLK** |
+| Absent vs prior 9-name book | **DE / FTNT / JNJ / AAPL / NDSN** (also TGT/PLTR/ETH…) |
+
+**Interpretation (evidence only, no invented fill PnL):** closes **did** happen later — cash rose from ~$549.77 (Oct 1 briefs) to $4,361.46 and the five names are absent from live Mirror A. Ticket stays **OPEN** until place_ack / watchdog / keys-MCP fixes land (P0/P1 in ticket body). Do not invent closed-trade PnL for DE/FTNT/JNJ/AAPL/NDSN here.
+
+Related Job-Runs: Momentum-EOD Oct 1–2 miss-checks under `Job-Runs/Momentum-EOD/` (backfill since 20260928).
