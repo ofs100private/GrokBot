@@ -2,7 +2,8 @@
 name: Momentum real-money QA gate
 description: >-
   use this when validating Momentum-HHHGDTJ screener buys, position_manager risk
-  actions, or post-EOD audits before/after execution
+  actions, or post-EOD audits before/after execution — unlimited stocks + ≥1 ETF
+  capacity (2026-10-05)
 ---
 # Momentum real-money QA gate
 
@@ -10,7 +11,7 @@ Independent validation for Momentum-HHHGDTJ (REAL MONEY). QA Bot co-owns the gat
 
 **Also run** [Momentum screener run QA](sand-workflow:momentum-screener-run-qa) on every screener execution (full S&P ≥400, TRACE, FAIL→rerun).
 
-Playbook **2026-09-16 full fix**: breakout sleeve primary, VCP secondary, event-vol freeze, soft-regime harden, TRAIL_SL @ 1R. See `/workspace/momentum_audit/playbook-2026-09-16-full-fix.md`.
+Playbook **2026-09-16 full fix** + **sleeve capacity 2026-10-05** (Ofer): unlimited open stocks; at least 1 sector ETF; cash + ≤$1000/name gate size. See [Trader Momentum strategy](sand-workflow:trader-momentum-strategy).
 
 ## When to run
 
@@ -22,21 +23,24 @@ Playbook **2026-09-16 full fix**: breakout sleeve primary, VCP secondary, event-
 
 ## Pack / sleeve FAIL if
 
-- stock_buys > 3 or etf_buys > 1 or buy_count > 4
-- more than **2** `MOMENTUM_BREAKOUT` buys
+- **Do NOT** FAIL on open stock count / `SLEEVE_CAPACITY_FULL` / `stock_buys > 3` / `buy_count > 4` (obsolete 2026-10-05 — unlimited stocks)
+- etf_buys > 1 (still max 1 new ETF per pack)
+- Book has **zero** sector ETFs in HEALTHY and pack adds only stocks with no ETF candidate when cash allows (prefer ≥1 ETF)
+- more than **2** `MOMENTUM_BREAKOUT` buys **in the same pack night** (quality preference)
 - `MOMENTUM_BREAKOUT` with RVOL < 2.0 (soft regime: < 2.5)
 - Soft-regime VCP / quiet volume BUY (`REGIME_SOFT_VCP_BLOCK` required instead)
 - Any BUY on `EVENT_VOL_FREEZE` or HARD_HALT day
 - ETF BUY in SOFT regime
 - DWM week/month red on BUY
 - leverage ≠ 1, amount > $1000, demo, short, bad mcp/stop shape
+- Mirror A cash cannot cover the authorized pack (`INSUFFICIENT_CASH` = GATE_OK)
 
 ## Regime
 
 - EVENT_VOL_FREEZE (today or next NYSE session FOMC/CPI/NFP): 0 BUY; SKIP/HALT OK; scan+near-miss required
 - HARD_HALT (VIX≥25 or SPX<0.98×SMA50): 0 BUY; scan+near-miss required
 - SOFT: STOCK only MOMENTUM_BREAKOUT + RVOL≥2.5 + RS≥90 + DWM
-- HEALTHY: breakout + VCP under pack rules
+- HEALTHY: breakout + VCP under pack rules; unlimited open stocks OK if cash covers
 
 ## Exits
 
@@ -49,7 +53,7 @@ Playbook **2026-09-16 full fix**: breakout sleeve primary, VCP secondary, event-
 
 After PASS, Trader_momentum places without user/CoS chat confirmation. QA never places. Tell user on FAIL and on fills.
 
-**Cash / state change:** `INSUFFICIENT_CASH` = GATE_OK (not process AVOID). After cash frees or book changes, trader must send a **new** place-QA request with the new mirror A cash snapshot; prior FAIL/no-fill guidance is not authority to place. Flag `PLACE_WITHOUT_QA_BOT_RECHECK` if they self-PASS.
+**Cash / state / rule change:** `INSUFFICIENT_CASH` = GATE_OK (not process AVOID). After cash frees, book changes, **or sleeve rule changes**, trader must send a **new** place-QA request with the new mirror A cash snapshot + rule; prior FAIL/no-fill guidance is not authority to place. Flag `PLACE_WITHOUT_QA_BOT_RECHECK` if they self-PASS.
 
 ## Verdict routing
 

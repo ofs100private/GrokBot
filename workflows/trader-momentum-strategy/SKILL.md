@@ -3,13 +3,14 @@ name: Trader Momentum strategy
 description: >-
   use this when planning, reviewing, or executing Trader_momentum EOD buys/sells
   on Momentum-HHHGDTJ — full auto after QA PASS, no user confirmation, playbook
-  2026-09-16 breakout sleeve + event freeze + 1R trail, Fear-as-dip window
+  2026-09-16 breakout sleeve + event freeze + 1R trail, Fear-as-dip window,
+  unlimited stocks + ≥1 ETF (2026-10-05)
 ---
 # Trader Momentum strategy
 
 Standing playbook for **Trader_momentum** on portfolio **Momentum-HHHGDTJ** (REAL MONEY, reporting basis **$8,000** parent mirror `11630170` only — never report keys MCP totals as Momentum dollars).
 
-Changelog: `/workspace/momentum_audit/playbook-2026-09-16-full-fix.md` (supersedes 2026-09-15 sleeve/regime notes where they conflict).
+Changelog: `/workspace/momentum_audit/playbook-2026-09-16-full-fix.md` (supersedes 2026-09-15 sleeve/regime notes where they conflict). Sleeve capacity updated **2026-10-05** (Ofer): unlimited stocks + at least 1 ETF.
 
 ## FULL AUTO (Ofer)
 
@@ -32,7 +33,8 @@ If cash later frees (e.g. after `LOSS_PCT_GE_4` / SMA50 closes) and a prior pack
 
 - Long-only, leverage **×1**, amount **≤ $1,000** per name
 - Full S&P 500 scan every NYSE EOD (≥400). TRACE + retry ≤3
-- Pack: up to **3 stocks** + **1 sector ETF**
+- **Sleeve capacity (Ofer 2026-10-05):** **unlimited** open stocks; keep **at least 1 sector ETF** in the book (if none held in HEALTHY, prefer adding 1 sector ETF). Do **not** FAIL on stock count / `SLEEVE_CAPACITY_FULL`. Cash + ≤$1000/name still gate size. Max **1** new ETF per pack night (`etf_buys > 1` still FAIL).
+- Per-night pack preference (quality, not a hard open-book cap): up to ~3 stock candidates from sleeves + 0–1 sector ETF, as cash allows
 - DWM: week and month green required for buys (breakout also needs day ≥ 0)
 - REAL only; never Classic; never demo
 - Intraday ban 16:30–18:30 Israel; skip NYSE holidays
@@ -45,11 +47,11 @@ When CNN Fear & Greed is **Fear or Extreme Fear**, that is the **best time to lo
 - A daily_brief **No Buy Today** that exists only because F&G is Fear does **not** block dip candidates. Do not re-ask Ofer for a Fear override.
 - Still required: ×1, ≤$1,000, DWM, sleeve rules, cash, QA PASS, then FULL AUTO place. **EVENT_VOL_FREEZE** and **HARD_HALT** (VIX ≥ 25 or SPX < 0.98×SMA50) still mean 0 new buys — those are not the Fear index.
 
-## Sleeves (stocks) — playbook 2026-09-16
+## Sleeves (stocks) — playbook 2026-09-16 + capacity 2026-10-05
 
-1. **MOMENTUM_BREAKOUT** (preferred, max **2** of 3 stock slots): RS ≥ 90, RVOL ≥ 2.0, new 20-day close high, close in upper third of day’s range, DWM day+week+month ≥ 0
-2. **VCP_SETUP / VOLUME_BREAKOUT** (secondary): fill remaining stock slots; RS ≥ 80; week+month green
-3. Then **1 sector ETF** only in **HEALTHY** regime; commodity only if no sector ETF
+1. **MOMENTUM_BREAKOUT** (preferred; prefer ≤**2** breakouts in a single pack night): RS ≥ 90, RVOL ≥ 2.0, new 20-day close high, close in upper third of day’s range, DWM day+week+month ≥ 0
+2. **VCP_SETUP / VOLUME_BREAKOUT** (secondary): fill remaining pack stock slots; RS ≥ 80; week+month green
+3. **Sector ETF:** ensure **≥1** sector ETF held; add **1** sector ETF only in **HEALTHY** if missing; commodity only if no sector ETF; never more than 1 new ETF in one pack
 
 Near-miss high-RS names that fail both sleeves: `NO_BREAKOUT_NO_VCP`.
 
@@ -90,10 +92,10 @@ Wed 2026-09-30: place-QA **PASS** for JNJ CLOSE + CRWD BE, but Mirror A next day
 3. **Sticky pending queue:** once authorize_place PASS for CLOSE/BE/TRAIL, keep until Mirror A confirms (position gone / SL ≥ new_stop / cash freed). Re-attempt next EOD even if live R later slips below 2R (missed BE is still debt).
 4. Watchdog / eod_miss_check: if `authorize_place_now` has no matching place_ack within ~15m → **`EOD_PLACE_NOT_ACKED`** (not CLEAN). Scan/PM ACTION alone is insufficient.
 5. Execution path: keys MCP must be keys-only (no mixed OAuth). If keys broken, route place via documented working Real path — never silent skip after PASS.
-6. Thin cash (&lt;~$1000) + ≥8 names: log `CASH_RECYCLE_REQUIRED`; BUY pack is advisory until a CLOSE frees room; then **fresh** place-QA (existing cash-block rule).
+6. Thin cash (&lt;~$1000): log `CASH_RECYCLE_REQUIRED`; BUY pack is advisory until cash covers; then **fresh** place-QA (existing cash-block rule). Stock-count alone is **not** a capacity block after 2026-10-05.
 
 See `/workspace/momentum_audit/improvement-2026-10-01.md`.
 
 ## Do not
 
-Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat CNN Fear as an automatic no-buy. Treat keys MCP as the $8k book. Double-buy a name filled this session. Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).
+Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat CNN Fear as an automatic no-buy. Treat keys MCP as the $8k book. Double-buy a name filled this session. Cap open stocks at 3 (obsolete). Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book/sleeve-rule snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).

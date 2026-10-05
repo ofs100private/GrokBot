@@ -1,0 +1,184 @@
+{
+  "packId": "classic-arbe-1000-20261004-ofer-override",
+  "overall": "FAIL",
+  "qa_places": false,
+  "qaAsOf": "2026-10-04T23:15:18+03:00",
+  "scope": "OfersClaw5-PRIYN mirror A 11368142 only; parent SSO user-etoro bearer. No place, prepare, close, or execute-write.",
+  "failingReasons": [
+    "Override evidence NOT_FOUND outside the trader artifact. Standing Classic buy HOLD: other names stay FAIL until an explicit lift. XLI/CAT/SMH history does not cover ARBE.",
+    "The only prepare is on connection user-OfersClaw5 (keys ledger B). Artifact says the token is bound to the keys connection and is not authority to place on mirror A. Ledger truth rejects user-OfersClaw5 keys as Classic. A keys-B place is not a mirror-11368142 order."
+  ],
+  "claimedOrderMatchesArtifact": true,
+  "checks": {
+    "liveBookMirrorA": {
+      "result": "PASS",
+      "note": "Fresh user-etoro reads. Trader xRequestId d2e11536-5503-47b5-aace-0e3ab8fc7583 was not used as evidence. Live cash/equity/invested/openPnl match the claimed 2026-10-04T20:12:22Z block."
+    },
+    "arbeAlreadyOpen": {
+      "result": "PASS",
+      "detail": "ARBE absent on mirror 11368142"
+    },
+    "mirrorDirectionAndLeverage": {
+      "result": "PASS",
+      "detail": "QQQ, XLV, SMH all long leverage 1. No shorts. Parent direct book (SPX500 x10, BTC, DOGE) excluded; gate is mirror 11368142 only."
+    },
+    "pendingOrdersOnMirror": {
+      "result": "PASS",
+      "detail": "mirror 11368142 orders empty"
+    },
+    "cashFloor": {
+      "result": "PASS",
+      "liveAvailableCash": 7285.54,
+      "amount": 1000,
+      "upfrontFees": 38.4,
+      "requiredDebit": 1038.4,
+      "cashAfter": 6247.14,
+      "floor": 2500,
+      "math": "7285.54 - 1000 - 38.40 = 6247.14 >= 2500"
+    },
+    "keysBCashRejected": {
+      "result": "PASS",
+      "detail": "Did not call user-OfersClaw5. Artifact keysPreviewAvailableCash_REJECTED 1119.16 noted only as a rejected figure, not used as the book."
+    },
+    "instrument1356": {
+      "result": "PASS",
+      "instrumentId": 1356,
+      "symbol": "ARBE",
+      "displayName": "ARBE Robotics LTD",
+      "type": "Stocks",
+      "notCrypto": true,
+      "source": "GET /api/v2/market-data/instruments instrumentsIds=1356 xRequestId 477477ea-a704-4ddc-b2b4-15f59d38a80a"
+    },
+    "fridayQuoteBand": {
+      "result": "PASS",
+      "ask": 0.6146,
+      "bid": 0.611,
+      "spread": 0.0036,
+      "asOf": "2026-10-02T19:59:54.8133713Z",
+      "label": "Friday close; market closed Sunday 2026-10-04. Live overview quote matches the pack exactly.",
+      "source": "get-instruments-overview xRequestId ebd42141-03b0-4aea-979e-84e0867c2d04"
+    },
+    "unitsAndFees": {
+      "result": "PASS",
+      "unitsRecomputed": 1627.0745193615355,
+      "unitsClaimed": 1627.07,
+      "unitsDelta": 0.0045193615356,
+      "feeSum": 38.4,
+      "feeParts": {
+        "transactionFee": 32.54,
+        "markup": 0,
+        "marketSpread": 5.86,
+        "overnightFee": 0
+      },
+      "spreadTimesUnits": 5.857468269701528,
+      "spreadVsClaimedCents": 0.002531730298472,
+      "note": "Within 0.1 unit and a few cents."
+    },
+    "hardGates": {
+      "leverageIs1": "PASS",
+      "notShort": "PASS",
+      "notCrypto": "PASS",
+      "notAllCashReserve": "PASS",
+      "notDemo": "PASS",
+      "feesPresent": "PASS",
+      "overnightEstimatePresent": "PASS",
+      "thesisPresentInPack": "PASS",
+      "orderUnchangedVsClaim": "PASS",
+      "runId": "N/A not an RSI pack; thesis says no run_id required"
+    },
+    "overrideEvidence": {
+      "result": "FAIL",
+      "path": "NOT_FOUND",
+      "sentence": null,
+      "searched": [
+        "/workspace/classic_rsi",
+        "/workspace/obsidian-trading-kb/Job-Runs",
+        "/workspace/obsidian-trading-kb/Process",
+        "/workspace/obsidian-trading-kb/Ledgers",
+        "2026-10-04 qa-pack and sidecar-for-cos files",
+        "workspace-wide ARBE / BUY ARBE $1000 / authorize 11368142 excluding this pack"
+      ],
+      "note": "Only hit is the pack thesis self-claim in classic-arbe-1000-20261004-ofer-override.json. Not independent authorization."
+    },
+    "prepareConnectionHitsMirrorA": {
+      "result": "FAIL",
+      "prepareConnection": "user-OfersClaw5",
+      "prepareXRequestIdClaimedNotReplayed": "b35f26ec-ef2b-48cd-81b4-99f9d71abc36",
+      "wouldHitMirror11368142": false,
+      "proved": [
+        "Artifact prepare.connection is user-OfersClaw5; tokenOmitted text says the token is bound to the keys connection and is not an authority to place on mirror A.",
+        "Parent book that holds mirror 11368142 is user-etoro bearer username ofs56etoro realCid 28376799. Copied trader on that mirror is cid 48144770 username OfersClaw5-PRIYN, a different account.",
+        "/workspace/obsidian-trading-kb/Ledgers/Ledger-Truth.md (asOf 2026-10-04T15:51:00+03:00): open/equity/cash is Mirror A 11368142; execution closes are keys-B and must never be called Mirror A; REJECT user-OfersClaw5 keys equity/cash as Classic.",
+        "/workspace/daily-brief-0530-2026-10-04/sidecar-for-cos.json and /workspace/app-refresh-2026-10-04-am/sidecar-for-cos.json: user-OfersClaw5 connected but is keys-B ledger \u2014 REJECTED for Classic A (used mirror 11368142).",
+        "/workspace/analysis/2026-10-02-classic-momentum-buy-scan.md: keys book cash ~1.1k and a different name set than Mirror A; not Classic Mirror A.",
+        "place-trade tokens are bound to the connection that prepared them, so this prepare cannot be executed on user-etoro mirror A. No replacement prepare was made."
+      ]
+    }
+  },
+  "liveMirrorA": {
+    "mirrorId": 11368142,
+    "username": "OfersClaw5-PRIYN",
+    "cid": 48144770,
+    "equity": 12930.08,
+    "availableCash": 7285.54,
+    "invested": 15000.0,
+    "openPnl": -1642.76,
+    "closedPnl": -2163.75,
+    "symbols": [
+      "QQQ",
+      "XLV",
+      "SMH"
+    ],
+    "positions": [
+      {
+        "symbol": "QQQ",
+        "instrumentId": 3006,
+        "direction": "long",
+        "leverage": 1,
+        "invested": 1323.4,
+        "positionId": 3523504427
+      },
+      {
+        "symbol": "XLV",
+        "instrumentId": 3017,
+        "direction": "long",
+        "leverage": 1,
+        "invested": 1137.84,
+        "positionId": 3498068265
+      },
+      {
+        "symbol": "SMH",
+        "instrumentId": 6357,
+        "direction": "long",
+        "leverage": 1,
+        "invested": 2662.31,
+        "positionId": 3581725276
+      }
+    ],
+    "pendingOrders": [],
+    "arbeOpen": false,
+    "portfolioSummary": {
+      "xRequestId": "e9119e8f-84ae-4c6c-9fda-6890cfcf52ff",
+      "timestamp": "2026-10-04T20:13:57.2036275Z",
+      "account": "real"
+    },
+    "positionsAndOrders": {
+      "xRequestId": "4320a5de-71ec-448a-8878-b5ae7384447c",
+      "timestamp": "2026-10-04T20:13:57.1647426Z",
+      "account": "real"
+    },
+    "matchesTraderSnapshotNumbers": true,
+    "traderXRequestIdUsedAsEvidence": false
+  },
+  "cashAfterMath": {
+    "liveCash": 7285.54,
+    "amount": 1000,
+    "upfront": 38.4,
+    "requiredDebit": 1038.4,
+    "cashAfter": 6247.14,
+    "floor": 2500,
+    "floorOk": true
+  },
+  "overrideEvidence": "NOT_FOUND",
+  "prepareCanHitMirrorA": false
+}
