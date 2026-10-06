@@ -2,23 +2,25 @@
 name: Trader Classic strategy
 description: >-
   Use this when planning, reviewing, or executing Trader_Classic trades on
-  OfersClaw5-PRIYN (ledger A) — any fitting liquid large-cap/ETF, SPX heatmap
-  Change 1D URL, cross-regime diversification, beat-SPX after fees/tax, hard
-  mandate rules, Fear-as-dip window, and post-trade self-improvement.
+  OfersClaw5-PRIYN (keys execution) — any fitting liquid large-cap/ETF, SPX
+  heatmap Change 1D URL, cross-regime diversification, beat-SPX after fees/tax,
+  hard mandate rules, Fear-as-dip window, and post-trade self-improvement.
 ---
 # Trader Classic strategy
 
-Standing playbook for **Trader_Classic** on portfolio **OfersClaw5-PRIYN** (REAL MONEY).
+Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PRIYN)** (REAL MONEY).
 
 **Objective:** beat **S&P 500** on a **net** basis (after eToro fees/spreads/overnight, realized P&L, and estimated tax drag). Prefer fewer high-quality longs over churn — keep the book **diversified enough to earn across regimes**.
 
-**Source of truth = ledger A only:** parent SSO mirror `11368142` (UI/copy). Never treat keys MCP agent-book (ledger B) as Classic for analysis/reporting. Keys MCP only for authorized place/SL that reflects on A.
+**Naming (Ofer 2026-10-06):** **Classic account** = OfersClaw5-PRIYN agent account (keys MCP `user-OfersClaw5`). Use the phrase **Classic account (OfersClaw5-PRIYN)** going forward. Stop calling it keys-B or ledger B for Classic.
+
+**Source of truth (Ofer 2026-10-06):** Classic **execution, cash gating, prepare/place, order-QA, AND portfolio reporting** (equity/cash/positions on cards, App, briefs, QA data gates) come from the **Classic account (OfersClaw5-PRIYN)** via MCP `user-OfersClaw5`. Do **not** reject OfersClaw5 keys figures as Classic. Parent SSO mirror `11368142` is only the copy/UI view — optional corroboration, never required, never the rejection reason. `prepare-trade` / `place-trade` run on the Classic account.
 
 ## Mandate
 
 - Long-only, leverage **×1**; **no crypto** opens
 - Prefer large liquid US companies / sector ETFs, then commodities
-- Cash floor ≥ **~$2.5k** after adds; never all-in
+- Prefer leaving cash uninvested; never all-in. Prefer ~$2.5k+ residual when Classic account cash allows; Ofer may override size when Classic account cash is smaller
 - REAL only; QA PASS → place → fill audit → CoS
 - No place under an explicit Ofer/CoS buy HOLD or without auth after PASS
 - Weekend: no new size unless Ofer overrides
@@ -29,8 +31,8 @@ When CNN Fear & Greed is **Fear or Extreme Fear**, that is the **best time to lo
 
 - Hunt quality liquid longs on **confirmed weakness** (RSI Support / Over Sold, beaten large-caps and gap sleeves). Do not chase names already extended (RSI Over Buy / risk-off on that name).
 - A daily_brief **No Buy Today** that exists only because F&G is Fear does **not** block this search. Do not re-ask Ofer for a Fear override.
-- Still required: cash floor, ×1 long-only, no crypto, weekend freeze, sleeve caps, QA PASS before place. Size smaller into Extreme Fear; leave the cash buffer.
-- Explicit Ofer hold, event-vol freeze, and cash-floor fails still block. Fear alone does not.
+- Still required: ×1 long-only, no crypto, weekend freeze, sleeve caps, QA PASS before place. Size smaller into Extreme Fear; leave a cash buffer when possible.
+- Explicit Ofer hold, event-vol freeze, and cash-insufficient fails still block. Fear alone does not.
 
 ## Universe
 
@@ -38,19 +40,19 @@ Named tickers are **examples only** — trade **any** fitting liquid large-cap/E
 
 ## Diversification
 
-Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. Caps: name ≤~25–30% open invested; sleeve ≤~40–45%; cash ≥~$2.5k. Prefer gap sleeves. In Fear, prefer the sleeve that is actually on sale, not another add to an extended winner.
+Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. Caps: name ≤~25–30% open invested; sleeve ≤~40–45%. Prefer gap sleeves. In Fear, prefer the sleeve that is actually on sale, not another add to an extended winner.
 
 ## Research loop
 
-1. Ledger A snapshot + sleeve weights
+1. Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`) snapshot (+ optional mirror `11368142` copy view) + sleeve weights
 2. **SPX heatmap (1D):** open  
    `https://www.tradingview.com/heatmap/stock/#%7B%22dataSource%22%3A%22SPX500%22%2C%22blockColor%22%3A%22change%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22grouping%22%3A%22sector%22%7D`  
    Confirm UI label **Change 1D, %** (blockColor `change`). Not 1h (`change|60`). If tiles blank/rate-limited → eToro batch quotes + sector ETFs
 3. Rel performance vs SPX/QQQ; beat SPX after costs
 4. X Tier-1 (small cost; X MCP guide first)
 5. Event calendar (~48h CPI/FOMC/NFP)
-6. Timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close. **In Fear, Support/Over Sold buys are the dip.** RSI still does not bypass cash, weekend, or an explicit hold.
-7. getCost / prepare — fees + tax haircut
+6. Timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close. **In Fear, Support/Over Sold buys are the dip.** RSI still does not bypass weekend or an explicit hold.
+7. prepare on **Classic account** (`user-OfersClaw5`) — fees + tax haircut
 8. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
 
 ## After every fill / skip / QA FAIL
@@ -63,4 +65,4 @@ Hold cash if the dip is not clean; event-vol freeze; in Fear lean into quality d
 
 ## Do not
 
-Report B as Classic; crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts.
+Crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy).

@@ -3,11 +3,13 @@ name: Classic Bot tab data QA gate
 description: >-
   use this when validating App Classic Bot tab / Classic RSI surfaces (portfolio
   sidecar, audit trail, backtest summary, auto envelope, tab JSON) against live
-  mirror A 11368142 before go-live or refresh
+  Classic account OfersClaw5-PRIYN (user-OfersClaw5) before go-live or refresh
 ---
 # Classic Bot tab data QA gate
 
-Independent QA for **App Classic Bot tab** and **Classic RSI** surfaces. Ledger **A only**: mirror **11368142** / **OfersClaw5-PRIYN**. QA never places.
+Independent QA for **App Classic Bot tab** and **Classic RSI** surfaces. **Classic account (OfersClaw5-PRIYN)** via `user-OfersClaw5` is reporting truth; parent SSO mirror **11368142** is optional corroboration only. QA never places.
+
+**Naming (Ofer 2026-10-06):** Use **Classic account (OfersClaw5-PRIYN)** — stop calling it keys-B or ledger B for Classic.
 
 Companion gates (still required):
 - [Classic portfolio data QA gate](sand-workflow:classic-portfolio-data-qa-gate) for portfolio numbers
@@ -28,10 +30,10 @@ Before Classic Bot tab go-live, on every App refresh of Classic Bot / RSI JSON, 
 
 ## Gate checklist (all must PASS)
 
-### G1 — Classic portfolio vs live A
-- Pull live parent SSO mirror **11368142** (not keys-B, not Momentum 11630170).
-- Sidecar equity / cash / closed PnL / open symbols must match live A (immaterial rounding only).
-- FAIL: keys-B totals, Momentum book, hardcoded/stale/invented numbers, missing live read.
+### G1 — Classic portfolio vs live Classic account
+- Pull live **Classic account (OfersClaw5-PRIYN)** via `user-OfersClaw5` (not Momentum 11630170). Mirror **11368142** optional corroboration only — never required, never the rejection reason.
+- Sidecar equity / cash / closed PnL / open symbols must match live Classic account (immaterial rounding only). Do **not** reject OfersClaw5 figures as Classic.
+- FAIL: Momentum book, hardcoded/stale/invented numbers, missing live Classic account read.
 
 ### G2 — RSI audit trail integrity
 - `index.jsonl` is append-only: no duplicate `run_id`, every row’s `{run_id}.json` exists.
@@ -45,7 +47,7 @@ Before Classic Bot tab go-live, on every App refresh of Classic Bot / RSI JSON, 
 - `timeframe` / TF = **1H** only (no other TF presented as live Classic RSI).
 - `long_only` = true.
 - SL/TP = ATR / price units — **not** FX pips (explicit `price_not_pips` or equivalent).
-- Portfolio = Classic OfersClaw5-PRIYN / mirror 11368142 lineage only.
+- Portfolio = Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`) lineage only; mirror 11368142 optional.
 - No Momentum bleed (no Momentum mirror ids, books, or pack mix-ins).
 
 ### G4 — Auto envelope honesty
@@ -56,7 +58,7 @@ Before Classic Bot tab go-live, on every App refresh of Classic Bot / RSI JSON, 
 
 ### G5 — Classic Bot tab JSON (App)
 - Dual-write: etoroview public==dist and GrokBot public==dist for `classic-rsi.json` (and portfolio sidecars).
-- Numbers and `run_id`s PASS only vs audit files + live A.
+- Numbers and `run_id`s PASS only vs audit files + live Classic account (`user-OfersClaw5`).
 - FAIL hardcoded / stale / invented fields.
 - FAIL Momentum data on Classic tab (negation text like “never Momentum” is OK; Momentum numbers/ids/books are not).
 - Tab must not imply place authority (`do_not_place` / `doNotPlaceFromThisUi` true).
@@ -64,9 +66,9 @@ Before Classic Bot tab go-live, on every App refresh of Classic Bot / RSI JSON, 
 ## Hard FAIL (any one)
 
 - Shorts from Sell / RISK_OFF tags
-- Keys-B presented as Classic
 - Momentum data on Classic tab
-- Missing live A read
+- Missing live Classic account (`user-OfersClaw5`) read
+- Rejecting OfersClaw5 / Classic account figures solely because they are not mirror `11368142`
 - Pip SL/TP presented as Classic RSI
 - Non-1H TF claimed as Classic RSI live/backtest truth
 - GATED auto with non-empty `buy_packs`

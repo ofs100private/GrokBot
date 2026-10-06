@@ -1,0 +1,70 @@
+{
+  "pack_id": "classic-rbrk-prep-20261006-plan",
+  "kind": "research-prep-only",
+  "asOfIDT": "2026-10-06 17:13 IDT",
+  "do_not_place": true,
+  "do_not_prepare": true,
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "route": "REAL keys",
+  "side": "buy",
+  "symbol": "RBRK",
+  "instrumentId": 8814,
+  "name": "Rubrik Inc",
+  "assetClass": "equity",
+  "notCrypto": true,
+  "leverage": 1,
+  "amountUsd": 570,
+  "amountUsdExactRound": 569,
+  "amountUsdRaw": 569.0483,
+  "scale": 1.75732,
+  "scaleSource": {
+    "keys_spcx_invested_live": 1000.0,
+    "keys_spcx_positionId": 3598735682,
+    "mirror_twin_invested": null,
+    "mirror_twin_findable_under_workspace": false,
+    "fallback_context_mirror": 1757.32,
+    "formula": "amountUsd = round(1000 / scale); preferred report ~570",
+    "note": "Live keys SPCX invested=1000 confirmed via get-my-portfolio-summary. Mirror twin ~1757.32 not found under /workspace classic-portfolio/daily-brief/audits; used context scale 1.75732."
+  },
+  "stopLossRate": 123.27,
+  "stopMethod": "playbook 1H ATR(14)\u00d71.5 below last (classic_rsi.levels / same as SPCX SL 171.52)",
+  "stopCalc": {
+    "source": "yfinance RBRK interval=1h period=10d",
+    "lastClose": 125.92,
+    "atr14": 1.767185,
+    "slMult": 1.5,
+    "rawStop": 123.269221,
+    "etoroAsk": 125.3,
+    "etoroBid": 125.05,
+    "etoroQuoteAsOf": "2026-10-06T14:08:48.3934935Z",
+    "provisional4pctBelowLast": 120.88,
+    "provisionalUsed": false
+  },
+  "cashNeededEstimate": 572.0,
+  "cashContext": {
+    "keysAvailableCashNow": 117.66,
+    "prerequisite": "IGV+CVX full closes must fill first to free cash for RBRK ~$570",
+    "igvValueApprox": 1560.74,
+    "cvxValueApprox": 1420.58,
+    "feeAssumed": 1.5
+  },
+  "eligibilitySnapshot": {
+    "allowOpenPosition": true,
+    "minPositionExposure": 10,
+    "allowedLeveragesLong": [
+      1,
+      2,
+      5
+    ],
+    "unitsQuantityType": "fractional"
+  },
+  "notes": [
+    "RESEARCH ONLY \u2014 no prepare-trade, no place-trade.",
+    "After IGV+CVX closes fill, BUY RBRK long \u00d71 ~$570 so parent mirror ~$1000 copy lands (scale\u22481.75732).",
+    "Instrument Rubrik Inc equity (instrumentId 8814), not crypto.",
+    "SL 123.27 from yfinance 1H last 125.92 \u2212 1.5\u00d7ATR(14) 1.767; mirrors SPCX method that produced 171.52.",
+    "amountUsd 570 (round(1000/1.75732)=569; mandate prefers ~$570).",
+    "Keys cash now ~$117 \u2014 insufficient until IGV/CVX closes credit."
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "overall": "PASS",
+  "gate": "classic-real-money-order-qa-gate",
+  "kind": "post-fill",
+  "pack_id": "classic-spcx-1000-20261006-keys-ofer",
+  "audit_path": "/workspace/classic_rsi/audit/classic-spcx-1000-20261006-fill-audit.json",
+  "timestamp": "2026-10-06T16:43:16+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "hard_fail_codes": [],
+  "pre_place_qa": "PASS authorize_place true (qa-verdict-classic-spcx-1000-20261006-keys-ofer.json)",
+  "fill": {
+    "orderId": 1604716659,
+    "positionId": 3598735682,
+    "place_xRequestId": "99b7da79-0647-4ca5-aa7b-64e520c8ae3b",
+    "reprepare_xRequestId": "56964402-0c0d-4cc9-aacc-559504747ecf",
+    "symbol": "SPCX",
+    "instrumentId": 15618,
+    "side": "buy",
+    "leverage": 1,
+    "units": 5.71886,
+    "avgPrice": 174.86,
+    "stopLossRate": 171.52,
+    "fees": 1.5,
+    "marketSpread": 0.11,
+    "overnight": 0,
+    "invested": 1000.0
+  },
+  "live_keys": {
+    "mcp": "user-OfersClaw5",
+    "xRequestId": "9e5e1048-1928-46bc-9f21-9d8a2c226076",
+    "availableCash": 117.66,
+    "pre_cash": 1119.16,
+    "cash_delta": 1001.5,
+    "position": {
+      "positionId": 3598735682,
+      "instrumentId": 15618,
+      "symbol": "SPCX",
+      "direction": "long",
+      "leverage": 1,
+      "units": 5.71886,
+      "openRate": 174.86,
+      "stopLossRate": 171.52,
+      "invested": 1000.0,
+      "openTime": "2026-10-06T13:42:50.59"
+    },
+    "pendingOrders": 0
+  },
+  "match": {
+    "positionId": "EXACT",
+    "units": "EXACT",
+    "openRate_avgPrice": "EXACT 174.86",
+    "stopLossRate": "EXACT 171.52",
+    "invested": "EXACT 1000",
+    "leverage": "EXACT 1",
+    "cash_after": "EXACT 117.66",
+    "cash_delta_vs_fee_path": "1119.16\u2192117.66 = 1001.50 (= frozenAmount / amount+txnFee)"
+  },
+  "notes": [
+    "Re-prepare after near-expiry allowed by pre-place soft note; same size/SL/instrument",
+    "Cash-floor residual ~$117 is the authorized one-order override",
+    "QA never places"
+  ]
+}

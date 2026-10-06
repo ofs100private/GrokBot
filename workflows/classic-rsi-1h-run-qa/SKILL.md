@@ -10,7 +10,7 @@ description: >-
 
 Independent **per-run** gate for Classic RSI 1H (`auto_1h` / `propose`). Complements [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) (order packs / fills). This skill owns **run integrity and signal hygiene**, not place sizing.
 
-**Classic only** (OfersClaw5-PRIYN / mirror `11368142`). Never Momentum. **Do not place** from this skill.
+**Classic only** (Classic account (OfersClaw5-PRIYN) / `user-OfersClaw5`). Never Momentum. **Do not place** from this skill. Parent SSO mirror `11368142` is optional copy/UI corroboration only.
 
 ## When to run
 
@@ -25,7 +25,7 @@ Independent **per-run** gate for Classic RSI 1H (`auto_1h` / `propose`). Complem
 2. `/workspace/classic_rsi/audit/latest-auto.json` or `latest-propose.json` matching that `run_id`
 3. `/workspace/classic_rsi/audit/index.jsonl` row for the same `run_id`
 4. Envelope fields: `kind` (`auto`|`propose`), `status`, `timeframe`, `confirmed_close`, `long_only`, `do_not_place`, `buy_packs`, `risk_off`, `mandate_gates`, `symbols`
-5. Independent LIVE check when packs or book summary present: parent mirror `11368142` only — **REJECT keys-B**
+5. Independent LIVE check when packs or book summary present: **Classic account (OfersClaw5-PRIYN)** via `user-OfersClaw5`. Do **not** reject OfersClaw5 figures as keys-B. Mirror `11368142` optional corroboration only — never required, never the rejection reason
 
 ## Hard FAIL (any one)
 
@@ -37,7 +37,7 @@ Independent **per-run** gate for Classic RSI 1H (`auto_1h` / `propose`). Complem
 | `RSI_UNCONFIRMED_BARS` | `confirmed_close` is false or missing when status is PROPOSE with packs |
 | `RSI_SHORT_OR_PIP` | Any pack implies short / sell-to-open, or uses FX pip SL/TP instead of ATR/% equity |
 | `RSI_CRYPTO` | Any crypto symbol in buy_packs |
-| `RSI_KEYS_B` | Book dollars taken from user-OfersClaw5 keys instead of mirror A `11368142` |
+| `RSI_WRONG_BOOK` | Book dollars from Momentum / wrong book, or invented — **not** a fail when from Classic account (`user-OfersClaw5`). Do not require mirror `11368142` |
 | `RSI_PLACE_FROM_AUTO` | Auto script or envelope set `place=true` / bypassed QA |
 | `RSI_RUN_CRASH` | Exception / empty / corrupt audit with no coherent PROPOSE or GATED status |
 
@@ -60,7 +60,7 @@ All of:
 
 1. Audit JSON + index row exist for `run_id`
 2. `timeframe=1H`, `long_only=true`, `confirmed_close=true` (for PROPOSE), `do_not_place=true` on auto
-3. No short / pip / crypto / keys-B / place-from-auto
+3. No short / pip / crypto / wrong-book / place-from-auto (Classic account OfersClaw5 figures are allowed)
 4. Packs (if any) carry ATR SL/TP and cite the same `run_id`
 
 Then:

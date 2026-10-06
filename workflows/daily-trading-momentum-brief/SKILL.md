@@ -10,8 +10,9 @@ description: >-
 - Input: `portfolios` — list of agent-portfolio keys the user wants (examples: `Classic` / `OfersClaw5-PRIYN`, `Momentum` / `Momentum-HHHGDTJ`).
 - Support any subset: one, several, or all of the user's agent portfolios. Never hardcode which book.
 - For each selected book, pull LIVE ledger fields via eToro Account / the matching trader agent (invested, equity, cash, open/closed PnL, positions). Do not invent dollar amounts.
-- **Standing default (Ofer):** `portfolios=[Classic, Momentum]` — always produce a separate Portfolio Recommendation card for **Classic** (OfersClaw5-PRIYN / mirror 11368142) **and** **Momentum** (Momentum-HHHGDTJ). Override only if Ofer narrows the list for a run.
-- Classic truth = parent mirror ledger A (not keys-B totals). Momentum truth = Momentum agent book / its live MCP — never mix Classic dollars into Momentum or vice versa.
+- **Standing default (Ofer):** `portfolios=[Classic, Momentum]` — always produce a separate Portfolio Recommendation card for **Classic** (Classic account (OfersClaw5-PRIYN)) **and** **Momentum** (Momentum-HHHGDTJ). Override only if Ofer narrows the list for a run.
+- **Classic truth** = Classic account (OfersClaw5-PRIYN) live via MCP `user-OfersClaw5` (equity/cash/positions). Parent SSO mirror `11368142` is optional copy/UI corroboration only — never required, never the rejection reason. Do **not** reject OfersClaw5 figures as Classic.
+- **Momentum truth** (UNCHANGED): Momentum agent book / mirror `11630170` as $8k reporting truth; keys Momentum-HHHGDTJ for execution only — never mix Classic dollars into Momentum or vice versa.
 
 ## Live data rules
 1. Fetch LIVE only via tools. Preferred F&G: `https://production.dataviz.cnn.io/index/fearandgreed/graphdata`. Fallback: web search / CNN Fear & Greed page.
@@ -41,6 +42,6 @@ If length pressure: shorten section-9 reasons; keep sections 10–14. A brief th
 
 ## Coordination
 - Use X agent / X tools for Tier-2 analyst tape (estimate cost; keep cheap).
-- Use trader agents + eToro Account for portfolio cards (Classic via Trader_Classic / mirror A; Momentum via Trader_momentum / Momentum MCP).
-- After delivery, refresh App JSON dual-write with **both** portfolio cards when both are selected; never write keys-B Classic totals as Classic A.
+- Use trader agents + MCP for portfolio cards (Classic via Trader_Classic / Classic account `user-OfersClaw5`; Momentum via Trader_momentum / Momentum MCP — Momentum reporting still mirror `11630170`).
+- After delivery, refresh App JSON dual-write with **both** portfolio cards when both are selected; Classic card numbers must come from live Classic account (`user-OfersClaw5`), not from inventing or requiring mirror `11368142`.
 - Deliver the full brief to the user (or hand off to Chief of Staff for user delivery when running in an isolated routine).

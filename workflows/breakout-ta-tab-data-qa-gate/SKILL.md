@@ -18,7 +18,7 @@ After each nightly `breakout_ta.auto_daily` run, and before calling the Breakout
 - Feed: `/workspace/etoroview/public/breakout-ta.json` (+ dist + GrokBot public/dist) must be byte-identical  
 - Audit: `/workspace/breakout_ta/audit/{run_id}.json` and `latest-auto.json`  
 - Comparison block vs Classic RSI / Momentum methods  
-- Live books only for overlap checks: Classic mirror `11368142`, Momentum mirror `11630170` ($8k) — reject keys-B  
+- Live books only for overlap checks: **Classic** = Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`; mirror `11368142` optional), **Momentum** = mirror `11630170` ($8k reporting truth). Do **not** reject OfersClaw5 Classic figures as keys-B  
 
 ## Gates
 
@@ -30,13 +30,13 @@ After each nightly `breakout_ta.auto_daily` run, and before calling the Breakout
 
 **G4 Comparison** — methods list includes breakout_ta, classic_rsi, momentum_breakout; overlap symbols ⊆ scanned universe; no invented Classic/Momentum dollars  
 
-**G5 Live book overlap (soft exact)** — if feed claims confirmed-in-classic-book / momentum-book, those symbols must appear on live mirror A books (or documented ABSENT)  
+**G5 Live book overlap (soft exact)** — if feed claims confirmed-in-classic-book / momentum-book, those symbols must appear on live Classic account (`user-OfersClaw5`) / Momentum mirror `11630170` books (or documented ABSENT); Classic mirror `11368142` optional only  
 
 ## Hard FAIL
 
 - Missing dual-write / mismatched copies  
 - Place flags true / shorts  
-- Momentum keys-B or Classic keys-B as truth  
+- Using Momentum keys alone as Momentum reporting truth (Momentum reporting = mirror `11630170`); rejecting Classic account / OfersClaw5 figures as Classic truth  
 - Comparison claiming places authorized  
 - Hardcoded stale run_id vs audit  
 

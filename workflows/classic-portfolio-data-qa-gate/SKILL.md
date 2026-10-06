@@ -10,9 +10,10 @@ Independent validator for **App** and **Trader_Classic** portfolio numbers on Cl
 
 ## Scope
 
-- Portfolio: **OfersClaw5-PRIYN**
-- Mirror id: **11368142**
-- Source of truth: live eToro Classic agent portfolio reads (via eToro Account / keys path). Never trust App hardcoding.
+- Portfolio: **Classic account (OfersClaw5-PRIYN)**
+- MCP: `user-OfersClaw5`
+- Parent SSO mirror id **11368142**: optional copy/UI corroboration only — never required, never the rejection reason
+- Source of truth: live Classic account reads via `user-OfersClaw5` (equity/cash/positions). Do **not** reject OfersClaw5 figures as Classic. Never trust App hardcoding.
 
 ## When to run
 
@@ -20,7 +21,7 @@ Whenever App or Trader_Classic presents Classic totals or positions for display,
 
 ## PASS
 
-Every total and every position matches the live read (symbols, units/invested, cash, PnL fields presented). Immaterial rounding only if explicitly within documented tolerance; otherwise exact match on presented fields.
+Every total and every position matches the live **Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`)** read (symbols, units/invested, cash, PnL fields presented). Immaterial rounding only if explicitly within documented tolerance; otherwise exact match on presented fields. Mirror `11368142` may corroborate but must not be required for PASS.
 
 ## FAIL
 
@@ -35,4 +36,4 @@ Every total and every position matches the live read (symbols, units/invested, c
 2. Same verdict to **App** (`64d1617f-e42c-4a90-a0e9-3463ae5f0187`)
 3. Tell Ofer on FAIL, and on PASS when useful
 
-Do not invent live numbers. Pull or require a fresh live Classic read before verdict.
+Do not invent live numbers. Pull or require a fresh live Classic account (`user-OfersClaw5`) read before verdict.

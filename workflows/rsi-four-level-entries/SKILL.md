@@ -62,7 +62,7 @@ Default pip SL/TP (70/80 pips) and 1m/5m tuning are for FX. Our books are **US s
 ## Prerequisites before live use
 
 1. **Mandate:** long-only ×1; Classic no crypto; Momentum ≤$1k/name; REAL money; QA PASS before place  
-2. **Ledger truth:** Classic mirror `11368142`; Momentum mirror `11630170` ($8k) — never keys-B totals  
+2. **Ledger truth:** Classic = Classic account (OfersClaw5-PRIYN) via `user-OfersClaw5` (mirror `11368142` optional corroboration only); Momentum mirror `11630170` ($8k reporting truth; keys Momentum-HHHGDTJ execution only) — do not mix books  
 3. **Timeframe:** prefer **daily** (or 1H for Classic discretionary timing). Retune strong-candle multiplier on that TF  
 4. **Stops/targets:** replace pip engine with **ATR or %** (e.g. SL 1.5–2×ATR, TP ≥1.5R) aligned with Classic/Momentum risk rules  
 5. **Confirm on close:** keep ON for any automation  

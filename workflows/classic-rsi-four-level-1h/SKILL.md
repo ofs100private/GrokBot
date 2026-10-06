@@ -8,7 +8,7 @@ description: >-
 ---
 # Classic RSI four-level entries (1H)
 
-**Classic only** (OfersClaw5-PRIYN / Trader_Classic). Do **not** use on Momentum.
+**Classic only** (Classic account (OfersClaw5-PRIYN) / Trader_Classic). Do **not** use on Momentum.
 
 Implements the four-level RSI zone model on **1-hour** bars with **ATR equity stops**, **confirmed candle close only**, and **long-only** remapping. Code: `/workspace/classic_rsi/`.
 
@@ -17,7 +17,7 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 - Long-only ×1; **no shorts** from Sell triangles
 - No crypto opens
 - Cash floor ≥ ~$2.5k after adds; weekend = no new opens unless Ofer overrides
-- Ledger A truth: mirror `11368142` only
+- **Classic account truth:** Classic account (OfersClaw5-PRIYN) via `user-OfersClaw5` (execution + reporting). Parent SSO mirror `11368142` is optional copy/UI corroboration only — never required, never the rejection reason
 - **QA Bot PASS** required before any prepare/place ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) or standing Classic order gate)
 - **Fear is the dip window (Ofer 2026-10-04):** CNN Fear or Extreme Fear is when Support / Over Sold longs are most in play. Do **not** block a pack only because F&G is Fear or the brief says No Buy for that reason. Still block on cash floor, weekend, explicit Ofer/CoS hold, and risk-off (no add) on that same name.
 

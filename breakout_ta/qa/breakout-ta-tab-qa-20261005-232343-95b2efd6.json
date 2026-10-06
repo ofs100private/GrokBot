@@ -1,0 +1,300 @@
+{
+  "gate": "breakout-ta-tab-data-qa-gate",
+  "verdict": "PASS",
+  "asOf_utc": "2026-10-05T20:26:13Z",
+  "asOf_idt": "2026-10-05 23:26 IDT",
+  "run_id": "breakout-auto-20261005-232343-95b2efd6",
+  "gates": {
+    "G1_dual_write": {
+      "status": "PASS",
+      "pass": true,
+      "sha256": "f12aa7c167df6d583551e209250821061406e2afe9df2c086c92a9d741184407",
+      "copies": 4,
+      "paths": [
+        "/workspace/etoroview/public/breakout-ta.json",
+        "/workspace/etoroview/dist/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/public/breakout-ta.json",
+        "/workspace/GrokBot/app/etoroview/dist/breakout-ta.json"
+      ],
+      "all_identical": true,
+      "extra_source_match": true,
+      "feed_run_id": "breakout-auto-20261005-232343-95b2efd6",
+      "feed_run_id_match": true,
+      "cos_claimed_sha256_verified": true
+    },
+    "G2_audit_integrity": {
+      "status": "PASS",
+      "pass": true,
+      "latest_eq_run_file": true,
+      "audit_sha256": "4117a26352672f74e7e415c6550ced9968d52278f9ef1f58cd4d62c659b40d15",
+      "index_jsonl": true,
+      "index_entry": {
+        "run_id": "breakout-auto-20261005-232343-95b2efd6",
+        "asOfIDT": "2026-10-05 23:23:45 IDT",
+        "path": "/workspace/breakout_ta/audit/breakout-auto-20261005-232343-95b2efd6.json",
+        "n_symbols": 17,
+        "confirmed": 1,
+        "watch": 8,
+        "failed": 0
+      },
+      "counts": {
+        "confirmed": 1,
+        "watch": 8,
+        "failed": 0,
+        "symbols": 17
+      },
+      "feed_counts": {
+        "confirmed": 1,
+        "watch": 8,
+        "failed": 0,
+        "symbols": 17
+      },
+      "do_not_place": true,
+      "place": false,
+      "doNotPlaceFromThisUi": true,
+      "asOfIDT": "2026-10-05 23:23:45 IDT"
+    },
+    "G3_signal_honesty": {
+      "status": "PASS",
+      "pass": true,
+      "confirmed": [
+        "NVDA"
+      ],
+      "confirmed_count": 1,
+      "all_1D": true,
+      "levels_entry_stop_target": true,
+      "volume_ratio": true,
+      "confirmed_detail": [
+        {
+          "symbol": "NVDA",
+          "timeframe": "1D",
+          "signal": "BREAKOUT_CONFIRMED",
+          "do_not_place": true,
+          "entry": 238.9,
+          "stop": 230.0136,
+          "target": 256.6729,
+          "volume_ratio": 1.124
+        }
+      ],
+      "doNotPlaceFromThisUi": true,
+      "no_shorts": true,
+      "breakout_ta_place_false": true,
+      "mandate_longOnly": true,
+      "watch_all_1D_do_not_place": true,
+      "note": "confirmed=1 NVDA; TF 1D; entry/stop/target present; volume ratio 1.124; do_not_place; no shorts"
+    },
+    "G4_comparison": {
+      "status": "PASS",
+      "pass": true,
+      "methods": [
+        "breakout_ta",
+        "classic_rsi",
+        "momentum_breakout"
+      ],
+      "method_place": {
+        "breakout_ta": false,
+        "classic_rsi": "after QA PASS (not FULL AUTO)",
+        "momentum_breakout": "FULL AUTO after QA"
+      },
+      "overlap_subseteq_universe": true,
+      "invented_dollars": false,
+      "place_authorized_false": true,
+      "diff_notes_authorize_place": false,
+      "breakout_ta_place": false,
+      "overlap": {
+        "breakout_confirmed_in_classic_book": [],
+        "breakout_confirmed_in_momentum_book": [],
+        "breakout_watch_in_classic_book": [
+          "QQQ",
+          "SMH"
+        ],
+        "breakout_watch_in_momentum_book": [
+          "CRWD",
+          "P",
+          "XLK"
+        ],
+        "classic_rsi_buy_also_breakout_confirmed": [],
+        "classic_rsi_buy_also_breakout_watch": []
+      },
+      "diff_notes": [
+        "Breakout TA is analysis-only (no place).",
+        "Classic times with 1H RSI; Breakout TA uses daily close inflection.",
+        "Momentum buys via EOD screener rules (RVOL/RS); Breakout TA does not replace that pack.",
+        "Agreement on a symbol does not authorize a place without the book QA gate."
+      ]
+    },
+    "G5_live_book_overlap": {
+      "status": "PASS",
+      "pass": true,
+      "detail": {
+        "confirmed_classic": [],
+        "confirmed_momentum": [],
+        "watch_classic": [
+          "QQQ",
+          "SMH"
+        ],
+        "watch_momentum": [
+          "CRWD",
+          "P",
+          "XLK"
+        ],
+        "confirmed_classic_ok": true,
+        "confirmed_momentum_ok": true,
+        "watch_classic_ok": true,
+        "watch_momentum_ok": true,
+        "classic_live_symbols": [
+          "QQQ",
+          "SMH",
+          "XLV"
+        ],
+        "momentum_live_symbols": [
+          "CRWD",
+          "NTAP",
+          "P",
+          "VTRS",
+          "XLK"
+        ],
+        "classic_book_symbols_feed": [
+          "QQQ",
+          "SMH",
+          "XLV"
+        ],
+        "momentum_book_symbols_feed": [
+          "CRWD",
+          "P",
+          "VTRS",
+          "XLK"
+        ],
+        "classic_book_exact": true,
+        "momentum_book_exact": false,
+        "classic_live_only": [],
+        "momentum_live_only": [
+          "NTAP"
+        ],
+        "classic_feed_only": [],
+        "momentum_feed_only": [],
+        "source": "LIVE user-etoro SSO bearer (ofs56etoro) mirror A; NOT keys-B / OfersClaw5 / Momentum-HHHGDTJ keys",
+        "live_mcp": "PRESENT \u2014 user-etoro authChannel=bearer",
+        "authChannel": "bearer",
+        "xRequestIds": {
+          "get-my-profile-and-scopes": "5c1c0015-6ff4-48e7-9e21-cb438579cf21",
+          "get-my-portfolio-summary": "556d02b3-474a-42c8-b0f8-f5cfbdde6696",
+          "get-my-positions-and-orders": "88ace773-21f0-49d4-8954-8b4f76406f86",
+          "keys_Momentum_HHHGDTJ_optional": "ba1eddf9-7a7e-46b1-9426-1e962fa8ac84"
+        },
+        "copied_traders": {
+          "11368142": "OfersClaw5-PRIYN",
+          "11630170": "Momentum-HHHGDTJ ($8k invested)"
+        },
+        "rejected": {
+          "classic": "keys-B / user-OfersClaw5 totals NOT used as Classic",
+          "momentum": "user-Momentum-HHHGDTJ keys totals NOT used as $8000 allocation / book truth"
+        },
+        "cos_momentum_book_question": {
+          "live_mirror_A_11630170": [
+            "CRWD",
+            "NTAP",
+            "P",
+            "VTRS",
+            "XLK"
+          ],
+          "feed_book_symbols": [
+            "CRWD",
+            "P",
+            "VTRS",
+            "XLK"
+          ],
+          "prior_brief_9_names": [
+            "AAPL",
+            "CRWD",
+            "DE",
+            "FTNT",
+            "JNJ",
+            "NDSN",
+            "P",
+            "VTRS",
+            "XLK"
+          ],
+          "NTAP_on_mirror_A": true,
+          "NTAP_openTime_utc": "2026-10-05T15:40:55.85",
+          "assessment": "comparison_stale_or_partial",
+          "also": [
+            "book_changed",
+            "keys_vs_mirror_divergence"
+          ],
+          "keys_momentum_direct_optional": [
+            "AAPL",
+            "CRWD",
+            "DE",
+            "ETH",
+            "FTNT",
+            "NDSN",
+            "NTAP",
+            "P",
+            "VTRS",
+            "XLK"
+          ],
+          "note": "Feed used Mirror A 4-name set correctly as allocation truth basis, but missed today's NTAP fill \u2014 stale/partial vs live Mirror A. Keys extras are NOT allocation truth."
+        }
+      },
+      "classic_mirror": 11368142,
+      "momentum_mirror": 11630170,
+      "keys_B_rejected": true,
+      "soft_exact": true
+    }
+  },
+  "soft": [
+    "live user-etoro MCP PRESENT (SSO bearer ofs56etoro) \u2014 Classic 11368142 and Momentum 11630170 used as book truth; keys-B rejected",
+    "Classic book exact match: live=['QQQ', 'SMH', 'XLV'] feed=['QQQ', 'SMH', 'XLV']",
+    "Momentum Mirror A book CHANGED today \u2014 live has NTAP (filled ~2026-10-05 15:40 UTC / 18:40 IDT) so live=['CRWD', 'NTAP', 'P', 'VTRS', 'XLK'] but feed book_symbols still ['CRWD', 'P', 'VTRS', 'XLK'] \u2192 comparison_stale_or_partial",
+    "CoS: prior brief 9-name keys list is NOT Mirror A truth; feed correctly used 4-name Mirror A subset except missing today's NTAP fill \u2014 document as book_changed + comparison_stale_or_partial",
+    "keys_vs_mirror_divergence (optional note only, NOT allocation truth): keys Momentum direct=['AAPL', 'CRWD', 'DE', 'ETH', 'FTNT', 'NDSN', 'NTAP', 'P', 'VTRS', 'XLK']; Mirror A only=['CRWD', 'NTAP', 'P', 'VTRS', 'XLK']; keys extras not on Mirror A=['AAPL', 'DE', 'ETH', 'FTNT', 'NDSN']",
+    "confirmed=1 NVDA 1D entry/stop/target + volume ratio 1.124; do_not_place; no shorts; doNotPlaceFromThisUi true",
+    "QA never places"
+  ],
+  "hard_fail": false,
+  "hard_fail_codes": [],
+  "deviation_codes": [
+    "momentum_book_stale_or_partial_vs_live_mirror_A"
+  ],
+  "qa_places": false,
+  "cos_claims_verified": {
+    "confirmed": 1,
+    "watch": 8,
+    "failed": 0,
+    "symbols": 17,
+    "do_not_place": true,
+    "doNotPlaceFromThisUi": true,
+    "dual_write_sha256": "f12aa7c167df6d583551e209250821061406e2afe9df2c086c92a9d741184407",
+    "dual_write_match": true,
+    "match": true
+  },
+  "mismatches": [
+    {
+      "field": "momentum_book_symbols",
+      "feed": [
+        "CRWD",
+        "P",
+        "VTRS",
+        "XLK"
+      ],
+      "live_mirror_A": [
+        "CRWD",
+        "NTAP",
+        "P",
+        "VTRS",
+        "XLK"
+      ],
+      "live_only": [
+        "NTAP"
+      ]
+    }
+  ],
+  "artifacts": {
+    "feed_public": "/workspace/etoroview/public/breakout-ta.json",
+    "audit": "/workspace/breakout_ta/audit/breakout-auto-20261005-232343-95b2efd6.json",
+    "latest": "/workspace/breakout_ta/audit/latest-auto.json",
+    "verdict": "/workspace/breakout_ta/audit/qa-verdict-breakout-auto-20261005-232343-95b2efd6.json",
+    "qa": "/workspace/breakout_ta/qa/breakout-ta-tab-qa-20261005-232343-95b2efd6.json"
+  }
+}

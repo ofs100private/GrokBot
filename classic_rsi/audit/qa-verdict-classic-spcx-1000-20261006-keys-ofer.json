@@ -1,0 +1,64 @@
+{
+  "overall": "PASS",
+  "gate": "classic-real-money-order-qa-gate",
+  "pack_id": "classic-spcx-1000-20261006-keys-ofer",
+  "pack_path": "/workspace/classic_rsi/audit/classic-spcx-1000-20261006-keys-ofer.json",
+  "timestamp": "2026-10-06T16:42:22+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "authorize_place": true,
+  "hard_fail_codes": [],
+  "cash_basis": "user-OfersClaw5 keys (Ofer 2026-10-06)",
+  "cash_floor_override": "one-order SPCX only \u2014 Ofer/CoS 2026-10-06; residual ~$117 OK",
+  "live": {
+    "mcp": "user-OfersClaw5",
+    "xRequestId": "25039346-6b8e-4d46-9a21-ed5eeacd3124",
+    "availableCash": 1119.16,
+    "totalValue": 7393.56,
+    "pendingOrders": 0,
+    "spcx": {
+      "instrumentId": 15618,
+      "ask": 174.5,
+      "bid": 174.41,
+      "allowOpenPosition": true,
+      "allowedLeveragesLong": [
+        1,
+        2,
+        5
+      ],
+      "quoteAsOf": "2026-10-06T13:42:08.3389012Z",
+      "xRequestId": "4cbd05f0-84b4-4796-97df-84d8fbabf08f"
+    }
+  },
+  "pack_vs_live": {
+    "availableCash": "EXACT 1119.16",
+    "required": 1001.84,
+    "cashAfterEst": 117.32,
+    "ask_drift": "prepare ask 175.67 \u2192 live 174.5 (mark move; SL 171.52 still below)",
+    "prepare_expiresAt": "2026-10-06T13:42:33Z",
+    "prepare_xRequestId": "c574e15e-5f99-4cc4-a5a3-26da2f7a857b"
+  },
+  "checks": {
+    "long_x1": true,
+    "equity_not_crypto": true,
+    "route_REAL": true,
+    "fees_present": true,
+    "overnight_fee_0": true,
+    "thesis_present": true,
+    "sl_171_52": true,
+    "instrument_15618": true,
+    "keys_cash_sufficient": true,
+    "keys_not_rejected": true,
+    "cash_floor_waived_this_order": true,
+    "rsi_run_id_required": false
+  },
+  "notes": [
+    "get-my-balances returned 403 (missing money.balance:read); cash from get-my-portfolio-summary totals.availableCash",
+    "keys book holds SMH/IGV/CVX/QQQ/XLV \u2014 differs from mirror-A brief cards; expected on keys execution ledger",
+    "If prepare token expired before place, Trader must re-prepare and may reuse this PASS only if size/SL/instrument/fees/cash unchanged; else fresh place-QA"
+  ],
+  "verdict_to": [
+    "Trader_Classic",
+    "Chief of Staff"
+  ]
+}

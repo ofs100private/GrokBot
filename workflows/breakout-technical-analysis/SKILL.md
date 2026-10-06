@@ -29,8 +29,8 @@ Entry / stop (structure + 1.5×ATR) / target (2R or measured move). Invalidation
 
 ## Comparison (required in feed)
 
-Methods: Breakout TA (analysis-only) · Classic RSI 1H · Momentum EOD breakout. Overlaps with live books only (mirrors 11368142 / 11630170). Agreement ≠ place.
+Methods: Breakout TA (analysis-only) · Classic RSI 1H · Momentum EOD breakout. Overlaps with live books only: Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`; mirror 11368142 optional) · Momentum mirror 11630170 ($8k). Agreement ≠ place.
 
 ## Do not
 
-Place · FULL AUTO attach · keys-B as truth · skip nightly user digest · skip QA on feed refresh
+Place · FULL AUTO attach · rejecting Classic account / OfersClaw5 as Classic truth (or using Momentum keys alone as Momentum reporting truth) · skip nightly user digest · skip QA on feed refresh
