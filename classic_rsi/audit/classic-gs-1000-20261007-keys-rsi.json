@@ -1,0 +1,130 @@
+{
+  "kind": "classic-rsi-order-qa",
+  "qa_gate": "classic-real-money-order-qa-gate",
+  "do_not_place": true,
+  "qa_places": false,
+  "asOfIDT": "2026-10-07 18:55:20 IDT",
+  "run_id": "classic-rsi-auto-20261007-185115-516fa110",
+  "propose_run_id": "classic-rsi-propose-20261007-185120-94f07df9",
+  "run_qa": {
+    "verdict": "PASS",
+    "path": "/workspace/classic_rsi/audit/qa-verdict-classic-rsi-auto-20261007-185115-516fa110.json"
+  },
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "ledger": "keys",
+  "route": "REAL",
+  "account": "real",
+  "side": "buy",
+  "action": "OPEN_LONG",
+  "symbol": "GS",
+  "instrumentId": 1467,
+  "assetClass": "equity",
+  "leverage": 1,
+  "direction": "long",
+  "amount": 1000.0,
+  "estimatedUnits": 1.1401988506795586,
+  "orderType": "mkt",
+  "stopLossRate": 864.05,
+  "takeProfitRate": 887.43,
+  "stopLossType": "fixed",
+  "levels_from_rsi": {
+    "entry_bar_close": 874.0700073242188,
+    "stop_loss": 864.0521201599446,
+    "take_profit": 887.4271902099176,
+    "atr": 6.67859144284942,
+    "rsi": 29.316705507435543,
+    "zone": "SUPPORT",
+    "raw_signal": "BUY_70"
+  },
+  "quote_at_prepare": {
+    "ask": 877.04,
+    "bid": 876.54,
+    "spread": 0.5,
+    "asOf": "2026-10-07T15:55:07.2643946Z"
+  },
+  "feeEstimateUsd": 2.07,
+  "feeBreakdown": {
+    "transactionFee": 1.5,
+    "markup": 0,
+    "marketSpread": 0.57,
+    "overnightFee": 0
+  },
+  "overnightFinancingEstimateUsd": 0.0,
+  "overnightNote": "US stock \u00d71 long \u2014 overnight financing estimate $0 on prepare; monitor if held overnight",
+  "cashBefore": 4054.5,
+  "cashRemainingAfter": 3052.43,
+  "cashFloorUsd": 2500.0,
+  "cashFloorOk": true,
+  "liveBook": {
+    "symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "note": "RBRK closed; envelope book SMH/QQQ/XLV/RBRK was stale",
+    "xRequestId": "858d9f84-09bd-4094-9c6a-0fbf49979b2c"
+  },
+  "fearGreed": {
+    "score": 47,
+    "rating": "Neutral",
+    "blocksBuys": false
+  },
+  "thesis": "Classic RSI 1H run classic-rsi-auto-20261007-185115-516fa110 / propose classic-rsi-propose-20261007-185120-94f07df9 BUY_70 Support ZONE_70 confirmed bar \u2014 GS RSI~29.3 ATR SL/TP. Gap financials sleeve vs book SMH/QQQ/XLV. Size $1000 leaves cash ~$3052 \u2265 $2.5k floor. Run-QA PASS.",
+  "preparedOrderSnapshot": {
+    "immutable": true,
+    "prepare_xRequestId": "d7f1f745-f6a8-4dcb-96a5-2e913820d260",
+    "prepare_expiresAt": "2026-10-07T15:57:07Z",
+    "token_redacted": true,
+    "note": "confirmationToken TTL ~2min \u2014 re-prepare identical params after order-QA PASS before place",
+    "params": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "GS",
+      "instrumentId": 1467,
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000,
+      "stopLossRate": 864.05,
+      "takeProfitRate": 887.43,
+      "stopLossType": "fixed"
+    },
+    "verdict": "ready",
+    "totalUpfrontCost": 2.07,
+    "required": 1002.07
+  },
+  "siblingPacks": {
+    "ADBE": {
+      "status": "SKIP_SLEEVE",
+      "reason": "Tech/growth sleeve already SMH+QQQ; cash after dual $1000s would breach ~$2.5k floor; GS preferred for diversification",
+      "rsi_levels": {
+        "entry": 230.05,
+        "sl": 226.24,
+        "tp": 235.13,
+        "signal": "BUY_70 Support"
+      },
+      "run_qa_accepted": true
+    },
+    "RSG": {
+      "status": "RISK_OFF_ONLY",
+      "note": "SELL_70 never short; no position to tighten"
+    }
+  },
+  "mandateChecks": {
+    "longOnly": true,
+    "leverageEq1": true,
+    "notCrypto": true,
+    "notDemo": true,
+    "notWeekend": true,
+    "cashFloorOk": true,
+    "keysLedger": true,
+    "fearNotBlock": true
+  },
+  "placeOnlyAfterQaPassAndAuth": true,
+  "status": "SUPERSEDED",
+  "supersededBy": [
+    "/workspace/classic_rsi/audit/classic-adbe-750-20261007-keys-rsi.json",
+    "/workspace/classic_rsi/audit/classic-gs-750-20261007-keys-rsi.json"
+  ],
+  "supersedeReason": "CoS asked both packs; resized GS $1000\u2192$750 + ADBE $750 for cash floor"
+}

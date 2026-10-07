@@ -1,0 +1,108 @@
+{
+  "kind": "classic-dual-order-qa-summary",
+  "gate": "classic-real-money-order-qa-gate",
+  "timestamp": "2026-10-07T19:57:01+03:00",
+  "timezone": "Asia/Jerusalem",
+  "asOfIDT": "2026-10-07 19:57 IDT",
+  "qa_places": false,
+  "overall": "PASS",
+  "authorize_place": true,
+  "cos_place_hold": true,
+  "cos_place_hold_note": "CoS HOLD ALL places 2026-10-07 \u2014 Trader_Classic must NOT place until CoS lifts HOLD even though authorize_place=true from integrity.",
+  "packs": [
+    {
+      "symbol": "CAT",
+      "overall": "PASS",
+      "authorize_place": true,
+      "cos_place_hold": true,
+      "amount": 750,
+      "instrumentId": 1012,
+      "sl": 798.61,
+      "tp": 834.14,
+      "fee": 1.55,
+      "required": 751.55,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-cat-750-20261007-keys-rsi.json",
+      "hard_fail_codes": [],
+      "fail_codes": []
+    },
+    {
+      "symbol": "PHM",
+      "overall": "PASS",
+      "authorize_place": true,
+      "cos_place_hold": true,
+      "amount": 750,
+      "instrumentId": 1815,
+      "sl": 110.43,
+      "tp": 114.35,
+      "fee": 1.67,
+      "required": 751.67,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-phm-750-20261007-keys-rsi.json",
+      "hard_fail_codes": [],
+      "fail_codes": []
+    }
+  ],
+  "sequenced_cash": {
+    "mcp": "user-OfersClaw5",
+    "authChannel": "keys",
+    "username": "OfersClaw5-PRIYN",
+    "live_availableCash": 4054.5,
+    "order": [
+      "CAT",
+      "PHM"
+    ],
+    "cat_required": 751.55,
+    "phm_required": 751.67,
+    "after_cat": 3302.95,
+    "after_both": 2551.28,
+    "cashFloorUsd": 2500.0,
+    "floor_ok": true
+  },
+  "live_book": [
+    "SMH",
+    "QQQ",
+    "XLV"
+  ],
+  "live": {
+    "availableCash": 4054.5,
+    "totalValue": 7317.71,
+    "pendingOrders": 0,
+    "cat_open": false,
+    "phm_open": false,
+    "adbe_open": false,
+    "gs_open": false,
+    "portfolio_xRequestId": "1b76b66a-40ce-46b2-8e90-dea4cc369668",
+    "positions_xRequestId": "2831dc43-e91e-4691-8650-f03c78c1d53c",
+    "quote_xRequestId": "89c5ea50-969e-4dfb-a457-79a8cd421a21"
+  },
+  "fearGreed": {
+    "score": 47,
+    "rating": "Neutral",
+    "blocksBuys": false,
+    "note": "Neutral \u2014 not a Classic No Buy FAIL"
+  },
+  "skipped": [
+    "ALLE",
+    "SW"
+  ],
+  "prior_hold": {
+    "adbe_gs_dual_pass": true,
+    "status": "HOLD_NOT_FILLED_PENDING_COS_AUTHORIZE",
+    "gs_1000_superseded": true
+  },
+  "run_id": "classic-rsi-auto-20261007-195118-adb106f5",
+  "propose_run_id": "classic-rsi-propose-20261007-195122-78e2f466",
+  "hard_fail_codes": [],
+  "fail_codes": [],
+  "message_trader_classic": {
+    "priority": true,
+    "to": "Trader_Classic",
+    "text": "Classic dual order QA PASS \u2014 authorize_place BOTH (integrity) BUT cos_place_hold=true \u2014 DO NOT PLACE until CoS lifts HOLD ALL places. (1) CAT $750 \u00d71 inst 1012 SL 798.61 TP 834.14 fees~$1.55; (2) PHM $750 \u00d71 inst 1815 SL 110.43 TP 114.35 fees~$1.67. Run QA PASS classic-rsi-auto-20261007-195118-adb106f5 / classic-rsi-propose-20261007-195122-78e2f466. LIVE OfersClaw5 (keys) cash 4054.50; book SMH/QQQ/XLV; no CAT/PHM open; pendingOrders=0; F&G Neutral 47 (not Classic No Buy FAIL). Sequenced cash: 4054.50 \u2212 751.55 = 3302.95 \u2212 751.67 = 2551.28 \u2265 $2.5k. SKIP ALLE/SW. Prior ADBE $750 + GS $750 order-QA PASS still HOLD not filled (GS $1000 superseded). Prepare tokens expired \u2014 after CoS authorize, re-prepare IDENTICAL params then place CAT then PHM. If CoS authorizes ADBE+GS first, re-size survivors vs remaining cash before place. QA never places. Verdicts: qa-verdict-classic-cat-750-20261007-keys-rsi.json + qa-verdict-classic-phm-750-20261007-keys-rsi.json + dual summary."
+  },
+  "message_cos": {
+    "priority": true,
+    "to": "Chief of Staff",
+    "text": "Classic dual order QA PASS CAT $750 + PHM $750 (authorize_place both from integrity). cos_place_hold=true \u2014 CoS HOLD ALL places still active; Trader instructed NOT to place until CoS lifts HOLD. Sequenced keys cash 4054.50 \u2192 2551.28 \u2265 floor. Live book SMH/QQQ/XLV; F&G Neutral 47. Prior ADBE+GS dual PASS still HOLD not filled. SKIP ALLE/SW. Summary: /workspace/classic_rsi/audit/qa-verdict-classic-dual-cat-phm-750-20261007-keys-rsi.json. QA never places."
+  },
+  "brief_user": true,
+  "brief_user_text": "QA PASS for Classic CAT $750 + PHM $750 (integrity authorize_place). Cash after both ~$2551 (\u2265$2.5k). cos_place_hold=true \u2014 do not place until CoS lifts HOLD. QA did not place."
+}

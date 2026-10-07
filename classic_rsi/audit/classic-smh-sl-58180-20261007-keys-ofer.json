@@ -1,0 +1,72 @@
+{
+  "kind": "classic-position-sl-update",
+  "qa_gate": "classic-real-money-order-qa-gate",
+  "do_not_place": true,
+  "qa_places": false,
+  "asOfIDT": "2026-10-07 05:43:25 IDT",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "ledger": "keys",
+  "route": "REAL",
+  "account": "real",
+  "side": "position_modify_sl",
+  "action": "SET_SL",
+  "symbol": "SMH",
+  "instrumentId": 6357,
+  "assetClass": "ETF",
+  "leverage": 1,
+  "direction": "long",
+  "positionId": 3581725275,
+  "units": 2.65783,
+  "invested": 1499.95,
+  "openRate": 564.35,
+  "currentRate": 632.39,
+  "priorStopLossRate": null,
+  "newStopLossRate": 581.8,
+  "stopLossType": "fixed",
+  "takeProfitRate": null,
+  "clearStopLoss": false,
+  "formula": "live_rate * 0.92",
+  "slVsLivePct": -8.0,
+  "slVsOpenPct": 3.09,
+  "cash": 3503.98,
+  "cashRemainingAfter": 3503.98,
+  "equity": 7350.82,
+  "feeEstimateUsd": 0.0,
+  "overnightFinancingEstimateUsd": 0.0,
+  "overnightNote": "SMH ETF \u00d71 long \u2014 no overnight financing on this leg; SL patch has no open fee",
+  "thesis": "Ofer/CoS 2026-10-07 05:42 IDT: set SMH stop on Classic keys only. Target ~8% under live (~$581). Live 632.39 \u00d7 0.92 = 581.8. Locks profit vs open 564.35; no other book changes.",
+  "authorization": {
+    "oferApproved": true,
+    "via": "Chief of Staff",
+    "asOfIDT": "2026-10-07 05:42 IDT",
+    "scope": "SMH SL only on OfersClaw5-PRIYN keys; no other changes"
+  },
+  "preparedOrderSnapshot": {
+    "immutable": true,
+    "method": "PATCH",
+    "path": "/api/v2/trading/positions/3581725275",
+    "routeId": "updateRealPosition",
+    "body": {
+      "stopLossRate": 581.8,
+      "stopLossType": "fixed"
+    },
+    "mcp": "user-OfersClaw5",
+    "account": "real"
+  },
+  "liveRead": {
+    "xRequestId_portfolio": "d105f80c-e76e-49e3-b48b-e5c2898c2083",
+    "asOfUTC": "2026-10-07T02:43:04.618021Z",
+    "source": "get-my-portfolio-summary includePositions"
+  },
+  "mandateChecks": {
+    "longOnly": true,
+    "leverageEq1": true,
+    "notCrypto": true,
+    "notShort": true,
+    "notDemo": true,
+    "cashUnchanged": true,
+    "keysLedger": true
+  },
+  "placeOnlyAfterQaPass": true
+}

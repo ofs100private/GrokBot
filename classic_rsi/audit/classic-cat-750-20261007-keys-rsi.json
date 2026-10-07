@@ -1,0 +1,144 @@
+{
+  "kind": "classic-rsi-order-qa",
+  "qa_gate": "classic-real-money-order-qa-gate",
+  "do_not_place": true,
+  "qa_places": false,
+  "PLACE": "NO",
+  "cos_hold_all_places": true,
+  "cos_hold_note": "CoS 2026-10-07: HOLD ALL places until CoS says authorize \u2014 includes prior ADBE $750 + GS $750 AND these CAT/PHM packs. Prepare\u2192order-QA audits only.",
+  "asOfIDT": "2026-10-07 19:55:35 IDT",
+  "run_id": "classic-rsi-auto-20261007-195118-adb106f5",
+  "propose_run_id": "classic-rsi-propose-20261007-195122-78e2f466",
+  "run_qa": {
+    "verdict": "PASS",
+    "path": "/workspace/classic_rsi/audit/qa-verdict-classic-rsi-auto-20261007-195118-adb106f5.json"
+  },
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "ledger": "keys",
+  "route": "REAL",
+  "account": "real",
+  "side": "buy",
+  "action": "OPEN_LONG",
+  "leverage": 1,
+  "direction": "long",
+  "orderType": "mkt",
+  "stopLossType": "fixed",
+  "cashBefore": 4054.5,
+  "cashFloorUsd": 2500.0,
+  "liveBook": {
+    "symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "equity": 7316.65,
+    "availableCash": 4054.5,
+    "note": "ADBE/GS NOT filled; prior dual order-QA PASS still HOLD pending CoS authorize; GS $1000 still superseded",
+    "xRequestId_positions": "421f186c-58de-40c3-b8b5-a7d3ebf0ec23",
+    "xRequestId_portfolio": "78e3f6d5-88d6-444c-85fc-a7236ded98df"
+  },
+  "fearGreed": {
+    "score": 47,
+    "rating": "Neutral",
+    "source": "CNN Fear & Greed (edition.cnn.com / MacroMicro / fcontext mirrors 2026-10-07)",
+    "blocksBuys": false,
+    "note": "Fear is dip window not hard No Buy; Neutral does not block"
+  },
+  "adbe_gs_conflict": {
+    "prior_dual_pass": true,
+    "prior_packs": [
+      "/workspace/classic_rsi/audit/classic-adbe-750-20261007-keys-rsi.json",
+      "/workspace/classic_rsi/audit/classic-gs-750-20261007-keys-rsi.json"
+    ],
+    "status": "HOLD_NOT_FILLED_PENDING_COS_AUTHORIZE",
+    "gs_1000_superseded": true,
+    "gs_1000_path": "/workspace/classic_rsi/audit/classic-gs-1000-20261007-keys-rsi.json",
+    "note": "If CoS later authorizes ADBE+GS first ($1500), survivors MUST be re-sized against remaining cash before any place; either path must leave \u2265$2500 floor. New packs sized as if ADBE/GS not yet in book (cash still 4054.50)."
+  },
+  "placeOnlyAfterQaPass": true,
+  "placeOnlyAfterCosAuthorize": true,
+  "assetClass": "stocks",
+  "mandateChecks": {
+    "longOnly": true,
+    "leverageEq1": true,
+    "notCrypto": true,
+    "notDemo": true,
+    "notWeekend": true,
+    "cashFloorOkDual": true,
+    "keysLedger": true,
+    "fearNotBlock": true,
+    "cosHoldAllPlaces": true
+  },
+  "symbol": "CAT",
+  "instrumentId": 1012,
+  "amount": 750,
+  "estimatedUnits": 0.9212740606075495,
+  "stopLossRate": 798.61,
+  "takeProfitRate": 834.14,
+  "sleeve": "industrials",
+  "sleeveScore": "GAP vs tech-heavy SMH/QQQ + healthcare XLV; mega-cap liquid quality dip",
+  "levels_from_rsi": {
+    "entry_bar_close": 813.84,
+    "stop_loss": 798.61,
+    "take_profit": 834.14,
+    "rsi": 32.8,
+    "zone": "SUPPORT",
+    "raw_signal": "BUY_70",
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 2.0,
+    "bar": "1H 15:30Z confirmed"
+  },
+  "quote_at_prepare": {
+    "ask": 814.09,
+    "bid": 813.62,
+    "spread": 0.47,
+    "asOf": "2026-10-07T16:55:05.5895307Z"
+  },
+  "feeEstimateUsd": 1.55,
+  "feeBreakdown": {
+    "transactionFee": 1.12,
+    "markup": 0,
+    "marketSpread": 0.43,
+    "overnightFee": 0
+  },
+  "overnightFinancingEstimateUsd": 0.0,
+  "overnightNote": "US stock \u00d71 long \u2014 overnight financing $0 on prepare",
+  "dualPackCashPlan": {
+    "CAT": 750,
+    "PHM": 750,
+    "feesEst": 3.22,
+    "cashAfterBoth": 2551.28,
+    "cashFloorOk": true,
+    "sequence": [
+      "CAT",
+      "PHM"
+    ]
+  },
+  "cashRemainingAfterThis": 3302.95,
+  "cashRemainingAfterDual": 2551.28,
+  "thesis": "Classic RSI 1H run classic-rsi-auto-20261007-195118-adb106f5 / propose classic-rsi-propose-20261007-195122-78e2f466 SUPPORT BUY_70 confirmed 1H bar 15:30Z \u2014 CAT ATR SL 1.5 / TP 2.0. Industrials gap sleeve vs tech-heavy book (SMH/QQQ)+XLV. Sized $750 with PHM $750 so dual cash-after ~$2551.28 \u2265 $2.5k. Run-QA PASS. CoS HOLD ALL places \u2014 prepare/order-QA only; PLACE=NO. Prior ADBE/GS dual PASS still HOLD not filled.",
+  "preparedOrderSnapshot": {
+    "immutable": true,
+    "prepare_xRequestId": "8df2edd0-60f2-4aaa-9f66-6c85c0805653",
+    "prepare_expiresAt": "2026-10-07T16:57:05Z",
+    "token_redacted": true,
+    "token_fresh_at_prepare": true,
+    "note": "Token short-lived; re-prepare IDENTICAL params after order-QA PASS + CoS authorize before any place. PLACE=NO now.",
+    "params": {
+      "account": "real",
+      "direction": "buy",
+      "instrumentId": 1012,
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 750,
+      "stopLossRate": 798.61,
+      "takeProfitRate": 834.14,
+      "stopLossType": "fixed"
+    },
+    "verdict": "ready",
+    "totalUpfrontCost": 1.55,
+    "required": 751.55,
+    "estimatedUnits": 0.9212740606075495
+  }
+}

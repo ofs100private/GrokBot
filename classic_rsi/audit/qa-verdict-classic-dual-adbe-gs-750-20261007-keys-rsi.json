@@ -1,0 +1,74 @@
+{
+  "kind": "classic-dual-order-qa-summary",
+  "gate": "classic-real-money-order-qa-gate",
+  "timestamp": "2026-10-07T18:57:10+03:00",
+  "timezone": "Asia/Jerusalem",
+  "asOfIDT": "2026-10-07 18:57 IDT",
+  "qa_places": false,
+  "overall": "PASS",
+  "packs": [
+    {
+      "symbol": "ADBE",
+      "overall": "PASS",
+      "authorize_place": true,
+      "amount": 750,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-adbe-750-20261007-keys-rsi.json",
+      "hard_fail_codes": []
+    },
+    {
+      "symbol": "GS",
+      "overall": "PASS",
+      "authorize_place": true,
+      "amount": 750,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-gs-750-20261007-keys-rsi.json",
+      "hard_fail_codes": []
+    }
+  ],
+  "sequenced_cash": {
+    "mcp": "user-OfersClaw5",
+    "live_availableCash": 4054.5,
+    "order": [
+      "ADBE",
+      "GS"
+    ],
+    "adbe_required": 751.48,
+    "gs_required": 751.57,
+    "after_adbe": 3303.02,
+    "after_both": 2551.45,
+    "cashFloorUsd": 2500.0,
+    "floor_ok": true
+  },
+  "live_book": [
+    "SMH",
+    "QQQ",
+    "XLV"
+  ],
+  "fearGreed": {
+    "score": 47,
+    "rating": "Neutral",
+    "blocksBuys": false
+  },
+  "superseded": {
+    "path": "/workspace/classic_rsi/audit/classic-gs-1000-20261007-keys-rsi.json",
+    "status": "SUPERSEDED",
+    "authorize_place": false,
+    "note": "Do not PASS or place GS $1000; only $750 dual packs"
+  },
+  "run_id": "classic-rsi-auto-20261007-185115-516fa110",
+  "propose_run_id": "classic-rsi-propose-20261007-185120-94f07df9",
+  "hard_fail_codes": [],
+  "message_trader_classic": {
+    "priority": true,
+    "to": "Trader_Classic",
+    "agent_id": "17bca140-8156-4306-944e-27264c7e1524",
+    "text": "Classic dual order QA PASS \u2014 authorize_place BOTH: (1) ADBE $750 \u00d71 inst 1126 SL 226.24 TP 235.13 fees~$1.48; (2) GS $750 \u00d71 inst 1467 SL 864.05 TP 887.43 fees~$1.57. Run QA PASS classic-rsi-auto-20261007-185115-516fa110 / classic-rsi-propose-20261007-185120-94f07df9. Live OfersClaw5 cash 4054.50; book SMH/QQQ/XLV; no ADBE/GS open; F&G Neutral 47. Sequenced cash: 4054.50 \u2212 751.48 = 3303.02 \u2212 751.57 = 2551.45 \u2265 $2.5k. SUPERSEDED: do NOT authorize/place /workspace/classic_rsi/audit/classic-gs-1000-20261007-keys-rsi.json ($1000). Re-prepare IDENTICAL params (tokens near expiry) \u2192 place ADBE then GS. QA never places. Verdicts: qa-verdict-classic-adbe-750-20261007-keys-rsi.json + qa-verdict-classic-gs-750-20261007-keys-rsi.json"
+  },
+  "message_cos": {
+    "priority": true,
+    "to": "Chief of Staff",
+    "agent_id": "b66054dc-f163-418d-a43c-59faef4ea103",
+    "text": "Classic dual order QA PASS ADBE $750 + GS $750 (authorize_place both). Sequenced keys cash 4054.50 \u2192 2551.45 \u2265 floor. GS $1000 SUPERSEDED / not authorized. Summary: /workspace/classic_rsi/audit/qa-verdict-classic-dual-adbe-gs-750-20261007-keys-rsi.json. QA never places."
+  },
+  "brief_user": true,
+  "brief_user_text": "QA PASS for both Classic packs: ADBE $750 and GS $750. Cash after both ~$2551 (above $2.5k floor). Prior GS $1000 pack superseded \u2014 not authorized. Trader_Classic may re-prepare identical and place; QA did not place."
+}

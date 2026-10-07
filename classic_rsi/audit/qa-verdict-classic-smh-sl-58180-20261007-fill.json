@@ -1,0 +1,96 @@
+{
+  "overall": "PASS",
+  "gate": "classic-real-money-order-qa-gate",
+  "kind": "post-place-set-sl-fill",
+  "action": "SET_SL",
+  "pack_id": "classic-smh-sl-58180-20261007",
+  "timestamp": "2026-10-07T05:45:50+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "pre_place_qa": {
+    "verdict": "PASS",
+    "path": "/workspace/classic_rsi/audit/qa-verdict-classic-smh-sl-58180-20261007-keys-ofer.json"
+  },
+  "fill_audit_path": "/workspace/classic_rsi/audit/classic-smh-sl-58180-20261007-fill-audit.json",
+  "account": {
+    "mcp": "user-OfersClaw5",
+    "username": "OfersClaw5-PRIYN",
+    "route": "REAL",
+    "account": "real"
+  },
+  "claimed_place": {
+    "method": "PATCH",
+    "routeId": "updateRealPosition",
+    "path": "/api/v2/trading/positions/3581725275",
+    "body": {"stopLossRate": 581.8, "stopLossType": "fixed"},
+    "body_note": "581.80 and 581.8 are the same numeric; fill audit and live both show 581.8",
+    "statusCode": 202,
+    "isSuccess": true,
+    "xRequestId": "df2c94f8-0caf-468a-9d64-d9680216fb0a",
+    "operationId": "85184399-c276-4661-b63e-e6f109fdc9f4"
+  },
+  "live": {
+    "asOfUTC": "2026-10-07T02:45:41.6525043Z",
+    "asOfIDT": "2026-10-07 05:45:41 IDT",
+    "availableCash": 3503.98,
+    "balance": 3503.98,
+    "totalValue": 7350.98,
+    "xRequestId_positions": "afc3fb30-c91d-4fc8-8dfb-d17adcbc2e35",
+    "xRequestId_portfolio": "b30535bb-bd36-4135-908a-7357ebe027d6",
+    "smh": {
+      "positionId": 3581725275,
+      "instrumentId": 6357,
+      "symbol": "SMH",
+      "units": 2.65783,
+      "openRate": 564.35,
+      "invested": 1499.95,
+      "leverage": 1,
+      "direction": "long",
+      "stopLossRate": 581.8,
+      "currentRate_positions": 635.94,
+      "currentRate_portfolio": 632.39,
+      "pnl_positions": 190.27
+    },
+    "other_positions_unchanged": [
+      {"positionId": 3523504426, "symbol": "QQQ", "units": 1.106357, "openRate": 677.9, "invested": 750.0, "stopLossRate": 644.0},
+      {"positionId": 3498067688, "symbol": "XLV", "units": 4.537045, "openRate": 156.44, "invested": 709.78, "stopLossRate": 148.62},
+      {"positionId": 3598873555, "symbol": "RBRK", "units": 4.516282, "openRate": 126.21, "invested": 570.0, "stopLossRate": 123.27}
+    ],
+    "positionCount": 4,
+    "pendingOrders": []
+  },
+  "checks": {
+    "pre_place_was_pass": true,
+    "status_202_accepted": true,
+    "body_matches_prepared_sl_only_fixed_5818": true,
+    "no_size_side_change": true,
+    "live_sl_5818": true,
+    "units_unchanged_2_65783": true,
+    "openRate_unchanged_564_35": true,
+    "invested_unchanged_1499_95": true,
+    "leverage_unchanged_1": true,
+    "direction_long_unchanged": true,
+    "cash_unchanged_3503_98": true,
+    "no_unexpected_other_position_changes": true,
+    "qa_never_placed": true
+  },
+  "hard_fail_codes": [],
+  "recommended_messages": {
+    "trader_classic": {
+      "agentId": "17bca140-8156-4306-944e-27264c7e1524",
+      "priority": true,
+      "waiting": true,
+      "text": "QA FILL PASS — Classic SET_SL SMH confirmed live (QA never places).\n\nPlace: PATCH updateRealPosition 3581725275 status 202\nxRequestId df2c94f8-0caf-468a-9d64-d9680216fb0a | operationId 85184399-c276-4661-b63e-e6f109fdc9f4\nBody matched prepared: {\"stopLossRate\":581.8,\"stopLossType\":\"fixed\"}\n\nLive (OfersClaw5-PRIYN REAL):\n- SMH pos 3581725275: stopLossRate 581.8 ✓ | units 2.65783 | open 564.35 | invested $1499.95 | lev ×1 long — unchanged\n- Cash $3503.98 unchanged\n- Other positions QQQ/XLV/RBRK unchanged; no pending orders\n- Verify xRequestIds: positions afc3fb30-c91d-4fc8-8dfb-d17adcbc2e35 | portfolio b30535bb-bd36-4135-908a-7357ebe027d6\n\nVerdict: /workspace/classic_rsi/audit/qa-verdict-classic-smh-sl-58180-20261007-fill.json"
+    },
+    "cos_fyi": {
+      "agentId": "b66054dc-f163-418d-a43c-59faef4ea103",
+      "text": "FYI QA FILL PASS — Classic SMH SET_SL 581.8 live on OfersClaw5-PRIYN pos 3581725275. Place 202 accepted; cash $3503.98 unchanged; units/open/invested/lev unchanged; no other book changes. Verdict: /workspace/classic_rsi/audit/qa-verdict-classic-smh-sl-58180-20261007-fill.json"
+    },
+    "user_brief": "Yes — SMH stop confirmed live at 581.8 on OfersClaw5 (cash unchanged). QA FILL PASS."
+  },
+  "notes": [
+    "SET_SL risk update only — cash must stay unchanged (confirmed)",
+    "QA never places / never PATCH — verify-only",
+    "Fill audit body uses 581.8; claimed 581.80 is identical numeric"
+  ]
+}

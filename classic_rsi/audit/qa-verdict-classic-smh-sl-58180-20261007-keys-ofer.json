@@ -1,0 +1,136 @@
+{
+  "overall": "PASS",
+  "gate": "classic-real-money-order-qa-gate",
+  "kind": "pre-place-set-sl",
+  "action": "SET_SL",
+  "pack_id": "classic-smh-sl-58180-20261007-keys-ofer",
+  "pack_path": "/workspace/classic_rsi/audit/classic-smh-sl-58180-20261007-keys-ofer.json",
+  "timestamp": "2026-10-07T05:44:47+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "authorize_place": true,
+  "hard_fail_codes": [],
+  "cash_basis": "user-OfersClaw5",
+  "account": {
+    "mcp": "user-OfersClaw5",
+    "username": "OfersClaw5-PRIYN",
+    "authChannel": "keys",
+    "route": "REAL",
+    "account": "real",
+    "realCid": 48144770
+  },
+  "claimed": {
+    "positionId": 3581725275,
+    "symbol": "SMH",
+    "instrumentId": 6357,
+    "assetClass": "ETF",
+    "units": 2.65783,
+    "openRate": 564.35,
+    "invested": 1499.95,
+    "leverage": 1,
+    "direction": "long",
+    "priorStopLossRate": null,
+    "newStopLossRate": 581.8,
+    "stopLossType": "fixed",
+    "cash": 3503.98,
+    "feeEstimateUsd": 0.0,
+    "overnightFinancingEstimateUsd": 0.0,
+    "preparedBody": {
+      "stopLossRate": 581.8,
+      "stopLossType": "fixed"
+    },
+    "path": "PATCH /api/v2/trading/positions/3581725275",
+    "routeId": "updateRealPosition"
+  },
+  "live": {
+    "availableCash": 3503.98,
+    "balance": 3503.98,
+    "totalValue": 7350.83,
+    "cashUnchangedExpected": true,
+    "smh": {
+      "positionId": 3581725275,
+      "instrumentId": 6357,
+      "symbol": "SMH",
+      "name": "VanEck Vectors Semiconductor ETF",
+      "units": 2.65783,
+      "openRate": 564.35,
+      "invested": 1499.95,
+      "leverage": 1,
+      "direction": "long",
+      "currentRate": 632.39,
+      "pnl": 180.84,
+      "pnlPercent": 12.06,
+      "priorStopLossRate": null,
+      "takeProfitRate": null
+    },
+    "quote": {
+      "ask": 632.54,
+      "bid": 632.39,
+      "spread": 0.15,
+      "asOf": "2026-10-06T19:59:57.23324Z",
+      "note": "US equity session closed; last quote still usable for SL vs market sanity"
+    },
+    "xRequestId_portfolio": "b2fbd2b9-45e1-4c7e-bb72-45555ee90349",
+    "xRequestId_positions": "8edd235d-fc3b-4977-884e-b2ce27244e9c",
+    "xRequestId_instrument": "06f960d7-a700-467a-9004-41263492f479",
+    "xRequestId_profile": "0d2b011b-7fe2-4205-b8fa-7e93214171e2",
+    "asOfUTC": "2026-10-07T02:44:37.9078899Z"
+  },
+  "sl_sanity": {
+    "newStopLossRate": 581.8,
+    "liveRateUsed": 632.39,
+    "formula": "live_rate * 0.92",
+    "liveTimes092": 581.8,
+    "slVsLivePct": -8.0,
+    "slVsOpenPct": 3.09,
+    "slBelowLive": true,
+    "slAboveOpen": true,
+    "interpretation": "Profit-protect SL: above entry (+3.09% vs open 564.35) and ~8% below live; valid for long (SL < market).",
+    "invalidForLong_slGteLive": false
+  },
+  "checks": {
+    "position_found": true,
+    "units_match": true,
+    "openRate_match": true,
+    "invested_match": true,
+    "long_x1": true,
+    "etf_not_crypto": true,
+    "route_REAL": true,
+    "not_demo": true,
+    "not_short": true,
+    "prior_sl_none": true,
+    "body_sl_only_fixed_58180": true,
+    "no_size_side_change": true,
+    "prepared_immutable": true,
+    "cash_unchanged": true,
+    "cash_live_match_3503_98": true,
+    "fees_present_0": true,
+    "overnight_0_documented": true,
+    "thesis_present": true,
+    "authorization_ofer_cos": true,
+    "sl_below_live": true,
+    "sl_formula_8pct": true,
+    "fear_not_relevant_set_sl": true,
+    "set_sl_not_buy_sell": true
+  },
+  "recommended_messages": {
+    "trader_classic": {
+      "agentId": "17bca140-8156-4306-944e-27264c7e1524",
+      "priority": true,
+      "waiting": true,
+      "text": "QA PASS \u2014 Classic SET_SL SMH authorize_place=true (QA never places).\n\nPack: classic-smh-sl-58180-20261007-keys-ofer\nAccount: OfersClaw5-PRIYN / user-OfersClaw5 / REAL (keys)\nAction: PATCH updateRealPosition pos 3581725275 SMH (6357 ETF)\nBody (immutable): {\"stopLossRate\":581.80,\"stopLossType\":\"fixed\"}\n\nLive evidence:\n- Pos match: units 2.65783 | open 564.35 | invested $1499.95 | lev \u00d71 long | prior SL none\n- Cash $3503.98 unchanged (SET_SL)\n- Live ~632.39; SL 581.80 = live\u00d70.92 (\u22128.0%); SL < live OK; SL > open (+3.09%) = profit-protect \u2014 valid\n- Fee $0 / overnight $0 documented; thesis + Ofer/CoS 05:42 IDT present\n\nVerdict: /workspace/classic_rsi/audit/qa-verdict-classic-smh-sl-58180-20261007-keys-ofer.json\nYou may PATCH now with the prepared body only. No other book changes."
+    },
+    "cos_copy": {
+      "agentId": "b66054dc-f163-418d-a43c-59faef4ea103",
+      "text": "QA PASS copy \u2014 Classic SMH SET_SL 581.80 on OfersClaw5-PRIYN pos 3581725275. authorize_place=true; cash unchanged; long \u00d71 ETF; SL ~8% under live / above entry (profit-protect). Verdict path above. Trader_Classic may PATCH prepared body only."
+    },
+    "user_brief": "Yes \u2014 material: Classic SMH stop set to 581.80 (~8% under live ~632; locks ~+3% vs entry 564.35). QA PASS; Trader may PATCH only."
+  },
+  "notes": [
+    "SET_SL risk update only \u2014 not a buy/sell; cash must stay unchanged",
+    "SL above openRate is intentional profit-protect after run-up; FAIL only if SL >= live for long",
+    "Fear not relevant for SET_SL alone",
+    "QA never places / never PATCH",
+    "Parent SSO mirror 11368142 optional \u2014 not used; OfersClaw5 is Classic truth"
+  ]
+}

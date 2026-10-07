@@ -1,0 +1,134 @@
+{
+  "overall": "PASS",
+  "gate": "classic-real-money-order-qa-gate",
+  "pack_id": "classic-gs-750-20261007-keys-rsi",
+  "pack_path": "/workspace/classic_rsi/audit/classic-gs-750-20261007-keys-rsi.json",
+  "timestamp": "2026-10-07T18:57:10+03:00",
+  "timezone": "Asia/Jerusalem",
+  "asOfIDT": "2026-10-07 18:57 IDT",
+  "qa_places": false,
+  "authorize_place": true,
+  "hard_fail_codes": [],
+  "cash_basis": "user-OfersClaw5 keys (Ofer 2026-10-06)",
+  "dual_pack": true,
+  "dual_with": "classic-adbe-750-20261007-keys-rsi",
+  "run_id": "classic-rsi-auto-20261007-185115-516fa110",
+  "propose_run_id": "classic-rsi-propose-20261007-185120-94f07df9",
+  "run_qa": {
+    "verdict": "PASS",
+    "path": "/workspace/classic_rsi/audit/qa-verdict-classic-rsi-auto-20261007-185115-516fa110.json"
+  },
+  "supersedes": "/workspace/classic_rsi/audit/classic-gs-1000-20261007-keys-rsi.json",
+  "supersedes_status": "SUPERSEDED \u2014 do NOT PASS/authorize classic-gs-1000-20261007-keys-rsi ($1000)",
+  "live": {
+    "mcp": "user-OfersClaw5",
+    "portfolio_xRequestId": "dafdbefc-9630-49bc-a9e1-83a64512a7be",
+    "positions_xRequestId": "54dd8bc7-b53c-47c4-80a3-59dfa1e5cc33",
+    "quote_xRequestId": "fdc20fb2-d182-4ab7-8b96-ed090e7724df",
+    "availableCash": 4054.5,
+    "totalValue": 7319.85,
+    "book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "pendingOrders": 0,
+    "adbe_open": false,
+    "gs_open": false,
+    "gs": {
+      "instrumentId": 1467,
+      "ask": 874.25,
+      "bid": 874.02,
+      "allowOpenPosition": true,
+      "allowedLeveragesLong": [
+        1,
+        2,
+        5
+      ],
+      "quoteAsOf": "2026-10-07T15:07:17.8606446Z",
+      "quote_note": "GS quote asOf older than ADBE in same batch; SL 864.05 still below live ask 874.25"
+    }
+  },
+  "pack_vs_live": {
+    "availableCash": "EXACT 4054.5",
+    "amount": 750,
+    "feeEstimateUsd": 1.57,
+    "required": 751.57,
+    "cashAfterThisAlone": 3302.93,
+    "cashAfterBothEst": 2551.45,
+    "cashFloorUsd": 2500.0,
+    "cashFloorOk": true,
+    "ask_drift": "prepare ask 877.77 \u2192 live 874.25 (mark move; SL 864.05 still below live ask)",
+    "sl_below_live": true,
+    "tp_above_live": true,
+    "stopLossRate": 864.05,
+    "takeProfitRate": 887.43,
+    "prepare_expiresAt": "2026-10-07T15:57:48Z",
+    "prepare_xRequestId": "2dcdeaf1-78ea-43e6-81d5-53227b7416f2"
+  },
+  "sequenced_cash": {
+    "order": [
+      "ADBE",
+      "GS"
+    ],
+    "before": 4054.5,
+    "after_adbe": 3303.02,
+    "after_both": 2551.45,
+    "floor": 2500.0,
+    "floor_ok": true
+  },
+  "checks": {
+    "long_x1": true,
+    "leverage_eq_1": true,
+    "equity_not_crypto": true,
+    "route_REAL": true,
+    "not_demo": true,
+    "fees_present": true,
+    "overnight_financing_present": true,
+    "overnight_fee_0": true,
+    "thesis_present": true,
+    "run_id_cited": true,
+    "run_qa_pass": true,
+    "atr_sl_tp": true,
+    "sl_below_live_ask": true,
+    "instrument_1467": true,
+    "no_open_conflict": true,
+    "order_unchanged_vs_prepare_snapshot": true,
+    "keys_cash_sufficient_dual": true,
+    "keys_not_rejected": true,
+    "cash_floor_ok_dual": true,
+    "fear_not_classic_nobuy_fail": true,
+    "gs_1000_not_authorized": true
+  },
+  "notes": [
+    "Classic truth = user-OfersClaw5 (OfersClaw5-PRIYN); mirror 11368142 optional \u2014 not a FAIL basis",
+    "Run QA PASS: classic-rsi-auto-20261007-185115-516fa110 / propose classic-rsi-propose-20261007-185120-94f07df9",
+    "Live book SMH/QQQ/XLV; no open ADBE or GS; pendingOrders=0",
+    "F&G Neutral 47 \u2014 Fear is NOT Classic No Buy FAIL; Neutral fine",
+    "Sequenced cash (keys): 4054.50 \u2212 751.48 (ADBE) = 3303.02; then \u2212 751.57 (GS) = 2551.45 \u2265 $2.5k floor",
+    "SUPERSEDED: /workspace/classic_rsi/audit/classic-gs-1000-20261007-keys-rsi.json ($1000 GS) \u2014 do NOT PASS/authorize that size; only these $750 packs",
+    "Prepare tokens expire ~15:57:48Z \u2014 Trader_Classic must re-prepare IDENTICAL params after PASS; if size/SL/TP/instrument/fees/cash change \u2192 fresh order-QA",
+    "QA NEVER places",
+    "GS $750 \u00d71 long; instrument 1467; SL 864.05 / TP 887.43; fees ~$1.57; overnight $0",
+    "Financials gap sleeve; CoS asked both packs sized to cash floor"
+  ],
+  "verdict_to": [
+    "Trader_Classic",
+    "Chief of Staff"
+  ],
+  "recommended_messages": {
+    "trader_classic": {
+      "priority": true,
+      "to": "Trader_Classic",
+      "agent_id": "17bca140-8156-4306-944e-27264c7e1524",
+      "text": "Classic order QA PASS \u2014 authorize_place GS $750 \u00d71 (instrument 1467, SL 864.05, TP 887.43, fees ~$1.57). Pack /workspace/classic_rsi/audit/classic-gs-750-20261007-keys-rsi.json. Run QA PASS classic-rsi-auto-20261007-185115-516fa110 / classic-rsi-propose-20261007-185120-94f07df9. Live OfersClaw5 cash 4054.50; book SMH/QQQ/XLV; no GS conflict. Dual with ADBE $750: sequenced cash-after both ~2551.45 \u2265 $2.5k. SUPERSEDED: classic-gs-1000-20261007-keys-rsi \u2014 do NOT authorize $1000. Place sequence: ADBE then GS after identical re-prepare. QA never places."
+    },
+    "cos": {
+      "priority": true,
+      "to": "Chief of Staff",
+      "agent_id": "b66054dc-f163-418d-a43c-59faef4ea103",
+      "text": "Classic order QA PASS GS $750 (authorize_place=true). Dual with ADBE $750; sequenced cash 4054.50\u21923303.02\u21922551.45 \u2265 floor. Prior GS $1000 SUPERSEDED / not authorized. Verdict: /workspace/classic_rsi/audit/qa-verdict-classic-gs-750-20261007-keys-rsi.json. QA never places."
+    }
+  },
+  "brief_user": true
+}

@@ -1,0 +1,184 @@
+{
+  "overall": "PASS",
+  "gate": "classic-real-money-order-qa-gate",
+  "pack_id": "classic-cat-750-20261007-keys-rsi",
+  "pack_path": "/workspace/classic_rsi/audit/classic-cat-750-20261007-keys-rsi.json",
+  "workspace_pack_path": "/workspace/classic-cat-750-20261007-keys-rsi.json",
+  "timestamp": "2026-10-07T19:57:01+03:00",
+  "timezone": "Asia/Jerusalem",
+  "asOfIDT": "2026-10-07 19:57 IDT",
+  "qa_places": false,
+  "authorize_place": true,
+  "cos_place_hold": true,
+  "cos_place_hold_note": "CoS HOLD ALL places 2026-10-07 \u2014 even with authorize_place true, Trader_Classic must NOT place until CoS lifts HOLD. Includes prior ADBE/GS AND these CAT/PHM packs.",
+  "hard_fail_codes": [],
+  "fail_codes": [],
+  "cash_basis": "user-OfersClaw5 keys availableCash (OfersClaw5-PRIYN)",
+  "dual_pack": true,
+  "dual_with": "classic-phm-750-20261007-keys-rsi",
+  "sequence_order": [
+    "CAT",
+    "PHM"
+  ],
+  "run_id": "classic-rsi-auto-20261007-195118-adb106f5",
+  "propose_run_id": "classic-rsi-propose-20261007-195122-78e2f466",
+  "run_qa": {
+    "verdict": "PASS",
+    "path": "/workspace/classic_rsi/audit/qa-verdict-classic-rsi-auto-20261007-195118-adb106f5.json"
+  },
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "ledger": "keys",
+  "authChannel": "keys",
+  "mirrorId_optional": 11368142,
+  "prior_hold": {
+    "adbe_gs_dual_pass": true,
+    "status": "HOLD_NOT_FILLED_PENDING_COS_AUTHORIZE",
+    "packs": [
+      "/workspace/classic_rsi/audit/classic-adbe-750-20261007-keys-rsi.json",
+      "/workspace/classic_rsi/audit/classic-gs-750-20261007-keys-rsi.json"
+    ],
+    "gs_1000_superseded": true,
+    "note": "ADBE/GS not in live book; cash still 4054.50. If CoS authorizes ADBE+GS first, re-size CAT/PHM vs remaining cash."
+  },
+  "skipped": [
+    "ALLE",
+    "SW"
+  ],
+  "live": {
+    "mcp": "user-OfersClaw5",
+    "username": "OfersClaw5-PRIYN",
+    "authChannel": "keys",
+    "profile_xRequestId": "0faa6ffa-d5c1-4cab-8ead-b749ef644a2c",
+    "portfolio_xRequestId": "1b76b66a-40ce-46b2-8e90-dea4cc369668",
+    "positions_xRequestId": "2831dc43-e91e-4691-8650-f03c78c1d53c",
+    "quote_xRequestId": "89c5ea50-969e-4dfb-a457-79a8cd421a21",
+    "availableCash": 4054.5,
+    "totalValue": 7317.71,
+    "usedMargin": 2959.73,
+    "unrealizedPnl": 303.48,
+    "book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "pendingOrders": 0,
+    "cat_open": false,
+    "phm_open": false,
+    "adbe_open": false,
+    "gs_open": false,
+    "balances_scope": "get-my-balances 403 (no money.balance:read); cash from portfolio-summary",
+    "cat": {
+      "instrumentId": 1012,
+      "ask": 814.09,
+      "bid": 813.8,
+      "spread": 0.29,
+      "allowOpenPosition": true,
+      "allowedLeveragesLong": [
+        1,
+        2,
+        5
+      ],
+      "quoteAsOf": "2026-10-07T16:56:18.622038Z"
+    }
+  },
+  "pack_vs_live": {
+    "availableCash": "EXACT 4054.5",
+    "symbol": "CAT",
+    "instrumentId": 1012,
+    "amount": 750,
+    "leverage": 1,
+    "direction": "buy",
+    "route": "REAL",
+    "account": "real",
+    "feeEstimateUsd": 1.55,
+    "required": 751.55,
+    "cashAfterThisAlone": 3302.95,
+    "cashAfterBothEst": 2551.28,
+    "cashFloorUsd": 2500.0,
+    "cashFloorOk": true,
+    "ask_drift": "prepare ask 814.09 \u2192 live 814.09 (exact); SL 798.61 still below live ask",
+    "sl_below_live_ask": true,
+    "tp_above_live_ask": true,
+    "stopLossRate": 798.61,
+    "takeProfitRate": 834.14,
+    "prepare_expiresAt": "2026-10-07T16:57:05Z",
+    "prepare_xRequestId": "8df2edd0-60f2-4aaa-9f66-6c85c0805653",
+    "prepare_token_expired": true,
+    "reprepare_identical_required": true
+  },
+  "sequenced_cash": {
+    "order": [
+      "CAT",
+      "PHM"
+    ],
+    "before": 4054.5,
+    "after_cat": 3302.95,
+    "after_both": 2551.28,
+    "floor": 2500.0,
+    "floor_ok": true
+  },
+  "fearGreed": {
+    "score": 47,
+    "rating": "Neutral",
+    "blocksBuys": false,
+    "note": "Fear/Extreme Fear is NOT Classic No Buy FAIL; Neutral does not block"
+  },
+  "checks": {
+    "long_x1": true,
+    "leverage_eq_1": true,
+    "equity_not_crypto": true,
+    "route_REAL": true,
+    "not_demo": true,
+    "not_short": true,
+    "fees_present": true,
+    "overnight_financing_present": true,
+    "overnight_fee_0": true,
+    "thesis_present": true,
+    "run_id_cited": true,
+    "run_qa_pass": true,
+    "atr_sl_tp": true,
+    "sl_below_live_ask": true,
+    "tp_above_live_ask": true,
+    "instrument_1012": true,
+    "no_open_conflict_cat": true,
+    "order_unchanged_vs_prepare_snapshot": true,
+    "keys_cash_sufficient_dual": true,
+    "keys_not_rejected": true,
+    "cash_floor_ok_dual": true,
+    "fear_not_classic_nobuy_fail": true,
+    "wrong_book": false,
+    "cos_place_hold_recorded": true
+  },
+  "notes": [
+    "Classic truth = user-OfersClaw5 (OfersClaw5-PRIYN keys); do not reject as keys-B; never Momentum; mirror 11368142 optional only",
+    "Run QA PASS: classic-rsi-auto-20261007-195118-adb106f5 / propose classic-rsi-propose-20261007-195122-78e2f466",
+    "Live book SMH/QQQ/XLV; no open CAT or PHM; pendingOrders=0; ADBE/GS still not filled",
+    "F&G Neutral 47 \u2014 Fear is NOT Classic No Buy FAIL; Neutral fine",
+    "Sequenced cash (keys): 4054.50 \u2212 751.55 (CAT) = 3302.95; then \u2212 751.67 (PHM) = 2551.28 \u2265 $2.5k floor",
+    "CAT historically in Ofer 2026-09-11 XLI+CAT lift \u2014 noted; pack otherwise clears + RSI run PASS \u2192 not a FAIL",
+    "SKIP ALLE/SW (cash floor / quality preference) \u2014 do not authorize",
+    "Prepare token expired (~16:57:05Z) \u2014 after CoS lifts HOLD, Trader must re-prepare IDENTICAL params; if size/SL/TP/instrument/fees/cash change \u2192 fresh order-QA",
+    "cos_place_hold=true \u2014 authorize_place reflects integrity only; PLACE=NO until CoS authorize",
+    "QA NEVER places",
+    "CAT $750 \u00d71 long; instrument 1012; SL 798.61 / TP 834.14; fees ~$1.55; overnight $0; sleeve industrials gap vs SMH/QQQ+XLV"
+  ],
+  "verdict_to": [
+    "Trader_Classic",
+    "Chief of Staff"
+  ],
+  "recommended_messages": {
+    "trader_classic": {
+      "priority": true,
+      "to": "Trader_Classic",
+      "text": "Classic dual order QA PASS \u2014 authorize_place BOTH (integrity) BUT cos_place_hold=true \u2014 DO NOT PLACE until CoS lifts HOLD ALL places. (1) CAT $750 \u00d71 inst 1012 SL 798.61 TP 834.14 fees~$1.55; (2) PHM $750 \u00d71 inst 1815 SL 110.43 TP 114.35 fees~$1.67. Run QA PASS classic-rsi-auto-20261007-195118-adb106f5 / classic-rsi-propose-20261007-195122-78e2f466. LIVE OfersClaw5 (keys) cash 4054.50; book SMH/QQQ/XLV; no CAT/PHM open; pendingOrders=0; F&G Neutral 47 (not Classic No Buy FAIL). Sequenced cash: 4054.50 \u2212 751.55 = 3302.95 \u2212 751.67 = 2551.28 \u2265 $2.5k. SKIP ALLE/SW. Prior ADBE $750 + GS $750 order-QA PASS still HOLD not filled (GS $1000 superseded). Prepare tokens expired \u2014 after CoS authorize, re-prepare IDENTICAL params then place CAT then PHM. If CoS authorizes ADBE+GS first, re-size survivors vs remaining cash before place. QA never places. Verdicts: qa-verdict-classic-cat-750-20261007-keys-rsi.json + qa-verdict-classic-phm-750-20261007-keys-rsi.json + dual summary."
+    },
+    "cos": {
+      "priority": true,
+      "to": "Chief of Staff",
+      "text": "Classic dual order QA PASS CAT $750 + PHM $750 (authorize_place both from integrity). cos_place_hold=true \u2014 CoS HOLD ALL places still active; Trader instructed NOT to place until CoS lifts HOLD. Sequenced keys cash 4054.50 \u2192 2551.28 \u2265 floor. Live book SMH/QQQ/XLV; F&G Neutral 47. Prior ADBE+GS dual PASS still HOLD not filled. SKIP ALLE/SW. Summary: /workspace/classic_rsi/audit/qa-verdict-classic-dual-cat-phm-750-20261007-keys-rsi.json. QA never places."
+    }
+  },
+  "brief_user": true,
+  "brief_user_line": "QA PASS for Classic CAT $750 + PHM $750 (integrity authorize_place). Cash after both ~$2551 (\u2265$2.5k). cos_place_hold=true \u2014 do not place until CoS lifts HOLD. QA did not place."
+}

@@ -1,0 +1,33 @@
+{
+  "gate": "breakout-ta-tab-data-qa-gate",
+  "verdict": "PASS",
+  "run_id": "breakout-auto-20261006-231744-c9cb537d",
+  "asOf_idt": "2026-10-06 23:20 IDT",
+  "hard_fail": false,
+  "hard_fail_codes": [],
+  "gates_summary": {
+    "G1_dual_write": "PASS",
+    "G2_audit_integrity": "PASS",
+    "G3_signal_honesty": "PASS",
+    "G4_comparison": "PASS",
+    "G5_live_book_overlap": "PASS"
+  },
+  "sha256": "384c2e2df247f355514278a3b5aeb174eb6247af57e2c679be84fa72d04dd400",
+  "counts": "2/9/0",
+  "soft": [
+    "G1 dual-write PASS \u2014 all 4 copies sha256=384c2e2df247f355514278a3b5aeb174eb6247af57e2c679be84fa72d04dd400 match CoS expected",
+    "G2 counts 2/9/0 confirmed/watch/failed; latest-auto == run file; index.jsonl has run; do_not_place",
+    "G3 confirmed NTAP+AMD 1D entry/stop/target + volume; no shorts; doNotPlaceFromThisUi true",
+    "G4 methods breakout_ta/classic_rsi/momentum_breakout; no invented dollars; no places authorized",
+    "SOFT Momentum book_symbols = 5 names [CRWD, NTAP, P, VTRS, XLK] as CoS noted \u2014 matches pre-MRVL Mirror A snapshot; live Mirror A NOW also has MRVL (filled ~23:08 IDT, openTime 2026-10-06T20:08:06Z) \u2192 comparison_stale_or_partial / MRVL lag (soft exact only)",
+    "SOFT Classic book source OfersClaw5-PRIYN (standing 2026-10-06) \u2014 live OfersClaw5=['QQQ','RBRK','SMH','XLV']; feed book_symbols=['QQQ','SMH','XLV'] missing RBRK (today's fill) \u2014 soft exact miss, overlap claims QQQ/SMH still valid",
+    "Mirror 11368142 optional corroboration also QQQ/SMH/XLV/RBRK \u2014 aligns with OfersClaw5",
+    "QA never places"
+  ],
+  "deviation_codes": [
+    "momentum_book_stale_or_partial_vs_live_mirror_A_missing_MRVL",
+    "classic_book_missing_RBRK_vs_live_OfersClaw5"
+  ],
+  "qa_places": false,
+  "verdict_path": "/workspace/breakout_ta/audit/qa-verdict-breakout-auto-20261006-231744-c9cb537d.json"
+}
