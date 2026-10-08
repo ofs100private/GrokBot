@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+from validate import validate_candidate, validate_position_action
+
+def test_halt_pass():
+    v = validate_candidate({"action": "HALT", "reason": "MARKET_REGIME_RISK", "details": "SPX < SMA50"})
+    assert v.ok and v.verdict == "PASS"
+
+def test_buy_bad_mcp_fail():
+    c = {
+        "action": "BUY",
+        "symbol": "AAPL",
+        "asset_class": "STOCK",
+        "reason": "VOLUME_BREAKOUT",
+        "rationale": "breakout",
+        "price": 200,
+        "rs_rating": 90,
+        "rvol": 2.0,
+        "day_pct": 1.0,
+        "week_pct": 2.0,
+        "month_pct": 3.0,
+        "mcp_order_params": {
+            "symbol": "AAPL",
+            "isBuy": True,
+            "leverage": 1,
+            "amount": 1000,
+            "stopLossRate": 188,
+            "isTakeProfitEnabled": False,
+        },
+    }
+    v = validate_candidate(c)
+    assert not v.ok
+
+def test_buy_good_pass():
+    c = {
+        "action": "BUY",
+        "symbol": "AAPL",
+        "asset_class": "STOCK",
+        "reason": "VOLUME_BREAKOUT",
+        "rationale": "RVOL breakout into close",
+        "price": 200,
+        "rs_rating": 90,
+        "rvol": 2.0,
+        "day_pct": 1.0,
+        "week_pct": 2.0,
+        "month_pct": 3.0,
+        "mcp_order_params": {
+            "account": "real",
+            "direction": "buy",
+            "symbol": "AAPL",
+            "orderType": "mkt",
+            "leverage": 1,
+            "amount": 1000,
+            "stopLossRate": 188.0,
+            "stopLossType": "fixed",
+        },
+    }
+    v = validate_candidate(c)
+    assert v.ok, v.reasons
+
+def test_dwm_fail_on_buy():
+    c = {
+        "action": "BUY",
+        "symbol": "NVDA",
+        "asset_class": "STOCK",
+        "reason": "VCP_SETUP",
+        "rationale": "vcp",
+        "price": 200,
+        "rs_rating": 90,
+        "rvol": 0.5,
+        "day_pct": 0.1,
+        "week_pct": -5.0,
+        "month_pct": -1.0,
+        "mcp_order_params": {
+            "account": "real",
+            "direction": "buy",
+            "symbol": "NVDA",
+            "orderType": "mkt",
+            "leverage": 1,
+            "amount": 1000,
+            "stopLossRate": 188.0,
+            "stopLossType": "fixed",
+        },
+    }
+    v = validate_candidate(c)
+    assert not v.ok
+    assert any(d.get("code") == "DWM_STRENGTH_FAIL" for d in v.deviations)
+
+def test_dwm_skip_pass():
+    v = validate_candidate({
+        "action": "SKIP",
+        "reason": "DWM_STRENGTH_FAIL",
+        "details": "week red",
+        "rationale": "DWM_STRENGTH_FAIL blocked before place",
+    })
+    assert v.ok and v.verdict == "PASS"
+
+def test_close_needs_sma50():
+    v = validate_position_action({"action": "CLOSE", "symbol": "X", "reason": "WHIM", "rationale": "felt like it"})
+    assert not v.ok
+
+def test_close_ok():
+    v = validate_position_action({
+        "action": "CLOSE", "symbol": "X", "reason": "BELOW_SMA50",
+        "rationale": "below SMA50", "last": 10, "sma50": 11
+    })
+    assert v.ok
+
+if __name__ == "__main__":
+    test_halt_pass()
+    test_buy_bad_mcp_fail()
+    test_buy_good_pass()
+    test_dwm_fail_on_buy()
+    test_dwm_skip_pass()
+    test_close_needs_sma50()
+    test_close_ok()
+    print("ALL_TESTS_PASS")

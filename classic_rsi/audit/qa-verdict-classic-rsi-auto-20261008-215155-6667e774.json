@@ -1,0 +1,233 @@
+{
+  "qa_skill": "classic-rsi-1h-run-qa",
+  "run_id": "classic-rsi-auto-20261008-215155-6667e774",
+  "propose_run_id": "classic-rsi-propose-20261008-215201-3039708e",
+  "kind": "auto",
+  "status": "PROPOSE",
+  "run_asOfIDT": "2026-10-08 21:52:01 IDT",
+  "qa_asOfIDT": "2026-10-08 21:55 IDT",
+  "verdict": "PASS",
+  "codes": [],
+  "advisory_codes": [
+    "VTRS_NO_DATA_DROPPED_CLEANLY",
+    "SNAPSHOT_AGE_25.8MIN_NEAR_30MIN_GUARD"
+  ],
+  "order_qa_context_codes_not_run_qa": [
+    "SLEEVE_CAP_BREACH",
+    "REBALANCE_REVERSAL",
+    "PACK_PRICE_DRIFT_GT_0.5ATR",
+    "ATR1H_STOP_TP_ON_CORE_ADD"
+  ],
+  "checks": {
+    "audit_json_exists": true,
+    "latest_auto_matches_run_id": true,
+    "latest_auto_equals_payload_except_audit_meta": true,
+    "latest_propose_matches_propose_run_id": true,
+    "propose_audit_json_exists": true,
+    "index_row_present": true,
+    "index_rows": 210,
+    "index_run_ids_unique": true,
+    "index_asOf_monotonic": true,
+    "index_prior_rows_intact": "212154 at line 206 (fp 3139769b43bd6181), 212716 at line 208 (fp 0dde3792f05fc6c6)",
+    "index_row_symbols_fingerprint_match": true,
+    "params_fingerprint": "558d93a935b399ee",
+    "index_buy_packs_count": 1,
+    "patched_script_used": "envelope has book_snapshot_stale (null) and flags ([]) keys -> produced by patched /workspace/classic_rsi/auto_1h.py, not GrokBot copy",
+    "timeframe": "1H",
+    "per_symbol_timeframe_all_1H": true,
+    "confirmed_close": true,
+    "per_symbol_confirmed_only_all_true": true,
+    "last_confirmed_bar_all_55": "2026-10-08 17:30:00+00:00 (closed 18:30Z = 21:30 IDT; run 18:51Z). Forming 18:30Z bar present in raw yfinance data and dropped by drop_forming_bar.",
+    "long_only": true,
+    "do_not_place": true,
+    "place": false,
+    "buy_packs": 1,
+    "risk_off": 0,
+    "short_or_pip": false,
+    "crypto_in_symbols": [],
+    "per_symbol_errors": [],
+    "mandate_gates": {
+      "us_rth": true,
+      "weekend": false,
+      "blocks": [],
+      "available_cash": 3671.18
+    },
+    "universe_meta": {
+      "pool": 502,
+      "liquid": 492,
+      "rising": 50,
+      "book_count": 5,
+      "universe_size": 55,
+      "used_fallback": false,
+      "error_count": 0
+    },
+    "book_symbols_run": [
+      "QQQ",
+      "SMH",
+      "XLV",
+      "SPY",
+      "TMO"
+    ],
+    "book_matches_live": true,
+    "rsi_1h_book": {
+      "QQQ": "39.92 NEUTRAL",
+      "SMH": "32.60 SUPPORT (pack)",
+      "XLV": "48.79 NEUTRAL",
+      "SPY": "46.34 NEUTRAL",
+      "TMO": "39.89 NEUTRAL"
+    }
+  },
+  "smh_pack_review": {
+    "side": "buy",
+    "action": "CANDIDATE_LONG",
+    "leverage": 1,
+    "route": "REAL",
+    "timeframe": "1H",
+    "bar_confirmed": true,
+    "bar_time": "2026-10-08 17:30:00+00:00",
+    "raw_signal": "BUY_70",
+    "strength_tag": "ZONE_70",
+    "zone": "SUPPORT",
+    "rsi_audit": 32.60271961261762,
+    "rsi_qa_recompute": 32.60271961261762,
+    "recompute_method": "classic_rsi.propose.fetch_1h('SMH','60d') + propose_from_bars (pure, no audit write); raw last bars 16:30Z,17:30Z,18:30Z -> 18:30Z dropped",
+    "levels_audit": {
+      "entry": 608.89,
+      "atr14_1h": 5.3908,
+      "stop_loss": 600.8038,
+      "take_profit": 619.6717,
+      "sl_mult": 1.5,
+      "tp_mult": 2.0
+    },
+    "levels_qa_recompute_identical": true,
+    "math": "SL = 608.89 - 1.5*5.3908 = 600.80 (below entry); TP = 608.89 + 2.0*5.3908 = 619.67 (above entry); risk 8.086/sh, reward 10.782/sh, R = 1.33",
+    "atr_not_pips": true,
+    "size": "unset (suggested_notional_usd null) - Trader sets",
+    "run_id_cited": "pack.run_id = classic-rsi-propose-20261008-215201-3039708e (paired propose_run_id; auto envelope handoff cites both) - same convention accepted in prior PASS 194408. Thesis text itself does not embed run_id: Trader's order-QA thesis must cite run_id + propose_run_id.",
+    "fee_estimate": null,
+    "overnight_financing_estimate": null,
+    "prepared_order": null,
+    "status": "PROPOSE_ONLY"
+  },
+  "vtrs_warning": {
+    "in_sp500_pool": true,
+    "in_universe_55": false,
+    "in_universe_latest_cache": false,
+    "universe_error_count": 0,
+    "per_symbol_entry": null,
+    "conclusion": "yfinance no-data for VTRS: excluded at the screen stage (pool 502 -> liquid 492), never reached signal scan, no exception, run completed PROPOSE. Handled cleanly; not a hard fail. Minor: no-data names are not counted in universe_meta.error_count/errors_sample (observability gap only)."
+  },
+  "live_read": {
+    "account": "real",
+    "source": "user-OfersClaw5 (Classic OfersClaw5-PRIYN)",
+    "positions_and_orders": {
+      "xRequestId": "48d03e66-6785-41f2-85be-d4d895a58472",
+      "timestampUTC": "2026-10-08T18:53:14.032Z",
+      "timestampIDT": "2026-10-08 21:53:14 IDT",
+      "positionCount": 5,
+      "pendingOrders": 0,
+      "note": "SMH currentRate 616.52 here is stale cache; summary 604.99 used"
+    },
+    "portfolio_summary": {
+      "xRequestId": "d59480e7-3a70-4284-8bbc-1d7fbbe0deb5",
+      "timestampUTC": "2026-10-08T18:53:13.793Z",
+      "timestampIDT": "2026-10-08 21:53:13 IDT",
+      "totalValue": 7240.54,
+      "availableCash": 3671.18,
+      "frozenCash": 0,
+      "usedMargin": 3389.05,
+      "unrealizedPnl": 180.31
+    },
+    "holdings": [
+      {
+        "symbol": "QQQ",
+        "positionId": 3523504426,
+        "units": 1.106357,
+        "rate": 746.61,
+        "value": 826.02,
+        "SL": 644.0
+      },
+      {
+        "symbol": "SMH",
+        "positionId": 3581725275,
+        "units": 1.29223,
+        "rate": 604.99,
+        "value": 781.79,
+        "SL": 581.8
+      },
+      {
+        "symbol": "XLV",
+        "positionId": 3498067688,
+        "units": 4.537045,
+        "rate": 167.63,
+        "value": 760.55,
+        "SL": 148.62
+      },
+      {
+        "symbol": "SPY",
+        "positionId": 3601641208,
+        "units": 0.906782,
+        "rate": 772.87,
+        "value": 700.83,
+        "SL": 711.97
+      },
+      {
+        "symbol": "TMO",
+        "positionId": 3601642886,
+        "units": 0.772582,
+        "rate": 647.4,
+        "value": 500.17,
+        "SL": 578.82
+      }
+    ],
+    "vs_snapshot": "Symbols, positionIds, units, invested 3389.05 and cash 3671.18 match exactly. Equity 7245.28 vs live 7240.54 = marks only. SPY SL 711.78 (snapshot) vs 711.97 live = trailing-stop ratchet."
+  },
+  "book_source_and_mtime": {
+    "path": "/workspace/classic-portfolio-for-app.json",
+    "mtimeIDT": "2026-10-08 21:26:26 IDT",
+    "asOf": "2026-10-08T21:26:13+03:00",
+    "xRequestId": "f912e584-49b8-414d-86a2-d8e7fb7c8ce6",
+    "positionsXRequestId": "42f0bd8c-d27a-4bf9-b79c-f7527694a8f6",
+    "age_at_run_min": 25.8,
+    "guard_max_min": 30,
+    "note": "Fresh by 4.2 min only. Next hourly slot (15:35 ET = 22:35 IDT) will report BOOK_SNAPSHOT_STALE unless the snapshot is refreshed live before it."
+  },
+  "order_qa_context_sleeve_analysis": {
+    "basis": "live portfolio-summary values 21:53 IDT (xRequestId d59480e7-3a70-4284-8bbc-1d7fbbe0deb5); growth sleeve = SMH+QQQ; cap 45% of invested (classic-rebalance 'Targets and caps')",
+    "invested_value": 3569.36,
+    "growth_value": 1607.81,
+    "growth_pct_value": 45.04,
+    "invested_cost": 3389.05,
+    "growth_cost": 1479.27,
+    "growth_pct_cost": 43.65,
+    "max_smh_add_keep_growth_le_45_value_basis": 0,
+    "raw_value_basis": -2.91,
+    "max_smh_add_keep_growth_le_45_cost_basis": 83.28,
+    "min_position_usd": 400,
+    "max_smh_add_name_cap_30pct": 412.88,
+    "smh_pct_of_invested": 21.9,
+    "max_add_cash_floor": 1171.18,
+    "growth_after_add": {
+      "$100": 46.54,
+      "$250": 48.64,
+      "$500": 51.8,
+      "$1171": 58.62
+    },
+    "cash_after_add": {
+      "$500": 3171.18,
+      "$1171.18": 2500.0
+    },
+    "cash_pct_equity": 50.7,
+    "binding_constraint": "sleeve cap: growth already 45.04% of invested by value -> max add $0 (cost basis allows ~$83, below the $400 minimum position)",
+    "authorization_context": "20:36 IDT Ofer authorized SMH trim of 1.3656u specifically to bring growth (SMH+QQQ) to ~45%. Any SMH add now re-breaches the cap and reverses that trim ~75 min later.",
+    "pack_sl_vs_existing": "Pack SL 600.80 vs existing SMH pos 3581725275 SL 581.80. An add would open a separate position with a much tighter stop: 600.80 is only 0.69% below live 604.99 (and below the signal entry already). Existing position remains at 581.80.",
+    "price_drift": "Live 604.99 (summary) / 605.05 (forming bar) vs signal close 608.89 = 3.84-3.90 = 0.71-0.72x ATR(1H) > 0.5x ATR -> classic-rebalance Step 5 says skip the pack.",
+    "rebalance_step5": "RSI buy packs only for names on current target/add list (SMH was just trimmed -> not an add name); no 1H-ATR initial stops / no fixed 2xATR(1H) TP on core adds.",
+    "expected_order_qa_outcome": "Not placeable as-is. classic-real-money-order-qa-gate literal hard-fail list does not name sleeve caps, but its PASS requires 'match the Classic mandate' and classic-rebalance caps/Step 5 apply. Expected: FAIL/BLOCK with SLEEVE_CAP_BREACH (blocking: growth 45.04% already at cap, max add $0) + REBALANCE_REVERSAL (blocking absent explicit new Ofer override) + PACK_PRICE_DRIFT_GT_0.5ATR (skip per Step 5) + ATR1H_STOP_TP_ON_CORE_ADD. Also missing fee/overnight estimates + prepare (hard fails if submitted without them).",
+    "recommendation": "Trader_Classic: do not prepare an SMH add from this pack; log it as 'signal valid, gated by sleeve cap/rebalance'. Only Ofer can explicitly override the 45% cap. Cash >50% of equity (50.7%) is a drift trigger -> deploy toward non-growth gap sleeves (industrials/financials, energy/hard assets) via the rebalance flow, not SMH."
+  },
+  "notes": [
+    "Run-level PASS: integrity, 1H, confirmed bars, long-only, ATR pack, no crypto, no place, patched script, live book.",
+    "QA read-only; no trades placed/closed/edited; no agents messaged."
+  ]
+}

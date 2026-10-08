@@ -74,6 +74,8 @@ Strength % = which rule fired, **not** a win-rate claim.
 
 Script: `python -m classic_rsi.auto_1h` → `/workspace/classic_rsi/audit/latest-auto.json`.
 
+Run from `/workspace` only: `cd /workspace && ./screener-venv/bin/python -m classic_rsi.auto_1h` (never the unpatched `/workspace/GrokBot` backup copy). Book snapshot `/workspace/classic-portfolio-for-app.json` is refreshed live from user-OfersClaw5 by Trader_Classic at :12 past each hour, 16:12–22:12 IDT weekdays; if it is >30 min old, auto_1h fails closed as BOOK_SNAPSHOT_STALE (0 packs) — then refresh it live first and rerun (added 2026-10-08).
+
 Routine **classic-rsi-1h-auto**: weekdays `CRON_TZ=America/New_York 35 9-15 * * 1-5` (after :30 ET bars during RTH).
 
 - **Universe (no fixed symbol list):** S&P pool (`/workspace/sp500_symbols.json`) → liquid ADV$ (SMA20 close×volume ≥ ~$100M, price ≥ $10) → rising confirmed 1H volume (last vol > SMA20 × 1.2) → top ~50 ∪ live Classic book. Screener: `classic_rsi/universe.py`. Envelope carries `universe_meta` (pool/liquid/rising counts, thresholds, fallback flag). Cache fallback: `audit/universe-latest.json` — never silently use the old fixed 6-name list as primary.

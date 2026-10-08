@@ -1,0 +1,196 @@
+{
+  "qa_skill": "classic-rsi-1h-run-qa",
+  "run_id": "classic-rsi-auto-20261008-212154-dafd390d",
+  "propose_run_id": "classic-rsi-propose-20261008-212158-2694fd2d",
+  "kind": "auto",
+  "status": "PROPOSE",
+  "run_asOfIDT": "2026-10-08 21:21:58 IDT",
+  "qa_asOfIDT": "2026-10-08 21:25 IDT",
+  "verdict": "FAIL",
+  "codes": [
+    "RSI_WRONG_BOOK"
+  ],
+  "info_codes": [
+    "BOOK_SNAPSHOT_STALE_PRE_REBALANCE",
+    "BOOK_MISSING_HELD_SPY_TMO",
+    "CASH_BASIS_OVERSTATED_377.45",
+    "OUTCOME_UNCHANGED_SPY_TMO_NEUTRAL",
+    "SL_DRIFT_VS_CONTEXT_SPY_TMO"
+  ],
+  "code_rationale": "Skill RSI_WRONG_BOOK = book dollars from wrong book or invented; exemption covers source account (user-OfersClaw5), not a snapshot that no longer reflects the account. book_symbols/book_summary/mandate cash came from a 19:46 IDT sidecar captured before the 20:36-20:37 IDT rebalance; at run time the live Classic book held 5 names (SPY, TMO missing) and cash 3671.18 (not 4048.63). RSI_AUDIT_INCOMPLETE NOT raised: audit JSON, latest-auto, index row and all envelope fields present.",
+  "checks": {
+    "audit_json_exists": true,
+    "latest_auto_matches_run_id": true,
+    "latest_auto_equals_payload_except_audit_meta": true,
+    "latest_propose_matches_propose_run_id": true,
+    "index_row_present": true,
+    "index_rows": 206,
+    "index_run_ids_unique": true,
+    "index_asOf_monotonic": true,
+    "index_row_symbols_and_fingerprint_match": true,
+    "timeframe": "1H",
+    "per_symbol_timeframe_all_1H": true,
+    "confirmed_close": true,
+    "per_symbol_confirmed_only_all_true": true,
+    "last_confirmed_bar_utc": "2026-10-08 16:30:00+00:00 (12:30-13:30 ET bar; 13:30 ET bar was forming at 14:21 ET and correctly dropped)",
+    "long_only": true,
+    "do_not_place": true,
+    "place": false,
+    "buy_packs": 0,
+    "risk_off": 0,
+    "short_or_pip": false,
+    "crypto_in_symbols": [],
+    "per_symbol_errors": [],
+    "mandate_gates": {
+      "us_rth": true,
+      "weekend": false,
+      "blocks": [],
+      "available_cash_used": 4048.63,
+      "cash_floor_usd": 2500.0
+    },
+    "universe_meta": {
+      "liquid_count": 492,
+      "rising_count": 50,
+      "used_fallback": false,
+      "universe_size": 53,
+      "book_count": 3,
+      "override": false
+    },
+    "book_matches_live": false,
+    "book_symbols_run": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "book_symbols_live": [
+      "QQQ",
+      "SMH",
+      "XLV",
+      "SPY",
+      "TMO"
+    ],
+    "spy_tmo_in_scanned_symbols": false,
+    "smh_rsi_reproduced_by_qa": true
+  },
+  "live_read": {
+    "account": "real",
+    "source": "user-OfersClaw5 (Classic OfersClaw5-PRIYN)",
+    "positions_and_orders": {
+      "xRequestId": "d6575cff-33de-4d67-b4a5-7a5568e884ca",
+      "timestampUTC": "2026-10-08T18:23:14.649Z",
+      "timestampIDT": "2026-10-08 21:23:14 IDT",
+      "positionCount": 5,
+      "pendingOrders": 0
+    },
+    "portfolio_summary": {
+      "xRequestId": "8d7bc966-8e72-4ad6-9962-327a75b180e2",
+      "timestampUTC": "2026-10-08T18:23:15.583Z",
+      "timestampIDT": "2026-10-08 21:23:15 IDT",
+      "totalValue": 7258.21,
+      "availableCash": 3671.18,
+      "frozenCash": 0,
+      "unrealizedPnl": 197.98,
+      "usedMargin": 3389.05
+    },
+    "holdings": [
+      {
+        "symbol": "QQQ",
+        "positionId": 3523504426,
+        "units": 1.106357,
+        "openRate": 677.9,
+        "rate": 748.5,
+        "value": 828.11,
+        "SL": 644.0
+      },
+      {
+        "symbol": "SMH",
+        "positionId": 3581725275,
+        "units": 1.29223,
+        "openRate": 564.35,
+        "rate": 617.51,
+        "value": 797.97,
+        "SL": 581.8
+      },
+      {
+        "symbol": "XLV",
+        "positionId": 3498067688,
+        "units": 4.537045,
+        "openRate": 156.44,
+        "rate": 167.31,
+        "value": 759.1,
+        "SL": 148.62
+      },
+      {
+        "symbol": "SPY",
+        "positionId": 3601641208,
+        "units": 0.906782,
+        "openRate": 771.96,
+        "rate": 773.28,
+        "value": 701.2,
+        "SL": 711.5,
+        "openTimeIDT": "2026-10-08 20:36:43"
+      },
+      {
+        "symbol": "TMO",
+        "positionId": 3601642886,
+        "units": 0.772582,
+        "openRate": 647.18,
+        "rate": 648.01,
+        "value": 500.65,
+        "SL": 578.82,
+        "openTimeIDT": "2026-10-08 20:36:59"
+      }
+    ]
+  },
+  "book_source_and_mtime": {
+    "loader": "classic_rsi/auto_1h.py load_book_symbols() -> PORTFOLIO_SNAPSHOT=/workspace/classic-portfolio-for-app.json (no live MCP read in script)",
+    "path": "/workspace/classic-portfolio-for-app.json",
+    "mtimeIDT": "2026-10-08 19:48:06 IDT",
+    "snapshot_asOf": "2026-10-08T19:46:31+03:00",
+    "snapshot_ssoTimestamp": "2026-10-08T16:46:31Z (19:46:31 IDT)",
+    "snapshot_slot": "trader-classic-bac-prep_2026-10-08_1946",
+    "snapshot_xRequestId": "abc8dd09-36c7-45eb-a775-a3fe02b699e8",
+    "snapshot_positionsXRequestId": "da8f9730-a538-46f8-9f50-fc1166ba1a79",
+    "snapshot_contents": {
+      "symbols": [
+        "SMH",
+        "QQQ",
+        "XLV"
+      ],
+      "SMH_units": 2.65783,
+      "availableCash": 4048.63,
+      "equity": 7275.91,
+      "invested": 2959.73
+    },
+    "age_at_run": "~95 min old; predates 20:36-20:37 IDT rebalance fills (SMH trim, SPY+TMO opens)"
+  },
+  "spy_tmo_rsi_1h_qa_recompute": {
+    "method": "QA recomputed read-only via classic_rsi.propose.fetch_1h + propose_from_bars (same params, confirmed bars; no audit written). SMH recompute matched audit exactly (RSI 20.32 SUPPORT).",
+    "SPY": {
+      "last_bar_time": "2026-10-08 16:30:00+00:00",
+      "last_close": 771.0800170898438,
+      "last_rsi": 39.374765772102585,
+      "last_zone": "NEUTRAL",
+      "buy_packs": [],
+      "risk_off": []
+    },
+    "TMO": {
+      "last_bar_time": "2026-10-08 16:30:00+00:00",
+      "last_close": 644.9099731445312,
+      "last_rsi": 37.92091076777585,
+      "last_zone": "NEUTRAL",
+      "buy_packs": [],
+      "risk_off": []
+    },
+    "conclusion": "Neither would have produced RISK_OFF or a pack on the 16:30Z bar; omission did not change outcome, but run did not evaluate them."
+  },
+  "notes": [
+    "Book: run reported SMH/QQQ/XLV + cash 4048.63 / equity 7275.91 (stale 19:46 snapshot). Live at 21:23 IDT: QQQ/SMH/XLV/SPY/TMO, cash 3671.18, total 7258.21, 0 pending. Cash overstated by 377.45; SMH units 2.65783 in snapshot vs 1.29223 live.",
+    "Mandate cash gate would still clear with live cash (3671.18 > 2500 floor), and 0 packs means no sizing harm this run \u2014 FAIL is for book integrity; rerun required before any reliance on this run_id.",
+    "Root cause: auto_1h reads /workspace/classic-portfolio-for-app.json and nobody refreshed it after the 20:36-20:37 IDT rebalance. Fix: refresh sidecar from a live user-OfersClaw5 read (positions + summary) before rerun; suggest a staleness guard (snapshot asOf older than last fill / >60 min -> GATED or flag).",
+    "Info: live SL differs from CoS context \u2014 SPY SL 711.5 (context 710.24), TMO SL 578.82 (context 575.99). Not a run-QA code; flag to order-QA / Trader_Classic.",
+    "Info: eToro positions endpoint currentRate vs summary differed slightly (QQQ 748.4 vs 748.5, SPY 773.17 vs 773.28); summary used.",
+    "Soft universe check OK: dynamic screen (492 liquid / 50 rising, no fallback, no override).",
+    "QA read-only: no trades placed/closed/edited; no agents messaged."
+  ]
+}

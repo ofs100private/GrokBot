@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 from zoneinfo import ZoneInfo
@@ -32,6 +32,8 @@ PORTFOLIO = "OfersClaw5-PRIYN"
 MIRROR_ID = 11368142
 CASH_FLOOR_USD = 2500.0
 PORTFOLIO_SNAPSHOT = Path("/workspace/classic-portfolio-for-app.json")
+BOOK_SNAPSHOT_MAX_AGE_MIN = 30.0  # older book snapshot => fail closed (no live-read path in this script)
+BOOK_SNAPSHOT_MAX_FUTURE_MIN = 2.0  # asOf further in the future => fail closed
 LATEST_AUTO = DEFAULT_AUDIT_DIR / "latest-auto.json"
 QA_GATE = "classic-real-money-order-qa-gate"
 RUN_QA_GATE = "classic-rsi-1h-run-qa"
@@ -80,6 +82,53 @@ def load_book_symbols(snapshot: Path = PORTFOLIO_SNAPSHOT) -> tuple[list[str], O
         except (TypeError, ValueError):
             cash = None
     return syms, cash, summary
+
+
+def book_snapshot_staleness(
+    snapshot: Path = PORTFOLIO_SNAPSHOT, now: Optional[datetime] = None
+) -> Optional[dict[str, Any]]:
+    """Return None if the book snapshot is fresh, else a BOOK_SNAPSHOT_STALE detail dict.
+
+    Fail closed when: file missing; asOf missing/unparseable; asOf older than max age;
+    asOf more than BOOK_SNAPSHOT_MAX_FUTURE_MIN in the future; or asOf earlier than the
+    latest position openTime in the file (snapshot predates a fill). Naive openTime = UTC (eToro).
+    """
+    detail: dict[str, Any] = {"flag": "BOOK_SNAPSHOT_STALE", "snapshot": str(snapshot),
+                              "max_age_min": BOOK_SNAPSHOT_MAX_AGE_MIN, "asOf": None, "age_min": None}
+    if not snapshot.exists():
+        detail["reason"] = "snapshot file missing"
+        return detail
+    try:
+        data = json.loads(snapshot.read_text())
+        as_of = datetime.fromisoformat(str(data["asOf"]))
+    except Exception:  # noqa: BLE001
+        detail["reason"] = "snapshot unreadable or asOf missing/unparseable"
+        return detail
+    if as_of.tzinfo is None:
+        as_of = as_of.replace(tzinfo=IDT)
+    age_min = ((now or _now_idt()) - as_of).total_seconds() / 60.0
+    detail.update(asOf=as_of.isoformat(), age_min=round(age_min, 1))
+    if age_min > BOOK_SNAPSHOT_MAX_AGE_MIN:
+        detail["reason"] = f"snapshot older than {BOOK_SNAPSHOT_MAX_AGE_MIN:.0f} min; refresh from live user-OfersClaw5 read"
+        return detail
+    if age_min < -BOOK_SNAPSHOT_MAX_FUTURE_MIN:
+        detail["reason"] = f"asOf more than {BOOK_SNAPSHOT_MAX_FUTURE_MIN:.0f} min in the future"
+        return detail
+    open_times = []
+    for pos in data.get("positions") or []:
+        ot = pos.get("openTime") if isinstance(pos, dict) else None
+        if not ot:
+            continue
+        try:
+            t = datetime.fromisoformat(str(ot).replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        open_times.append(t if t.tzinfo else t.replace(tzinfo=timezone.utc))
+    if open_times and as_of < max(open_times):
+        detail.update(latest_open_time=max(open_times).isoformat(),
+                      reason="asOf is earlier than the latest position openTime (snapshot predates a fill)")
+        return detail
+    return None
 
 
 def build_universe(
@@ -139,8 +188,13 @@ def run_auto_1h(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     book_syms, cash, summary = load_book_symbols()
+    book_stale = book_snapshot_staleness()
     universe_meta: dict[str, Any]
-    if symbols:
+    if book_stale is not None:
+        # Fail closed: wrong/stale book => no scan, no packs, no proposals
+        universe = []
+        universe_meta = {"skipped": "BOOK_SNAPSHOT_STALE", **book_stale}
+    elif symbols:
         # Manual override for tests — still record meta
         universe = [str(s).upper().strip() for s in symbols if s]
         universe_meta = {
@@ -160,7 +214,9 @@ def run_auto_1h(
     risk_off: list[Any] = []
     status = "SKIPPED"
 
-    if dry_run:
+    if book_stale is not None:
+        status = "BOOK_SNAPSHOT_STALE"
+    elif dry_run:
         status = "DRY_RUN"
     elif not gates["allow_new_buys"] and not force:
         status = "GATED"
@@ -209,6 +265,8 @@ def run_auto_1h(
         "universe_meta": universe_meta,
         "book_symbols": book_syms,
         "book_summary": summary,
+        "book_snapshot_stale": book_stale,
+        "flags": ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else [],
         "mandate_gates": gates,
         "buy_packs": buy_packs,
         "risk_off": risk_off,
@@ -238,6 +296,7 @@ def run_auto_1h(
                 "force": force,
                 "notional": notional,
                 "status": status,
+                "flags": ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else [],
             },
         )
         envelope["audit"] = meta

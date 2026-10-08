@@ -86,7 +86,9 @@
         "openRate": 771.96,
         "SL": 710.2,
         "TSL": true,
-        "TP": null
+        "TP": null,
+        "SL_QA_cited": 710.24,
+        "SL_liveNow_2126": 711.78
       },
       "TMO": {
         "positionId": 3601642886,
@@ -94,7 +96,8 @@
         "openRate": 647.18,
         "SL": 575.99,
         "TSL": true,
-        "TP": null
+        "TP": null,
+        "SL_liveNow_2126": 578.82
       }
     },
     "valuationNote": "Weights at live bids (overview 17:37:09Z); portfolio-summary currentRate is stale cache (SMH 618.4, SPY 775.58, QQQ 753.97) so its totalValue 7264.88 overstates",
@@ -168,5 +171,37 @@
     "placeCallsMade": 0,
     "bookUnchanged": "cash 4048.63; SMH 2.65783u SL581.80; QQQ 1.106357u SL644; XLV 4.537045u SL148.62; 0 pending (per 20:32:45 snapshot)",
     "nextStep": "Re-base pack to live SMH bid (~605.30) + re-QA, or explicit waiver of the 0.1% drift gate (move is favorable for a sell: +~$1.84 proceeds on 1.3656u)"
+  },
+  "slCorrection_2126": {
+    "SPY": {
+      "at": "2026-10-08T21:26:13+03:00",
+      "requestedBy": "QA (via parent): change SPY SL 710.20 -> 710.24 (eToro rounding), note TSL ratchet ~711.5",
+      "observed": {
+        "requested": 710.18,
+        "fillTimeReads": {
+          "value": 710.2,
+          "sources": [
+            "get-my-portfolio-summary 9d62ec68-1c65-449a-acdd-2635b8cf0e4d @17:37:03Z",
+            "/trading/info/portfolio 02c2220b-83f6-49a3-9155-7d0ca1444023"
+          ]
+        },
+        "liveNow": {
+          "value": 711.78,
+          "isTslEnabled": true,
+          "sources": [
+            "get-my-portfolio-summary f912e584-49b8-414d-86a2-d8e7fb7c8ce6 @18:26:13Z",
+            "/trading/info/portfolio 40b91965-f80b-4d58-8085-cd064ae35d8b"
+          ]
+        }
+      },
+      "qaCited_710_24": "NOT observed in any eToro read (fill-time reads show 710.2; 2-dp API value). Recorded as QA-cited only; not substituted as fact.",
+      "trailingNote": "Trailing stop has since ratcheted up: live 711.78 at 21:26 IDT (QA estimate ~711.5)."
+    },
+    "TMO": {
+      "asSet": 575.99,
+      "liveNow": 578.82,
+      "isTslEnabled": true,
+      "note": "trailing stop ratcheted"
+    }
   }
 }
