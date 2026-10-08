@@ -1,0 +1,210 @@
+{
+  "job": "manual_early_2240_eod_2026-09-23",
+  "ts_il": "2026-09-23T21:54:39.050341+03:00",
+  "pfG_status": {
+    "symbol": "PFG",
+    "status": "CLOSED_FILLED",
+    "keys_positionId": 3581779537,
+    "close_orderId_history": 1589918424,
+    "morning_waiting_orderId": 1586690242,
+    "closeTime_utc": "2026-09-23T08:08:59.377Z",
+    "closeTime_il": "2026-09-23T11:08:59+03:00",
+    "closeRate": 113.07,
+    "netProfit": -39.01,
+    "note": "Not in open positions; no pending orders. Do NOT re-place."
+  },
+  "mirror_A": {
+    "id": 11630170,
+    "availableCash": 2141.3,
+    "value": 7815.47,
+    "invested": 8000.0,
+    "openPnl": -162.34,
+    "closedPnl": -236.96,
+    "source": "user-etoro get-my-portfolio-summary copiedTraders",
+    "asOf_utc": "2026-09-23T18:53:13Z",
+    "asOf_il": "2026-09-23T21:53:13+03:00"
+  },
+  "keys_book": {
+    "availableCash": 2666.65,
+    "totalValue": 9768.79,
+    "note": "execution ledger only \u2014 do not report as $8k book",
+    "open": [
+      {
+        "symbol": "JNJ",
+        "positionId": 3584876985,
+        "pnlPercent": -0.49
+      },
+      {
+        "symbol": "PSX",
+        "positionId": 3580194054,
+        "pnlPercent": -4.08
+      },
+      {
+        "symbol": "TGT",
+        "positionId": 3581081151,
+        "pnlPercent": -1.95
+      },
+      {
+        "symbol": "DE",
+        "positionId": 3581779392,
+        "pnlPercent": 3.41
+      },
+      {
+        "symbol": "XLK",
+        "positionId": 3577022318,
+        "pnlPercent": 3.95
+      },
+      {
+        "symbol": "VTRS",
+        "positionId": 3580194334,
+        "pnlPercent": 0.36
+      },
+      {
+        "symbol": "CRWD",
+        "positionId": 3579391383,
+        "pnlPercent": 7.98
+      },
+      {
+        "symbol": "ETH",
+        "positionId": 3572932449,
+        "pnlPercent": 7.1,
+        "invested": 10.0
+      }
+    ],
+    "pending_orders": []
+  },
+  "pm": {
+    "run_id": "posmgr from 21:53 IL",
+    "out_path": "/workspace/pm_2026-09-23_eod.json",
+    "actions": [
+      {
+        "symbol": "PSX",
+        "action": "CLOSE",
+        "reason": "LOSS_PCT_GE_4",
+        "needs_qa_bot": true
+      },
+      {
+        "symbol": "ETH",
+        "action": "TRAIL_SL",
+        "execution": "SKIP_NOT_ON_MIRROR_A"
+      },
+      {
+        "symbol": "JNJ",
+        "action": "HOLD"
+      },
+      {
+        "symbol": "TGT",
+        "action": "HOLD"
+      },
+      {
+        "symbol": "DE",
+        "action": "HOLD"
+      },
+      {
+        "symbol": "XLK",
+        "action": "HOLD"
+      },
+      {
+        "symbol": "VTRS",
+        "action": "HOLD"
+      },
+      {
+        "symbol": "CRWD",
+        "action": "HOLD",
+        "reason": "TRAIL_NO_RAISE"
+      }
+    ]
+  },
+  "eth_skip": {
+    "symbol": "ETH",
+    "pm_action": "TRAIL_SL",
+    "execution": "SKIP_NOT_ON_MIRROR_A",
+    "rationale": "PM wants TRAIL_SL HIT_1R new_stop=2357.96 but ETH is keys dust ($10) only; standing rule TRAIL only if on mirror A 11630170. Skip place.",
+    "keys_positionId": 3572932449,
+    "keys_invested": 10.0
+  },
+  "screener_run_qa_request": {
+    "type": "screener-run-QA",
+    "run_id": "screener-20260923-215216-328871f8",
+    "summary_path": "/workspace/momentum_audit/screener-run-screener-20260923-215216-328871f8.json",
+    "near_miss_path": "/workspace/momentum_audit/near-miss-2026-09-23.json",
+    "audit_jsonl": "/workspace/momentum_audit/2026-09-23.jsonl",
+    "regime": "HEALTHY",
+    "universe_n": 520,
+    "sp500_n": 503,
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "buys": [
+      "GILD"
+    ],
+    "pack": "1 stock VCP_SETUP, 0 breakout, 0 ETF",
+    "local_script_qa_pack": "PASS"
+  },
+  "place_qa_requests": [
+    {
+      "type": "place-QA",
+      "action": "CLOSE",
+      "reason": "LOSS_PCT_GE_4",
+      "symbol": "PSX",
+      "positionId_keys": 3580194054,
+      "account": "real",
+      "mcp": "user-Momentum-HHHGDTJ",
+      "etoro_mark_pnl_percent": -4.08,
+      "yahoo_pnl_pct": -4.13,
+      "last": 254.115,
+      "entry": 265.05,
+      "invested": 1000.0,
+      "units": 3.772873,
+      "stopLossRate": 249.12,
+      "prepare": {
+        "account": "real",
+        "positionId": 3580194054
+      },
+      "note": "Prefer eToro mark; both eToro (-4.08) and Yahoo (-4.13) trigger LOSS_PCT_GE_4. No working close order present."
+    },
+    {
+      "type": "place-QA",
+      "action": "BUY",
+      "symbol": "GILD",
+      "amount": 1000,
+      "leverage": 1,
+      "stopLossRate": 141.28,
+      "stopLossType": "fixed",
+      "orderType": "mkt",
+      "account": "real",
+      "sleeve": "VCP_SETUP",
+      "rs_rating": 81,
+      "rvol": 0.38,
+      "dwm": {
+        "day_pct": -0.17,
+        "week_pct": 2.73,
+        "month_pct": 3.44
+      },
+      "regime": "HEALTHY",
+      "mirror_A_cash": 2141.3,
+      "keys_cash": 2666.65,
+      "held_skip": [
+        "JNJ",
+        "PSX",
+        "TGT",
+        "DE",
+        "XLK",
+        "VTRS",
+        "CRWD"
+      ],
+      "already_held": false,
+      "note": "Cash OK pre-PSX-close ($2141.30 >= 1000). If PSX CLOSE fills first, re-pull A cash and re-ask place-QA only if this FAIL'd for cash (unlikely).",
+      "mcp_order_params": {
+        "account": "real",
+        "direction": "buy",
+        "symbol": "GILD",
+        "orderType": "mkt",
+        "leverage": 1,
+        "amount": 1000,
+        "stopLossRate": 141.28,
+        "stopLossType": "fixed"
+      }
+    }
+  ],
+  "blocker": "Executor subagent has no SendToAgent tool. Parent must message QA Bot 498c78db-a027-4f2c-8126-3c2be6f0a4bb for screener-run QA + place-QA; on PASS, prepare+place on user-Momentum-HHHGDTJ. No places executed (PLACE_WITHOUT_QA_BOT_RECHECK)."
+}

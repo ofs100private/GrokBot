@@ -1,0 +1,73 @@
+{
+  "op": "place_ack",
+  "event": "PLACE_ACK",
+  "action": "MOVE_SL_BREAKEVEN",
+  "run_id": "eod-20261007-2240-primary",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mcp": "user-Momentum-HHHGDTJ",
+  "authChannel": "keys",
+  "symbol": "P",
+  "instrumentId": 6823,
+  "positionId": 3587299961,
+  "positionId_mirror_A": 3587299963,
+  "direction": "long",
+  "leverage": 1,
+  "openRate": 122.86,
+  "prior_sl": 108.11,
+  "new_sl": 122.86,
+  "stopLossType": "fixed",
+  "trailing_sl": false,
+  "pre_check": {
+    "xRequestId": "497e45df-a586-447c-b49b-d1bbf95be9b4",
+    "asOf_il": "2026-10-07T22:50:38+03:00",
+    "stopLossRate": 108.11,
+    "currentRate": 153.3,
+    "open": true
+  },
+  "request": {
+    "method": "PATCH",
+    "path": "/api/v2/trading/positions/3587299961",
+    "body": {
+      "stopLossRate": 122.86,
+      "stopLossType": "fixed"
+    }
+  },
+  "response": {
+    "statusCode": 202,
+    "operationId": "3323858e-d396-47da-ad5c-e4059c4ca762",
+    "positionId": 3587299961,
+    "referenceId": "dbe35b20-8294-4a0f-9185-334370e0d7e2"
+  },
+  "xRequestId_write": "dbe35b20-8294-4a0f-9185-334370e0d7e2",
+  "placed_at_il": "2026-10-07T22:50:45+03:00",
+  "verify": {
+    "xRequestId_positions": "9fa985c1-5555-40fe-a72c-4180d7c7492a",
+    "asOf_il": "2026-10-07T22:51:00+03:00",
+    "live_stopLossRate": 122.86,
+    "currentRate": 151.55,
+    "match": true
+  },
+  "verified_live_sl": 122.86,
+  "mirror_a_status": {
+    "mirrorId": 11630170,
+    "positionId": 3587299963,
+    "stopLossRate": 122.86,
+    "currentRate": 151.55,
+    "ge_122_86": true,
+    "source": "user-etoro get-my-positions-and-orders mirrors[11630170] (read-only)",
+    "xRequestId": "9ca42ce4-0ab1-487a-8102-274e816b40bf",
+    "asOf_il": "2026-10-07T22:51:00+03:00",
+    "edited_directly": false
+  },
+  "sticky_until": "mirror A 11630170 position 3587299963 shows SL >= 122.86",
+  "sticky_cleared": true,
+  "qa_verdict": "/workspace/momentum_audit/qa-verdict-place-eod-20261007-2240.json",
+  "qa_scope": "P MOVE_SL_BREAKEVEN only (keys pos 3587299961)",
+  "not_touched": [
+    "FTNT trail (SKIP_NOT_ON_MIRROR_A)",
+    "ZBRA/HPQ/XOM buys (INSUFFICIENT_CASH, authorize_place=false)"
+  ],
+  "status": "SL_EDITED_VERIFIED",
+  "ts_il": "2026-10-07T22:51:11.458518+03:00",
+  "ts_utc": "2026-10-07T19:51:11.458518+00:00"
+}

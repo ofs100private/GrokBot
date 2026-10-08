@@ -1,0 +1,154 @@
+{
+  "day": "2026-10-02",
+  "source": "eod_pm_primary_2240",
+  "run_id": "posmgr-20261002-224607-054f61ae",
+  "asOf_il": "2026-10-02T22:46:06.649024+03:00",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 4361.46,
+    "held_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "positions_path": "/workspace/momentum_audit/positions-2026-10-02-pm.json",
+    "mapped_path": "/workspace/momentum_audit/pm-positions-mapped-2026-10-02-2240.json",
+    "note": "FTNT/NDSN gone vs 2026-10-01; cash 2782.67\u21924361.46"
+  },
+  "sticky_crwd": {
+    "symbol": "CRWD",
+    "action": "MOVE_SL_BREAKEVEN",
+    "prior_stop": 230.85,
+    "new_stop": 242.0,
+    "positionId_mirror_A": 3579391384,
+    "positionId_keys_audit": 3579391383,
+    "place_qa": "PASS_WITH_GATE_OK",
+    "place_qa_ref": "/workspace/momentum_audit/place-qa-eod-20261001-crwd-be.json",
+    "live_sl": 230.85,
+    "note": "Sticky BE from 2026-10-01; SL still 230.85; KEYS_AUTH blocked"
+  },
+  "decisions": [
+    {
+      "symbol": "XLK",
+      "action": "TRAIL_SL",
+      "reason": "HIT_1R",
+      "rationale": "Trail SL on XLK: R=1.08 \u2265 1R \u2014 new_stop=187.8000 (10d_low=190.9700, entry=187.8000, prior=176.58)",
+      "last": 199.93,
+      "sma50": 186.1331,
+      "new_stop_loss": 187.8,
+      "prior_stop_loss": 176.58,
+      "trail_floor": 190.97,
+      "r_multiple": 1.08,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "PASS TRAIL_SL XLK: HIT_1R"
+        ],
+        "deviations": []
+      }
+    },
+    {
+      "symbol": "VTRS",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold VTRS: last 17.6100 > SMA50 16.8944, R=0.00 \u2014 no risk action",
+      "last": 17.61,
+      "sma50": 16.8944,
+      "r_multiple": 0,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "HOLD VTRS: ABOVE_SMA50_UNDER_1R"
+        ],
+        "deviations": []
+      }
+    },
+    {
+      "symbol": "CRWD",
+      "action": "MOVE_SL_BREAKEVEN",
+      "reason": "HIT_2R",
+      "rationale": "Move SL to breakeven on CRWD: R=2.47 \u2265 2 (last 269.5950, entry 242.0000)",
+      "last": 269.595,
+      "sma50": 219.7885,
+      "new_stop_loss": 242.0,
+      "prior_stop_loss": 230.85,
+      "r_multiple": 2.47,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "PASS MOVE_SL_BREAKEVEN CRWD: HIT_2R"
+        ],
+        "deviations": []
+      }
+    },
+    {
+      "symbol": "P",
+      "action": "HOLD",
+      "reason": "TRAIL_NO_RAISE",
+      "rationale": "Hold P: \u22651R but trail would not raise stop (prior=108.11, floor=104.4000)",
+      "last": 140.375,
+      "sma50": 102.0519,
+      "r_multiple": 1.19,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "HOLD P: TRAIL_NO_RAISE"
+        ],
+        "deviations": []
+      }
+    }
+  ],
+  "placeable": [
+    {
+      "symbol": "XLK",
+      "action": "TRAIL_SL",
+      "reason": "HIT_1R",
+      "rationale": "Trail SL on XLK: R=1.08 \u2265 1R \u2014 new_stop=187.8000 (10d_low=190.9700, entry=187.8000, prior=176.58)",
+      "last": 199.93,
+      "sma50": 186.1331,
+      "new_stop_loss": 187.8,
+      "prior_stop_loss": 176.58,
+      "trail_floor": 190.97,
+      "r_multiple": 1.08,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "PASS TRAIL_SL XLK: HIT_1R"
+        ],
+        "deviations": []
+      }
+    },
+    {
+      "symbol": "CRWD",
+      "action": "MOVE_SL_BREAKEVEN",
+      "reason": "HIT_2R",
+      "rationale": "Move SL to breakeven on CRWD: R=2.47 \u2265 2 (last 269.5950, entry 242.0000)",
+      "last": 269.595,
+      "sma50": 219.7885,
+      "new_stop_loss": 242.0,
+      "prior_stop_loss": 230.85,
+      "r_multiple": 2.47,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "PASS MOVE_SL_BREAKEVEN CRWD: HIT_2R"
+        ],
+        "deviations": []
+      }
+    }
+  ],
+  "screener": {
+    "run_id": "screener-20261002-224453-e769fabd",
+    "action": "HALT",
+    "reason": "EVENT_VOL_FREEZE",
+    "buys": []
+  }
+}

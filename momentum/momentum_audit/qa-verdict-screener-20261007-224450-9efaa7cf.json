@@ -1,0 +1,136 @@
+{
+ "op": "qa.verdict.momentum_screener_run",
+ "run_id": "screener-20261007-224450-9efaa7cf",
+ "slot": "eod_2240_primary",
+ "asOf": "2026-10-07",
+ "qaAt": "2026-10-07T22:49:00+03:00",
+ "book": "Momentum-HHHGDTJ",
+ "mirrorId": 11630170,
+ "overall": "PASS",
+ "verdict": "PASS",
+ "fail_codes": [],
+ "deviation_codes": [],
+ "rerun_required": false,
+ "checks": {
+  "SPX_UNIVERSE_TOO_SMALL": {
+   "result": "OK",
+   "evidence": "TRACE universe universe_n=520, sp500_n=503; /workspace/sp500_symbols.json count=503 asOf 2026-10-07T19:44:51Z (22:44:51 IDT)"
+  },
+  "SPX_MEGACAP_FALLBACK": {
+   "result": "OK",
+   "evidence": "503-name S&P list; watch NOW/PANW/CRM=true in TRACE; screener refuses mega-cap fallback (momentum_screener.py hard-fail <400)"
+  },
+  "SPX_FETCH_BROKEN": {
+   "result": "OK",
+   "evidence": "io.StringIO read_html path present in momentum_screener.py; no FileNotFoundError; cache refreshed this run"
+  },
+  "SPX_SCAN_NOT_FULL": {
+   "result": "OK",
+   "evidence": "download_ok valid_n=515 (drop_short_or_nan=5); drop_counts sum 448+10+50=508 + 7 pre-pack buys = 515"
+  },
+  "SCREENER_RUN_CRASH": {
+   "result": "OK",
+   "evidence": "attempt 1/3 succeeded, 4 BUY ACTION rows, RUN_END ok=true"
+  },
+  "SCREENER_AUDIT_INCOMPLETE": {
+   "result": "OK",
+   "evidence": "RUN_START 22:44:50.825 -> TRACE(attempt, regime, universe, download_ok, near_misses, event_vol_freeze, pack_done, run_summary_written) -> ACTION BUY x4 22:45:08.703 (rationale present) -> RUN_END 22:45:08.704; screener-run summary present"
+  }
+ },
+ "regime": {
+  "mode": "HEALTHY",
+  "spx_close": 7800.49,
+  "spx_sma50": 7680.43,
+  "spx_pct_vs_sma50": 1.563,
+  "vix_close": 15.09,
+  "hard_halt": false,
+  "soft": false,
+  "note": "HEALTHY independently consistent: SPX > SMA50 (+1.56%), VIX 15.09 < 25 -> not SOFT, not HARD_HALT. VCP_SETUP buys allowed (no REGIME_SOFT_VCP_BLOCK needed)."
+ },
+ "event_vol_freeze": {
+  "freeze": false,
+  "screener_reason": "no_event_freeze today=2026-10-07 next_open=2026-10-08",
+  "independent_check": "momentum_qa/event_calendar.py lists FOMC decision 2026-10-28, NFP 2026-10-02 & 11-06, CPI 2026-10-14. BLS live schedule (bls.gov/schedule/2026/10_sched_list.htm) confirms Employment Situation Fri 2026-10-02 and CPI Wed 2026-10-14; nothing on 10-07 or 10-08. FOMC minutes (Sep 15-16 meeting) are not a freeze event under the playbook (decision days only)."
+ },
+ "pack": {
+  "buys_screener": [
+   "ZBRA",
+   "HPQ",
+   "XOM",
+   "XLK"
+  ],
+  "buys_executable_after_held_drop": [
+   "ZBRA",
+   "HPQ",
+   "XOM"
+  ],
+  "dropped": [
+   {
+    "symbol": "XLK",
+    "reason": "ALREADY_HELD (keys pos 3577022318 / mirror A 3577022320) \u2014 book keeps >=1 sector ETF"
+   }
+  ],
+  "momentum_breakout_count": 0,
+  "etf_buys_new": 0,
+  "etf_buys_screener": 1,
+  "amount_usd_each": 1000,
+  "leverage": 1,
+  "rows": [
+   {
+    "symbol": "ZBRA",
+    "setup": "VCP_SETUP",
+    "rs": 93,
+    "rvol": 0.46,
+    "dwm": "0.18/3.53/9.63",
+    "sl": 363.29,
+    "live_ask": 386.41,
+    "sl_below_entry": true,
+    "sl_pct": -5.98
+   },
+   {
+    "symbol": "HPQ",
+    "setup": "VCP_SETUP",
+    "rs": 92,
+    "rvol": 0.49,
+    "dwm": "1.65/3.12/4.49",
+    "sl": 30.32,
+    "live_ask": 32.23,
+    "sl_below_entry": true,
+    "sl_pct": -5.93
+   },
+   {
+    "symbol": "XOM",
+    "setup": "VCP_SETUP",
+    "rs": 87,
+    "rvol": 0.43,
+    "dwm": "-0.10/0.96/2.27",
+    "sl": 154.45,
+    "live_ask": 164.27,
+    "sl_below_entry": true,
+    "sl_pct": -5.98,
+    "note": "day -0.10 OK (day>=0 only required for MOMENTUM_BREAKOUT); week+month green; RS>=80"
+   }
+  ],
+  "pack_rules": "breakout 0 <= 2; etf_buys <= 1; VCP in HEALTHY OK; stock count not a FAIL (sleeve unlimited 2026-10-05); amount<=1000; lev 1",
+  "result": "PASS -> goes to place-QA (Momentum real-money QA gate)"
+ },
+ "on_time": {
+  "ACTION_ts_il": "2026-10-07T22:45:08.703+03:00",
+  "deadline": "22:50 IDT",
+  "EOD_SCREENER_MISSED": false
+ },
+ "soft_notes": [
+  "near-miss TRACE count 62 vs near-miss-2026-10-07.json top-N 25 (by design, _write_near_misses writes top list; same as prior days)",
+  "No separate screener stdout/stderr log on disk for this run; S&P source evidenced via sp500_symbols.json (503, refreshed 22:44:51 IDT) + TRACE universe/download_ok",
+  "drop_counts event_freeze=0, regime_soft_vcp=0, regime_hard=0 consistent with HEALTHY/no freeze"
+ ],
+ "evidence_paths": {
+  "run_summary": "/workspace/momentum_audit/screener-run-screener-20261007-224450-9efaa7cf.json",
+  "near_miss": "/workspace/momentum_audit/near-miss-2026-10-07.json",
+  "audit": "/workspace/momentum_audit/2026-10-07.jsonl",
+  "sp500_cache": "/workspace/sp500_symbols.json",
+  "event_calendar": "/workspace/momentum_qa/event_calendar.py",
+  "bundle": "/workspace/momentum_audit/place_qa/eod-20261007-2240-qa-bundle.json"
+ },
+ "qa_places": false
+}

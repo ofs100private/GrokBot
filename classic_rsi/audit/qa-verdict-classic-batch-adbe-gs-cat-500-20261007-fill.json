@@ -1,0 +1,126 @@
+{
+ "overall": "PASS",
+ "gate": "classic-real-money-order-qa-gate",
+ "step": "post-execution audit (batch fill)",
+ "batch_id": "classic-batch-adbe-gs-cat-500-20261007-keys-ofer",
+ "timestamp": "2026-10-07T21:53:00+03:00",
+ "timezone": "Asia/Jerusalem",
+ "qa_places": false,
+ "read_only": true,
+ "order_qa_verdict": "/workspace/classic_rsi/audit/qa-verdict-classic-batch-adbe-gs-cat-500-20261007-keys-ofer.json",
+ "batch_fill_audit": "/workspace/classic_rsi/audit/classic-batch-adbe-gs-cat-500-20261007-keys-ofer-fill-audit.json",
+ "batch_fill_audit_matches_live": true,
+ "per_fill": {
+  "ADBE": {
+   "overall": "PASS",
+   "fail_codes": [],
+   "path": "/workspace/classic_rsi/audit/qa-verdict-classic-adbe-500-20261007-fill.json",
+   "slippage_pct": 0.0
+  },
+  "GS": {
+   "overall": "PASS",
+   "fail_codes": [],
+   "path": "/workspace/classic_rsi/audit/qa-verdict-classic-gs-500-20261007-fill.json",
+   "slippage_pct": 0.0158
+  },
+  "CAT": {
+   "overall": "PASS",
+   "fail_codes": [],
+   "path": "/workspace/classic_rsi/audit/qa-verdict-classic-cat-500-20261007-fill.json",
+   "slippage_pct": 0.0
+  }
+ },
+ "fail_codes": [],
+ "mismatches": [],
+ "phm": {
+  "open_position": false,
+  "pending_order": false,
+  "result": "PASS (SUPERSEDED, not placed)"
+ },
+ "duplicates": {
+  "ADBE": 1,
+  "GS": 1,
+  "CAT": 1,
+  "result": "PASS"
+ },
+ "pendingOrders": 0,
+ "mirrors": [],
+ "copiedTraders": [],
+ "cash": {
+  "start": 4054.5,
+  "order_qa_expected": 2551.64,
+  "claimed": 2552.25,
+  "live_available": 2552.25,
+  "live_frozen": 0,
+  "live_balance": 2552.25,
+  "delta": 1502.25,
+  "delta_breakdown": "3 x (500 + 0.75 fee)",
+  "floor_2500_met": true,
+  "result": "PASS",
+  "note": "Live is $0.61 above QA estimate because estimate included spread; actual cash cost is fee only."
+ },
+ "equity": {
+  "claimed": 7314.14,
+  "live_totalValue": 7314.31,
+  "diff": 0.17,
+  "result": "PASS (market drift)",
+  "unrealizedPnl": 302.33,
+  "usedMargin": 4459.73
+ },
+ "book": {
+  "claimed": [
+   "SMH",
+   "QQQ",
+   "XLV",
+   "ADBE",
+   "GS",
+   "CAT"
+  ],
+  "live": [
+   "SMH",
+   "QQQ",
+   "XLV",
+   "CAT",
+   "ADBE",
+   "GS"
+  ],
+  "positionCount": 6,
+  "result": "PASS"
+ },
+ "fees": {
+  "total_actual": 2.25,
+  "per_fill": 0.75,
+  "qa_estimates": {
+   "ADBE": 0.9,
+   "GS": 0.9,
+   "CAT": 1.06
+  },
+  "result": "PASS"
+ },
+ "gs_tp": {
+  "status": "OPEN, TP not hit",
+  "currentRate": "882.16 (positions) / 883.64 (portfolio)",
+  "TP": 887.43
+ },
+ "audit_files": {
+  "exist": true,
+  "twins_identical": true,
+  "match_live": true
+ },
+ "fyi_not_in_scope": [
+  "RBRK pos 3598873555 closed by SL earlier today 2026-10-07 16:30 IDT @122.08 (SL 123.27, gap fill), netProfit -$18.65; not part of this batch."
+ ],
+ "live_refs": {
+  "positions_xRequestId": "ad85478b-6cf8-491f-bc45-d1df89110e0a",
+  "portfolio_xRequestId": "488e2ecd-068f-4c00-8347-46e0f3158591",
+  "history_xRequestId": "c50b6eff-d62b-4f4b-a1a5-2cc221293000",
+  "asOf": {
+   "positions": "2026-10-07 21:52:39 IDT",
+   "portfolio": "2026-10-07 21:52:40 IDT"
+  }
+ },
+ "notes": [
+  "get-my-balances not used (known 403); cash from portfolio summary.",
+  "Momentum not touched; mirror 11368142 not checked (optional)."
+ ]
+}

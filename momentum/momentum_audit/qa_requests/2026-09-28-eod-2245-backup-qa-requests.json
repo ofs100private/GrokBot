@@ -1,0 +1,100 @@
+{
+  "asOf_il": "2026-09-28T22:53:52+03:00",
+  "job": "22:45 screener-backup catch-up after BOTH EOD_PM_MISSED + EOD_SCREENER_MISSED; next_job=position_manager (PM-first)",
+  "screener_run_qa": {
+    "qa_bot": "498c78db-a027-4f2c-8126-3c2be6f0a4bb",
+    "skill": "momentum-screener-run-qa",
+    "run_id": "screener-20260928-225153-16616f0d",
+    "summary": "/workspace/momentum_audit/screener-run-screener-20260928-225153-16616f0d.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-09-28.json",
+    "audit": "/workspace/momentum_audit/2026-09-28.jsonl",
+    "stdout": "/workspace/momentum_audit/screener-2026-09-28-stdout.log",
+    "stderr": "/workspace/momentum_audit/screener-2026-09-28-stderr.log",
+    "pack": "/workspace/momentum_audit/screener-2026-09-28-pack.json",
+    "pack_filtered": "/workspace/momentum_audit/screener-2026-09-28-pack-filtered.json",
+    "regime": "HEALTHY",
+    "spx_close": 7684.14,
+    "spx_sma50": 7640.61,
+    "spx_pct_vs_sma50": 0.57,
+    "vix": 16.07,
+    "universe_n": 520,
+    "event_vol_freeze": false,
+    "buys": [
+      "FTNT",
+      "JNJ",
+      "LLY"
+    ],
+    "action_ts_il": "2026-09-28T22:52:07+03:00",
+    "note": "Screener already completed (concurrent catch-up); idempotent — did not re-run"
+  },
+  "place_qa": [
+    {
+      "symbol": "FTNT",
+      "amount": 1000.0,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 165.78,
+      "stopLossType": "fixed",
+      "setup": "VCP_SETUP",
+      "rs_rating": 95,
+      "mirror_A_cash": 2150.1,
+      "portfolio": "Momentum-HHHGDTJ",
+      "mirrorId": 11630170
+    },
+    {
+      "symbol": "LLY",
+      "amount": 1000.0,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 1113.48,
+      "stopLossType": "fixed",
+      "setup": "VCP_SETUP",
+      "rs_rating": 80,
+      "mirror_A_cash": 2150.1,
+      "portfolio": "Momentum-HHHGDTJ",
+      "mirrorId": 11630170
+    }
+  ],
+  "pm_place_qa": [
+    {
+      "symbol": "VTRS",
+      "positionId": 3580194334,
+      "action": "TRAIL_SL",
+      "new_stop": 16.38,
+      "reason": "HIT_1R",
+      "skill": "momentum-real-money-qa-gate",
+      "note": "place-QA required before prepare-close/edit SL; do not execute without PASS"
+    },
+    {
+      "symbol": "CRWD",
+      "positionId": 3579391383,
+      "action": "TRAIL_SL",
+      "new_stop": 230.85,
+      "reason": "HIT_1R",
+      "skill": "momentum-real-money-qa-gate",
+      "note": "place-QA required before prepare-close/edit SL; do not execute without PASS"
+    }
+  ],
+  "do_not_place": [
+    {
+      "symbol": "JNJ",
+      "reason": "already_held"
+    },
+    {
+      "symbol": "ETH",
+      "reason": "TRAIL_SL SKIP_NOT_ON_MIRROR_A"
+    }
+  ],
+  "mirror_A": {
+    "mirrorId": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 2150.1,
+    "value": 7863.68,
+    "invested": 8000.0,
+    "asOf": "2026-09-28T22:50:58+03:00",
+    "source": "user-etoro get-my-portfolio-summary"
+  },
+  "pm_decision": "/workspace/momentum_audit/pm-2026-09-28-2245-screener-backup-decision.json"
+}

@@ -1,0 +1,229 @@
+{
+  "day": "2026-10-05",
+  "source": "manual_early_eod_1600",
+  "asOf_il": "2026-10-05T16:06:00.900624+03:00",
+  "nyse_open": true,
+  "intraday_ban_at_bundle": false,
+  "intraday_ban_window_il": "16:30–18:30",
+  "buy_place_rule": "If place-QA returns during/before 16:30–18:30 IL ban: HOLD BUY places until after 18:30 IL. CLOSE/BE/TRAIL risk patches may proceed after QA PASS. Re-check ban before any BUY.",
+  "pm_run_id": "posmgr-20261005-160439-6c9fb4ac",
+  "screener_run_id": "screener-20261005-160452-88488e84",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 4361.46,
+    "invested_book_usd": 8000.0,
+    "value": 7841.77,
+    "openPnl": -121.06,
+    "held": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "sleeve_status": "FULL — 3 stocks (VTRS,CRWD,P) + 1 sector ETF (XLK). Playbook max 3 stocks + 1 sector ETF.",
+    "note": "Reporting truth $8k book. NEVER report keys MCP equity as the $8k book."
+  },
+  "keys_execution": {
+    "mcp": "user-Momentum-HHHGDTJ",
+    "authChannel": "keys",
+    "held_equity": [
+      "AAPL",
+      "DE",
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "CRWD",
+      "P",
+      "NDSN"
+    ],
+    "excluded": [
+      "ETH dust $10"
+    ],
+    "note": "Keys book diverged from Mirror A (extras AAPL/DE/FTNT/NDSN). Execution ONLY via keys MCP — never parent SSO user-etoro on Mirror A."
+  },
+  "sticky_already_live_today": {
+    "ack": "/workspace/momentum_audit/place_ack/eod-20261005-crwd-be-xlk-trail-placed.json",
+    "asOf_il": "2026-10-05T15:59:29+03:00",
+    "CRWD": {
+      "action": "MOVE_SL_BREAKEVEN",
+      "live_sl": 242.0,
+      "positionId_keys": 3579391383
+    },
+    "XLK": {
+      "action": "TRAIL_SL",
+      "live_sl": 187.8,
+      "positionId_keys": 3577022318
+    },
+    "include_in_place_qa": false,
+    "reason": "PM did NOT propose further raise — Do NOT re-PATCH / do NOT re-include in place-QA"
+  },
+  "pm_actions": [
+    {
+      "symbol": "AAPL",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "positionId_keys": 3589579685
+    },
+    {
+      "symbol": "DE",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "positionId_keys": 3581779392
+    },
+    {
+      "symbol": "XLK",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "positionId_keys": 3577022318,
+      "note": "sticky TRAIL already at 187.8 (=entry)"
+    },
+    {
+      "symbol": "FTNT",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "positionId_keys": 3590220047
+    },
+    {
+      "symbol": "VTRS",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "positionId_keys": 3580194334
+    },
+    {
+      "symbol": "CRWD",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "positionId_keys": 3579391383,
+      "note": "sticky BE already at 242 (=entry)"
+    },
+    {
+      "symbol": "P",
+      "action": "HOLD",
+      "reason": "TRAIL_NO_RAISE",
+      "positionId_keys": 3587299961,
+      "r_multiple": 1.17
+    },
+    {
+      "symbol": "NDSN",
+      "action": "HOLD",
+      "reason": "ABOVE_SMA50_UNDER_1R",
+      "positionId_keys": 3591649728
+    }
+  ],
+  "placeable_risk": [],
+  "buys": [
+    {
+      "symbol": "NTAP",
+      "action": "BUY",
+      "sleeve": "VOLUME_BREAKOUT",
+      "setup_type": "BREAKOUT",
+      "amount_usd": 1000,
+      "stopLossRate": 205.97,
+      "price": 226.27,
+      "rs_rating": 95,
+      "rvol": 2.06,
+      "dwm": {
+        "day_pct": 5.22,
+        "week_pct": 12.49,
+        "month_pct": 25.17
+      },
+      "mcp_order_params": {
+        "account": "real",
+        "direction": "buy",
+        "symbol": "NTAP",
+        "orderType": "mkt",
+        "leverage": 1,
+        "amount": 1000,
+        "stopLossRate": 205.97,
+        "stopLossType": "fixed"
+      }
+    },
+    {
+      "symbol": "ANET",
+      "action": "BUY",
+      "sleeve": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "amount_usd": 1000,
+      "stopLossRate": 194.91,
+      "price": 207.35,
+      "rs_rating": 92,
+      "rvol": 0.68,
+      "dwm": {
+        "day_pct": 1.4,
+        "week_pct": 0.39,
+        "month_pct": 11.42
+      },
+      "mcp_order_params": {
+        "account": "real",
+        "direction": "buy",
+        "symbol": "ANET",
+        "orderType": "mkt",
+        "leverage": 1,
+        "amount": 1000,
+        "stopLossRate": 194.91,
+        "stopLossType": "fixed"
+      }
+    },
+    {
+      "symbol": "FFIV",
+      "action": "BUY",
+      "sleeve": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "amount_usd": 1000,
+      "stopLossRate": 426.8,
+      "price": 454.04,
+      "rs_rating": 90,
+      "rvol": 1.04,
+      "dwm": {
+        "day_pct": 2.34,
+        "week_pct": 2.48,
+        "month_pct": 16.1
+      },
+      "mcp_order_params": {
+        "account": "real",
+        "direction": "buy",
+        "symbol": "FFIV",
+        "orderType": "mkt",
+        "leverage": 1,
+        "amount": 1000,
+        "stopLossRate": 426.8,
+        "stopLossType": "fixed"
+      }
+    }
+  ],
+  "halt": false,
+  "event_vol_freeze": false,
+  "regime": "HEALTHY",
+  "universe_n": 520,
+  "screener_local_pack_qa": "PASS (local only — NOT a substitute for QA Bot)",
+  "place_qa_requests": [
+    {
+      "skill": "momentum-screener-run-qa",
+      "run_id": "screener-20261005-160452-88488e84",
+      "summary": "/workspace/momentum_audit/screener-run-screener-20261005-160452-88488e84.json",
+      "near_miss": "/workspace/momentum_audit/near-miss-2026-10-05.json",
+      "audit": "/workspace/momentum_audit/2026-10-05.jsonl"
+    },
+    {
+      "skill": "momentum-real-money-qa-gate",
+      "scope": "BUY pack NTAP/ANET/FFIV only — no CLOSE/BE/TRAIL placeable this wake",
+      "mirror_A_cash": 4361.46,
+      "sleeve_note": "Mirror A already FULL (3 stocks + XLK). QA must gate capacity vs playbook before any BUY PASS.",
+      "exclude_sticky": [
+        "CRWD",
+        "XLK"
+      ]
+    }
+  ],
+  "paths": {
+    "pm_decision": "/workspace/momentum_audit/pm-2026-10-05-manual-1600-decision.json",
+    "screener_summary": "/workspace/momentum_audit/screener-run-screener-20261005-160452-88488e84.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-10-05.json",
+    "eod_miss": "/workspace/momentum_audit/eod_miss_check_2026-10-05_manual_1600.json",
+    "positions_keys": "/workspace/momentum_audit/positions-2026-10-05-manual-1600-keys.json",
+    "positions_mirrorA": "/workspace/momentum_audit/positions-2026-10-05-manual-1600-mirrorA.json",
+    "sticky_ack": "/workspace/momentum_audit/place_ack/eod-20261005-crwd-be-xlk-trail-placed.json"
+  },
+  "blocker": "Executor has no SendToAgent. Parent must message QA Bot 498c78db-a027-4f2c-8126-3c2be6f0a4bb for screener-run QA + place-QA. Never self-PASS. No places executed this wake (PLACE_WITHOUT_QA_BOT_RECHECK)."
+}

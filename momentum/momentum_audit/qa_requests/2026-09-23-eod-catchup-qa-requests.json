@@ -1,0 +1,204 @@
+{
+  "job": "eod_catchup_2026-09-23_after_2250",
+  "ts_il": "2026-09-23T23:05:48.634729+03:00",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mirror_A": {
+    "id": 11630170,
+    "availableCash": 2907.35,
+    "value": 7812.52,
+    "invested": 8000.0,
+    "openPnl": -164.14,
+    "closedPnl": -269.74,
+    "source": "user-etoro get-my-portfolio-summary copiedTraders",
+    "asOf_il": "2026-09-23T23:03+03:00",
+    "note": "Cash freed after PSX close vs early T21 snapshot 2141.30"
+  },
+  "keys_book": {
+    "note": "execution ledger only — not $8k reporting basis",
+    "open": [
+      {
+        "symbol": "JNJ",
+        "positionId": 3584876985,
+        "pnlPercent": -0.65,
+        "invested": 1000.0
+      },
+      {
+        "symbol": "TGT",
+        "positionId": 3581081151,
+        "pnlPercent": -2.47,
+        "invested": 1000.0
+      },
+      {
+        "symbol": "DE",
+        "positionId": 3581779392,
+        "pnlPercent": 3.21,
+        "invested": 1000.0
+      },
+      {
+        "symbol": "XLK",
+        "positionId": 3577022318,
+        "pnlPercent": 3.9,
+        "invested": 999.89
+      },
+      {
+        "symbol": "VTRS",
+        "positionId": 3580194334,
+        "pnlPercent": 0.95,
+        "invested": 1000.0
+      },
+      {
+        "symbol": "CRWD",
+        "positionId": 3579391383,
+        "pnlPercent": 8.29,
+        "invested": 1000.0
+      },
+      {
+        "symbol": "ETH",
+        "positionId": 3572932449,
+        "pnlPercent": 6.8,
+        "invested": 10.0
+      }
+    ],
+    "pending_orders": [],
+    "psx_status": "ALREADY_CLOSED — do not re-close; early PENDING_QA CLOSE obsolete",
+    "gild_status": "NOT_HELD / no pending buy — early T21 GILD pack superseded by catch-up screener"
+  },
+  "miss_check_after": {
+    "screener_miss": false,
+    "pm_miss": false,
+    "any_miss": false,
+    "next_job": null,
+    "has_eod_screener_action": true,
+    "has_eod_pm_action": true,
+    "path": "/workspace/eod_miss_check_2026-09-23_catchup.json"
+  },
+  "pm": {
+    "run_id": "posmgr-20260923-230418-5233c8b7",
+    "out_path": "/workspace/pm_2026-09-23_eod_catchup.json",
+    "positions_json": "/workspace/pm_positions_live_20260923_catchup.json",
+    "actions": [
+      {
+        "symbol": "JNJ",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R"
+      },
+      {
+        "symbol": "TGT",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R"
+      },
+      {
+        "symbol": "DE",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R"
+      },
+      {
+        "symbol": "XLK",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R"
+      },
+      {
+        "symbol": "VTRS",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R"
+      },
+      {
+        "symbol": "CRWD",
+        "action": "HOLD",
+        "reason": "TRAIL_NO_RAISE"
+      },
+      {
+        "symbol": "ETH",
+        "action": "TRAIL_SL",
+        "reason": "HIT_1R",
+        "new_stop_loss": 2357.9592,
+        "execution": "SKIP_NOT_ON_MIRROR_A"
+      }
+    ],
+    "place_needed": []
+  },
+  "eth_skip": {
+    "symbol": "ETH",
+    "pm_action": "TRAIL_SL",
+    "execution": "SKIP_NOT_ON_MIRROR_A",
+    "rationale": "PM PASS TRAIL_SL HIT_1R new_stop=2357.9592 but ETH is keys dust ($10) only; standing rule TRAIL only if on mirror A 11630170. Skip place.",
+    "keys_positionId": 3572932449,
+    "keys_invested": 10.0
+  },
+  "psx_skip": {
+    "symbol": "PSX",
+    "status": "ALREADY_CLOSED",
+    "note": "Not in open positions; no pending orders. Early T21 place-QA CLOSE is obsolete — do NOT re-place."
+  },
+  "screener_run_qa_request": {
+    "type": "screener-run-QA",
+    "run_id": "screener-20260923-230426-463c2c9f",
+    "summary_path": "/workspace/momentum_audit/screener-run-screener-20260923-230426-463c2c9f.json",
+    "near_miss_path": "/workspace/momentum_audit/near-miss-2026-09-23.json",
+    "audit_jsonl": "/workspace/momentum_audit/2026-09-23.jsonl",
+    "stdout_path": "/workspace/screener_2026-09-23_eod_catchup.stdout",
+    "regime": "HEALTHY",
+    "universe_n": 520,
+    "sp500_n": 503,
+    "spx_close": 7706.09,
+    "spx_sma50": 7624.84,
+    "vix": 15.17,
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "buys": [
+      "JNJ"
+    ],
+    "pack": "1 stock VCP_SETUP, 0 breakout, 0 ETF",
+    "local_script_qa_pack": "PASS",
+    "note": "Catch-up T23 run (T21 early run does not count for miss_check). Pack buy JNJ is ALREADY HELD — suppress place."
+  },
+  "place_qa_requests": [],
+  "place_qa_suppressed": [
+    {
+      "type": "place-QA",
+      "action": "BUY",
+      "symbol": "JNJ",
+      "suppressed": true,
+      "reason": "ALREADY_HELD",
+      "positionId_keys": 3584876985,
+      "would_have_been": {
+        "amount": 1000,
+        "leverage": 1,
+        "stopLossRate": 253.15,
+        "sleeve": "VCP_SETUP",
+        "rs_rating": 85,
+        "rvol": 0.72,
+        "dwm": {
+          "day_pct": -0.06,
+          "week_pct": 0.79,
+          "month_pct": 0.15
+        },
+        "mirror_A_cash": 2907.35
+      },
+      "note": "Never double-buy a name already open. Screener-run QA still required for audit completeness; no place after PASS."
+    },
+    {
+      "type": "place-QA",
+      "action": "BUY",
+      "symbol": "GILD",
+      "suppressed": true,
+      "reason": "SUPERSEDED_BY_CATCHUP_SCREENER",
+      "note": "Early T21 pack had GILD; catch-up T23 pack is JNJ (already held). Do not place stale GILD from early PENDING_QA."
+    },
+    {
+      "type": "place-QA",
+      "action": "CLOSE",
+      "symbol": "PSX",
+      "suppressed": true,
+      "reason": "ALREADY_CLOSED"
+    },
+    {
+      "type": "place-QA",
+      "action": "TRAIL_SL",
+      "symbol": "ETH",
+      "suppressed": true,
+      "reason": "SKIP_NOT_ON_MIRROR_A"
+    }
+  ],
+  "blocker": "Place blocked pending QA Bot screener-run PASS only for audit. No executable place-QA rows (JNJ already held; PSX closed; ETH dust skip; early GILD superseded). Executor did NOT place. Parent must message QA Bot 498c78db-a027-4f2c-8126-3c2be6f0a4bb. Never self-PASS."
+}

@@ -1,0 +1,171 @@
+[info] EOD screener + QA gate…
+Crumb fetch rate-limited (HTTP 429), continuing without crumb
+[TRACE] regime {'mode': 'HEALTHY', 'spx_close': 7705.89, 'spx_sma50': 7628.08, 'spx_pct': 1.02, 'vix': 15.57, 'hard_halt': False, 'soft': False}
+/workspace/momentum_screener.py:76: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "asOf": datetime.utcnow().isoformat() + "Z",
+[info] S&P 500 live list: 503 symbols
+[TRACE] universe {'universe_n': 520, 'sp500_n': 503, 'watch': {'NOW': True, 'PANW': True, 'CRM': True}}
+[info] regime=HEALTHY — scanning 520 names (S&P 503 + 11 sector + 6 commodity ETFs; NOW/PANW/CRM in-universe=True)…
+$CPRT: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+$TEL: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+$SWK: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+$FIX: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+$INTU: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+$BIIB: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+$CVNA: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+
+7 Failed downloads:
+['CPRT', 'TEL', 'SWK', 'FIX', 'INTU', 'BIIB', 'CVNA']: possibly delisted; no price data found  (1d 2025-07-31 -> 2026-09-24)
+[TRACE] download_ok {'valid_n': 510, 'drop_short_or_nan': 10}
+[TRACE] near_misses {'count': 73, 'path': '/workspace/momentum_audit/near-miss-2026-09-24.json', 'drop_counts': {'minervini': 435, 'rs': 17, 'setup': 54, 'dwm_data': 0, 'dwm_fail': 0, 'regime_hard': 0, 'regime_soft_etf': 0, 'regime_soft_rs': 0, 'regime_soft_vcp': 0, 'event_freeze': 0}}
+[TRACE] event_vol_freeze {'freeze': False, 'reason': 'no_event_freeze today=2026-09-24 next_open=2026-09-25'}
+[TRACE] pack_done {'buys_pre': 4, 'buys_packed': 3, 'skips': 0, 'hard_halt': False}
+[
+  {
+    "symbol": "P",
+    "etoro_symbol": "P",
+    "yahoo_symbol": "P",
+    "asset_class": "STOCK",
+    "price": 123.72,
+    "current_price": 123.72,
+    "stop_loss": 108.11,
+    "amount_usd": 1000,
+    "setup_type": "BREAKOUT",
+    "rs_rating": 95,
+    "rvol": 2.17,
+    "vcp_contraction": "44.8% -> 24.3% -> 29.8%",
+    "day_pct": 12.83,
+    "week_pct": 26.75,
+    "month_pct": 23.18,
+    "regime_mode": "HEALTHY",
+    "sleeve": "VOLUME_BREAKOUT",
+    "action": "BUY",
+    "reason": "VOLUME_BREAKOUT",
+    "rationale": "VOLUME_BREAKOUT on STOCK P: RS=95 RVOL=2.17 VCP=44.8% -> 24.3% -> 29.8% | VOLUME_BREAKOUT on STOCK P: RS=95 DWM d/w/m=12.83/26.75/23.18 regime=HEALTHY",
+    "mcp_order_params": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "P",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000,
+      "stopLossRate": 108.11,
+      "stopLossType": "fixed"
+    },
+    "near_misses_path": "/workspace/momentum_audit/near-miss-2026-09-24.json",
+    "qa": {
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [
+        "PASS P: VOLUME_BREAKOUT on STOCK P: RS=95 DWM d/w/m=12.83/26.75/23.18 regime=HEALTHY | RS=95 RVOL=2.17 class=STOCK"
+      ],
+      "deviations": []
+    },
+    "qa_pack": {
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [
+        "Screener pack PASS (3 buys: stocks=3 breakout=0 etf=0 commodity=0, 3 rows)"
+      ],
+      "deviations": []
+    }
+  },
+  {
+    "symbol": "AAPL",
+    "etoro_symbol": "AAPL",
+    "yahoo_symbol": "AAPL",
+    "asset_class": "STOCK",
+    "price": 337.15,
+    "current_price": 337.15,
+    "stop_loss": 316.92,
+    "amount_usd": 1000,
+    "setup_type": "VCP_READY",
+    "rs_rating": 85,
+    "rvol": 0.35,
+    "vcp_contraction": "12.9% -> 7.2% -> 5.5%",
+    "day_pct": 0.04,
+    "week_pct": 0.05,
+    "month_pct": 8.79,
+    "regime_mode": "HEALTHY",
+    "sleeve": "VCP_SETUP",
+    "action": "BUY",
+    "reason": "VCP_SETUP",
+    "rationale": "VCP_SETUP on STOCK AAPL: RS=85 RVOL=0.35 VCP=12.9% -> 7.2% -> 5.5% | VCP_SETUP on STOCK AAPL: RS=85 DWM d/w/m=0.04/0.05/8.79 regime=HEALTHY",
+    "mcp_order_params": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "AAPL",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000,
+      "stopLossRate": 316.92,
+      "stopLossType": "fixed"
+    },
+    "near_misses_path": "/workspace/momentum_audit/near-miss-2026-09-24.json",
+    "qa": {
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [
+        "PASS AAPL: VCP_SETUP on STOCK AAPL: RS=85 DWM d/w/m=0.04/0.05/8.79 regime=HEALTHY | RS=85 RVOL=0.35 class=STOCK"
+      ],
+      "deviations": []
+    },
+    "qa_pack": {
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [
+        "Screener pack PASS (3 buys: stocks=3 breakout=0 etf=0 commodity=0, 3 rows)"
+      ],
+      "deviations": []
+    }
+  },
+  {
+    "symbol": "JNJ",
+    "etoro_symbol": "JNJ",
+    "yahoo_symbol": "JNJ",
+    "asset_class": "STOCK",
+    "price": 271.9,
+    "current_price": 271.9,
+    "stop_loss": 255.59,
+    "amount_usd": 1000,
+    "setup_type": "VCP_READY",
+    "rs_rating": 85,
+    "rvol": 0.51,
+    "vcp_contraction": "10.7% -> 6.1% -> 5.3%",
+    "day_pct": 1.01,
+    "week_pct": 1.73,
+    "month_pct": 0.07,
+    "regime_mode": "HEALTHY",
+    "sleeve": "VCP_SETUP",
+    "action": "BUY",
+    "reason": "VCP_SETUP",
+    "rationale": "VCP_SETUP on STOCK JNJ: RS=85 RVOL=0.51 VCP=10.7% -> 6.1% -> 5.3% | VCP_SETUP on STOCK JNJ: RS=85 DWM d/w/m=1.01/1.73/0.07 regime=HEALTHY",
+    "mcp_order_params": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "JNJ",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000,
+      "stopLossRate": 255.59,
+      "stopLossType": "fixed"
+    },
+    "near_misses_path": "/workspace/momentum_audit/near-miss-2026-09-24.json",
+    "qa": {
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [
+        "PASS JNJ: VCP_SETUP on STOCK JNJ: RS=85 DWM d/w/m=1.01/1.73/0.07 regime=HEALTHY | RS=85 RVOL=0.51 class=STOCK"
+      ],
+      "deviations": []
+    },
+    "qa_pack": {
+      "ok": true,
+      "verdict": "PASS",
+      "reasons": [
+        "Screener pack PASS (3 buys: stocks=3 breakout=0 etf=0 commodity=0, 3 rows)"
+      ],
+      "deviations": []
+    }
+  }
+]

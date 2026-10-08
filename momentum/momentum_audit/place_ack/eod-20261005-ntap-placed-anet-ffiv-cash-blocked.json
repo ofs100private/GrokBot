@@ -1,0 +1,29 @@
+{
+  "op": "place_ack.momentum_buy_pack",
+  "job": "post_ban_place_ntap_anet_ffiv_2026-10-05",
+  "asOf_il": "2026-10-05T18:41:05+03:00",
+  "portfolio": "Momentum-HHHGDTJ",
+  "write_path": "user-Momentum-HHHGDTJ keys MCP (account=real)",
+  "authority": "/workspace/momentum_audit/place_qa/qa-verdict-eod-20261005-manual-1600-r2-sleeve-unlimited.json (QA Bot place-QA PASS r2)",
+  "screener_run_id": "screener-20261005-160452-88488e84",
+  "ban_check": {"local_time_il": "18:40:25", "in_intraday_ban": false},
+  "pre_check_positions_xRequestId": "64f58b4b-81d5-4b04-895f-0729f158998c",
+  "pre_check_note": "NTAP/ANET/FFIV not open before place; keys availableCash 1612.37 (only one $1000 buy fundable)",
+  "placed": [
+    {
+      "symbol": "NTAP", "instrumentId": 1796, "amount": 1000, "leverage": 1, "orderType": "mkt",
+      "prepare_xRequestId": "8bf3797f-0389-489b-a307-7b039ff7dba2",
+      "place_statusCode": 200, "place_xRequestId": "9433f723-44ea-4d59-b63b-840a81e75ea9",
+      "orderId": 1602867174, "outcome_reported": "partiallyFilled (status 5, errorCode 0)",
+      "positionId": 3597307544, "units": 4.528165, "avgPrice": 220.84, "stopLossRate": 205.97,
+      "openTime_utc": "2026-10-05T15:40:55.8Z",
+      "live_confirmation": {"xRequestId": "b54be8cc-7900-46c4-b314-204c4cd5e5ed", "invested": 1000.0, "units": 4.528165, "stopLossRate": 205.97, "note": "full estimated units filled; treated as filled"}
+    }
+  ],
+  "not_placed": [
+    {"symbol": "ANET", "amount": 1000, "stopLossRate": 194.91, "reason": "INSUFFICIENT_CASH", "prepare_xRequestId": "d4deeeb4-4753-44bc-bfcf-a06260343ae0", "detail": "prepare-trade rejected: available $610.87, required ~$1002.08"},
+    {"symbol": "FFIV", "amount": 1000, "stopLossRate": 426.80, "reason": "INSUFFICIENT_CASH", "detail": "not attempted after ANET cash reject; same shortfall"}
+  ],
+  "gate_note": "INSUFFICIENT_CASH = GATE_OK / protective_reject. Per verdict full_auto clause and 2026-09-22 QA standing, any later ANET/FFIV place on changed cash requires fresh QA Bot place-QA PASS (no self-PASS). Keys book cash (~$611) diverges from Mirror A availableCash ($4361) used in QA.",
+  "routine": "momentum-post-ban-place-ntap-anet-ffiv deleted (one-shot)"
+}

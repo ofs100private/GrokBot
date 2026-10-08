@@ -1,0 +1,114 @@
+{
+  "asOf_il": "2026-09-29T22:47:58.885635+03:00",
+  "job": "22:42 backup catch-up after EOD_PM_MISSED (primary 22:40 had no PM audit); screener chained same wake",
+  "screener_run_qa": {
+    "qa_bot": "498c78db-a027-4f2c-8126-3c2be6f0a4bb",
+    "skill": "momentum-screener-run-qa",
+    "run_id": "screener-20260929-224425-a44cb333",
+    "summary": "/workspace/momentum_audit/screener-run-screener-20260929-224425-a44cb333.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-09-29.json",
+    "audit": "/workspace/momentum_audit/2026-09-29.jsonl",
+    "pack": "/workspace/momentum_audit/screener-2026-09-29-pack.json",
+    "pack_filtered": "/workspace/momentum_audit/screener-2026-09-29-pack-filtered.json",
+    "meta": "/workspace/momentum_audit/screener-2026-09-29-2242-backup-meta.json",
+    "regime": "HEALTHY",
+    "spx_close": 7670.69,
+    "spx_sma50": 7645.15,
+    "spx_pct_vs_sma50": 0.334,
+    "vix": 16.02,
+    "universe_n": 520,
+    "event_vol_freeze": false,
+    "buys": [
+      "FTNT",
+      "NDSN",
+      "LLY"
+    ],
+    "action_ts_il": "2026-09-29T22:44:39+03:00",
+    "note": "First screener ACTION \u226422:50 IDT (soft SCHEDULED_2245_LATE only if cron late but ACTION existed). Soft-clear night_status; NOT EOD_SCREENER_MISSED HIGH AVOID. Screener landed during backup wake CLI inspect; valid TRACE+PASS; not re-run."
+  },
+  "place_qa": [
+    {
+      "symbol": "NDSN",
+      "amount": 1000.0,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 310.19,
+      "stopLossType": "fixed",
+      "setup": "VCP_SETUP",
+      "rs_rating": 86,
+      "rvol": 0.42,
+      "mirror_A_cash": 1349.61,
+      "portfolio": "Momentum-HHHGDTJ",
+      "mirrorId": 11630170
+    },
+    {
+      "symbol": "LLY",
+      "amount": 1000.0,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 1113.58,
+      "stopLossType": "fixed",
+      "setup": "VCP_SETUP",
+      "rs_rating": 80,
+      "rvol": 0.43,
+      "mirror_A_cash": 1349.61,
+      "portfolio": "Momentum-HHHGDTJ",
+      "mirrorId": 11630170,
+      "expect": "likely INSUFFICIENT_CASH GATE_OK after first $1000 place"
+    }
+  ],
+  "pm_place_qa": [
+    {
+      "symbol": "VTRS",
+      "positionId": 3580194334,
+      "action": "MOVE_SL_BREAKEVEN",
+      "new_stop": 16.96,
+      "prior_stop": 16.38,
+      "reason": "HIT_2R",
+      "skill": "momentum-real-money-qa-gate",
+      "note": "place-QA required before PATCH stopLossRate; do not execute without PASS"
+    }
+  ],
+  "do_not_place": [
+    {
+      "symbol": "FTNT",
+      "reason": "already_held"
+    },
+    {
+      "symbol": "CRWD",
+      "reason": "TRAIL_SL NOOP_STOP_UNCHANGED (230.85==prior)"
+    },
+    {
+      "symbol": "ETH",
+      "reason": "TRAIL_SL SKIP_NOT_ON_MIRROR_A"
+    }
+  ],
+  "mirror_A": {
+    "mirrorId": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 1349.61,
+    "value": 7807.98,
+    "invested": 8000.0,
+    "asOf": "2026-09-29T22:47:58.885635+03:00",
+    "source": "user-etoro get-my-portfolio-summary",
+    "symbols_on_mirror_A": [
+      "AAPL",
+      "JNJ",
+      "DE",
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "absent_vs_keys": [
+      "ETH"
+    ]
+  },
+  "pm_decision": "/workspace/momentum_audit/pm-2026-09-29-2242-backup-decision.json",
+  "screener_run_qa_status": "PENDING_QA_BOT",
+  "place_qa_status": "PENDING_QA_BOT",
+  "blocker": "Executor has no SendToAgent. Parent must message QA Bot 498c78db-a027-4f2c-8126-3c2be6f0a4bb for screener-run QA + place-QA (VTRS BE + NDSN/LLY buys) before any place. No places executed (PLACE_WITHOUT_QA_BOT_RECHECK)."
+}

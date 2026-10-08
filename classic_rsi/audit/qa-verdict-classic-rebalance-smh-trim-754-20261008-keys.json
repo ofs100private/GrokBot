@@ -1,0 +1,91 @@
+{
+  "skill": "classic-real-money-order-qa-gate",
+  "also_checked": [
+    "trader-classic-strategy",
+    "classic-rebalance (installed 2026-10-08 20:27 IDT)"
+  ],
+  "batch": "classic-rebalance-batch-20261008-keys",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "route": "REAL",
+  "asOfIDT": "2026-10-08 20:31 IDT",
+  "timestamp_iso": "2026-10-08T20:31:14+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "place": false,
+  "authorize_place_scope": "QA only; placement additionally needs explicit Ofer/CoS authorization naming symbol + size (classic-rebalance Step 6.4)",
+  "live_reads": {
+    "positions_orders_xRequestId": "766fb020-25c7-4673-bd57-5cf3d90787d0",
+    "portfolio_xRequestId": "0b2d18ba-562e-450b-8377-70f8a080804c",
+    "asOf_utc": "2026-10-08T17:30:00Z (20:30 IDT)",
+    "quotes_xRequestIds": [
+      "e0cb546e-9a32-475c-bb83-dff5cf851068",
+      "5abc22df-ced7-4627-a6c9-386c94ba0cf7"
+    ],
+    "availableCash": 4048.63,
+    "frozenCash": 0,
+    "pendingOrders": 0,
+    "stale_quote_note": "eToro overview returned STALE cached quotes for SMH (618.30/618.43 @15:23:56Z), SPY (775.5 @16:17:41Z) and QQQ (753.9 @16:17Z) on two reads. TMO/XLE/XLV were fresh (@17:29:57\u201317:30:00Z). Fresh cross-checks: SMH position currentRate 602.35 @17:30Z; Yahoo 1m @13:30 ET: SMH 602.43, SPY 771.02, QQQ 744.36, TMO 645.13, XLE 65.25."
+  },
+  "authorization_evidence": {
+    "claimed": "Ofer approved rebalance plan 2026-10-08 ~20:26 IDT; BAC skipped (batch/pack files + qa-request .md, all written by Trader_Classic 20:28 IDT)",
+    "corroboration": "The classic-rebalance workflow skill was installed at 20:27:00 IDT. That timing is consistent with plan adoption, but the skill contains no approval text.",
+    "independent_record_found": false,
+    "note": "I found no CoS note, Ofer message, or audit row confirming the approval or naming symbols and sizes. Treat placement as pending explicit Ofer/CoS authorization."
+  },
+  "w8ben": "Informational. requiresW8Ben=true on SPY/XLE and also on the held SMH/QQQ/XLV, which were bought successfully, so a W-8BEN is very likely on file. Neither skill makes it a gate.",
+  "pack_id": "classic-rebalance-smh-trim-754-20261008-keys",
+  "pack_path": "/workspace/classic_rsi/audit/classic-rebalance-smh-trim-754-20261008-keys.json",
+  "seq": 1,
+  "verdict": "PASS",
+  "authorize_place": false,
+  "hard_fail_codes": [],
+  "soft_codes": [
+    "SMH_SL_CUSHION_3.4PCT",
+    "PREPARE_CLOSE_RATE_STALE_618.30",
+    "TOKEN_EXPIRED_REPREPARE",
+    "GROWTH_SLEEVE_46PCT_IF_XLE_DEFERRED"
+  ],
+  "checks": {
+    "audit_consistent_with_batch": true,
+    "instrumentId_6357_is_SMH": true,
+    "side": "partial close of existing long (long-reducing sell), not a short",
+    "leverage": 1,
+    "crypto": false,
+    "positionId_live": 3581725275,
+    "units_live": 2.65783,
+    "unitsToDeduct": 1.25401,
+    "deduct_le_held": true,
+    "remainder_units": 1.40382,
+    "remainder_value_live": 845.59,
+    "existing_SL_live": 581.8,
+    "SL_kept_on_remainder": "Live position has SL 581.80. A partial close keeps the same position, so the SL should carry over. Verify on the fill audit that the remainder still shows SL 581.80.",
+    "sl_cushion_pct_live": 3.41,
+    "live_rate": 602.35,
+    "trader_bid": 601.27,
+    "drift_pct": 0.18,
+    "proceeds_live_est": 755.35,
+    "proceeds_trader_est": 754.0,
+    "fee_est": 1.13,
+    "fee_basis": "0.15% estimate; prepare-close returns no fee",
+    "overnight": 0,
+    "thesis": "Concentration trim (SMH 49.8% of invested live \u2192 21.5\u201323.3%); matches the classic-rebalance cap rule (name \u226430%). Non-RSI pack, so no run_id is required.",
+    "prepare_snapshot_note": "The prepare-close confirmation currentRate_reported 618.3 matches the stale cached eToro quote (@15:23Z), not the market (~602). The close is units-based, so params are unaffected, but at re-prepare check that the rate is fresh."
+  },
+  "conditions": [
+    "Place FIRST in the sequence",
+    "Re-prepare identical: prepare-close real, positionId 3581725275, unitsToDeduct 1.25401",
+    "Re-prepare confirmation rate must be fresh (\u2248 live, not 618.30)",
+    "Fill audit: remainder \u22481.40382u still carries SL 581.80; report proceeds and fee",
+    "If SMH's 581.80 SL triggers before the trim, the whole position closes. Pause the batch and return to QA (weights change)"
+  ],
+  "qa_override": {
+    "at": "2026-10-08T20:32:00+03:00",
+    "by": "QA Bot",
+    "reason": "CoS 20:31 IDT: no record of Ofer approving the rebalance; classic-rebalance skill (installed 20:27) unconfirmed for gating. HOLD until Ofer confirms in CoS chat and the skill is sanctioned.",
+    "codes": [
+      "AUTH_UNCONFIRMED_COS_HOLD"
+    ],
+    "update_2032": "CoS 20:32 IDT: Ofer 20:26 msg in Trader_Classic chat 'Approve the process and prepare the rebalance trades for QA (skip BAC)' sanctions classic-rebalance skill for gating + prepare only. authorize_place stays false until Ofer authorizes per symbol/size via CoS; then re-prepare + re-QA."
+  }
+}

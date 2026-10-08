@@ -1,0 +1,20 @@
+[info] EOD screener + QA gate…
+Crumb fetch rate-limited (HTTP 429), continuing without crumb
+[TRACE] regime {'mode': 'HEALTHY', 'spx_close': 7746.31, 'spx_sma50': 7636.14, 'spx_pct': 1.443, 'vix': 14.85, 'hard_halt': False, 'soft': False}
+/workspace/momentum_screener.py:76: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "asOf": datetime.utcnow().isoformat() + "Z",
+[info] S&P 500 live list: 503 symbols
+[TRACE] universe {'universe_n': 520, 'sp500_n': 503, 'watch': {'NOW': True, 'PANW': True, 'CRM': True}}
+[info] regime=HEALTHY — scanning 520 names (S&P 503 + 11 sector + 6 commodity ETFs; NOW/PANW/CRM in-universe=True)…
+$XYZ: possibly delisted; no price data found  (1d 2025-08-01 -> 2026-09-25)
+$SOLV: possibly delisted; no price data found  (1d 2025-08-01 -> 2026-09-25)
+$DE: possibly delisted; no price data found  (1d 2025-08-01 -> 2026-09-25)
+$BDX: possibly delisted; no price data found  (1d 2025-08-01 -> 2026-09-25)
+$UHS: possibly delisted; no price data found  (1d 2025-08-01 -> 2026-09-25)
+
+5 Failed downloads:
+['XYZ', 'SOLV', 'DE', 'BDX', 'UHS']: possibly delisted; no price data found  (1d 2025-08-01 -> 2026-09-25)
+[TRACE] download_ok {'valid_n': 512, 'drop_short_or_nan': 8}
+[TRACE] near_misses {'count': 72, 'path': '/workspace/momentum_audit/near-miss-2026-09-25.json', 'drop_counts': {'minervini': 439, 'rs': 18, 'setup': 52, 'dwm_data': 0, 'dwm_fail': 0, 'regime_hard': 0, 'regime_soft_etf': 0, 'regime_soft_rs': 0, 'regime_soft_vcp': 0, 'event_freeze': 0}}
+[TRACE] event_vol_freeze {'freeze': False, 'reason': 'no_event_freeze today=2026-09-25 next_open=2026-09-28'}
+[TRACE] pack_done {'buys_pre': 3, 'buys_packed': 3, 'skips': 0, 'hard_halt': False}

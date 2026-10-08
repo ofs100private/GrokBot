@@ -1,0 +1,320 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_manual_1600_place_qa_2026-10-05_buy_pack_r2_sleeve_unlimited",
+  "revision": "r2",
+  "prior_verdict_path": "/workspace/momentum_audit/place_qa/qa-verdict-eod-20261005-manual-1600.json",
+  "prior_verdict": "FAIL SLEEVE_CAPACITY_FULL \u2014 NOT authority; fresh place-QA after Ofer sleeve rule change 2026-10-05",
+  "asOf_il": "2026-10-05T17:03:12+03:00",
+  "screener_run_id": "screener-20261005-160452-88488e84",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/qa-verdict-screener-20261005-160452-88488e84.json",
+  "screener_reuse": "Confirmed existing PASS verdict; no re-scan",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20261005-manual-1600-qa-bundle.json",
+  "pm_decision_ref": "/workspace/momentum_audit/pm-2026-10-05-manual-1600-decision.json",
+  "playbook_sleeve_rule": {
+    "citation": "2026-10-05",
+    "path": "/workspace/momentum_audit/playbook-2026-10-05-sleeve-unlimited.md",
+    "skill": "/home/box/agent-data/workflows/momentum-real-money-qa-gate/SKILL.md",
+    "rule": "Unlimited open stocks; keep \u22651 sector ETF. Do NOT FAIL SLEEVE_CAPACITY_FULL / stock_buys>3 / buy_count>4 / MAX_STOCK_PICKS.",
+    "still_fail": [
+      "etf_buys>1",
+      ">2 MOMENTUM_BREAKOUT same pack",
+      "EVENT_VOL_FREEZE/HARD_HALT",
+      "soft-regime VCP",
+      "DWM red",
+      "leverage\u22601",
+      "amount>$1000",
+      "short/demo",
+      "INSUFFICIENT_CASH (GATE_OK)"
+    ]
+  },
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS",
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "LIVE_READ_LIMITED": false,
+  "live_read_note": "Mirror A truth via user-etoro SSO (authChannel=bearer) get-my-portfolio-summary copiedTraders[11630170] + get-my-positions-and-orders mirrors[11630170]. REJECT keys MCP / user-Momentum-HHHGDTJ balances as $8k book.",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 4361.46,
+    "value": 7876.49,
+    "invested": 8000.0,
+    "openPnl": -86.34,
+    "closedPnl": -401.64,
+    "source": "user-etoro SSO get-my-portfolio-summary copiedTraders[11630170]",
+    "xRequestId_profile": "12f187f2-d74d-4db8-b710-0bf40365b63b",
+    "xRequestId_portfolio": "38ae47cd-7e66-4513-ba3f-2a0e45844a03",
+    "xRequestId_positions": "286e41f8-b2db-47a1-90ea-cc0da5cfb0d7",
+    "xRequestId_instruments": "777bc5c8-5535-4455-9330-24ee54187812",
+    "held_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "asOf_utc": "2026-10-05T14:02:20.2720171Z",
+    "positions_asOf_utc": "2026-10-05T14:02:20.4839423Z",
+    "live_positions": [
+      {
+        "symbol": "XLK",
+        "positionId": 3577022320,
+        "openRate": 187.8,
+        "stopLossRate": 187.8,
+        "invested": 799.89,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "VTRS",
+        "positionId": 3580194335,
+        "openRate": 16.96,
+        "stopLossRate": 16.96,
+        "invested": 799.98,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "CRWD",
+        "positionId": 3579391384,
+        "openRate": 242.0,
+        "stopLossRate": 242.0,
+        "invested": 799.98,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "P",
+        "positionId": 3587299963,
+        "openRate": 122.86,
+        "stopLossRate": 108.11,
+        "invested": 799.88,
+        "direction": "long",
+        "leverage": 1
+      }
+    ],
+    "absent_from_mirror_A": [
+      "DE",
+      "FTNT",
+      "JNJ",
+      "AAPL",
+      "NDSN",
+      "ETH"
+    ],
+    "note": "Mirror A availableCash=$4361.46 is book cash TRUTH ($8k basis). Parent Trading cash/holdings are NOT Momentum book. Keys extras AAPL/DE/FTNT/NDSN (+ETH dust) never allocation truth."
+  },
+  "live_vs_claimed": {
+    "claimed_cash_range": "4361\u20134667",
+    "claimed_cash_bundle": 4361.46,
+    "live_cash": 4361.46,
+    "cash_match": true,
+    "claimed_value": 7841.77,
+    "live_value": 7876.49,
+    "value_delta": 34.72,
+    "claimed_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "live_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "symbols_match": true,
+    "note": "Cash exact match to bundle 4361.46; MTM equity drift vs claimed 7841.77 expected"
+  },
+  "pm_risk": {
+    "placeable": [],
+    "all_HOLD": true,
+    "sticky_excluded_from_this_place_qa": {
+      "CRWD": {
+        "live_sl_mirror": 242.0,
+        "action": "MOVE_SL_BREAKEVEN",
+        "ack": "/workspace/momentum_audit/place_ack/eod-20261005-crwd-be-xlk-trail-placed.json",
+        "include_in_place_qa": false
+      },
+      "XLK": {
+        "live_sl_mirror": 187.8,
+        "action": "TRAIL_SL",
+        "ack": "/workspace/momentum_audit/place_ack/eod-20261005-crwd-be-xlk-trail-placed.json",
+        "include_in_place_qa": false
+      }
+    },
+    "note": "PM placeable risk NONE \u2014 sticky CRWD\u2192242 + XLK\u2192187.8 already live on Mirror A; EXCLUDED from this place-QA"
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "spx_close": 7722.72,
+    "spx_sma50": 7657.64,
+    "vix_close": 16.2,
+    "source": "screener-run + prior screener-run QA PASS"
+  },
+  "sleeve": {
+    "rule_citation": "2026-10-05 unlimited stocks + \u22651 sector ETF",
+    "stocks_held": [
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "etf_held": [
+      "XLK"
+    ],
+    "stocks_n": 3,
+    "etf_n": 1,
+    "etf_floor_ok": true,
+    "stock_cap": "unlimited",
+    "max_etf_buys_per_pack": 1,
+    "max_momentum_breakout_per_pack": 2,
+    "ok_for_new_stock_buys": true,
+    "SLEEVE_CAPACITY_FULL_obsolete": true,
+    "note": "Prior SLEEVE_CAPACITY_FULL obsolete under 2026-10-05. XLK present \u2192 ETF floor OK. Unlimited stocks \u2192 3 held + 3 new stock buys allowed if cash covers."
+  },
+  "pack_sleeve_requested": {
+    "stocks": 3,
+    "breakout_momentum_or_volume": 1,
+    "volume_breakout": 1,
+    "momentum_breakout": 0,
+    "vcp": 2,
+    "etf": 0,
+    "commodity": 0,
+    "breakout_count_for_cap": 1,
+    "breakout_cap": 2,
+    "breakout_ok": true,
+    "etf_buys_ok": true,
+    "ok_vs_pack_shape": true,
+    "ok_vs_live_capacity": true,
+    "note": "NTAP VOLUME_BREAKOUT counts as 1 breakout sleeve; ANET+FFIV VCP not breakout. Pack \u22642 breakouts OK. etf_buys=0\u22641 OK."
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 4361.46,
+    "buys_requested_usd": 3000,
+    "per_name_cap": 1000,
+    "estimated_half_spread_fees_usd": {
+      "NTAP": 0.76,
+      "ANET": 0.73,
+      "FFIV": 1.52
+    },
+    "estimated_fee_sum": 3.01,
+    "fees_buffer_usd": 50.0,
+    "fees_method": "live ask/spread half-spread estimate via get-instruments-overview \u2014 prepare-trade NOT called (QA read-only)",
+    "required_with_buffer": 3053.01,
+    "cash_covers_all_3": true,
+    "residual_after_3_fills_est": 1358.45,
+    "buys_authorized": 3,
+    "subset_note": "Cash covers full pack; no subset needed",
+    "INSUFFICIENT_CASH": false
+  },
+  "order_hygiene": {
+    "no_ETH": true,
+    "no_shorts": true,
+    "all_leverage_1": true,
+    "all_amount_le_1000": true,
+    "all_long_buy_mkt": true,
+    "account_real_not_demo": true,
+    "event_vol_freeze_blocks_buy": false,
+    "soft_regime_vcp_block": false,
+    "dwm_from_screener_pack": "green (NTAP/ANET/FFIV)",
+    "prepare_trade_called": false
+  },
+  "items": [
+    {
+      "symbol": "NTAP",
+      "action": "BUY",
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 205.97,
+      "setup": "VOLUME_BREAKOUT",
+      "setup_type": "BREAKOUT",
+      "counts_toward_breakout_cap": true,
+      "rs_rating": 95,
+      "rvol": 2.06,
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "live_ask": 222.34,
+      "est_half_spread_fee": 0.76,
+      "healthy_rules_independent": "PASS \u2014 VOLUME_BREAKOUT RVOL 2.06\u22652; RS95; DWM green (screener); HEALTHY; leverage 1; $1000; real long mkt",
+      "notes": "PASS under sleeve 2026-10-05. Breakout 1/2. Cash covers."
+    },
+    {
+      "symbol": "ANET",
+      "action": "BUY",
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 194.91,
+      "setup": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "counts_toward_breakout_cap": false,
+      "rs_rating": 92,
+      "rvol": 0.68,
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "live_ask": 206.16,
+      "est_half_spread_fee": 0.73,
+      "healthy_rules_independent": "PASS \u2014 VCP (not breakout) so RVOL 0.68 fine; RS92; DWM ok; HEALTHY allows VCP (not soft-regime)",
+      "notes": "PASS. VCP not counted toward \u22642 breakout. Cash covers."
+    },
+    {
+      "symbol": "FFIV",
+      "action": "BUY",
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 426.8,
+      "setup": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "counts_toward_breakout_cap": false,
+      "rs_rating": 90,
+      "rvol": 1.04,
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "live_ask": 457.35,
+      "est_half_spread_fee": 1.52,
+      "healthy_rules_independent": "PASS \u2014 VCP (not breakout) so RVOL 1.04 fine; RS90; DWM ok; HEALTHY allows VCP",
+      "notes": "PASS. VCP not counted toward \u22642 breakout. Cash covers."
+    }
+  ],
+  "buys_authorized": [
+    "NTAP",
+    "ANET",
+    "FFIV"
+  ],
+  "buys_authorized_n": 3,
+  "soft_notes": [
+    "Live Monday WTD from eToro performance equals dailyChange (session drift vs screener DWM); place-QA uses screener-pack DWM (green) consistent with prior methodology",
+    "NTAP live ask 222.34 vs screener price 226.27 \u2014 SL 205.97 still below ask",
+    "16:30\u201318:30 IL ban active at QA (~17:02 IL) \u2014 trader scheduling HOLD places until after 18:30 IL then FULL AUTO; ban does not withhold PASS"
+  ],
+  "scheduling_note": "16:30\u201318:30 IL place ban is trader scheduling. PASS issued during ban \u2192 trader MUST HOLD BUY places until after 18:30 IL, then FULL AUTO on authorized NTAP/ANET/FFIV via keys MCP (user-Momentum-HHHGDTJ). Re-check ban before any BUY.",
+  "full_auto": "PASS \u2014 After 18:30 IL, Trader_momentum may prepare+place NTAP then ANET then FFIV ($1000\u00d71 mkt each, SLs as pack) on keys MCP without user/CoS confirm. Do NOT place sticky CRWD/XLK risk again. QA never places. FULL AUTO only after PASS. If INSUFFICIENT_CASH or state change mid-place, stop and request new place-QA.",
+  "xRequestIds": {
+    "profile": "12f187f2-d74d-4db8-b710-0bf40365b63b",
+    "portfolio": "38ae47cd-7e66-4513-ba3f-2a0e45844a03",
+    "positions": "286e41f8-b2db-47a1-90ea-cc0da5cfb0d7",
+    "instruments": "777bc5c8-5535-4455-9330-24ee54187812"
+  }
+}

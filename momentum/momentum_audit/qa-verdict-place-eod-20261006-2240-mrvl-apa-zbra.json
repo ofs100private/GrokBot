@@ -1,0 +1,407 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_2240_primary_place_qa_2026-10-06_mrvl_apa_zbra",
+  "asOf_il": "2026-10-06T22:46:00+03:00",
+  "run_id": "eod-20261006-2240-primary",
+  "screener_run_id": "screener-20261006-224226-687dbc12",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/qa-verdict-screener-20261006-224226-687dbc12.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20261006-2240-qa-bundle.json",
+  "pending_ack_ref": "/workspace/momentum_audit/place_ack/eod-20261006-2240-mrvl-apa-zbra-pending-qa.json",
+  "pm_ref": {
+    "run_id": "posmgr-20261006-224201-6a0b9438",
+    "result": "8 HOLD (AAPL DE NTAP XLK VTRS CRWD P NDSN) + FTNT/ETH TRAIL SKIP_NOT_ON_MIRROR_A; placeable risk NONE",
+    "place_needed": false,
+    "decision": "/workspace/momentum_audit/pm-2026-10-06-eod-2240-decision.json",
+    "stdout": "/workspace/momentum_audit/pm-2026-10-06-eod-2240.stdout",
+    "positions_mapped": "/workspace/momentum_audit/pm-positions-mapped-2026-10-06-eod-2240.json"
+  },
+  "playbook_sleeve_rule": {
+    "citation": "2026-10-05",
+    "path": "/workspace/momentum_audit/playbook-2026-10-05-sleeve-unlimited.md",
+    "rule": "Unlimited open stocks; keep \u22651 sector ETF. Do NOT FAIL SLEEVE_CAPACITY_FULL / stock_buys>3 / buy_count>4 / MAX_STOCK_PICKS.",
+    "still_fail": [
+      "etf_buys>1",
+      ">2 MOMENTUM_BREAKOUT same pack",
+      "EVENT_VOL_FREEZE/HARD_HALT",
+      "soft-regime VCP",
+      "DWM red",
+      "leverage\u22601",
+      "amount>$1000",
+      "short/demo"
+    ]
+  },
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS_WITH_GATE_OK",
+  "verdict": "PASS_WITH_GATE_OK",
+  "authorize_place": false,
+  "deviation_codes": [],
+  "fail_codes": [],
+  "GATE_OK_codes": [
+    "INSUFFICIENT_CASH"
+  ],
+  "LIVE_READ_LIMITED": false,
+  "live_read_note": "Keys execution cash via user-Momentum-HHHGDTJ get-my-portfolio-summary (get-my-balances 403 missing money.balance:read \u2014 portfolio availableCash used). Mirror A cash from trader bundle/sidecar reporting only \u2014 never authorize from Mirror A alone.",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 3567.49,
+    "value": 7959.53,
+    "invested": 8000.0,
+    "openPnl": -2.11,
+    "source": "trader bundle + /workspace/momentum_audit/mirror-A-cash-2026-10-06-eod.json (reporting only)",
+    "xRequestId_portfolio": "9d283d19-be58-46ba-bed3-7ea4681c7ecd",
+    "xRequestId_positions": "30bbbcf2-fb7e-4ac4-915b-21d7f61adcc6",
+    "held_symbols": [
+      "NTAP",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "role": "REPORTING ONLY \u2014 do NOT authorize_place from Mirror A cash",
+    "note": "Mirror A availableCash=$3567.49 would cover 3\u00d7$1000 book allocation, but keys cannot execute \u2192 authorize_place=false"
+  },
+  "keys_ledger": {
+    "authChannel": "keys",
+    "mcp": "user-Momentum-HHHGDTJ",
+    "availableCash": 610.87,
+    "availableCash_role": "EXECUTION TRUTH \u2014 must cover sequenced fills; authorize_place requires keys coverage",
+    "totalValue": 10083.99,
+    "unrealizedPnl": 563.23,
+    "frozenCash": 0,
+    "positionCount_direct": 10,
+    "held_symbols": [
+      "AAPL",
+      "DE",
+      "NTAP",
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "CRWD",
+      "P",
+      "NDSN",
+      "ETH"
+    ],
+    "XLK_held": true,
+    "XLK_positionId": 3577022318,
+    "MRVL_held": false,
+    "APA_held": false,
+    "ZBRA_held": false,
+    "pending_orders": [],
+    "asOf_utc": "2026-10-06T19:45:07.529293Z",
+    "xRequestId_portfolio": "cd374738-cb85-4cac-9095-5393cf25bf21",
+    "xRequestId_positions": "bdadc8b1-44a9-4a1e-ae18-820076747227",
+    "xRequestId_balances_403": "fae6d9da-b125-4b94-84f3-dc1ef1434546",
+    "balances_scope_gap": "get-my-balances HTTP 403 InsufficientPermissions (missing etoro-public:money.balance:read); portfolio.totals.availableCash used instead",
+    "trader_claimed_keys_cash": 610.87,
+    "cash_match_trader_claim": true,
+    "note": "Live keys availableCash $610.87 < $1000 first fill \u2014 cannot fund MRVL/APA/ZBRA. Mirror A $3567.49 reporting only."
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "soft": false,
+    "spx_close": 7824.15,
+    "spx_sma50": 7673.1,
+    "vix_close": 15.06,
+    "source": "screener-run screener-20261006-224226-687dbc12 + screener-run QA PASS"
+  },
+  "sleeve": {
+    "rule_citation": "2026-10-05 unlimited stocks + \u22651 sector ETF",
+    "stocks_held_mirror_A": [
+      "NTAP",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "etf_held_mirror_A": [
+      "XLK"
+    ],
+    "stocks_n_mirror_A": 4,
+    "etf_n": 1,
+    "etf_floor_ok": true,
+    "stock_cap": "unlimited",
+    "max_etf_buys_per_pack": 1,
+    "max_momentum_breakout_per_pack": 2,
+    "ok_for_new_stock_buys": true,
+    "SLEEVE_CAPACITY_FULL_obsolete": true,
+    "do_not_fail_capacity": true,
+    "note": "XLK held \u2192 ETF floor OK; no ETF buy required/allowed this pack. Unlimited stocks \u2192 MRVL/APA/ZBRA stock buys allowed by sleeve if cash covers. Do NOT FAIL SLEEVE_CAPACITY_FULL."
+  },
+  "pack_sleeve_requested": {
+    "candidates_placeable": [
+      "MRVL",
+      "APA",
+      "ZBRA"
+    ],
+    "dropped": {
+      "XLK": "ALREADY_HELD_NO_DOUBLE_BUY"
+    },
+    "stocks": 3,
+    "breakout_momentum": 0,
+    "volume_breakout": 1,
+    "vcp": 2,
+    "etf": 0,
+    "commodity": 0,
+    "etf_buys_ok": true,
+    "breakout_ok": true,
+    "ok_vs_pack_shape": true,
+    "ok_vs_live_capacity": true,
+    "note": "1 VOLUME_BREAKOUT (not tagged MOMENTUM_BREAKOUT; even if counted =1 \u22642 BO OK) + 2 VCP; 0 ETF buys (XLK held). Sleeve shape OK under playbook 2026-09-16 + sleeve 2026-10-05."
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 3567.49,
+    "keys_availableCash": 610.87,
+    "buys_requested_usd": 3000,
+    "per_name_cap": 1000,
+    "fees_buffer_assumed": true,
+    "mirror_A_covers_all_3": true,
+    "keys_covers_even_one": false,
+    "keys_residual_vs_1000": -389.13,
+    "sequenced": [
+      {
+        "symbol": "MRVL",
+        "need": 1000,
+        "keys_before": 610.87,
+        "covers": false,
+        "code": "INSUFFICIENT_CASH"
+      },
+      {
+        "symbol": "APA",
+        "need": 1000,
+        "keys_before": 610.87,
+        "covers": false,
+        "code": "INSUFFICIENT_CASH"
+      },
+      {
+        "symbol": "ZBRA",
+        "need": 1000,
+        "keys_before": 610.87,
+        "covers": false,
+        "code": "INSUFFICIENT_CASH"
+      }
+    ],
+    "INSUFFICIENT_CASH": true,
+    "gate": "GATE_OK",
+    "not_AVOID": true,
+    "authorize_place": false,
+    "note": "Mirror A $3567.49 covers 3\u00d7$1000 reporting, but keys $610.87 cannot fund first $1000 fill (+fees) \u2192 authorize_place=false; all three INSUFFICIENT_CASH GATE_OK. Never authorize from Mirror A alone."
+  },
+  "order_hygiene": {
+    "no_ETH_buy": true,
+    "no_shorts": true,
+    "all_leverage_1": true,
+    "all_amount_le_1000": true,
+    "all_long_buy_mkt": true,
+    "account_real_not_demo": true,
+    "stops_present": true,
+    "event_vol_freeze_blocks_buy": false,
+    "soft_regime_vcp_block": false,
+    "dwm_from_screener_pack": "ok (MRVL/APA/ZBRA dwm_fail=0; all d/w/m non-red pack)",
+    "pending_orders_blocking": false,
+    "prepare_trade_called": false,
+    "qa_places": false
+  },
+  "items": [
+    {
+      "symbol": "MRVL",
+      "action": "BUY",
+      "verdict": "GATE_OK",
+      "status": "GATE_OK",
+      "authorize_place": false,
+      "deviation_codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "hard_fail": false,
+      "gate": "GATE_OK",
+      "not_AVOID": true,
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 266.0,
+      "setup": "VOLUME_BREAKOUT",
+      "counts_toward_breakout_cap": false,
+      "breakout_cap_note": "Tagged VOLUME_BREAKOUT not MOMENTUM_BREAKOUT; even if counted as 1 BO still \u22642 OK",
+      "rs_rating": 97,
+      "rvol": 2.18,
+      "dwm": {
+        "day_pct": 5.35,
+        "week_pct": 8.54,
+        "month_pct": 27.83
+      },
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "held_on_keys": false,
+      "trade_rules_independent": "PASS \u2014 VOLUME_BREAKOUT allowed in HEALTHY; RS97 RVOL2.18; DWM green; lev1; $1000; real long mkt; SL 266.00; not freeze/halt; sleeve unlimited stocks OK",
+      "cash_gate": "INSUFFICIENT_CASH",
+      "notes": "Trade hygiene PASS but keys availableCash $610.87 < $1000 (+fees) \u2014 GATE_OK protective. Do NOT place."
+    },
+    {
+      "symbol": "APA",
+      "action": "BUY",
+      "verdict": "GATE_OK",
+      "status": "GATE_OK",
+      "authorize_place": false,
+      "deviation_codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "hard_fail": false,
+      "gate": "GATE_OK",
+      "not_AVOID": true,
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 41.47,
+      "setup": "VCP_SETUP",
+      "counts_toward_breakout_cap": false,
+      "rs_rating": 94,
+      "rvol": 0.39,
+      "dwm": {
+        "day_pct": 0.62,
+        "week_pct": 4.57,
+        "month_pct": 3.16
+      },
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "held_on_keys": false,
+      "trade_rules_independent": "PASS \u2014 VCP allowed in HEALTHY (soft-regime VCP block N/A); RS94; DWM ok; lev1; $1000; real long mkt; SL 41.47; sleeve OK",
+      "cash_gate": "INSUFFICIENT_CASH",
+      "notes": "Same keys cash block. Sequenced fills impossible \u2014 even first fill fails. GATE_OK not AVOID."
+    },
+    {
+      "symbol": "ZBRA",
+      "action": "BUY",
+      "verdict": "GATE_OK",
+      "status": "GATE_OK",
+      "authorize_place": false,
+      "deviation_codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "hard_fail": false,
+      "gate": "GATE_OK",
+      "not_AVOID": true,
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 364.02,
+      "setup": "VCP_SETUP",
+      "counts_toward_breakout_cap": false,
+      "rs_rating": 93,
+      "rvol": 0.65,
+      "dwm": {
+        "day_pct": 3.43,
+        "week_pct": 3.34,
+        "month_pct": 7.11
+      },
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "held_on_keys": false,
+      "trade_rules_independent": "PASS \u2014 VCP allowed in HEALTHY; RS93; DWM green; lev1; $1000; real long mkt; SL 364.02; sleeve OK",
+      "cash_gate": "INSUFFICIENT_CASH",
+      "notes": "Same keys cash block as MRVL/APA. GATE_OK protective."
+    },
+    {
+      "symbol": "XLK",
+      "action": "SKIP",
+      "verdict": "SKIP_ALREADY_HELD",
+      "status": "SKIP_ALREADY_HELD",
+      "authorize_place": false,
+      "deviation_codes": [],
+      "codes": [],
+      "keys_positionId": 3577022318,
+      "on_mirror_A": true,
+      "notes": "Screener BUY ETF but XLK already held \u2014 correctly dropped; no ETF buy OK (ETF floor satisfied)."
+    }
+  ],
+  "pm_items": [
+    {
+      "symbols_hold": [
+        "AAPL",
+        "DE",
+        "NTAP",
+        "XLK",
+        "VTRS",
+        "CRWD",
+        "P",
+        "NDSN"
+      ],
+      "verdict": "OK",
+      "authorize_place": false,
+      "notes": "HOLD documented; no placeable risk actions"
+    },
+    {
+      "symbol": "FTNT",
+      "action": "TRAIL_SL",
+      "verdict": "SKIP_NOT_ON_MIRROR_A",
+      "authorize_place": false,
+      "new_stop": 169.56,
+      "prior": 165.78,
+      "keys_positionId": 3590220047,
+      "notes": "Keys-only TRAIL correctly skipped \u2014 not on Mirror A"
+    },
+    {
+      "symbol": "ETH",
+      "action": "TRAIL_SL",
+      "verdict": "SKIP_NOT_ON_MIRROR_A",
+      "authorize_place": false,
+      "new_stop": 2492.64,
+      "notes": "ETH dust $10 keys-only \u2014 SKIP_NOT_ON_MIRROR_A OK"
+    }
+  ],
+  "buys_authorized": [],
+  "buys_authorized_n": 0,
+  "GATE_OK_notes": [
+    "MRVL INSUFFICIENT_CASH GATE_OK \u2014 keys $610.87 < $1000; Mirror A $3567.49 reporting only",
+    "APA INSUFFICIENT_CASH GATE_OK \u2014 same keys cash block",
+    "ZBRA INSUFFICIENT_CASH GATE_OK \u2014 same keys cash block",
+    "Do NOT treat GATE_OK as AVOID / playbook fail; require fresh place-QA after keys cash \u2265$1000 (+fees) per sequenced fill before any place"
+  ],
+  "soft_notes": [
+    "get-my-balances 403 on keys; portfolio availableCash 610.87 authoritative for execution cash",
+    "Keys vs Mirror A cash gap noted ($610.87 vs $3567.49) \u2014 authorize from keys only",
+    "Sleeve unlimited stocks \u2014 open stock count does not FAIL capacity",
+    "CASH_RECYCLE_REQUIRED before any FULL AUTO"
+  ],
+  "evidence_paths": [
+    "/workspace/momentum_audit/place_qa/eod-20261006-2240-qa-bundle.json",
+    "/workspace/momentum_audit/place_ack/eod-20261006-2240-mrvl-apa-zbra-pending-qa.json",
+    "/workspace/momentum_audit/qa-verdict-screener-20261006-224226-687dbc12.json",
+    "/workspace/momentum_audit/screener-run-screener-20261006-224226-687dbc12.json",
+    "/workspace/momentum_audit/pm-2026-10-06-eod-2240-decision.json",
+    "/workspace/momentum_audit/mirror-A-cash-2026-10-06-eod.json",
+    "/workspace/momentum_audit/2026-10-06.jsonl"
+  ],
+  "full_auto": "NO \u2014 overall PASS_WITH_GATE_OK; authorize_place=false. Trader_momentum must NOT prepare/place MRVL/APA/ZBRA. QA never places. Re-request place-QA only after keys availableCash can cover \u2265$1000 (+fees) per sequenced fill. Mirror A cash alone is not enough to authorize keys execution.",
+  "explicit": {
+    "qa_never_places": true,
+    "trader_must_not_place_without_PASS_and_enough_keys_cash": true,
+    "authorize_any_buy": false,
+    "authorize_place": false
+  },
+  "xRequestIds": {
+    "keys_portfolio": "cd374738-cb85-4cac-9095-5393cf25bf21",
+    "keys_positions": "bdadc8b1-44a9-4a1e-ae18-820076747227",
+    "keys_balances_403": "fae6d9da-b125-4b94-84f3-dc1ef1434546",
+    "mirrorA_portfolio_from_trader": "9d283d19-be58-46ba-bed3-7ea4681c7ecd",
+    "mirrorA_positions_from_trader": "30bbbcf2-fb7e-4ac4-915b-21d7f61adcc6"
+  }
+}

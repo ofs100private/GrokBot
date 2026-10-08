@@ -1,0 +1,59 @@
+{
+ "run_id": "eod-20261007-2240-primary",
+ "asOf_il": "2026-10-07T22:46:06.188344+03:00",
+ "status": "RESOLVED_P_DONE_BUYS_BLOCKED",
+ "authorize_place_needed": [
+  {
+   "symbol": "P",
+   "action": "MOVE_SL_BREAKEVEN",
+   "keys_positionId": 3587299961,
+   "mirrorA_positionId": 3587299963,
+   "instrumentId": 6823,
+   "prior_stop": 108.11,
+   "new_stop": 122.86
+  }
+ ],
+ "buys_advisory": [
+  "ZBRA",
+  "HPQ",
+  "XOM"
+ ],
+ "cash_note": "keys $110.12 < $1000 -> CASH_RECYCLE_REQUIRED; mirror A $3170.57 reporting only",
+ "bundle": "/workspace/momentum_audit/place_qa/eod-20261007-2240-qa-bundle.json",
+ "updated_il": "2026-10-07T22:51:11.458518+03:00",
+ "qa_verdict": "/workspace/momentum_audit/qa-verdict-place-eod-20261007-2240.json",
+ "resolution": {
+  "P": {
+   "action": "MOVE_SL_BREAKEVEN",
+   "status": "DONE_SL_EDITED_VERIFIED",
+   "keys_positionId": 3587299961,
+   "live_sl": 122.86,
+   "mirrorA_sl": 122.86,
+   "ack_ref": "/workspace/momentum_audit/place_ack/eod-20261007-2240-p-be-placed.json"
+  },
+  "ZBRA": {
+   "status": "BLOCKED_INSUFFICIENT_CASH",
+   "gate": "GATE_OK",
+   "flag": "CASH_RECYCLE_REQUIRED",
+   "next": "needs fresh place-QA (keys + mirror A snapshot) once keys cash >= $1000"
+  },
+  "HPQ": {
+   "status": "BLOCKED_INSUFFICIENT_CASH",
+   "gate": "GATE_OK",
+   "flag": "CASH_RECYCLE_REQUIRED",
+   "next": "needs fresh place-QA (keys + mirror A snapshot) once keys cash >= $1000"
+  },
+  "XOM": {
+   "status": "BLOCKED_INSUFFICIENT_CASH",
+   "gate": "GATE_OK",
+   "flag": "CASH_RECYCLE_REQUIRED",
+   "next": "needs fresh place-QA (keys + mirror A snapshot) once keys cash >= $1000"
+  },
+  "FTNT": {
+   "action": "TRAIL_SL",
+   "status": "SKIP_NOT_ON_MIRROR_A",
+   "keys_positionId": 3590220047,
+   "live_sl": 165.78
+  }
+ }
+}

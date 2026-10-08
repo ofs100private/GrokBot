@@ -1,0 +1,91 @@
+{
+  "verdict": "PASS",
+  "at": "2026-10-08T20:35:00+03:00",
+  "by": "QA Bot",
+  "account": "OfersClaw5-PRIYN",
+  "ns": "user-OfersClaw5",
+  "pack": "classic-rebalance-batch-20261008-keys-v2.json",
+  "authorization": "Ofer 20:32 IDT via CoS: trim SMH ~$822 (1.3656u), SPY $700, TMO $500 x1; XLE/BAC excluded; classic-rebalance skill sanctioned",
+  "skills": [
+    "classic-rebalance",
+    "classic-real-money-order-qa-gate"
+  ],
+  "live_check": {
+    "xRequestId": "f9ba8787-5578-4171-a84a-7d4db30bc629",
+    "ts": "2026-10-08T17:34:12Z",
+    "positions": "QQQ 1.106357u SL644, XLV 4.537045u SL148.62, SMH 3581725275 2.65783u SL581.80; all long x1; 0 pending orders",
+    "note": "positions endpoint SMH currentRate 618.4 is the known stale cache; pack bid 603.95 @20:32:44 used"
+  },
+  "packs": [
+    {
+      "symbol": "SMH",
+      "action": "partial close 1.3656u pos 3581725275",
+      "authorize_place": true,
+      "size_locked": "1.3656u exactly \u2014 do NOT use 1.37074u (not authorized by Ofer)",
+      "prepare_rate": 603.66,
+      "live_bid": 603.95,
+      "drift_pct": 0.05,
+      "remainder_u": 1.29223,
+      "remainder_sl": 581.8,
+      "proceeds_est": 824.36
+    },
+    {
+      "symbol": "SPY",
+      "action": "buy $700 x1 long",
+      "authorize_place": true,
+      "ask": 771.62,
+      "trail_sl": 709.97,
+      "sl_pct": -8,
+      "tp": null,
+      "place_only_after": "SMH fill confirmed"
+    },
+    {
+      "symbol": "TMO",
+      "action": "buy $500 x1 long",
+      "authorize_place": true,
+      "ask": 646.27,
+      "trail_sl": 575.18,
+      "sl_pct": -11,
+      "tp": null,
+      "weight_pct": 14.03,
+      "place_only_after": "SPY"
+    }
+  ],
+  "cash": {
+    "start": 4048.63,
+    "after": 3668.99,
+    "worst_case_smh_unfilled": 2845.87,
+    "floor": 2500,
+    "pass": true
+  },
+  "growth_sleeve": {
+    "pct": 45.05,
+    "cap": 45,
+    "ruling": "PASS_WITH_TOLERANCE \u2014 0.05pp over is price drift on Ofer's explicitly authorized size; within rebalance tolerance; recheck at next weekly check"
+  },
+  "conditions": [
+    "Order SMH -> confirm fill -> SPY -> TMO",
+    "Re-prepare identical params inside token TTL; reject stale cached rates (SMH 618.x, SPY 775.5)",
+    "Drift >0.1% vs pack -> re-base + re-QA",
+    "If SMH hits SL or does not fill -> do NOT place SPY/TMO; re-QA",
+    "Fill audit to QA"
+  ],
+  "hard_fail_codes": [],
+  "rebase_2036": {
+    "at": "2026-10-08T20:36:00+03:00",
+    "reason": "Trader halted on SMH +0.22-0.27% favorable drift (bid 605.2-605.3, fresh prepare-close 605.30). No place calls.",
+    "verdict": "PASS re-based, same authorized sizes",
+    "bands": {
+      "SMH": "partial close exactly 1.3656u; place if fresh live bid 600.00-612.00 (quote ts <60s; >=612 treat as stale cache); remainder SL 581.80 must remain",
+      "SPY": "$700 x1; live ask 769.30-773.94 (pack 771.62 +/-0.3%); trailing SL = fill-ask x0.92",
+      "TMO": "$500 x1; live ask 644.33-648.21 (pack 646.27 +/-0.3%); trailing SL = fill-ask x0.89"
+    },
+    "recheck_each_step": [
+      "cash after step >= $2,500",
+      "growth <= 45.5% (else stop + re-QA)",
+      "TMO <= 15%"
+    ],
+    "outside_band": "stop, re-prepare, re-QA",
+    "note": "Higher SMH bid raises remainder value; growth ~45.08% at 605.3 (Trader said lower; it is marginally higher), within tolerance."
+  }
+}

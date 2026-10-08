@@ -1,0 +1,146 @@
+{
+  "overall": "PASS",
+  "authorize_place": true,
+  "authorized_symbols": [
+    "ADBE",
+    "GS",
+    "CAT"
+  ],
+  "not_authorized": {
+    "PHM": "SUPERSEDED: removed by Ofer via CoS 21:48 IDT"
+  },
+  "gate": "classic-real-money-order-qa-gate",
+  "batch_id": "classic-batch-adbe-gs-cat-500-20261007-keys-ofer",
+  "timestamp": "2026-10-07T21:49:03+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "authority": [
+    "Ofer direct to QA Bot 21:44 IDT: 'Buy ADBE, GS, CAT, PHM 500 x1 on classic.'",
+    "Ofer via CoS 2026-10-07 21:48 IDT: Classic buy ONLY ADBE + GS + CAT $500 x1 each; PHM SKIPPED/superseded"
+  ],
+  "source_packs": {
+    "ADBE": "/workspace/classic_rsi/audit/classic-adbe-500-20261007-keys-ofer.json",
+    "GS": "/workspace/classic_rsi/audit/classic-gs-500-20261007-keys-ofer.json",
+    "CAT": "/workspace/classic_rsi/audit/classic-cat-500-20261007-keys-ofer.json"
+  },
+  "source_batch_pack_note": "Trader's batch file still lists PHM (classic-batch-adbe-gs-cat-phm-500\u2026); ignore PHM entry",
+  "supersedes": [
+    "/workspace/classic_rsi/audit/qa-verdict-classic-batch-adbe-gs-cat-phm-500-20261007-keys-ofer.json",
+    "abandoned $750 packs (ADBE/GS/CAT/PHM 750, GS 1000)"
+  ],
+  "fail_codes": [],
+  "per_pack": {
+    "ADBE": {
+      "overall": "PASS",
+      "authorize_place": true,
+      "fail_codes": [],
+      "instrumentId": 1126,
+      "live_ask": 232.9,
+      "SL": 226.24,
+      "TP": 235.13,
+      "sl_pct_below": 2.86,
+      "tp_pct_above": 0.96,
+      "live_rr": 0.33,
+      "fee": 0.9,
+      "overnight": 0.0,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-adbe-500-20261007-keys-ofer.json",
+      "soft_warnings": [
+        "LIVE_RR_BELOW_1: from live ask 232.9, reward 2.23 vs risk 6.66/share = R:R 0.33 (levels anchored to RSI bar close 230.05; price has run toward TP)"
+      ]
+    },
+    "GS": {
+      "overall": "PASS",
+      "authorize_place": true,
+      "fail_codes": [],
+      "instrumentId": 1467,
+      "live_ask": 884.4,
+      "SL": 864.05,
+      "TP": 887.43,
+      "sl_pct_below": 2.3,
+      "tp_pct_above": 0.34,
+      "live_rr": 0.15,
+      "fee": 0.9,
+      "overnight": 0.0,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-gs-500-20261007-keys-ofer.json",
+      "soft_warnings": [
+        "TP_NEAR_LIVE: TP only 0.34% above live ask 884.4; little upside before TP. Optional: Trader re-derives TP from live ATR (any change = re-QA)",
+        "LIVE_RR_BELOW_1: from live ask 884.4, reward 3.03 vs risk 20.35/share = R:R 0.15 (levels anchored to RSI bar close 874.07; price has run toward TP)"
+      ]
+    },
+    "CAT": {
+      "overall": "PASS",
+      "authorize_place": true,
+      "fail_codes": [],
+      "instrumentId": 1012,
+      "live_ask": 811.86,
+      "SL": 798.61,
+      "TP": 834.14,
+      "sl_pct_below": 1.63,
+      "tp_pct_above": 2.74,
+      "live_rr": 1.68,
+      "fee": 1.06,
+      "overnight": 0.0,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-cat-500-20261007-keys-ofer.json",
+      "soft_warnings": []
+    }
+  },
+  "soft_warnings_common": [
+    "PREPARE_TOKEN_EXPIRED (expired ~21:46-21:47 IDT): re-prepare IDENTICAL params; any param change = re-QA",
+    "PACK_INSTRUCTION_WORDING: pack text says 'prepare \u2026 do NOT place'; authority = Ofer 21:44 + 21:48 scope",
+    "PRIOR_COS_HOLD_ALL on the superseded $750 packs shouldn't carry over; CoS relayed the 21:48 scope",
+    "get-instruments-overview GS quote stale; realtime rates route used",
+    "get-my-balances 403; cash from portfolio-summary"
+  ],
+  "cash_sequence": {
+    "start": 4054.5,
+    "steps": [
+      {
+        "symbol": "ADBE",
+        "cashBefore": 4054.5,
+        "required": 500.9,
+        "cashAfter": 3553.6
+      },
+      {
+        "symbol": "GS",
+        "cashBefore": 3553.6,
+        "required": 500.9,
+        "cashAfter": 3052.7
+      },
+      {
+        "symbol": "CAT",
+        "cashBefore": 3052.7,
+        "required": 501.06,
+        "cashAfter": 2551.64
+      }
+    ],
+    "final_residual": 2551.64,
+    "fees_total": 2.86,
+    "residual_positive": true,
+    "floor_usd": 2500,
+    "floor_met": true,
+    "ofer_cash_floor_override": true,
+    "ofer_cash_floor_override_needed": false,
+    "note": "Residual $2551.64 clears the $2.5k floor by $51.64, so the override isn't needed. Fill slippage could matter: if actual cash after CAT ends up under $2.5k, the override still covers it."
+  },
+  "live_book": {
+    "availableCash": 4054.5,
+    "frozenCash": 0,
+    "totalValue": 7317.38,
+    "unrealizedPnl": 303.15,
+    "usedMargin": 2959.73,
+    "holdings": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "pendingOrders": [],
+    "adbe_gs_cat_phm_open": false,
+    "asOf": "2026-10-07T18:48:27Z (21:48 IDT)",
+    "xRequestId": "6b0f9bd2-34e4-4969-a153-69ca783cb66e"
+  },
+  "place_order": [
+    "ADBE",
+    "GS",
+    "CAT"
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "overall": "SUPERSEDED",
+  "authorize_place": false,
+  "gate": "classic-real-money-order-qa-gate",
+  "batch_id": "classic-batch-adbe-gs-cat-phm-500-20261007-keys-ofer",
+  "batch_pack_path": "/workspace/classic_rsi/audit/classic-batch-adbe-gs-cat-phm-500-20261007-keys-ofer.json",
+  "timestamp": "2026-10-07T21:49:03+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "authority": "Ofer direct to QA Bot 2026-10-07 21:44 IDT: 'Buy ADBE, GS, CAT, PHM 500 x1 on classic.'",
+  "ofer_cash_floor_override": true,
+  "supersedes_abandoned_750_packs": [
+    "classic-adbe-750",
+    "classic-gs-750",
+    "classic-gs-1000",
+    "classic-cat-750",
+    "classic-phm-750"
+  ],
+  "fail_codes": [
+    "SUPERSEDED_SCOPE_CHANGE"
+  ],
+  "soft_warnings": {
+    "ADBE": [
+      "LIVE_RR_BELOW_1: from live ask, reward 2.25 vs risk 6.64/share = R:R 0.34 (levels anchored to 230.05 bar close; price has run up toward TP)"
+    ],
+    "GS": [
+      "TP_NEAR_LIVE: TP only 0.39% above live ask 884.0 \u2014 little upside left before TP; consider Trader re-deriving TP from live ATR (any change = re-QA)",
+      "LIVE_RR_BELOW_1: from live ask, reward 3.43 vs risk 19.95/share = R:R 0.17 (levels anchored to 874.07 bar close; price has run up toward TP)"
+    ],
+    "CAT": [],
+    "PHM": []
+  },
+  "soft_warnings_common": [
+    "PREPARE_TOKEN_EXPIRED",
+    "PACK_INSTRUCTION_WORDING",
+    "PRIOR_COS_HOLD_ALL",
+    "overview GS/PHM quote stale; realtime rates used",
+    "get-my-balances 403; cash from portfolio-summary"
+  ],
+  "per_pack": {
+    "ADBE": {
+      "overall": "PASS",
+      "authorize_place": true,
+      "fail_codes": [],
+      "instrumentId": 1126,
+      "live_ask": 232.88,
+      "SL": 226.24,
+      "TP": 235.13,
+      "sl_pct_below": 2.85,
+      "tp_pct_above": 0.97,
+      "live_rr": 0.34,
+      "fee": 0.9,
+      "overnight": 0.0,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-adbe-500-20261007-keys-ofer.json"
+    },
+    "GS": {
+      "overall": "PASS",
+      "authorize_place": true,
+      "fail_codes": [],
+      "instrumentId": 1467,
+      "live_ask": 884.0,
+      "SL": 864.05,
+      "TP": 887.43,
+      "sl_pct_below": 2.26,
+      "tp_pct_above": 0.39,
+      "live_rr": 0.17,
+      "fee": 0.9,
+      "overnight": 0.0,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-gs-500-20261007-keys-ofer.json"
+    },
+    "CAT": {
+      "overall": "PASS",
+      "authorize_place": true,
+      "fail_codes": [],
+      "instrumentId": 1012,
+      "live_ask": 811.8,
+      "SL": 798.61,
+      "TP": 834.14,
+      "sl_pct_below": 1.62,
+      "tp_pct_above": 2.75,
+      "live_rr": 1.69,
+      "fee": 1.06,
+      "overnight": 0.0,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-cat-500-20261007-keys-ofer.json"
+    },
+    "PHM": {
+      "overall": "SUPERSEDED",
+      "authorize_place": false,
+      "fail_codes": [
+        "SUPERSEDED_SCOPE_CHANGE"
+      ],
+      "instrumentId": 1815,
+      "live_ask": 112.3,
+      "SL": 110.43,
+      "TP": 114.35,
+      "sl_pct_below": 1.67,
+      "tp_pct_above": 1.83,
+      "live_rr": 1.1,
+      "fee": 1.06,
+      "overnight": 0.0,
+      "verdict_path": "/workspace/classic_rsi/audit/qa-verdict-classic-phm-500-20261007-keys-ofer.json"
+    }
+  },
+  "cash_sequence": {
+    "start": 4054.5,
+    "steps": [
+      {
+        "symbol": "ADBE",
+        "cashBefore": 4054.5,
+        "required": 500.9,
+        "cashAfter": 3553.6
+      },
+      {
+        "symbol": "GS",
+        "cashBefore": 3553.6,
+        "required": 500.9,
+        "cashAfter": 3052.7
+      },
+      {
+        "symbol": "CAT",
+        "cashBefore": 3052.7,
+        "required": 501.06,
+        "cashAfter": 2551.64
+      },
+      {
+        "symbol": "PHM",
+        "cashBefore": 2551.64,
+        "required": 501.06,
+        "cashAfter": 2050.58
+      }
+    ],
+    "final_residual": 2050.58,
+    "fees_total": 3.92,
+    "residual_positive": true,
+    "below_2500_ok_under_ofer_override": true,
+    "matches_pack_plan": true
+  },
+  "live_book": {
+    "availableCash": 4054.5,
+    "frozenCash": 0,
+    "totalValue": 7317.03,
+    "unrealizedPnl": 302.8,
+    "usedMargin": 2959.73,
+    "positions": [
+      {
+        "symbol": "SMH",
+        "positionId": 3581725275,
+        "lev": 1,
+        "invested": 1499.95,
+        "sl": 581.8
+      },
+      {
+        "symbol": "QQQ",
+        "positionId": 3523504426,
+        "lev": 1,
+        "invested": 750.0,
+        "sl": 644.0
+      },
+      {
+        "symbol": "XLV",
+        "positionId": 3498067688,
+        "lev": 1,
+        "invested": 709.78,
+        "sl": 148.62
+      }
+    ],
+    "pendingOrders": [],
+    "mirrors": [],
+    "adbe_gs_cat_phm_open": false,
+    "duplicate_pending": false,
+    "portfolio_xRequestId": "8a0b86a7-b21e-4bcf-adff-f575a772241e",
+    "positions_xRequestId": "1609820a-1189-4467-89df-419c22d16f71",
+    "asOf": "2026-10-07T18:46:38Z (21:46 IDT)",
+    "balances_note": "get-my-balances 403 (no money.balance:read scope); cash from get-my-portfolio-summary"
+  },
+  "place_order": [
+    "ADBE",
+    "GS",
+    "CAT",
+    "PHM"
+  ],
+  "scope_change": "Ofer via CoS 2026-10-07 21:48 IDT: Classic buy ONLY ADBE + GS + CAT $500 x1 each; PHM SKIPPED/superseded",
+  "superseded_by": "/workspace/classic_rsi/audit/qa-verdict-classic-batch-adbe-gs-cat-500-20261007-keys-ofer.json"
+}

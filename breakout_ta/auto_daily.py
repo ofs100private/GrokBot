@@ -104,22 +104,256 @@ APP_ROOTS = [
 ]
 
 
-def build_comparison(payload: dict[str, Any]) -> dict[str, Any]:
-    """Compare Breakout TA vs Classic RSI vs Momentum breakout sleeve (methods, not live PnL)."""
+# ---------------------------------------------------------------------------
+# Classic book loader (fix 2026-10-07, QA soft code BT_COMPARISON_CLASSIC_BOOK_STALE)
+#
+# Classic truth = live Classic account OfersClaw5-PRIYN via MCP `user-OfersClaw5`
+# (get-my-portfolio-summary). This Python process cannot call MCP itself, so the
+# caller (routine/agent) must pass the saved live MCP response
+# (--classic-live-json) or have refreshed the sidecars from it. The loader then:
+#   * prefers an explicit live read (and rewrites all Classic sidecars from it),
+#   * otherwise picks the NEWEST user-OfersClaw5 sidecar by asOf (never a fixed
+#     file order — the old code preferred public/classic-portfolio.json even
+#     when it was hours older than classic-portfolio-for-app.json),
+#   * refuses any sidecar older than CLASSIC_MAX_AGE_MIN (book left empty and
+#     flagged STALE_SNAPSHOT_REFUSED so QA sees it instead of a silent stale book).
+# ---------------------------------------------------------------------------
+CLASSIC_SOURCE = "user-OfersClaw5"
+CLASSIC_PORTFOLIO = "OfersClaw5-PRIYN"
+CLASSIC_MIRROR_ID = 11368142  # optional mirror; not required for truth
+CLASSIC_MAX_AGE_MIN = 30
+CLASSIC_SIDECARS = [
+    Path("/workspace/etoroview/public/classic-portfolio.json"),
+    Path("/workspace/classic-portfolio-for-app.json"),
+]
+CLASSIC_SIDECAR_MIRRORS = [
+    Path("/workspace/etoroview/dist/classic-portfolio.json"),
+    Path("/workspace/GrokBot/app/etoroview/public/classic-portfolio.json"),
+    Path("/workspace/GrokBot/app/etoroview/dist/classic-portfolio.json"),
+]
+MOMENTUM_SIDECAR = Path("/workspace/etoroview/public/momentum-portfolio.json")
+MOMENTUM_MIRROR_ID = 11630170
+
+
+def _parse_ts(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        txt = str(value).strip().replace("Z", "+00:00")
+        # trim >6 fractional digits (eToro returns 7)
+        if "." in txt:
+            head, _, tail = txt.partition(".")
+            n = 0
+            while n < len(tail) and tail[n].isdigit():
+                n += 1
+            frac, rest = tail[:n], tail[n:]
+            txt = f"{head}.{frac[:6]}{rest}"
+        dt = datetime.fromisoformat(txt)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=IDT)
+        return dt.astimezone(IDT)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def classic_snapshot_from_live_summary(live: dict[str, Any], *, slot: str = "breakout_ta_live_refresh") -> dict[str, Any]:
+    """Map a raw user-OfersClaw5 get-my-portfolio-summary response to the Classic sidecar shape."""
+    if int(live.get("statusCode") or 0) != 200:
+        raise ValueError(f"Classic live read not OK: statusCode={live.get('statusCode')}")
+    totals = live.get("totals") or {}
+    ts = _parse_ts(live.get("timestamp")) or datetime.now(IDT)
+    positions: list[dict[str, Any]] = []
+    for h in live.get("holdings") or []:
+        mk = h.get("market") or {}
+        sym = str(mk.get("symbol") or "").upper()
+        for pos in h.get("positions") or [{}]:
+            positions.append({
+                "symbol": sym,
+                "instrumentId": mk.get("instrumentId"),
+                "invested": pos.get("invested", h.get("invested")),
+                "units": pos.get("units", h.get("units")),
+                "openRate": pos.get("openRate", h.get("avgOpenRate")),
+                "positionId": pos.get("positionId"),
+                "openTime": pos.get("openTime"),
+                "currentRate": pos.get("currentRate", h.get("currentRate")),
+                "value": h.get("value") if len(h.get("positions") or []) <= 1 else None,
+                "pnl": pos.get("pnl", h.get("pnl")),
+                "pnlPercent": pos.get("pnlPercent", h.get("pnlPercent")),
+                "stopLossRate": pos.get("stopLossRate"),
+                "takeProfitRate": pos.get("takeProfitRate"),
+                "leverage": pos.get("leverage", h.get("avgLeverage")),
+                "direction": pos.get("direction", "long"),
+            })
+    symbols: list[str] = []
+    for p_ in positions:
+        if p_["symbol"] and p_["symbol"] not in symbols:
+            symbols.append(p_["symbol"])
+    cash = totals.get("availableCash")
+    equity = totals.get("totalValue")
+    invested = round(sum(float(p_.get("invested") or 0) for p_ in positions), 2)
+    cash_pct = round(100.0 * float(cash) / float(equity), 1) if cash is not None and equity else None
+    return {
+        "mirrorId": CLASSIC_MIRROR_ID,
+        "username": CLASSIC_PORTFOLIO,
+        "equity": equity,
+        "cash": cash,
+        "invested": invested,
+        "openPnl": totals.get("unrealizedPnl"),
+        "closedPnl": None,
+        "cashPct": cash_pct,
+        "deploymentPct": round(100.0 - cash_pct, 1) if cash_pct is not None else None,
+        "symbols": symbols,
+        "positions": positions,
+        "pendingOrders": live.get("pendingOrders") or [],
+        "summary": {
+            "availableCash": cash,
+            "equity": equity,
+            "invested": invested,
+            "openPnl": totals.get("unrealizedPnl"),
+            "usedMargin": totals.get("usedMargin"),
+            "source": CLASSIC_SOURCE,
+        },
+        "availableCash": cash,
+        "totalValue": equity,
+        "unrealizedPnl": totals.get("unrealizedPnl"),
+        "xRequestId": live.get("xRequestId"),
+        "ssoTimestamp": live.get("timestamp"),
+        "asOf": ts.isoformat(),
+        "slot": slot,
+        "pricingNote": (
+            f"LIVE {CLASSIC_SOURCE} get-my-portfolio-summary ({CLASSIC_PORTFOLIO}) "
+            f"xRequestId={live.get('xRequestId')}. Book {'/'.join(symbols)}. Cash ${cash}."
+        ),
+        "rejected": None,
+        "names": len(symbols),
+        "source": CLASSIC_SOURCE,
+        "mcp": CLASSIC_SOURCE,
+        "portfolio": CLASSIC_PORTFOLIO,
+        "agentPortfolio": CLASSIC_PORTFOLIO,
+        "ledger": "keys",
+    }
+
+
+def write_classic_sidecars(snapshot: dict[str, Any]) -> list[str]:
+    """Write the live Classic snapshot to every Classic sidecar the app/scan reads."""
+    text = json.dumps(snapshot, indent=2, default=str) + "\n"
+    written = []
+    for dest in CLASSIC_SIDECARS + CLASSIC_SIDECAR_MIRRORS:
+        if dest.parent.exists():
+            dest.write_text(text)
+            written.append(str(dest))
+    return written
+
+
+def load_classic_book(
+    classic_live: Optional[dict[str, Any]] = None,
+    *,
+    now: Optional[datetime] = None,
+    max_age_min: int = CLASSIC_MAX_AGE_MIN,
+    write_sidecars: bool = True,
+) -> dict[str, Any]:
+    """Return Classic book {symbols, status, source, asOf, xRequestId, cash, ...} — live only, never stale."""
+    now = now or datetime.now(IDT)
+    if classic_live is not None:
+        snap = classic_snapshot_from_live_summary(classic_live)
+        written = write_classic_sidecars(snap) if write_sidecars else []
+        return {
+            "status": "LIVE",
+            "source": f"{CLASSIC_SOURCE} get-my-portfolio-summary (live read)",
+            "portfolio": CLASSIC_PORTFOLIO,
+            "symbols": sorted(snap["symbols"]),
+            "asOf": snap["asOf"],
+            "xRequestId": snap.get("xRequestId"),
+            "availableCash": snap.get("cash"),
+            "totalValue": snap.get("equity"),
+            "pendingOrders": len(snap.get("pendingOrders") or []),
+            "sidecars_refreshed": written,
+        }
+
+    best: Optional[tuple[datetime, Path, dict[str, Any]]] = None
+    for path in CLASSIC_SIDECARS:
+        if not path.exists():
+            continue
+        try:
+            d = json.loads(path.read_text())
+        except Exception:  # noqa: BLE001
+            continue
+        if str(d.get("source") or (d.get("summary") or {}).get("source") or "") != CLASSIC_SOURCE:
+            continue
+        ts = _parse_ts(d.get("asOf"))
+        if ts is None:
+            continue
+        if best is None or ts > best[0]:
+            best = (ts, path, d)
+
+    if best is None:
+        return {"status": "MISSING", "source": CLASSIC_SOURCE, "symbols": [],
+                "note": "No user-OfersClaw5 Classic sidecar found; refresh from live read."}
+    ts, path, d = best
+    age_min = (now - ts).total_seconds() / 60.0
+    base = {
+        "source": f"{CLASSIC_SOURCE} sidecar {path}",
+        "portfolio": CLASSIC_PORTFOLIO,
+        "asOf": ts.isoformat(),
+        "age_min": round(age_min, 1),
+        "xRequestId": d.get("xRequestId"),
+        "availableCash": d.get("cash", d.get("availableCash")),
+        "totalValue": d.get("equity", d.get("totalValue")),
+    }
+    if age_min > max_age_min:
+        return {**base, "status": "STALE_SNAPSHOT_REFUSED", "symbols": [],
+                "stale_symbols": sorted(set(_load_symbols_from_portfolio(path))),
+                "note": f"Newest Classic sidecar is {age_min:.0f} min old (> {max_age_min}); "
+                        "refusing stale book. Re-run with --classic-live-json from a live user-OfersClaw5 read."}
+    return {**base, "status": "FRESH_SIDECAR", "symbols": sorted(set(_load_symbols_from_portfolio(path)))}
+
+
+def _load_momentum_book() -> dict[str, Any]:
+    d: dict[str, Any] = {}
+    if MOMENTUM_SIDECAR.exists():
+        try:
+            d = json.loads(MOMENTUM_SIDECAR.read_text())
+        except Exception:  # noqa: BLE001
+            d = {}
+    return {
+        "source": f"parent copy mirror {MOMENTUM_MIRROR_ID} sidecar {MOMENTUM_SIDECAR}",
+        "mirrorId": d.get("mirrorId"),
+        "asOf": d.get("asOf"),
+        "xRequestId": d.get("xRequestId"),
+        "symbols": sorted(set(_load_symbols_from_portfolio(MOMENTUM_SIDECAR))),
+        "note": "Momentum reporting truth = mirror 11630170 (keys user-Momentum-HHHGDTJ NOT used as the book).",
+    }
+
+
+def build_comparison(
+    payload: dict[str, Any],
+    *,
+    classic_live: Optional[dict[str, Any]] = None,
+    classic_book: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    """Compare Breakout TA vs Classic RSI vs Momentum breakout sleeve (methods, not live PnL).
+
+    Classic book comes from load_classic_book(): live user-OfersClaw5 read or a fresh
+    sidecar written from one — never an older snapshot.
+    """
     confirmed = {r["symbol"] for r in payload.get("confirmed") or []}
     watch = {r["symbol"] for r in payload.get("watch") or []}
+    failed = {r["symbol"] for r in payload.get("failed") or []}
 
-    classic_syms = set(_load_symbols_from_portfolio(Path("/workspace/etoroview/public/classic-portfolio.json")))
-    if not classic_syms:
-        classic_syms = set(_load_symbols_from_portfolio(Path("/workspace/classic-portfolio-for-app.json")))
-    mom_syms = set(_load_symbols_from_portfolio(Path("/workspace/etoroview/public/momentum-portfolio.json")))
+    if classic_book is None:
+        classic_book = load_classic_book(classic_live)
+    classic_syms = set(classic_book.get("symbols") or [])
+    momentum_book = _load_momentum_book()
+    mom_syms = set(momentum_book["symbols"])
 
     # Classic RSI latest auto if present
     classic_rsi_buy, classic_rsi_riskoff = set(), set()
+    classic_rsi_run_id, classic_rsi_asof = None, None
     cr_path = Path("/workspace/classic_rsi/audit/latest-auto.json")
     if cr_path.exists():
         try:
             cr = json.loads(cr_path.read_text())
+            classic_rsi_run_id, classic_rsi_asof = cr.get("run_id"), cr.get("asOfIDT")
             for p in cr.get("buy_packs") or []:
                 s = (p.get("instrument") or {}).get("symbol") or p.get("symbol")
                 if s:
@@ -132,6 +366,9 @@ def build_comparison(payload: dict[str, Any]) -> dict[str, Any]:
             pass
 
     return {
+        "refreshedAt": datetime.now(IDT).isoformat(),
+        "signals_run_id": payload.get("run_id"),
+        "signals_asOfIDT": payload.get("asOfIDT"),
         "methods": [
             {
                 "id": "breakout_ta",
@@ -141,6 +378,7 @@ def build_comparison(payload: dict[str, Any]) -> dict[str, Any]:
                 "place": False,
                 "tonight_confirmed": sorted(confirmed),
                 "tonight_watch": sorted(watch),
+                "tonight_failed": sorted(failed),
             },
             {
                 "id": "classic_rsi",
@@ -149,6 +387,9 @@ def build_comparison(payload: dict[str, Any]) -> dict[str, Any]:
                 "core": "RSI zones + strong candle; ATR SL/TP; Sell=risk-off; QA before place",
                 "place": "after QA PASS (not FULL AUTO)",
                 "book_symbols": sorted(classic_syms),
+                "book": classic_book,
+                "latest_rsi_run_id": classic_rsi_run_id,
+                "latest_rsi_asOfIDT": classic_rsi_asof,
                 "latest_rsi_buy_packs": sorted(classic_rsi_buy),
                 "latest_rsi_risk_off": sorted(classic_rsi_riskoff),
             },
@@ -159,6 +400,7 @@ def build_comparison(payload: dict[str, Any]) -> dict[str, Any]:
                 "core": "RS/RVOL/new 20d high; FULL AUTO after QA PASS",
                 "place": "FULL AUTO after QA",
                 "book_symbols": sorted(mom_syms),
+                "book": momentum_book,
             },
         ],
         "overlap": {
@@ -166,6 +408,10 @@ def build_comparison(payload: dict[str, Any]) -> dict[str, Any]:
             "breakout_confirmed_in_momentum_book": sorted(confirmed & mom_syms),
             "breakout_watch_in_classic_book": sorted(watch & classic_syms),
             "breakout_watch_in_momentum_book": sorted(watch & mom_syms),
+            "breakout_failed_in_classic_book": sorted(failed & classic_syms),
+            "breakout_failed_in_momentum_book": sorted(failed & mom_syms),
+            "classic_book_no_breakout_signal": sorted(classic_syms - confirmed - watch - failed),
+            "momentum_book_no_breakout_signal": sorted(mom_syms - confirmed - watch - failed),
             "classic_rsi_buy_also_breakout_confirmed": sorted(classic_rsi_buy & confirmed),
             "classic_rsi_buy_also_breakout_watch": sorted(classic_rsi_buy & watch),
         },
@@ -174,15 +420,24 @@ def build_comparison(payload: dict[str, Any]) -> dict[str, Any]:
             "Classic times with 1H RSI; Breakout TA uses daily close inflection.",
             "Momentum buys via EOD screener rules (RVOL/RS); Breakout TA does not replace that pack.",
             "Agreement on a symbol does not authorize a place without the book QA gate.",
+            "FAILED_BREAKOUT on a held name is informational only; it is not a sell/close instruction from this tab.",
         ],
     }
 
 
-def write_app_feed(payload: dict[str, Any]) -> list[str]:
-    comparison = build_comparison(payload)
+def write_app_feed(
+    payload: dict[str, Any],
+    *,
+    classic_live: Optional[dict[str, Any]] = None,
+    comparison: Optional[dict[str, Any]] = None,
+    as_of: Optional[str] = None,
+) -> list[str]:
+    if comparison is None:
+        comparison = build_comparison(payload, classic_live=classic_live)
     feed = {
         "schemaVersion": "1.0",
-        "asOf": datetime.now(IDT).isoformat(),
+        "asOf": as_of or datetime.now(IDT).isoformat(),
+        "comparisonRefreshedAt": comparison.get("refreshedAt"),
         "slot": "nightly_breakout_ta",
         "run_id": payload.get("run_id"),
         "timeframe": "1D",
@@ -229,7 +484,15 @@ def write_app_feed(payload: dict[str, Any]) -> list[str]:
     return written
 
 
-def run_auto(*, symbols: Optional[list[str]] = None, period: str = "6mo") -> dict[str, Any]:
+def run_auto(
+    *,
+    symbols: Optional[list[str]] = None,
+    period: str = "6mo",
+    classic_live: Optional[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    if classic_live is not None:
+        # refresh Classic sidecars from the live read BEFORE building the universe/comparison
+        write_classic_sidecars(classic_snapshot_from_live_summary(classic_live))
     universe = symbols or build_universe()
     rid = new_run_id()
     cfg = AnalyzeConfig()
@@ -267,8 +530,41 @@ def run_auto(*, symbols: Optional[list[str]] = None, period: str = "6mo") -> dic
     }
     path = append_audit(payload, rid)
     payload["audit_path"] = str(path)
-    write_app_feed(payload)
+    write_app_feed(payload, classic_live=classic_live)
     return payload
+
+
+def refresh_comparison(run_id: str, *, classic_live: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Rebuild only the comparison block for an existing run (signals, run_id and asOf unchanged)."""
+    audit_path = AUDIT_DIR / f"{run_id}.json"
+    payload = json.loads(audit_path.read_text())
+    payload["audit_path"] = str(audit_path)
+    as_of = None
+    cur = APP_ROOTS[0] / APP_FEED_NAME
+    if cur.exists():
+        try:
+            prev = json.loads(cur.read_text())
+            if prev.get("run_id") == run_id:
+                as_of = prev.get("asOf")
+        except Exception:  # noqa: BLE001
+            pass
+    comparison = build_comparison(payload, classic_live=classic_live)
+    written = write_app_feed(payload, comparison=comparison, as_of=as_of)
+    text = (APP_ROOTS[0] / APP_FEED_NAME).read_bytes()
+    rec = {
+        "run_id": run_id,
+        "kind": "breakout_comparison_refresh",
+        "comparisonRefreshedAt": comparison.get("refreshedAt"),
+        "feed_asOf": as_of,
+        "classic_book": comparison["methods"][1]["book"],
+        "overlap": comparison["overlap"],
+        "feed_sha256": hashlib.sha256(text).hexdigest(),
+        "written": written,
+        "do_not_place": True,
+    }
+    with (AUDIT_DIR / "comparison-refresh.jsonl").open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(rec, default=str) + "\n")
+    return rec
 
 
 def asdict_cfg(cfg: AnalyzeConfig) -> dict[str, Any]:
@@ -290,8 +586,22 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--symbols", nargs="*", default=None)
     p.add_argument("--period", default="6mo")
     p.add_argument("--out", default="")
+    p.add_argument("--classic-live-json", default="",
+                   help="Saved raw user-OfersClaw5 get-my-portfolio-summary response (live Classic truth)")
+    p.add_argument("--refresh-comparison", default="", metavar="RUN_ID",
+                   help="Only rebuild comparison + re-dual-write feed for an existing run_id")
     args = p.parse_args(argv)
-    payload = run_auto(symbols=list(args.symbols) if args.symbols else None, period=args.period)
+    classic_live = json.loads(Path(args.classic_live_json).read_text()) if args.classic_live_json else None
+    if args.refresh_comparison:
+        rec = refresh_comparison(args.refresh_comparison, classic_live=classic_live)
+        print(json.dumps({k: rec[k] for k in ("run_id", "comparisonRefreshedAt", "feed_sha256")}, default=str))
+        print(json.dumps(rec["classic_book"], default=str))
+        print(json.dumps(rec["overlap"], default=str))
+        for w in rec["written"]:
+            print("  wrote", w)
+        return 0
+    payload = run_auto(symbols=list(args.symbols) if args.symbols else None, period=args.period,
+                       classic_live=classic_live)
     if args.out:
         Path(args.out).write_text(json.dumps(payload, indent=2, default=str) + "\n")
         print(f"wrote {args.out}")

@@ -1,0 +1,50 @@
+{
+  "source": "22:42 backup catch-up",
+  "day": "2026-09-30",
+  "asOf_il": "2026-09-30T22:50:57.317394+03:00",
+  "screener_run_id": "screener-20260930-224513-4fa06dab",
+  "pm_file": "/workspace/pm_2026-09-30_eod_2242_backup.json",
+  "risk_actions": [
+    {
+      "symbol": "JNJ",
+      "action": "CLOSE",
+      "reason": "BELOW_SMA50",
+      "rationale": "Close JNJ: last 265.0500 < SMA50 265.3936 \u2014 EOD playbook exits broken trend (R=-0.27, pnl=-1.59%)",
+      "last": 265.05,
+      "sma50": 265.3936,
+      "avg_price": 269.34,
+      "pnl_pct": -1.59,
+      "r_multiple": -0.27,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "PASS CLOSE JNJ: BELOW_SMA50"
+        ],
+        "deviations": []
+      }
+    },
+    {
+      "symbol": "CRWD",
+      "action": "MOVE_SL_BREAKEVEN",
+      "reason": "HIT_2R",
+      "rationale": "Move SL to breakeven on CRWD: R=2.07 \u2265 2 (last 265.0700, entry 242.0000)",
+      "last": 265.07,
+      "sma50": 216.518,
+      "new_stop_loss": 242.0,
+      "prior_stop_loss": 230.85,
+      "r_multiple": 2.07,
+      "qa": {
+        "ok": true,
+        "verdict": "PASS",
+        "reasons": [
+          "PASS MOVE_SL_BREAKEVEN CRWD: HIT_2R"
+        ],
+        "deviations": []
+      }
+    }
+  ],
+  "pack_filtered": "/workspace/momentum_audit/screener-2026-09-30-pack-filtered.json",
+  "keys_mcp": "BROKEN_MIXED_AUTH user-Momentum-HHHGDTJ",
+  "positions_source": "user-etoro mirrors[11630170]"
+}

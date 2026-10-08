@@ -1,0 +1,277 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_place_qa_2026-09-30_jnj_crwd_rvty",
+  "asOf_il": "2026-09-30T22:53:31+03:00",
+  "screener_run_id": "screener-20260930-224513-4fa06dab",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/screener-qa-screener-20260930-224513-4fa06dab.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20260930-2240-primary-qa-bundle.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS_WITH_GATE_OK",
+  "LIVE_READ_LIMITED": true,
+  "live_read_note": "user-Momentum-HHHGDTJ MCP 422 mixed Authorization+x-user-key \u2014 execution keys ledger unread; book cash/positions from user-etoro mirror 11630170 (+ afternoon sidecar). Never blend keys cash as book.",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 549.77,
+    "value": 7845.87,
+    "invested": 8000.0,
+    "openPnl": -122.69,
+    "closedPnl": -301.28,
+    "source": "user-etoro SSO get-my-portfolio-summary copiedTraders[11630170]",
+    "xRequestId_portfolio": "7ca6f126-8ed7-49c5-ae6c-a2fa3b4434b0",
+    "xRequestId_positions": "83de3e00-a31c-4023-8fd3-d42c3f692379",
+    "held_symbols": [
+      "AAPL",
+      "JNJ",
+      "DE",
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "CRWD",
+      "P",
+      "NDSN"
+    ],
+    "asOf_utc": "2026-09-30T19:52:47.8403175Z",
+    "note": "Mirror A availableCash=$549.77 is book cash TRUTH \u2014 never blend keys; parent Trading cash $6495.88 is NOT Momentum book"
+  },
+  "keys_ledger": {
+    "authChannel": "BROKEN_MIXED_AUTH_422",
+    "mcp": "user-Momentum-HHHGDTJ",
+    "availableCash_NOT_TRUTH": null,
+    "note": "Keys MCP = fills/execution ledger ONLY when healthy \u2014 currently LIVE_READ_LIMITED; positionId_keys from audit sidecar only",
+    "positionId_keys_from_audit": {
+      "JNJ": 3584876985,
+      "CRWD": 3579391383
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "spx_close": 7685.56,
+    "spx_sma50": 7648.68,
+    "vix_close": 15.99
+  },
+  "pack_sleeve": {
+    "stocks": 3,
+    "breakout_momentum": 0,
+    "volume_breakout": 1,
+    "vcp": 2,
+    "etf": 1,
+    "commodity": 0,
+    "ok": true,
+    "filtered_drops": {
+      "FTNT": "ALREADY_HELD",
+      "NDSN": "ALREADY_HELD",
+      "XLK": "ALREADY_HELD"
+    }
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 549.77,
+    "RVTY": 1000,
+    "covers_RVTY_now": false,
+    "after_JNJ_CLOSE_est_cash": "~1349 (549.77 + ~800 JNJ invested)",
+    "order": "JNJ CLOSE + CRWD BE first; RVTY INSUFFICIENT_CASH GATE_OK now \u2014 FRESH place-QA after JNJ frees cash",
+    "note": "PLACE_WITHOUT_QA_BOT_RECHECK if RVTY placed without new QA Bot recheck after cash/state change"
+  },
+  "verdicts": {
+    "JNJ_CLOSE": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "hard_fail": false,
+      "qa_places": false,
+      "action": "CLOSE",
+      "symbol": "JNJ",
+      "reason": "BELOW_SMA50",
+      "positionId_keys_audit": 3584876985,
+      "positionId_mirror_A": 3584876986,
+      "on_mirror_A": true,
+      "live_mirror": {
+        "positionId": 3584876986,
+        "openRate": 269.34,
+        "currentRate": 265.09,
+        "pnlPercent": -1.57,
+        "stopLossRate": 253.27,
+        "invested": 799.86,
+        "units": 2.969704,
+        "direction": "long",
+        "leverage": 1
+      },
+      "pm": {
+        "last": 265.05,
+        "sma50": 265.3936,
+        "avg_price": 269.34,
+        "pnl_pct": -1.59,
+        "r_multiple": -0.27
+      },
+      "checks": {
+        "long_x1_open": true,
+        "below_sma50": true,
+        "last_lt_sma50": true,
+        "priority_CLOSE_ok": true,
+        "not_short": true,
+        "mirror_A_holds_JNJ": true,
+        "pnl_not_required_loss4_when_below_sma": true
+      },
+      "note": "PASS CLOSE JNJ BELOW_SMA50: live 265.09 < SMA50 265.3936 (pnl\u2248-1.57%). Mirror pos 3584876986. Keys pos unresolved live (422) \u2014 use keys 3584876985 from audit for execution if keys MCP fixed. FULL AUTO close OK."
+    },
+    "CRWD_MOVE_SL_BREAKEVEN": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "hard_fail": false,
+      "qa_places": false,
+      "action": "MOVE_SL_BREAKEVEN",
+      "symbol": "CRWD",
+      "reason": "HIT_2R",
+      "positionId_keys_audit": 3579391383,
+      "positionId_mirror_A": 3579391384,
+      "on_mirror_A": true,
+      "prior_stop": 230.85,
+      "new_stop": 242.0,
+      "entry": 242.0,
+      "live_mirror": {
+        "positionId": 3579391384,
+        "openRate": 242.0,
+        "currentRate": 264.82,
+        "pnlPercent": 9.44,
+        "stopLossRate": 230.85,
+        "invested": 799.98,
+        "direction": "long",
+        "leverage": 1
+      },
+      "r_multiple_pm": 2.07,
+      "r_multiple_live_est": 2.047,
+      "checks": {
+        "long_x1_open": true,
+        "new_stop_eq_entry_breakeven": true,
+        "new_stop_ge_prior": true,
+        "not_noop_already_at_new": true,
+        "not_loosen": true,
+        "R_ge_2": true,
+        "not_short": true,
+        "priority_not_CLOSE": true,
+        "pnl_pct_gt_neg4": true,
+        "above_sma50_pm": true,
+        "mirror_A_holds_CRWD": true
+      },
+      "priority_vs_close": "BE_OK_not_CLOSE (pnl% +9.44 live; PM sma50=216.518 last>sma50)",
+      "note": "PASS MOVE_SL_BREAKEVEN CRWD mirror pos 3579391384: SL 230.85\u2192242.0 (=entry BE). Live still at 230.85 (not noop). R\u22482.05\u22652. FULL AUTO patch OK. Keys pos 3579391383 from audit if keys MCP fixed."
+    },
+    "FTNT_SKIP": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_codes": [
+        "ALREADY_HELD"
+      ],
+      "symbol": "FTNT",
+      "positionId_mirror_A": 3590220048,
+      "on_mirror_A": true,
+      "note": "FTNT already held on mirror A \u2014 skip BUY correctly (BLOCK/SKIP OK).",
+      "qa_places": false
+    },
+    "NDSN_SKIP": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_codes": [
+        "ALREADY_HELD"
+      ],
+      "symbol": "NDSN",
+      "positionId_mirror_A": 3591649729,
+      "on_mirror_A": true,
+      "note": "NDSN already held on mirror A \u2014 skip BUY correctly (BLOCK/SKIP OK).",
+      "qa_places": false
+    },
+    "XLK_SKIP": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_codes": [
+        "ALREADY_HELD"
+      ],
+      "symbol": "XLK",
+      "positionId_mirror_A": 3577022320,
+      "on_mirror_A": true,
+      "note": "XLK already held on mirror A \u2014 skip BUY correctly (BLOCK/SKIP OK).",
+      "qa_places": false
+    },
+    "RVTY": {
+      "verdict": "GATE_OK",
+      "authorize_place": false,
+      "deviation_codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "hard_fail": false,
+      "qa_places": false,
+      "trade_rules": "PASS",
+      "cash_gate": "INSUFFICIENT_CASH",
+      "sleeve_note": "VOLUME_BREAKOUT secondary sleeve (NOT MOMENTUM_BREAKOUT) \u2014 RVOL 1.84 \u22651.5 OK; RVOL<2.0 would FAIL only if tagged MOMENTUM_BREAKOUT",
+      "candidate": {
+        "symbol": "RVTY",
+        "amount": 1000,
+        "leverage": 1,
+        "direction": "buy",
+        "orderType": "mkt",
+        "account": "real",
+        "stopLossRate": 145.07,
+        "stopLossType": "fixed",
+        "setup": "VOLUME_BREAKOUT",
+        "setup_type_field": "BREAKOUT",
+        "sleeve": "VOLUME_BREAKOUT",
+        "reason": "VOLUME_BREAKOUT",
+        "rs": 94,
+        "rvol": 1.84,
+        "regime": "HEALTHY",
+        "dwm": {
+          "day": 1.02,
+          "week": 8.6,
+          "month": 19.94
+        }
+      },
+      "checks": {
+        "screener_pack_linkage": true,
+        "setup_ok_healthy_volume_breakout": true,
+        "not_momentum_breakout_rvol_gate": true,
+        "leverage_eq_1": true,
+        "amount_eq_1000": true,
+        "long_only": true,
+        "sl_present_fixed": true,
+        "not_already_held_mirror_A": true,
+        "event_vol_freeze": false,
+        "hard_halt": false,
+        "stock_sleeve_le_3": true,
+        "breakout_momentum_le_2": true,
+        "dwm_not_both_week_month_red": true,
+        "cash_covers_now": false,
+        "cash_now": 549.77
+      },
+      "note": "Trade-rule PASS (HEALTHY VOLUME_BREAKOUT $1000\u00d71 SL145.07 RS94 RVOL1.84) but INSUFFICIENT_CASH GATE_OK at mirror A $549.77. Protective \u2014 NOT playbook AVOID. Do NOT authorize place now. After JNJ CLOSE frees cash \u2192 require FRESH place-QA; flag PLACE_WITHOUT_QA_BOT_RECHECK if placed without recheck."
+    }
+  },
+  "GATE_OK_notes": [
+    "RVTY INSUFFICIENT_CASH GATE_OK (protective) at $549.77 \u2014 require fresh place-QA after JNJ CLOSE / cash change; prior verdict is not authority to place RVTY",
+    "PLACE_WITHOUT_QA_BOT_RECHECK if trader self-PASSes RVTY after cash frees without QA Bot recheck"
+  ],
+  "authorize_place_now": [
+    "JNJ_CLOSE",
+    "CRWD_MOVE_SL_BREAKEVEN"
+  ],
+  "gate_ok_wait": [
+    "RVTY"
+  ],
+  "do_not_place": [
+    "FTNT",
+    "NDSN",
+    "XLK",
+    "RVTY_until_fresh_QA"
+  ],
+  "xRequestIds": {
+    "user-etoro_portfolio": "7ca6f126-8ed7-49c5-ae6c-a2fa3b4434b0",
+    "user-etoro_positions": "83de3e00-a31c-4023-8fd3-d42c3f692379",
+    "user-Momentum-HHHGDTJ": "422_mixed_auth_not_sent"
+  },
+  "full_auto_note": "FULL AUTO now (risk): (1) CLOSE JNJ mirror pos 3584876986 (keys audit 3584876985 if keys MCP fixed); (2) PATCH CRWD SL 230.85\u2192242.0 mirror pos 3579391384 (keys audit 3579391383). Do NOT place FTNT/NDSN/XLK (ALREADY_HELD). Do NOT place RVTY yet (INSUFFICIENT_CASH GATE_OK \u2014 FRESH place-QA after JNJ cash frees). QA never places. qa_places=false."
+}

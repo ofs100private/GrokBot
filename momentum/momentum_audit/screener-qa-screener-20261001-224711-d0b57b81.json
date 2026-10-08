@@ -1,0 +1,114 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20261001-224711-d0b57b81",
+  "slot": "eod_2242_backup_catchup",
+  "asOf": "2026-10-01",
+  "qaAt": "2026-10-01T22:50:51+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "soft_notes": [
+    "EVENT_VOL_FREEZE (NFP next_open=2026-10-02): 0 BUY required \u2014 buys=[] verified; 5 EVENT_VOL_FREEZE SKIPs (FTNT/XLK/NDSN/NVDA/JCI); HALT ACTION present",
+    "HALT ACTION @ 22:47:22 IDT \u226422:50 \u2014 on-time; not EOD_SCREENER_MISSED",
+    "near-miss TRACE count 54 vs file top-N 25 (same taxonomy soft as prior days)",
+    "sp500_symbols.json count=503 asOf 2026-10-01T19:47:12Z; universe_n=520; valid_n=517; watch NOW/PANW/CRM in TRACE \u2014 no mega-cap stub",
+    "regime HEALTHY (spx 7677.9 > sma50 7651.58 +0.344%; vix 16.33); TRACE regime/universe/download_ok/near_misses/event_vol_freeze/pack_done/run_summary_written present",
+    "Trader claims verified independently: HEALTHY + EVENT_VOL_FREEZE; universe_n=520; buys=[]; HALT @ 22:47:22 IDT",
+    "Pack PASS 0 buys (stocks=0 breakout=0 etf=0 commodity=0, 6 rows=1 HALT+5 SKIP); FAIL-any-BUY-on-freeze: no BUY in audit"
+  ],
+  "evidence_quotes": {
+    "universe_n": 520,
+    "sp500_n": 503,
+    "sp500_cache_count": 503,
+    "valid_n": 517,
+    "regime": "HEALTHY",
+    "spx_close": 7677.9,
+    "spx_sma50": 7651.58,
+    "spx_pct_vs_sma50": 0.344,
+    "vix_close": 16.33,
+    "event_vol_freeze": true,
+    "event_vol_freeze_reason": "EVENT_VOL_FREEZE prior_session today=2026-10-01 next_open=2026-10-02 event=NFP",
+    "hard_halt": false,
+    "ACTION_HALT_ts_il": "2026-10-01T22:47:22.190514+03:00",
+    "RUN_START_il": "2026-10-01T22:47:11.335290+03:00",
+    "RUN_END_il": "2026-10-01T22:47:22.190874+03:00",
+    "buys": [],
+    "skips": [
+      {
+        "symbol": "FTNT",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "XLK",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "NDSN",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "NVDA",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "JCI",
+        "reason": "EVENT_VOL_FREEZE"
+      }
+    ],
+    "sleeve": "stocks=0 breakout=0 etf=0 commodity=0 (freeze halt)",
+    "near_miss_trace": 54,
+    "near_miss_file_topn": 25,
+    "pack_qa_verdict": "PASS",
+    "drop_counts": {
+      "minervini": 460,
+      "rs": 7,
+      "setup": 45,
+      "dwm_data": 0,
+      "dwm_fail": 0,
+      "regime_hard": 0,
+      "regime_soft_etf": 0,
+      "regime_soft_rs": 0,
+      "regime_soft_vcp": 0,
+      "event_freeze": 5
+    }
+  },
+  "paths_checked": [
+    "/workspace/momentum_audit/screener-run-screener-20261001-224711-d0b57b81.json",
+    "/workspace/momentum_audit/near-miss-2026-10-01.json",
+    "/workspace/momentum_audit/2026-10-01.jsonl",
+    "/workspace/sp500_symbols.json",
+    "/workspace/momentum_audit/eod_miss_check_2026-10-01_pm_2242_backup_post.json",
+    "/workspace/momentum_audit/pm-2026-10-01-2242-backup-decision.json"
+  ],
+  "hard_gates": {
+    "SPX_UNIVERSE_TOO_SMALL": false,
+    "SPX_MEGACAP_FALLBACK": false,
+    "SPX_FETCH_BROKEN": false,
+    "SPX_SCAN_NOT_FULL": false,
+    "SCREENER_RUN_CRASH": false,
+    "SCREENER_AUDIT_INCOMPLETE": false,
+    "BUY_ON_EVENT_VOL_FREEZE": false
+  },
+  "coherence": {
+    "RUN_START": true,
+    "TRACE_regime_universe_download_near_miss_freeze_pack": true,
+    "ACTION_HALT": true,
+    "ACTION_buys": false,
+    "ACTION_skips_freeze": true,
+    "RUN_END": true,
+    "screener_run_json_has_regime_universe_n": true,
+    "near_miss_present": true,
+    "run_summary_written": true
+  },
+  "eod_timing": {
+    "deadline_il": "22:50",
+    "action_il": "22:47:22",
+    "eod_screener_missed_hard": false,
+    "note": "HALT ACTION 22:47:22 IDT \u226422:50 \u2014 on-time; not EOD_SCREENER_MISSED"
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "place-QA ONLY CRWD MOVE_SL_BREAKEVEN HIT_2R (no buys \u2014 EVENT_VOL_FREEZE). QA never places."
+}

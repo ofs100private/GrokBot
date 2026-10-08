@@ -1,0 +1,311 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_place_qa_2026-09-29_vtrs_ndsn_lly",
+  "asOf_il": "2026-09-29T22:52:08+03:00",
+  "screener_run_id": "screener-20260929-224425-a44cb333",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/screener_qa/screener-qa-screener-20260929-224425-a44cb333.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20260929-2242-backup-qa-bundle.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS_WITH_GATE_OK",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 1349.61,
+    "value": 7810.95,
+    "invested": 8000.0,
+    "openPnl": -157.48,
+    "closedPnl": -301.28,
+    "source": "user-etoro SSO get-my-portfolio-summary copiedTraders",
+    "xRequestId_portfolio": "9cf0e73d-5867-43a7-b593-6d7968afb954",
+    "xRequestId_positions": "a92608db-c197-4141-8089-bc2425f859bd",
+    "held_symbols": [
+      "AAPL",
+      "JNJ",
+      "DE",
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "absent_vs_keys": [
+      "ETH"
+    ],
+    "asOf_utc": "2026-09-29T19:51:21.1823581Z",
+    "note": "Mirror A availableCash=$1349.61 is book cash TRUTH \u2014 never blend keys $1673.54"
+  },
+  "keys_ledger": {
+    "authChannel": "keys",
+    "mcp": "user-Momentum-HHHGDTJ",
+    "availableCash_NOT_TRUTH": 1673.54,
+    "totalValue": 9782.48,
+    "positionCount": 9,
+    "note": "Keys MCP = fills/execution ledger ONLY \u2014 never blend as $8k book cash",
+    "xRequestId_positions": "0f0102b7-4443-4bc1-be65-5a5bcc4977a0",
+    "xRequestId_portfolio": "450edf82-279c-4368-ac44-c88a1d157dc7",
+    "symbols": [
+      "AAPL",
+      "JNJ",
+      "DE",
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "CRWD",
+      "P",
+      "ETH"
+    ],
+    "VTRS": {
+      "positionId": 3580194334,
+      "direction": "long",
+      "openRate": 16.96,
+      "currentRate": 18.19,
+      "units": 58.962264,
+      "invested": 1000.0,
+      "pnlPercent": 7.26,
+      "stopLossRate": 16.38,
+      "leverage": 1
+    },
+    "CRWD": {
+      "positionId": 3579391383,
+      "stopLossRate": 230.85,
+      "openRate": 242.0
+    },
+    "FTNT": {
+      "positionId": 3590220047,
+      "invested": 1000.0,
+      "stopLossRate": 165.78
+    },
+    "ETH": {
+      "positionId": 3572932449,
+      "invested": 10.0,
+      "on_mirror_A": false
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "spx_close": 7670.69,
+    "spx_sma50": 7645.15,
+    "vix_close": 16.02
+  },
+  "pack_sleeve": {
+    "stocks": 3,
+    "breakout": 0,
+    "etf": 0,
+    "commodity": 0,
+    "ok": true,
+    "filtered_drops": {
+      "FTNT": "ALREADY_HELD"
+    }
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 1349.61,
+    "NDSN": 1000,
+    "LLY": 1000,
+    "covers_one": true,
+    "covers_both": false,
+    "residual_after_NDSN_est": 349.61,
+    "order": "NDSN first PASS-to-place; LLY INSUFFICIENT_CASH GATE_OK wait",
+    "note": "Only one $1000 BUY fits on $1349.61; second requires fresh place-QA after cash/state change"
+  },
+  "verdicts": {
+    "VTRS_MOVE_SL_BREAKEVEN": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "hard_fail": false,
+      "qa_places": false,
+      "action": "MOVE_SL_BREAKEVEN",
+      "symbol": "VTRS",
+      "reason": "HIT_2R",
+      "positionId_keys": 3580194334,
+      "positionId_mirror_A": 3580194335,
+      "on_mirror_A": true,
+      "on_keys": true,
+      "prior_stop": 16.38,
+      "new_stop": 16.96,
+      "entry": 16.96,
+      "live_stop_keys": 16.38,
+      "live_stop_mirror_A": 16.38,
+      "live_pnlPercent_keys": 7.26,
+      "live_currentRate_keys": 18.19,
+      "r_multiple_pm": 2.09,
+      "r_multiple_live_est": 2.12,
+      "checks": {
+        "long_x1_open": true,
+        "new_stop_eq_entry_breakeven": true,
+        "new_stop_ge_prior": true,
+        "not_noop_already_at_new": true,
+        "not_loosen": true,
+        "R_ge_2": true,
+        "not_short": true,
+        "priority_not_CLOSE": true,
+        "pnl_pct_gt_neg4": true,
+        "above_sma50_pm": true,
+        "mirror_A_holds_VTRS": true
+      },
+      "priority_vs_close": "BE_OK_not_CLOSE (pnl% +7.26 keys / +5.61 mirror; PM sma50=16.8695 last>sma50)",
+      "note": "PASS MOVE_SL_BREAKEVEN VTRS keys pos 3580194334: SL 16.38\u219216.96 (=entry BE). Live still at 16.38 (not noop). R\u22482.12\u22652. Mirror A also long VTRS. FULL AUTO patch OK."
+    },
+    "NDSN": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "hard_fail": false,
+      "qa_places": false,
+      "candidate": {
+        "symbol": "NDSN",
+        "amount": 1000,
+        "leverage": 1,
+        "direction": "buy",
+        "orderType": "mkt",
+        "account": "real",
+        "stopLossRate": 310.19,
+        "stopLossType": "fixed",
+        "setup": "VCP_SETUP",
+        "rs": 86,
+        "rvol": 0.42,
+        "regime": "HEALTHY",
+        "dwm": {
+          "day": -0.4,
+          "week": 3.23,
+          "month": 1.97
+        }
+      },
+      "checks": {
+        "screener_pack_linkage": true,
+        "setup_ok_healthy_vcp": true,
+        "leverage_eq_1": true,
+        "amount_eq_1000": true,
+        "long_only": true,
+        "sl_present_fixed": true,
+        "not_already_held_mirror_A": true,
+        "not_already_held_keys": true,
+        "event_vol_freeze": false,
+        "hard_halt": false,
+        "stock_sleeve_le_3": true,
+        "breakout_le_2": true,
+        "dwm_not_both_week_month_red": true,
+        "cash_covers_one": true,
+        "cash_after_est": 349.61
+      },
+      "place_order": 1,
+      "note": "PASS NDSN $1000 \u00d71 mkt SL 310.19 VCP_SETUP RS86. Mirror A cash $1349.61 covers ONE. Prefer place first. FULL AUTO OK."
+    },
+    "LLY": {
+      "verdict": "GATE_OK",
+      "authorize_place": false,
+      "deviation_codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "hard_fail": false,
+      "qa_places": false,
+      "trade_rules": "PASS",
+      "cash_gate": "INSUFFICIENT_CASH",
+      "candidate": {
+        "symbol": "LLY",
+        "amount": 1000,
+        "leverage": 1,
+        "direction": "buy",
+        "orderType": "mkt",
+        "account": "real",
+        "stopLossRate": 1113.58,
+        "stopLossType": "fixed",
+        "setup": "VCP_SETUP",
+        "rs": 80,
+        "rvol": 0.43,
+        "regime": "HEALTHY",
+        "dwm": {
+          "day": -0.01,
+          "week": 1.24,
+          "month": 0.86
+        }
+      },
+      "checks": {
+        "screener_pack_linkage": true,
+        "setup_ok_healthy_vcp": true,
+        "leverage_eq_1": true,
+        "amount_eq_1000": true,
+        "long_only": true,
+        "sl_present_fixed": true,
+        "not_already_held_mirror_A": true,
+        "not_already_held_keys": true,
+        "event_vol_freeze": false,
+        "hard_halt": false,
+        "stock_sleeve_le_3": true,
+        "breakout_le_2": true,
+        "dwm_not_both_week_month_red": true,
+        "cash_covers_alone": true,
+        "cash_covers_after_NDSN": false,
+        "cash_after_NDSN_est": 349.61
+      },
+      "place_order": 2,
+      "note": "Trade-rule PASS (HEALTHY VCP $1000\u00d71) but INSUFFICIENT_CASH GATE_OK if NDSN fills first (residual ~$349.61 < $1000). Protective \u2014 NOT playbook AVOID. Do NOT authorize place now. Fresh place-QA required after any cash/state change."
+    },
+    "FTNT_SKIP": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_codes": [
+        "ALREADY_HELD"
+      ],
+      "symbol": "FTNT",
+      "positionId_keys": 3590220047,
+      "on_mirror_A": true,
+      "note": "FTNT already held on mirror A / keys \u2014 skip BUY correctly.",
+      "qa_places": false
+    },
+    "CRWD_TRAIL_NOOP": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_codes": [
+        "TRAIL_NOOP"
+      ],
+      "symbol": "CRWD",
+      "positionId_keys": 3579391383,
+      "live_stop": 230.85,
+      "proposed_new_stop": 230.85,
+      "note": "CRWD TRAIL_SL new_stop==prior 230.85 \u2014 NOOP. Correct skip.",
+      "qa_places": false
+    },
+    "ETH_SKIP": {
+      "verdict": "SKIP",
+      "authorize_place": false,
+      "deviation_codes": [
+        "SKIP_NOT_ON_MIRROR_A"
+      ],
+      "symbol": "ETH",
+      "positionId_keys": 3572932449,
+      "invested_keys": 10.0,
+      "on_mirror_A": false,
+      "note": "ETH not on mirror A \u2014 skip. Correct.",
+      "qa_places": false
+    }
+  },
+  "GATE_OK_notes": [
+    "LLY INSUFFICIENT_CASH GATE_OK (protective) \u2014 require fresh place-QA after NDSN fill / cash change; prior verdict is not authority to place LLY"
+  ],
+  "authorize_place_now": [
+    "VTRS_MOVE_SL_BREAKEVEN",
+    "NDSN"
+  ],
+  "gate_ok_wait": [
+    "LLY"
+  ],
+  "do_not_place": [
+    "FTNT",
+    "CRWD",
+    "ETH",
+    "LLY_until_fresh_QA"
+  ],
+  "xRequestIds": {
+    "user-etoro_portfolio": "9cf0e73d-5867-43a7-b593-6d7968afb954",
+    "user-etoro_positions": "a92608db-c197-4141-8089-bc2425f859bd",
+    "user-Momentum-HHHGDTJ_positions": "0f0102b7-4443-4bc1-be65-5a5bcc4977a0",
+    "user-Momentum-HHHGDTJ_portfolio": "450edf82-279c-4368-ac44-c88a1d157dc7"
+  },
+  "full_auto_note": "FULL AUTO now: (1) PATCH VTRS SL 16.38\u219216.96 on keys pos 3580194334; (2) prepare+place NDSN $1000\u00d71 mkt SL 310.19. Do NOT place LLY yet (INSUFFICIENT_CASH GATE_OK \u2014 fresh place-QA after cash/state change). Do NOT place FTNT/CRWD/ETH. QA never places."
+}

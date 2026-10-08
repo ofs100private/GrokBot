@@ -1,0 +1,349 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_2242_backup_place_qa_2026-10-05_mu_psx",
+  "asOf_il": "2026-10-05T22:51:13+03:00",
+  "screener_run_id": "screener-20261005-224819-a6552f3c",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/qa-verdict-screener-20261005-224819-a6552f3c.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20261005-2242-backup-qa-bundle.json",
+  "pm_ref": {
+    "run_id": "posmgr-20261005-224726-3bbd5ce3",
+    "result": "9 HOLD (AAPL DE NTAP XLK FTNT VTRS CRWD P NDSN), 0 risk actions; ETH dust excluded",
+    "place_needed": false,
+    "stdout": "/workspace/momentum_audit/pm-2026-10-05-eod-2242-backup.stdout",
+    "positions_mapped": "/workspace/momentum_audit/pm-positions-mapped-2026-10-05-eod-2242-backup.json"
+  },
+  "playbook_sleeve_rule": {
+    "citation": "2026-10-05",
+    "path": "/workspace/momentum_audit/playbook-2026-10-05-sleeve-unlimited.md",
+    "rule": "Unlimited open stocks; keep \u22651 sector ETF. Do NOT FAIL SLEEVE_CAPACITY_FULL / stock_buys>3 / buy_count>4.",
+    "still_fail": [
+      "etf_buys>1",
+      ">2 MOMENTUM_BREAKOUT same pack",
+      "EVENT_VOL_FREEZE/HARD_HALT",
+      "soft-regime VCP",
+      "DWM red",
+      "leverage\u22601",
+      "amount>$1000",
+      "short/demo",
+      "INSUFFICIENT_CASH (GATE_OK)"
+    ]
+  },
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS_WITH_GATE_OK",
+  "verdict": "PASS_WITH_GATE_OK",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "GATE_OK_codes": [
+    "INSUFFICIENT_CASH"
+  ],
+  "LIVE_READ_LIMITED": false,
+  "live_read_note": "Mirror A truth via user-etoro SSO get-my-portfolio-summary copiedTraders[11630170] + get-my-positions-and-orders mirrors[11630170]. Keys execution cash via user-Momentum-HHHGDTJ get-my-portfolio-summary (get-my-balances 403 missing money.balance:read \u2014 portfolio availableCash used).",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 3567.49,
+    "value": 7890.49,
+    "invested": 8000.0,
+    "openPnl": -71.15,
+    "closedPnl": -401.64,
+    "source": "user-etoro SSO get-my-portfolio-summary copiedTraders[11630170]",
+    "xRequestId_portfolio": "780d98b5-63df-49c0-ae32-251b5372845a",
+    "xRequestId_positions": "271b31b3-1afb-481e-b3d0-d0b5d9460355",
+    "held_symbols": [
+      "NTAP",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "asOf_utc": "2026-10-05T19:50:27.5973346Z",
+    "positions_asOf_utc": "2026-10-05T19:50:33.6078374Z",
+    "live_positions": [
+      {
+        "symbol": "NTAP",
+        "positionId": 3597307545,
+        "openRate": 220.84,
+        "stopLossRate": 205.97,
+        "invested": 792.78,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "XLK",
+        "positionId": 3577022320,
+        "openRate": 187.8,
+        "stopLossRate": 187.8,
+        "invested": 799.89,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "VTRS",
+        "positionId": 3580194335,
+        "openRate": 16.96,
+        "stopLossRate": 16.96,
+        "invested": 799.98,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "CRWD",
+        "positionId": 3579391384,
+        "openRate": 242.0,
+        "stopLossRate": 242.0,
+        "invested": 799.98,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "P",
+        "positionId": 3587299963,
+        "openRate": 122.86,
+        "stopLossRate": 108.11,
+        "invested": 799.88,
+        "direction": "long",
+        "leverage": 1
+      }
+    ],
+    "absent_from_mirror_A_vs_keys": [
+      "AAPL",
+      "DE",
+      "FTNT",
+      "NDSN",
+      "ETH"
+    ],
+    "note": "Mirror A availableCash=$3567.49 is book cash TRUTH ($8k basis). Keys extras AAPL/DE/FTNT/NDSN (+ETH dust) never allocation truth. MU/PSX not held on Mirror A."
+  },
+  "keys_ledger": {
+    "authChannel": "keys",
+    "mcp": "user-Momentum-HHHGDTJ",
+    "availableCash": 610.87,
+    "availableCash_role": "EXECUTION \u2014 must cover sequenced fills; pack cannot PASS to place if keys cannot execute",
+    "totalValue": 9961.34,
+    "unrealizedPnl": 440.58,
+    "positionCount_direct": 10,
+    "held_symbols": [
+      "P",
+      "CRWD",
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "NDSN",
+      "NTAP",
+      "DE",
+      "AAPL",
+      "ETH"
+    ],
+    "FTNT_held": true,
+    "FTNT_positionId": 3590220047,
+    "XLK_held": true,
+    "MU_held": false,
+    "PSX_held": false,
+    "asOf_utc": "2026-10-05T19:50:25.4031643Z",
+    "xRequestId_portfolio": "14b7afa7-305a-4d93-98ea-89481aecd51d",
+    "xRequestId_positions": "beab02e1-9c9f-4418-8a24-77273a2c5395",
+    "xRequestId_balances_403": "740783c2-0b80-435a-8762-4082e91a968f",
+    "balances_scope_gap": "get-my-balances HTTP 403 InsufficientPermissions (missing etoro-public:money.balance:read); portfolio.totals.availableCash used instead",
+    "trader_claimed_keys_cash": 610.87,
+    "cash_match_trader_claim": true,
+    "note": "Keys cash $610.87 < $1000 per name \u2014 cannot fund MU or PSX. Mirror A $3567.49 would cover book allocation but keys cannot execute \u2192 INSUFFICIENT_CASH GATE_OK (not AVOID)."
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "soft": false,
+    "spx_close": 7780.16,
+    "spx_sma50": 7665.01,
+    "vix_close": 15.6,
+    "source": "screener-run screener-20261005-224819-a6552f3c + screener-run QA PASS"
+  },
+  "sleeve": {
+    "rule_citation": "2026-10-05 unlimited stocks + \u22651 sector ETF",
+    "stocks_held_mirror_A": [
+      "NTAP",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "etf_held_mirror_A": [
+      "XLK"
+    ],
+    "stocks_n": 4,
+    "etf_n": 1,
+    "etf_floor_ok": true,
+    "stock_cap": "unlimited",
+    "max_etf_buys_per_pack": 1,
+    "max_momentum_breakout_per_pack": 2,
+    "ok_for_new_stock_buys": true,
+    "SLEEVE_CAPACITY_FULL_obsolete": true,
+    "note": "XLK present \u2192 ETF floor OK. Unlimited stocks \u2192 MU/PSX stock buys allowed by sleeve if cash covers. No new ETF (XLK held)."
+  },
+  "pack_sleeve_requested": {
+    "candidates_placeable": [
+      "MU",
+      "PSX"
+    ],
+    "skipped": {
+      "FTNT": "ALREADY_HELD on keys pos 3590220047"
+    },
+    "stocks": 2,
+    "breakout_momentum": 0,
+    "vcp": 2,
+    "etf": 0,
+    "commodity": 0,
+    "etf_buys_ok": true,
+    "breakout_ok": true,
+    "ok_vs_pack_shape": true,
+    "ok_vs_live_capacity": true,
+    "note": "2 VCP stock buys; 0 MOMENTUM_BREAKOUT; 0 ETF buys. Sleeve shape OK."
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 3567.49,
+    "keys_availableCash": 610.87,
+    "buys_requested_usd": 2000,
+    "per_name_cap": 1000,
+    "mirror_A_covers_all_2": true,
+    "keys_covers_even_one": false,
+    "keys_residual_vs_1000": -389.13,
+    "INSUFFICIENT_CASH": true,
+    "gate": "GATE_OK",
+    "not_AVOID": true,
+    "note": "Reporting truth Mirror A $3567.49 covers 2\u00d7$1000, but execution keys $610.87 cannot fund any $1000 fill \u2192 do NOT authorize place; INSUFFICIENT_CASH GATE_OK protective."
+  },
+  "order_hygiene": {
+    "no_ETH": true,
+    "no_shorts": true,
+    "all_leverage_1": true,
+    "all_amount_le_1000": true,
+    "all_long_buy_mkt": true,
+    "account_real_not_demo": true,
+    "stops_present": true,
+    "event_vol_freeze_blocks_buy": false,
+    "soft_regime_vcp_block": false,
+    "dwm_from_screener_pack": "green/ok (MU day -1.22 but week/month +; PSX d/w/m all +; dwm_fail=0)",
+    "prepare_trade_called": false,
+    "qa_places": false
+  },
+  "process_miss_note": {
+    "path": "/workspace/momentum_audit/eod_miss_check_2026-10-05_pm_2242_backup.json",
+    "screener_miss": true,
+    "pm_miss": true,
+    "codes": [
+      "EOD_SCREENER_MISSED",
+      "EOD_PM_MISSED"
+    ],
+    "blocks_place_qa": false,
+    "note": "Catch-up never clears primary EOD_SCREENER_MISSED process miss if primary missed by 22:50 \u2014 soft/process only; trade-rule place-QA not blocked solely for catch-up when rules otherwise PASS."
+  },
+  "items": [
+    {
+      "symbol": "MU",
+      "action": "BUY",
+      "verdict": "GATE_OK",
+      "authorize_place": false,
+      "deviation_codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "hard_fail": false,
+      "gate": "GATE_OK",
+      "not_AVOID": true,
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 998.07,
+      "setup": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "counts_toward_breakout_cap": false,
+      "rs_rating": 98,
+      "rvol": 0.45,
+      "dwm": {
+        "day_pct": -1.22,
+        "week_pct": 0.74,
+        "month_pct": 10.81
+      },
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "held_on_keys": false,
+      "price_screener": 1061.78,
+      "trade_rules_independent": "PASS \u2014 VCP_READY allowed in HEALTHY; RS98; DWM ok (dwm_fail=0); lev1; $1000; real long mkt; SL 998.07 present; not freeze/halt; sleeve unlimited stocks OK",
+      "cash_gate": "INSUFFICIENT_CASH",
+      "notes": "Trade hygiene PASS but keys availableCash $610.87 < $1000 \u2014 GATE_OK protective. Do NOT place. Fresh place-QA after keys cash \u2265$1000 (+fees buffer)."
+    },
+    {
+      "symbol": "PSX",
+      "action": "BUY",
+      "verdict": "GATE_OK",
+      "authorize_place": false,
+      "deviation_codes": [
+        "INSUFFICIENT_CASH"
+      ],
+      "hard_fail": false,
+      "gate": "GATE_OK",
+      "not_AVOID": true,
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "stopLossRate": 252.81,
+      "setup": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "counts_toward_breakout_cap": false,
+      "rs_rating": 94,
+      "rvol": 0.45,
+      "dwm": {
+        "day_pct": 1.65,
+        "week_pct": 6.07,
+        "month_pct": 5.61
+      },
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "held_on_keys": false,
+      "price_screener": 268.95,
+      "trade_rules_independent": "PASS \u2014 VCP_READY allowed in HEALTHY; RS94; DWM green; lev1; $1000; real long mkt; SL 252.81 present; not freeze/halt; sleeve OK",
+      "cash_gate": "INSUFFICIENT_CASH",
+      "notes": "Same keys cash block as MU. Sequenced fills impossible \u2014 residual after hypothetical first buy still N/A because even first fill fails. GATE_OK not AVOID."
+    },
+    {
+      "symbol": "FTNT",
+      "action": "SKIP",
+      "verdict": "SKIP_ALREADY_HELD",
+      "authorize_place": false,
+      "deviation_codes": [],
+      "keys_positionId": 3590220047,
+      "on_mirror_A": false,
+      "notes": "Screener BUY but already held on keys \u2014 correctly skipped by trader; not a place candidate."
+    }
+  ],
+  "buys_authorized": [],
+  "buys_authorized_n": 0,
+  "GATE_OK_notes": [
+    "MU INSUFFICIENT_CASH GATE_OK (protective) \u2014 keys $610.87 < $1000; Mirror A $3567.49 would cover book but keys cannot execute",
+    "PSX INSUFFICIENT_CASH GATE_OK (protective) \u2014 same keys cash block",
+    "Do NOT treat GATE_OK as AVOID / playbook fail; require fresh place-QA after keys cash/state change before any place"
+  ],
+  "soft_notes": [
+    "Parent Trading MU position is NOT Momentum book \u2014 irrelevant to Momentum MU buy candidate",
+    "get-my-balances 403 on keys; portfolio availableCash 610.87 authoritative for execution cash",
+    "EOD_SCREENER_MISSED / EOD_PM_MISSED process codes noted; do not sole-block place-QA"
+  ],
+  "full_auto": "NO \u2014 overall PASS_WITH_GATE_OK. Trader_momentum must NOT prepare/place MU or PSX. QA never places. Re-request place-QA only after keys availableCash can cover \u2265$1000 (+fees) per sequenced fill. Mirror A cash alone is not enough to authorize keys execution.",
+  "explicit": {
+    "qa_never_places": true,
+    "trader_must_not_place_without_PASS_and_enough_keys_cash": true,
+    "authorize_any_buy": false
+  },
+  "xRequestIds": {
+    "keys_portfolio": "14b7afa7-305a-4d93-98ea-89481aecd51d",
+    "keys_positions": "beab02e1-9c9f-4418-8a24-77273a2c5395",
+    "keys_balances_403": "740783c2-0b80-435a-8762-4082e91a968f",
+    "parent_portfolio": "780d98b5-63df-49c0-ae32-251b5372845a",
+    "parent_positions": "271b31b3-1afb-481e-b3d0-d0b5d9460355"
+  }
+}

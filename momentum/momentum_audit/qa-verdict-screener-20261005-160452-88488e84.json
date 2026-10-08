@@ -1,0 +1,123 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20261005-160452-88488e84",
+  "slot": "manual_early_eod_1600",
+  "asOf": "2026-10-05",
+  "qaAt": "2026-10-05T16:08:08+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "soft_notes": [
+    "near-miss TRACE count 57 vs file top-N 25 (same taxonomy soft as prior days)",
+    "sp500_symbols.json count=503 asOf 2026-10-05T13:04:53.569171Z; universe_n=520; valid_n=517; watch NOW/PANW/CRM in TRACE \u2014 no mega-cap stub",
+    "momentum_screener.py get_sp500_symbols uses io.StringIO + refuses mega-cap fallback (<400 hard fail)",
+    "regime HEALTHY (spx 7722.72 > sma50 7657.64 +0.85%; vix 16.2); TRACE regime/universe/download_ok/near_misses/event_vol_freeze/pack_done/run_summary_written present",
+    "Trader claims verified independently: HEALTHY; universe_n=520; halt=false; EVENT_VOL_FREEZE=false; HARD_HALT=false; buys NTAP VOLUME_BREAKOUT $1000 SL205.97, ANET VCP $1000 SL194.91, FFIV VCP $1000 SL426.8; ACTION ts_il 16:05:03 IDT",
+    "Pack PASS 3 buys (stocks=3 breakout=0 etf=0 commodity=0) \u2014 note NTAP tagged VOLUME_BREAKOUT (RVOL2.06) not MOMENTUM_BREAKOUT sleeve count in pack summary; VCP allowed in HEALTHY",
+    "Manual early EOD ~16:05 IDT \u2014 not EOD_SCREENER_MISSED (early ACTION counts)"
+  ],
+  "evidence_quotes": {
+    "universe_n": 520,
+    "sp500_n": 503,
+    "sp500_cache_count": 503,
+    "valid_n": 517,
+    "drop_short_or_nan": 3,
+    "regime": "HEALTHY",
+    "spx_close": 7722.72,
+    "spx_sma50": 7657.64,
+    "spx_pct_vs_sma50": 0.85,
+    "vix_close": 16.2,
+    "event_vol_freeze": false,
+    "event_vol_freeze_reason": "no_event_freeze today=2026-10-05 next_open=2026-10-06",
+    "hard_halt": false,
+    "halt": false,
+    "RUN_START_il": "2026-10-05T16:04:52.925231+03:00",
+    "ACTION_BUY_ts_il": "2026-10-05T16:05:03.259854+03:00",
+    "RUN_END_il": "2026-10-05T16:05:03.260817+03:00",
+    "buys": [
+      {
+        "symbol": "NTAP",
+        "setup": "VOLUME_BREAKOUT",
+        "amount_usd": 1000,
+        "stop_loss": 205.97,
+        "rs": 95,
+        "rvol": 2.06
+      },
+      {
+        "symbol": "ANET",
+        "setup": "VCP_SETUP",
+        "amount_usd": 1000,
+        "stop_loss": 194.91,
+        "rs": 92,
+        "rvol": 0.68
+      },
+      {
+        "symbol": "FFIV",
+        "setup": "VCP_SETUP",
+        "amount_usd": 1000,
+        "stop_loss": 426.8,
+        "rs": 90,
+        "rvol": 1.04
+      }
+    ],
+    "skips": [],
+    "sleeve": "stocks=3 breakout=0 etf=0 commodity=0",
+    "near_miss_trace": 57,
+    "near_miss_file_topn": 25,
+    "pack_qa_verdict": "PASS",
+    "drop_counts": {
+      "minervini": 457,
+      "rs": 8,
+      "setup": 47,
+      "dwm_data": 0,
+      "dwm_fail": 0,
+      "regime_hard": 0,
+      "regime_soft_etf": 0,
+      "regime_soft_rs": 0,
+      "regime_soft_vcp": 0,
+      "event_freeze": 0
+    }
+  },
+  "paths_checked": [
+    "/workspace/momentum_audit/screener-run-screener-20261005-160452-88488e84.json",
+    "/workspace/momentum_audit/near-miss-2026-10-05.json",
+    "/workspace/momentum_audit/2026-10-05.jsonl",
+    "/workspace/sp500_symbols.json",
+    "/workspace/momentum_screener.py",
+    "/workspace/momentum_audit/pm-2026-10-05-manual-1600-decision.json",
+    "/workspace/momentum_audit/place_qa/eod-20261005-manual-1600-qa-bundle.json",
+    "/workspace/momentum_audit/playbook-2026-09-16-full-fix.md"
+  ],
+  "hard_gates": {
+    "SPX_UNIVERSE_TOO_SMALL": false,
+    "SPX_MEGACAP_FALLBACK": false,
+    "SPX_FETCH_BROKEN": false,
+    "SPX_SCAN_NOT_FULL": false,
+    "SCREENER_RUN_CRASH": false,
+    "SCREENER_AUDIT_INCOMPLETE": false,
+    "BUY_ON_EVENT_VOL_FREEZE": false
+  },
+  "coherence": {
+    "RUN_START": true,
+    "TRACE_regime_universe_download_near_miss_freeze_pack": true,
+    "ACTION_HALT": false,
+    "ACTION_buys": true,
+    "ACTION_skips_freeze": false,
+    "RUN_END": true,
+    "screener_run_json_has_regime_universe_n": true,
+    "near_miss_present": true,
+    "run_summary_written": true,
+    "stringio_no_megacap_fallback_in_script": true
+  },
+  "eod_timing": {
+    "deadline_il": "22:50",
+    "action_il": "16:05:03",
+    "eod_screener_missed_hard": false,
+    "note": "Manual early EOD ACTION 16:05:03 IDT \u2014 counts; not EOD_SCREENER_MISSED"
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "Gate A PASS \u2014 proceed to place-QA on BUY pack NTAP/ANET/FFIV. QA never places. Expect sleeve-capacity FAIL (Mirror A already 3 stocks+1 ETF)."
+}

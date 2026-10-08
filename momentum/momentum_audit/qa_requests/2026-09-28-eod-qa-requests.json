@@ -1,0 +1,138 @@
+{
+  "job": "eod_pm_2240_2026-09-28",
+  "asOf_il": "2026-09-28T22:55:50.807614+03:00",
+  "nyse_open": true,
+  "in_intraday_ban": false,
+  "pm_source": "pm-2026-09-28-2240.json",
+  "pm_decisions": {
+    "HOLD": [
+      "AAPL",
+      "JNJ",
+      "TGT",
+      "DE",
+      "XLK",
+      "P",
+      "PLTR"
+    ],
+    "TRAIL_SL_placed": [
+      {
+        "symbol": "VTRS",
+        "new_stop": 16.38,
+        "prior": 15.9,
+        "positionId": 3580194334,
+        "operationId": "2c3e8fb4-9ec2-4301-8e5f-ce95f73dee18",
+        "xRequestId": "71814bb6-9f21-44e7-b4e5-8c71a22e3d09",
+        "statusCode": 202
+      },
+      {
+        "symbol": "CRWD",
+        "new_stop": 230.85,
+        "prior": 227.4,
+        "positionId": 3579391383,
+        "operationId": "e6721782-368f-4ac9-9fbf-ef4133046b5e",
+        "xRequestId": "5d1ecad4-32af-429a-981e-85c0fe4417fe",
+        "statusCode": 202
+      }
+    ],
+    "TRAIL_SL_SKIP_NOT_ON_MIRROR_A": [
+      "ETH"
+    ],
+    "CLOSE": [],
+    "MOVE_SL_BREAKEVEN": []
+  },
+  "screener_run_id": "screener-20260928-225153-16616f0d",
+  "regime": "HEALTHY",
+  "regime_detail": {
+    "spx_close": 7684.14,
+    "spx_sma50": 7640.61,
+    "spx_pct": 0.57,
+    "vix": 16.07,
+    "event_vol_freeze": false
+  },
+  "raw_pack": [
+    "FTNT",
+    "JNJ",
+    "LLY"
+  ],
+  "dropped_held": [
+    "JNJ"
+  ],
+  "placeable_after_held_filter": [
+    "FTNT",
+    "LLY"
+  ],
+  "mirror_A": {
+    "mirrorId": 11630170,
+    "availableCash": 2150.1,
+    "value": 7867.06,
+    "invested": 8000.0,
+    "symbols": [
+      "AAPL",
+      "JNJ",
+      "DE",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "absent_vs_keys": [
+      "TGT",
+      "PLTR",
+      "ETH"
+    ],
+    "source": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders mirrors"
+  },
+  "expected_place_qa": {
+    "FTNT": "PASS_LIKELY (1000 <= 2150.10; not held)",
+    "LLY": "PASS_LIKELY (cash covers 2x1000)",
+    "JNJ": "DO_NOT_PLACE_ALREADY_HELD"
+  },
+  "screener_run_qa": "PENDING_QA_BOT",
+  "place_qa": "PENDING_QA_BOT",
+  "authorize_place": [],
+  "do_not_place": [
+    "JNJ"
+  ],
+  "blocker": "Executor has no SendToAgent. Parent must message QA Bot 498c78db-a027-4f2c-8126-3c2be6f0a4bb for screener-run QA + place-QA before any BUY. TRAIL_SL VTRS/CRWD already submitted (async 202). No BUY places (PLACE_WITHOUT_QA_BOT_RECHECK).",
+  "hygiene": {
+    "EOD_SCREENER_MISSED": true,
+    "note": "first screener ACTION 22:52:07 IDT > 22:50; night_status cleared by catch-up; feedback_daily should keep AVOID",
+    "screener_actions_by_2250": []
+  },
+  "artifacts": {
+    "pm_positions": "/workspace/momentum_audit/pm-positions-2026-09-28-2240.json",
+    "pm_2240": "/workspace/momentum_audit/pm-2026-09-28-2240.json",
+    "screener_pack": "/workspace/momentum_audit/screener-2026-09-28-pack.json",
+    "screener_pack_list": "/workspace/momentum_audit/screener-2026-09-28-pack-list.json",
+    "screener_pack_filtered": "/workspace/momentum_audit/screener-2026-09-28-pack-filtered.json",
+    "run_summary": "/workspace/momentum_audit/screener-run-screener-20260928-225153-16616f0d.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-09-28.json",
+    "mirror_cash": "/workspace/momentum_audit/mirror-A-cash-2026-09-28-eod.json",
+    "eod_miss_check": "/workspace/momentum_audit/eod_miss_check_2026-09-28_eod_exec.json",
+    "audit_jsonl": "/workspace/momentum_audit/2026-09-28.jsonl",
+    "place_qa_bundle": "/workspace/momentum_audit/place_qa/eod-20260928-2240-qa-bundle.json",
+    "parent_wake": "/workspace/momentum_audit/qa_requests/PARENT_WAKE_MESSAGES.md"
+  },
+  "mcp_order_params": {
+    "FTNT": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "FTNT",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000,
+      "stopLossRate": 165.78,
+      "stopLossType": "fixed"
+    },
+    "LLY": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "LLY",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000,
+      "stopLossRate": 1113.48,
+      "stopLossType": "fixed"
+    }
+  }
+}

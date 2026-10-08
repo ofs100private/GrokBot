@@ -1,0 +1,453 @@
+{
+ "op": "qa.verdict.momentum_real_money_close_gate",
+ "run_id": "override-20261007-orphan-closes",
+ "job": "keys_only_orphan_close_FTNT_NDSN_DE_AAPL_ETH_2026-10-07",
+ "asOf_il": "2026-10-07T23:33:05+03:00",
+ "qa_by": "QA Bot (executor, read-only)",
+ "portfolio": "Momentum-HHHGDTJ",
+ "mcp": "user-Momentum-HHHGDTJ",
+ "authChannel": "keys",
+ "account": "real",
+ "authority": "Ofer via CoS 2026-10-07 23:30 IDT: full close of keys-only orphans FTNT, NDSN, DE, AAPL, ETH to free cash; no new buys",
+ "verdict": "PASS_WITH_CONDITIONS",
+ "authorize_place_all": true,
+ "authorize_place_symbols": [
+  "FTNT",
+  "NDSN",
+  "DE",
+  "AAPL",
+  "ETH"
+ ],
+ "qa_never_places": true,
+ "full_auto": "Trader_momentum may place after fresh re-prepare that matches the conditions below; no further user/CoS chat confirmation needed (Ofer's authorization plus this QA PASS). Any deviation means re-QA.",
+ "deviation_codes": [],
+ "codes": {
+  "info": [
+   "CLOSE_QUEUED_TO_OPEN",
+   "PREPARE_READY_NO_QUEUE_WARNING",
+   "ETH_NO_QUEUE_REJECT_IF_CLOSED",
+   "NEAR_LOSS_PCT_GE_4(DE)",
+   "KEYS_BALANCES_403_CASH_FROM_SUMMARY",
+   "MIRROR_A_UNCHANGED"
+  ],
+  "warn": [
+   "GAP_RISK_STALE_WIDE_QUOTE(NDSN,DE)",
+   "TOKEN_EXPIRED_REPREPARE_REQUIRED"
+  ],
+  "fail": []
+ },
+ "bundle_ref": "/workspace/momentum_audit/place_qa/override-20261007-orphan-closes-qa-bundle.json",
+ "pending_ack_ref": "/workspace/momentum_audit/place_ack/override-20261007-orphan-closes-pending-qa.json",
+ "checks": {
+  "1_bundle_scope": {
+   "result": "PASS",
+   "symbols": [
+    "FTNT",
+    "NDSN",
+    "DE",
+    "AAPL",
+    "ETH"
+   ],
+   "extras": [],
+   "missing": [],
+   "all_action_CLOSE_FULL": true,
+   "all_unitsToDeduct_null": true,
+   "full_close_only_flag": true,
+   "no_new_buys_flag": true,
+   "token_payloads_decoded": "all 5 have kind=close, account=real, UnitsToDeduct=null, PositionUnitsAtPrepare equal to live units; all expired 23:33:32-33 IDT"
+  },
+  "2_live_keys_match": {
+   "result": "PASS",
+   "positions_xRequestId": "18656354-fd54-4ee1-99cc-7efd1c697e61",
+   "summary_xRequestId": "b50e8d16-c85d-49f8-b5f0-bf860aa40d67",
+   "keys_positionCount": 11,
+   "all_5_present": true,
+   "split_positions": "none (positionCount=1 for each of the 5 symbols)",
+   "instrument_direction_leverage_units_exact": true
+  },
+  "3_mirror_A_exclusion": {
+   "result": "PASS",
+   "source": "user-etoro get-my-positions-and-orders mirrors[11630170], xRequestId c9d74874-2e44-4425-b2f0-2fd7bc6d4c6e (read-only)",
+   "mirror_A_positions": {
+    "NTAP": 3597307545,
+    "XLK": 3577022320,
+    "VTRS": 3580194335,
+    "MRVL": 3599509753,
+    "CRWD": 3579391384,
+    "P": 3587299963
+   },
+   "pack_symbols_on_mirror_A": [],
+   "mirror_A_symbols_in_pack": [],
+   "keys_ids_of_mirror_names_absent_from_pack": {
+    "CRWD": 3579391383,
+    "MRVL": 3599509752,
+    "NTAP": 3597307544,
+    "P": 3587299961,
+    "VTRS": 3580194334,
+    "XLK": 3577022318
+   },
+   "note": "Bundle do_not_touch list matches live keys IDs exactly. None of the 5 is in the user-etoro direct book either."
+  },
+  "4_no_duplicate_pending": {
+   "result": "PASS",
+   "keys_direct_orders": [],
+   "keys_pendingOrders": [],
+   "keys_mirrors": []
+  },
+  "5_market_state": {
+   "result": "INFO",
+   "now_il": "2026-10-07T23:33:05+03:00",
+   "us_regular_session": "closed (closed 23:00 IDT); next open 2026-10-08 16:30 IDT",
+   "stocks": "CLOSE_QUEUED_TO_OPEN (info): cash is freed only after the fill. Caveat: prepare-close is supposed to return 'rejected' when a US stock can't be sold outside session hours, but at 23:31 it returned 'ready' with no queue warning for all 4 stocks, so the fill could be extended-hours now (AAPL quote is live at 23:32) or queued to the open. Check fill timing and price on the place-close outcome.",
+   "eth": "24/7, fills now; it does not queue, so a close in a closed market is rejected (not material now).",
+   "skill_rules": "The skill has no after-hours-close or order-type rule. prepare-close gives a MARKET close only (no limit option). Rules that do apply: QA never places; post-fill QA after every fill; tell the user on fills; fresh place-QA after a keys state change before any new buy (PLACE_WITHOUT_QA_BOT_RECHECK if self-PASS). Tool rules: one place-close per fresh token. outcome 'pending' means accepted, so do NOT close again; follow up via get-my-positions-and-orders. If a re-prepare returns 'rejected' (session closed), wait for 16:30 IDT and re-prepare the same positionId with full units."
+  },
+  "6_cash_math": {
+   "result": "PASS",
+   "keys_cash_before": 110.12,
+   "keys_cash_source": "get-my-portfolio-summary totals (availableCash 110.12, frozen 0); get-my-balances 403 per bundle (scope missing, not zero)",
+   "freed_live_value_usd": 3911.72,
+   "freed_units_x_live_bid_usd": 3911.71,
+   "per_symbol_value": {
+    "FTNT": 1072.08,
+    "NDSN": 984.09,
+    "DE": 960.7,
+    "AAPL": 884.52,
+    "ETH": 10.33
+   },
+   "expected_keys_cash_after_usd": 4021.84,
+   "after_eth_fee_est_usd": 4021.74,
+   "gap_scenarios_stock_basket_3901.39": {
+    "-1%": 3982.83,
+    "-2%": 3943.81,
+    "-3%": 3904.8,
+    "-5%": 3826.77
+   },
+   "mirror_A": {
+    "id": 11630170,
+    "availableCash": 3170.57,
+    "invested": 8000.0,
+    "value": 7964.86,
+    "source": "user-etoro get-my-portfolio-summary xRequestId d4161e5d-7ba4-40e2-9b0b-58a2ff764d4f"
+   },
+   "keys_minus_mirrorA_cash_before": -3060.45,
+   "keys_minus_mirrorA_cash_after": 851.27,
+   "keys_totalValue": 10028.82,
+   "note": "Closing these 5 doesn't change mirror A (none are copied). Keys total value is unchanged apart from fees and slippage; only the cash mix changes. Claimed $3,911.72 and $4,021.84 match live."
+  },
+  "7_reprepare_rule": {
+   "result": "CONDITION",
+   "rule": "All tokens expired (TTL 120s). Trader must re-run prepare-close per position with account=real, the same positionId and unitsToDeduct=null (full). The confirmation must show the same instrumentId, long, x1 and units equal to live units. Any change (different id, partial units, split, extra symbol, units drift) means STOP and re-QA."
+  }
+ },
+ "conditions": [
+  "Close ONLY these 5 positionIds: FTNT 3590220047, NDSN 3591649728, DE 3581779392, AAPL 3589579685, ETH 3572932449.",
+  "Fresh prepare-close per position: account=real, unitsToDeduct=null; confirmation must match positionId, instrumentId, long, leverage 1 and units (5.657708 / 3.030394 / 1.463871 / 2.628581 / 0.004011). Any mismatch means STOP and re-QA.",
+  "One place-close per fresh token, sequentially, before expiry (120s). Suggested order: ETH (24/7), then AAPL, FTNT, DE, NDSN.",
+  "If place-close outcome is 'pending' or the order shows waitingForMarket: do NOT re-close or re-prepare that position; follow up via get-my-positions-and-orders.",
+  "If a stock re-prepare returns 'rejected' (session closed): no workaround; re-prepare at/after 2026-10-08 16:30 IDT open with identical id and full units.",
+  "Gap risk (NDSN stale 23:09 IDT, 1.84% spread; DE 1.03% spread): market close only. Realised cash may come in below $4,021.84; report actual fills.",
+  "NEVER touch keys IDs 3579391383 (CRWD), 3599509752 (MRVL), 3597307544 (NTAP), 3587299961 (P), 3580194334 (VTRS), 3577022318 (XLK), or anything on mirror 11630170.",
+  "No new buys under this authorization. Any later buy using the freed cash needs a fresh place-QA with a new keys plus mirror A cash snapshot (PLACE_WITHOUT_QA_BOT_RECHECK if self-PASS).",
+  "Post-fill: send fill evidence (closed positionIds, fill prices, keys availableCash after) for post-fill QA; tell the user on fills."
+ ],
+ "discrepancies": [
+  "None material. Bundle and claimed values match live keys to the cent (NDSN summary row 984.10 vs position 984.09: rounding).",
+  "Bundle ETH live_quote bid 2575.20 vs prepare currentRate 2575.71 vs now 2575.12: normal 24/7 drift.",
+  "Bundle keys_totalValue 10028.49 vs live 10028.82: mark drift.",
+  "Stocks got prepare verdict 'ready' after hours, while the tool doc says US stocks outside session hours get 'rejected'. Fill timing (extended-hours vs queued to open) is unconfirmed (info)."
+ ],
+ "live_snapshot": {
+  "keys": {
+   "positions_xRequestId": "18656354-fd54-4ee1-99cc-7efd1c697e61",
+   "positions_ts_il": "2026-10-07T23:33:05+03:00",
+   "summary_xRequestId": "b50e8d16-c85d-49f8-b5f0-bf860aa40d67",
+   "summary_ts_il": "2026-10-07T23:33:06+03:00",
+   "quotes_xRequestId": "919ddfb8-e895-43d4-817f-743f1e9e5ce8",
+   "totalValue": 10028.82,
+   "availableCash": 110.12,
+   "frozenCash": 0,
+   "unrealizedPnl": 508.81,
+   "positionCount": 11,
+   "orders": 0,
+   "mirrors": 0
+  },
+  "mirror_A": {
+   "positions_xRequestId": "c9d74874-2e44-4425-b2f0-2fd7bc6d4c6e",
+   "summary_xRequestId": "d4161e5d-7ba4-40e2-9b0b-58a2ff764d4f",
+   "ts_il": "2026-10-07T23:33:20+03:00",
+   "availableCash": 3170.57,
+   "value": 7964.86,
+   "invested": 8000.0,
+   "symbols": [
+    "NTAP",
+    "XLK",
+    "VTRS",
+    "MRVL",
+    "CRWD",
+    "P"
+   ],
+   "orders": 0
+  }
+ },
+ "items": [
+  {
+   "symbol": "FTNT",
+   "action": "CLOSE_FULL",
+   "positionId": 3590220047,
+   "instrumentId": 4346,
+   "verdict": "PASS_WITH_CONDITIONS",
+   "authorize_place": true,
+   "required_reprepare": {
+    "positionId": 3590220047,
+    "account": "real",
+    "unitsToDeduct": null,
+    "expected_PositionUnitsAtPrepare": 5.657708
+   },
+   "checks": {
+    "in_bundle": true,
+    "positionId_live": true,
+    "instrument_match": true,
+    "direction_long": true,
+    "leverage_1": true,
+    "units_exact_match": true,
+    "full_close_unitsToDeduct_null": true,
+    "token_payload_full_close": true,
+    "split_positions_on_symbol": 1,
+    "on_mirror_A_11630170": false,
+    "pending_close_order_on_keys": false
+   },
+   "codes": [
+    "CLOSE_QUEUED_TO_OPEN",
+    "PREPARE_READY_NO_QUEUE_WARNING",
+    "TOKEN_EXPIRED_REPREPARE_REQUIRED"
+   ],
+   "notes": "Exact match bundle vs live; single position; quote 11 min stale after-hours, spread 0.21%.",
+   "live": {
+    "units": 5.657708,
+    "direction": "long",
+    "leverage": 1,
+    "openRate": 176.75,
+    "currentRate": 189.49,
+    "invested": 1000.0,
+    "value": 1072.08,
+    "pnl": 72.08,
+    "pnlPercent": 7.21,
+    "stopLossRate": 165.78,
+    "bid": 189.49,
+    "ask": 189.89,
+    "spread_pct": 0.211,
+    "quote_asOf_il": "2026-10-07T23:22:04+03:00",
+    "asset": "US stock"
+   }
+  },
+  {
+   "symbol": "NDSN",
+   "action": "CLOSE_FULL",
+   "positionId": 3591649728,
+   "instrumentId": 8848,
+   "verdict": "PASS_WITH_CONDITIONS",
+   "authorize_place": true,
+   "required_reprepare": {
+    "positionId": 3591649728,
+    "account": "real",
+    "unitsToDeduct": null,
+    "expected_PositionUnitsAtPrepare": 3.030394
+   },
+   "checks": {
+    "in_bundle": true,
+    "positionId_live": true,
+    "instrument_match": true,
+    "direction_long": true,
+    "leverage_1": true,
+    "units_exact_match": true,
+    "full_close_unitsToDeduct_null": true,
+    "token_payload_full_close": true,
+    "split_positions_on_symbol": 1,
+    "on_mirror_A_11630170": false,
+    "pending_close_order_on_keys": false
+   },
+   "codes": [
+    "CLOSE_QUEUED_TO_OPEN",
+    "PREPARE_READY_NO_QUEUE_WARNING",
+    "GAP_RISK_STALE_WIDE_QUOTE",
+    "TOKEN_EXPIRED_REPREPARE_REQUIRED"
+   ],
+   "notes": "Exact match; single position. Quote stale (23:09 IDT, ~24 min) and wide (1.84%); realised value can differ materially (\u00b13% gap \u2248 \u00b1$29.5).",
+   "live": {
+    "units": 3.030394,
+    "direction": "long",
+    "leverage": 1,
+    "openRate": 329.99,
+    "currentRate": 324.74,
+    "invested": 1000.0,
+    "value": 984.09,
+    "pnl": -15.91,
+    "pnlPercent": -1.59,
+    "stopLossRate": 310.19,
+    "bid": 324.74,
+    "ask": 330.7,
+    "spread_pct": 1.835,
+    "quote_asOf_il": "2026-10-07T23:09:06+03:00",
+    "asset": "US stock"
+   }
+  },
+  {
+   "symbol": "DE",
+   "action": "CLOSE_FULL",
+   "positionId": 3581779392,
+   "instrumentId": 1526,
+   "verdict": "PASS_WITH_CONDITIONS",
+   "authorize_place": true,
+   "required_reprepare": {
+    "positionId": 3581779392,
+    "account": "real",
+    "unitsToDeduct": null,
+    "expected_PositionUnitsAtPrepare": 1.463871
+   },
+   "checks": {
+    "in_bundle": true,
+    "positionId_live": true,
+    "instrument_match": true,
+    "direction_long": true,
+    "leverage_1": true,
+    "units_exact_match": true,
+    "full_close_unitsToDeduct_null": true,
+    "token_payload_full_close": true,
+    "split_positions_on_symbol": 1,
+    "on_mirror_A_11630170": false,
+    "pending_close_order_on_keys": false
+   },
+   "codes": [
+    "CLOSE_QUEUED_TO_OPEN",
+    "PREPARE_READY_NO_QUEUE_WARNING",
+    "GAP_RISK_STALE_WIDE_QUOTE",
+    "NEAR_LOSS_PCT_GE_4",
+    "TOKEN_EXPIRED_REPREPARE_REQUIRED"
+   ],
+   "notes": "Exact match; single position. Spread 1.03%; PnL \u22123.93% is ~0.07pt from the \u22124% LOSS_PCT_GE_4 exit, so the close agrees with the exit rules. \u00b13% gap \u2248 \u00b1$28.8.",
+   "live": {
+    "units": 1.463871,
+    "direction": "long",
+    "leverage": 1,
+    "openRate": 683.12,
+    "currentRate": 656.27,
+    "invested": 1000.0,
+    "value": 960.7,
+    "pnl": -39.3,
+    "pnlPercent": -3.93,
+    "stopLossRate": 642.94,
+    "bid": 656.27,
+    "ask": 663.0,
+    "spread_pct": 1.025,
+    "quote_asOf_il": "2026-10-07T23:30:42+03:00",
+    "asset": "US stock"
+   }
+  },
+  {
+   "symbol": "AAPL",
+   "action": "CLOSE_FULL",
+   "positionId": 3589579685,
+   "instrumentId": 1001,
+   "verdict": "PASS_WITH_CONDITIONS",
+   "authorize_place": true,
+   "required_reprepare": {
+    "positionId": 3589579685,
+    "account": "real",
+    "unitsToDeduct": null,
+    "expected_PositionUnitsAtPrepare": 2.628581
+   },
+   "checks": {
+    "in_bundle": true,
+    "positionId_live": true,
+    "instrument_match": true,
+    "direction_long": true,
+    "leverage_1": true,
+    "units_exact_match": true,
+    "full_close_unitsToDeduct_null": true,
+    "token_payload_full_close": true,
+    "split_positions_on_symbol": 1,
+    "on_mirror_A_11630170": false,
+    "pending_close_order_on_keys": false
+   },
+   "codes": [
+    "CLOSE_QUEUED_TO_OPEN",
+    "PREPARE_READY_NO_QUEUE_WARNING",
+    "TOKEN_EXPIRED_REPREPARE_REQUIRED"
+   ],
+   "notes": "Exact match; single position; quote is live (extended hours), spread 0.01%.",
+   "live": {
+    "units": 2.628581,
+    "direction": "long",
+    "leverage": 1,
+    "openRate": 342.39,
+    "currentRate": 336.5,
+    "invested": 900.0,
+    "value": 884.52,
+    "pnl": -15.48,
+    "pnlPercent": -1.72,
+    "stopLossRate": 320.79,
+    "bid": 336.5,
+    "ask": 336.53,
+    "spread_pct": 0.009,
+    "quote_asOf_il": "2026-10-07T23:32:32+03:00",
+    "asset": "US stock"
+   }
+  },
+  {
+   "symbol": "ETH",
+   "action": "CLOSE_FULL",
+   "positionId": 3572932449,
+   "instrumentId": 100001,
+   "verdict": "PASS_WITH_CONDITIONS",
+   "authorize_place": true,
+   "required_reprepare": {
+    "positionId": 3572932449,
+    "account": "real",
+    "unitsToDeduct": null,
+    "expected_PositionUnitsAtPrepare": 0.004011
+   },
+   "checks": {
+    "in_bundle": true,
+    "positionId_live": true,
+    "instrument_match": true,
+    "direction_long": true,
+    "leverage_1": true,
+    "units_exact_match": true,
+    "full_close_unitsToDeduct_null": true,
+    "token_payload_full_close": true,
+    "split_positions_on_symbol": 1,
+    "on_mirror_A_11630170": false,
+    "pending_close_order_on_keys": false
+   },
+   "codes": [
+    "ETH_NO_QUEUE_REJECT_IF_CLOSED",
+    "TOKEN_EXPIRED_REPREPARE_REQUIRED"
+   ],
+   "notes": "Exact match; single position; trades 24/7, so it fills now. Warning: this instrument doesn't queue closes (closed market means rejected, not queued). Close fee ~1% \u2248 $0.10.",
+   "live": {
+    "units": 0.004011,
+    "direction": "long",
+    "leverage": 1,
+    "openRate": 2492.64,
+    "currentRate": 2575.12,
+    "invested": 10.0,
+    "value": 10.33,
+    "pnl": 0.33,
+    "pnlPercent": 3.3,
+    "stopLossRate": null,
+    "bid": 2575.12,
+    "ask": 2575.27,
+    "spread_pct": 0.006,
+    "quote_asOf_il": "2026-10-07T23:33:07+03:00",
+    "asset": "crypto 24/7"
+   }
+  }
+ ],
+ "routing": {
+  "verdict_to": "Trader_momentum (priority)",
+  "copy": "CoS",
+  "user": "after fills"
+ },
+ "ts_il": "2026-10-07T23:35:00+03:00"
+}

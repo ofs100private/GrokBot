@@ -1,0 +1,109 @@
+{
+  "job": "eod_2245_screener_backup_catchup_2026-09-28",
+  "asOf_il": "2026-09-28T22:53:52+03:00",
+  "nyse_open": true,
+  "pm_source": "pm-2026-09-28-2245-screener-backup.json",
+  "pm_decisions": {
+    "HOLD": [
+      "AAPL",
+      "JNJ",
+      "TGT",
+      "DE",
+      "XLK",
+      "P",
+      "PLTR"
+    ],
+    "TRAIL_SL_needs_place_qa": [
+      {
+        "symbol": "VTRS",
+        "positionId": 3580194334,
+        "new_stop": 16.38
+      },
+      {
+        "symbol": "CRWD",
+        "positionId": 3579391383,
+        "new_stop": 230.85
+      }
+    ],
+    "TRAIL_SL_SKIP_NOT_ON_MIRROR_A": [
+      "ETH"
+    ],
+    "CLOSE": [],
+    "MOVE_SL_BREAKEVEN": []
+  },
+  "screener_run_id": "screener-20260928-225153-16616f0d",
+  "regime": "HEALTHY",
+  "raw_pack": [
+    "FTNT",
+    "JNJ",
+    "LLY"
+  ],
+  "dropped_held": [
+    "JNJ"
+  ],
+  "placeable_after_held_filter": [
+    "FTNT",
+    "LLY"
+  ],
+  "mirror_A": {
+    "mirrorId": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 2150.1,
+    "value": 7863.68,
+    "invested": 8000.0,
+    "asOf": "2026-09-28T22:50:58+03:00",
+    "source": "user-etoro get-my-portfolio-summary"
+  },
+  "expected_place_qa": {
+    "FTNT": "PASS $1000 fits cash 2150.10",
+    "LLY": "PASS $1000 fits remaining ~1150 after FTNT",
+    "JNJ": "DO_NOT_PLACE_ALREADY_HELD",
+    "VTRS_TRAIL": "needs place-QA before SL edit",
+    "CRWD_TRAIL": "needs place-QA before SL edit",
+    "ETH": "SKIP_NOT_ON_MIRROR_A"
+  },
+  "mcp_order_params": {
+    "FTNT": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "FTNT",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000.0,
+      "stopLossRate": 165.78,
+      "stopLossType": "fixed"
+    },
+    "LLY": {
+      "account": "real",
+      "direction": "buy",
+      "symbol": "LLY",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 1000.0,
+      "stopLossRate": 1113.48,
+      "stopLossType": "fixed"
+    }
+  },
+  "artifacts": {
+    "pm": "/workspace/momentum_audit/pm-2026-09-28-2245-screener-backup.json",
+    "pm_decision": "/workspace/momentum_audit/pm-2026-09-28-2245-screener-backup-decision.json",
+    "screener_stdout": "/workspace/momentum_audit/screener-2026-09-28-stdout.log",
+    "screener_stderr": "/workspace/momentum_audit/screener-2026-09-28-stderr.log",
+    "run_summary": "/workspace/momentum_audit/screener-run-screener-20260928-225153-16616f0d.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-09-28.json",
+    "pack": "/workspace/momentum_audit/screener-2026-09-28-pack.json",
+    "pack_filtered": "/workspace/momentum_audit/screener-2026-09-28-pack-filtered.json",
+    "mirror_cash": "/workspace/momentum_audit/mirror-A-cash-2026-09-28-eod.json",
+    "audit_jsonl": "/workspace/momentum_audit/2026-09-28.jsonl",
+    "qa_requests": "/workspace/momentum_audit/qa_requests/2026-09-28-eod-2245-backup-qa-requests.json"
+  },
+  "authorize_place_after_qa": [
+    "FTNT",
+    "LLY"
+  ],
+  "do_not_place": [
+    "JNJ",
+    "ETH"
+  ],
+  "blocker": "Await QA Bot screener-run PASS then place-QA PASS before FULL AUTO"
+}

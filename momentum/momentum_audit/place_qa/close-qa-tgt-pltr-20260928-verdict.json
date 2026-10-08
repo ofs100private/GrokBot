@@ -1,0 +1,70 @@
+{
+  "op": "qa.verdict.momentum_real_money_close_gate",
+  "job": "keys_only_close_TGT_PLTR_2026-09-28",
+  "asOf_il": "2026-09-28T23:01:38+03:00",
+  "authority": "Ofer via CoS AUTHORIZED keys-only cleanup",
+  "portfolio": "Momentum-HHHGDTJ",
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "qa_never_places": true,
+  "mirror_A": {
+    "id": 11630170,
+    "availableCash": 2150.1,
+    "invested": 8000.0,
+    "value": 7848.41,
+    "source": "user-etoro parent SSO get-my-portfolio-summary xRequestId 9c2b05c1-d92e-4c44-b4cd-f22edd2b4bfc",
+    "tgt_pltr_absent": true,
+    "note": "TGT+PLTR not in tonight prior mirror-A held set (AAPL/JNJ/DE/XLK/VTRS/CRWD/P); keys-only cleanup"
+  },
+  "keys_live": {
+    "source": "user-Momentum-HHHGDTJ get-my-positions-and-orders xRequestId d09da7ce-575b-474b-990f-82f176748678",
+    "authChannel": "keys",
+    "items": {
+      "TGT": {
+        "positionId": 3581081151,
+        "invested": 1000.0,
+        "units": 6.251953,
+        "openRate": 159.95,
+        "currentRate": 158.0,
+        "pnl": -12.19,
+        "pnlPercent": -1.21,
+        "direction": "long",
+        "leverage": 1,
+        "match_bundle": true
+      },
+      "PLTR": {
+        "positionId": 3586291200,
+        "invested": 1500.0,
+        "units": 7.862047,
+        "openRate": 190.79,
+        "currentRate": 187.2,
+        "pnl": -28.22,
+        "pnlPercent": -1.88,
+        "direction": "long",
+        "leverage": 1,
+        "match_bundle": true,
+        "soft_note": "pnl drifted vs prepare ~-26 \u2192 live -28.22; still same position"
+      }
+    }
+  },
+  "items": [
+    {
+      "symbol": "TGT",
+      "action": "CLOSE_FULL",
+      "positionId": 3581081151,
+      "verdict": "PASS",
+      "prepare_xRequestId_claimed": "0358b12c-f4f1-4af8-8393-ba41847a3c58",
+      "notes": "keys-only; Ofer authorized; live matches invested/units/openRate; long\u00d71"
+    },
+    {
+      "symbol": "PLTR",
+      "action": "CLOSE_FULL",
+      "positionId": 3586291200,
+      "verdict": "PASS",
+      "prepare_xRequestId_claimed": "0e0b1f11-c6cd-47a6-9ab5-51392f828d28",
+      "notes": "keys-only; Ofer authorized; live matches invested/units/openRate; long\u00d71"
+    }
+  ],
+  "full_auto": "After PASS trader may re-prepare then place-close on keys MCP only. QA never places. Fresh place-QA required for FTNT+LLY after closes \u2014 do not reuse catch-up buy PASS.",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/close-qa-tgt-pltr-20260928.json"
+}

@@ -1,0 +1,149 @@
+{
+  "run_id": "aapl-900-postfill-qa-20260928",
+  "gate": "momentum-real-money-qa-gate",
+  "playbook": "2026-09-16-full-fix",
+  "stage": "post-fill",
+  "purpose": "Mon-open AAPL resume — independent post-fill QA after Trader_momentum claimed fill",
+  "verdict": "PASS",
+  "fail_codes": [],
+  "hard_fail": false,
+  "asOf_il": "2026-09-28T16:56:19+03:00",
+  "asOf_utc": "2026-09-28T13:56:19Z",
+  "qa_places": false,
+  "prior_place_qa": {
+    "path": "/workspace/momentum_audit/place_qa/place-qa-aapl-20260928-165339.json",
+    "verdict": "PASS",
+    "candidate": {
+      "symbol": "AAPL",
+      "amount": 900,
+      "leverage": 1,
+      "direction": "buy",
+      "stopLossRate": 320.79,
+      "account": "real"
+    }
+  },
+  "claimed_fill": {
+    "trader": "Trader_momentum",
+    "book": "Momentum-HHHGDTJ / mirror A 11630170 REAL",
+    "orderId": 1597282198,
+    "positionId": 3589579685,
+    "direction": "long",
+    "leverage": 1,
+    "openRate": 342.39,
+    "units": 2.628581,
+    "invested": 900,
+    "stopLossRate": 320.79,
+    "fees": 1.35
+  },
+  "live_user_etoro": {
+    "source": "user-etoro get-my-portfolio-summary + get-my-positions-and-orders account=real",
+    "xRequestId_portfolio": "40117834-e41b-41d6-8b6d-f594ac083aa5",
+    "xRequestId_positions": "39b197c1-4cc8-4730-9d07-1749752ba9ee",
+    "timestamp_portfolio": "2026-09-28T13:56:05.3500302Z",
+    "timestamp_positions": "2026-09-28T13:56:05.5261682Z",
+    "account": "real",
+    "mirror_A": {
+      "mirrorId": 11630170,
+      "username": "Momentum-HHHGDTJ",
+      "availableCash": 2150.1,
+      "invested": 8000.0,
+      "value": 7814.89,
+      "openPnl": -154.74,
+      "aapl_position": {
+        "positionId": 3589579686,
+        "symbol": "AAPL",
+        "instrumentId": 1001,
+        "direction": "long",
+        "leverage": 1,
+        "openRate": 342.39,
+        "currentRate": 342.34,
+        "units": 2.099244,
+        "invested": 718.76,
+        "stopLossRate": 320.79,
+        "openTime": "2026-09-28T13:55:27.183",
+        "pnl": -0.1
+      },
+      "held_symbols": ["AAPL", "JNJ", "DE", "XLK", "VTRS", "CRWD", "P"],
+      "pending_orders": []
+    }
+  },
+  "keys_fill_ledger_only": {
+    "mcp": "user-Momentum-HHHGDTJ",
+    "note": "Keys cash NOT authority; fills-only corroboration of PI position",
+    "xRequestId_positions": "1b8775dd-0cf5-4313-a32a-7ee26cc4a501",
+    "xRequestId_portfolio": "0e36d7e3-cd37-40b4-8002-5388ba2d198c",
+    "timestamp_positions": "2026-09-28T13:56:06.0690403Z",
+    "availableCash_NOT_authority": 219.14,
+    "aapl_position": {
+      "positionId": 3589579685,
+      "symbol": "AAPL",
+      "instrumentId": 1001,
+      "direction": "long",
+      "leverage": 1,
+      "openRate": 342.39,
+      "units": 2.628581,
+      "invested": 900.0,
+      "stopLossRate": 320.79,
+      "openTime": "2026-09-28T13:55:27.137",
+      "pnl": -0.13
+    },
+    "matches_claimed": true
+  },
+  "checks": {
+    "mirror_holds_aapl": true,
+    "position_found": true,
+    "positionId_keys_matches_claim": true,
+    "positionId_mirror_is_copy_sibling": true,
+    "direction_long": true,
+    "not_short": true,
+    "leverage_eq_1": true,
+    "openRate_match_342_39": true,
+    "sl_present": true,
+    "sl_eq_320_79": true,
+    "invested_keys_eq_900": true,
+    "invested_mirror_scaled": true,
+    "units_keys_match_claim": true,
+    "amount_vs_place_qa_900": true,
+    "sl_vs_place_qa": true,
+    "leverage_vs_place_qa": true,
+    "buy_long_vs_place_qa": true,
+    "not_demo": true,
+    "no_pending_aapl": true,
+    "cash_dropped_mirror_A": true
+  },
+  "vs_place_qa": {
+    "amount": 900,
+    "stopLossRate": 320.79,
+    "leverage": 1,
+    "direction": "buy",
+    "amount_match_keys": true,
+    "sl_match": true,
+    "long_x1": true,
+    "sl_present": true,
+    "not_demo": true,
+    "not_short": true
+  },
+  "cash": {
+    "mirror_A_11630170_pre_place_qa": 2869.94,
+    "mirror_A_post": 2150.1,
+    "drop": 719.84,
+    "expected_full_pi_drop_approx": 901.35,
+    "expected_mirror_scaled_drop_approx": 719.84,
+    "drop_matches_mirror_invested_plus_fees": true,
+    "note": "Soft: mirror cash dropped ~$719.84 (= mirror invested 718.76 + ~$1.08 fees), not full PI $900+$1.35 — expected copy-scale. Keys cash 1120.49→219.14 drop ~901.35 corroborates PI fill+fees (NOT authority)."
+  },
+  "soft_notes": [
+    "Mirror A positionId 3589579686 is copy sibling of PI 3589579685 (claimed); both openRate 342.39 SL 320.79 ×1 long.",
+    "Mirror invested $718.76 / units 2.099244 is copy-scaled from PI $900 / 2.628581 — not a size FAIL.",
+    "Cash after mirror A $2150.10 vs pre-place $2869.94; drop matches scaled fill not full $900+fees.",
+    "Keys MCP confirms exact claimed fill positionId 3589579685 invested 900 units 2.628581 — fills-only, cash ignored.",
+    "orderId 1597282198 not re-fetched on open-position routes; position presence is fill evidence."
+  ],
+  "xRequestIds": {
+    "user_etoro_portfolio": "40117834-e41b-41d6-8b6d-f594ac083aa5",
+    "user_etoro_positions": "39b197c1-4cc8-4730-9d07-1749752ba9ee",
+    "keys_positions": "1b8775dd-0cf5-4313-a32a-7ee26cc4a501",
+    "keys_portfolio": "0e36d7e3-cd37-40b4-8002-5388ba2d198c"
+  },
+  "note": "PASS post-fill AAPL BUY $900 ×1 SL 320.79 on Momentum-HHHGDTJ / mirror A 11630170 REAL. QA never places."
+}

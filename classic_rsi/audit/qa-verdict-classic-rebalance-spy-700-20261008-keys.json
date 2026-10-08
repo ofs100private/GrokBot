@@ -1,0 +1,95 @@
+{
+  "skill": "classic-real-money-order-qa-gate",
+  "also_checked": [
+    "trader-classic-strategy",
+    "classic-rebalance (installed 2026-10-08 20:27 IDT)"
+  ],
+  "batch": "classic-rebalance-batch-20261008-keys",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "route": "REAL",
+  "asOfIDT": "2026-10-08 20:31 IDT",
+  "timestamp_iso": "2026-10-08T20:31:14+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "place": false,
+  "authorize_place_scope": "QA only; placement additionally needs explicit Ofer/CoS authorization naming symbol + size (classic-rebalance Step 6.4)",
+  "live_reads": {
+    "positions_orders_xRequestId": "766fb020-25c7-4673-bd57-5cf3d90787d0",
+    "portfolio_xRequestId": "0b2d18ba-562e-450b-8377-70f8a080804c",
+    "asOf_utc": "2026-10-08T17:30:00Z (20:30 IDT)",
+    "quotes_xRequestIds": [
+      "e0cb546e-9a32-475c-bb83-dff5cf851068",
+      "5abc22df-ced7-4627-a6c9-386c94ba0cf7"
+    ],
+    "availableCash": 4048.63,
+    "frozenCash": 0,
+    "pendingOrders": 0,
+    "stale_quote_note": "eToro overview returned STALE cached quotes for SMH (618.30/618.43 @15:23:56Z), SPY (775.5 @16:17:41Z) and QQQ (753.9 @16:17Z) on two reads. TMO/XLE/XLV were fresh (@17:29:57\u201317:30:00Z). Fresh cross-checks: SMH position currentRate 602.35 @17:30Z; Yahoo 1m @13:30 ET: SMH 602.43, SPY 771.02, QQQ 744.36, TMO 645.13, XLE 65.25."
+  },
+  "authorization_evidence": {
+    "claimed": "Ofer approved rebalance plan 2026-10-08 ~20:26 IDT; BAC skipped (batch/pack files + qa-request .md, all written by Trader_Classic 20:28 IDT)",
+    "corroboration": "The classic-rebalance workflow skill was installed at 20:27:00 IDT. That timing is consistent with plan adoption, but the skill contains no approval text.",
+    "independent_record_found": false,
+    "note": "I found no CoS note, Ofer message, or audit row confirming the approval or naming symbols and sizes. Treat placement as pending explicit Ofer/CoS authorization."
+  },
+  "w8ben": "Informational. requiresW8Ben=true on SPY/XLE and also on the held SMH/QQQ/XLV, which were bought successfully, so a W-8BEN is very likely on file. Neither skill makes it a gate.",
+  "pack_id": "classic-rebalance-spy-700-20261008-keys",
+  "pack_path": "/workspace/classic_rsi/audit/classic-rebalance-spy-700-20261008-keys.json",
+  "seq": 2,
+  "verdict": "PASS",
+  "authorize_place": false,
+  "hard_fail_codes": [],
+  "soft_codes": [
+    "ETORO_SPY_QUOTE_STALE_775",
+    "TOKEN_EXPIRED_REPREPARE",
+    "W8BEN_INFO"
+  ],
+  "checks": {
+    "instrumentId_3000_is_SPY": true,
+    "long": true,
+    "leverage": 1,
+    "crypto": false,
+    "amount": 700,
+    "prepare_ask": 770.65,
+    "live_ref": 771.02,
+    "live_ref_source": "Yahoo 1m 13:30 ET (eToro overview stale 775.5 @16:17Z)",
+    "drift_pct": 0.048,
+    "drift_material": false,
+    "trailing_sl": 709.03,
+    "sl_pct_below_live": 8.04,
+    "sl_rule": "classic-rebalance: ETFs ~8% trailing \u2713",
+    "tp": null,
+    "tp_rule": "No fixed TP on core adds per classic-rebalance \u2713",
+    "intraday_chg_pct": -0.8,
+    "no_chase_ok": true,
+    "fee": 1.07,
+    "fee_breakdown": {
+      "transaction": 1.05,
+      "spread": 0.02
+    },
+    "overnight": 0,
+    "thesis": "Broad core to cut cash drag vs SPY (classic-rebalance: park idle cash in SPY). Non-RSI pack, so no run_id is required.",
+    "name_weight_after_pct": [
+      17.8,
+      19.3
+    ],
+    "name_cap_30_ok": true,
+    "new_name_count": "1 of 2/month"
+  },
+  "conditions": [
+    "Place only after the SMH trim fills (floor holds either way: worst case $2846.52 without XLE)",
+    "Re-prepare identical: buy 3000 mkt lev1 $700, trailing SL 709.03, no TP",
+    "Re-prepare quote asOf must be fresh (seconds old). Reject the cached 775.x @16:17Z quote",
+    "If the fresh ask differs from 770.65 by >~0.1% (~$0.77), re-base SL to \u22128% and re-QA"
+  ],
+  "qa_override": {
+    "at": "2026-10-08T20:32:00+03:00",
+    "by": "QA Bot",
+    "reason": "CoS 20:31 IDT: no record of Ofer approving the rebalance; classic-rebalance skill (installed 20:27) unconfirmed for gating. HOLD until Ofer confirms in CoS chat and the skill is sanctioned.",
+    "codes": [
+      "AUTH_UNCONFIRMED_COS_HOLD"
+    ],
+    "update_2032": "CoS 20:32 IDT: Ofer 20:26 msg in Trader_Classic chat 'Approve the process and prepare the rebalance trades for QA (skip BAC)' sanctions classic-rebalance skill for gating + prepare only. authorize_place stays false until Ofer authorizes per symbol/size via CoS; then re-prepare + re-QA."
+  }
+}

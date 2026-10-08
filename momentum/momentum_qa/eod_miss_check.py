@@ -19,7 +19,17 @@ IL = ZoneInfo("Asia/Jerusalem")
 AUDIT = Path("/workspace/momentum_audit")
 
 
-def _eod_rows(day: str) -> list[dict]:
+def _parse_ts_il(ts: str) -> datetime | None:
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts)
+    except Exception:
+        return None
+
+
+def _day_rows(day: str) -> list[dict]:
+    """All audit rows for the calendar day (IL date in filename)."""
     path = AUDIT / f"{day}.jsonl"
     rows: list[dict] = []
     if not path.exists():
@@ -29,11 +39,47 @@ def _eod_rows(day: str) -> list[dict]:
             r = json.loads(line)
         except json.JSONDecodeError:
             continue
-        ts = r.get("ts_il") or ""
-        if "T22:" not in ts and "T23:" not in ts:
-            continue
         rows.append(r)
     return rows
+
+
+def _eod_rows(day: str) -> list[dict]:
+    """Evening window rows: T21–T23 IL (manual early EOD + scheduled + catch-up).
+
+    T21 included so early/manual EOD (e.g. ~21:52) counts toward operational
+    'screener already ran' and toward the ≤22:50 miss gate (QA Bot 2026-09-23).
+    """
+    rows: list[dict] = []
+    for r in _day_rows(day):
+        ts = r.get("ts_il") or ""
+        if "T21:" in ts or "T22:" in ts or "T23:" in ts:
+            rows.append(r)
+    return rows
+
+
+def screener_actions_by_deadline(day: str, hour: int = 22, minute: int = 50) -> list[dict]:
+    """Screener ACTION BUY/HALT/SKIP/ERROR with ts_il ≤ deadline that calendar day.
+
+    Standing gate (2026-09-11 / QA 2026-09-23): EOD_SCREENER_MISSED iff none by 22:50 IL.
+    Early/manual EOD counts.
+    """
+    deadline_min = hour * 60 + minute
+    out: list[dict] = []
+    for r in _day_rows(day):
+        if r.get("script") != "momentum_screener.py":
+            continue
+        if r.get("event") != "ACTION":
+            continue
+        if r.get("action") not in ("HALT", "BUY", "SKIP", "ERROR"):
+            continue
+        dt = _parse_ts_il(r.get("ts_il") or "")
+        if dt is None:
+            continue
+        if dt.strftime("%Y-%m-%d") != day:
+            continue
+        if dt.hour * 60 + dt.minute <= deadline_min:
+            out.append(r)
+    return out
 
 
 def screener_ran_tonight(now: datetime | None = None) -> dict:

@@ -1,0 +1,133 @@
+{
+  "run_id": "place-qa-aapl-20260928-165339",
+  "gate": "momentum-real-money-qa-gate",
+  "playbook": "2026-09-16-full-fix",
+  "stage": "pre-place",
+  "purpose": "Mon-open AAPL resume \u2014 fresh place-QA; Fri 2026-09-25 PASS void (Auto-review interrupt / no fill)",
+  "verdict": "PASS",
+  "fail_codes": [],
+  "asOf_il": "2026-09-28T16:53:39+03:00",
+  "asOf_utc": "2026-09-28T13:53:39Z",
+  "screener_run_id": "screener-20260925-224937-f841c72c",
+  "screener_run_qa": "PASS",
+  "fri_place_qa": {
+    "path": "/workspace/momentum_audit/place_qa/aapl-900-place-qa-20260925.json",
+    "verdict_was": "PASS",
+    "reuse_for_place": false,
+    "void_reason": "Auto-review interrupt / no fill \u2014 prior PASS not authority; fresh run_id required"
+  },
+  "portfolio": "Momentum-HHHGDTJ",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 2869.94,
+    "value": 7811.79,
+    "invested": 8000.0,
+    "openPnl": -158.92,
+    "source": "user-etoro get-my-portfolio-summary real includeCopiedTraders=true includeOrders=true",
+    "xRequestId_portfolio": "0aed52ec-e6e7-4e77-ba83-38896ac949b4",
+    "xRequestId_positions": "175edf28-35aa-4ff9-9db6-f4bf517e67b0",
+    "held_symbols_live": [
+      "JNJ",
+      "DE",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "aapl_open": false,
+    "pending_orders": [],
+    "pending_aapl": false
+  },
+  "keys_fill_ledger_only": {
+    "mcp": "user-Momentum-HHHGDTJ",
+    "xRequestId": "d3dfee31-8d0b-49f9-bf42-74e3f0b3ec99",
+    "availableCash_NOT_authority": 1120.49,
+    "held_symbols": [
+      "PLTR",
+      "VTRS",
+      "CRWD",
+      "XLK",
+      "P",
+      "JNJ",
+      "DE",
+      "TGT",
+      "ETH"
+    ],
+    "aapl_open": false,
+    "pending_orders": [],
+    "note": "Keys cash NOT authority; fills-only. ETH dust not a stock buy for pack limit."
+  },
+  "trader_claimed_snapshot": {
+    "asOf_utc": "2026-09-28T13:51:38Z",
+    "xRequestId": "9e372c91-36b5-4364-83b4-eccaa72e0b1f",
+    "availableCash": 2869.94,
+    "invested": 8000,
+    "value": 7799.16,
+    "aapl_open": false,
+    "pending": 0,
+    "held_claimed": [
+      "JNJ",
+      "TGT",
+      "DE",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P",
+      "PLTR",
+      "ETH"
+    ]
+  },
+  "candidate": {
+    "symbol": "AAPL",
+    "amount": 900,
+    "leverage": 1,
+    "direction": "buy",
+    "orderType": "mkt",
+    "account": "real",
+    "stopLossRate": 320.79,
+    "stopLossType": "fixed",
+    "setup": "VCP_SETUP",
+    "label": "VCP_SETUP",
+    "resume_of": "Fri PASS buy never filled"
+  },
+  "checks": {
+    "independent_live_read_user_etoro": true,
+    "cash_covers": true,
+    "cash_gate": "900 <= 2869.94",
+    "cash_after_est": 1969.94,
+    "leverage_eq_1": true,
+    "amount_le_1000": true,
+    "long_only": true,
+    "order_mkt": true,
+    "sl_present_fixed_320_79": true,
+    "not_demo": true,
+    "not_short": true,
+    "aapl_not_open_mirror_A": true,
+    "no_conflicting_pending_aapl": true,
+    "event_vol_freeze": false,
+    "event_vol_freeze_reason": "no_event_freeze today=2026-09-28 next_open=2026-09-29",
+    "hard_halt": false,
+    "pack_sleeve_ok": true,
+    "todays_new_stock_buys_count": 1,
+    "todays_new_buys": [
+      "AAPL"
+    ],
+    "breakout_count": 0,
+    "vcp_count": 1,
+    "eth_dust_not_stock_buy": true,
+    "fri_pass_not_reused": true
+  },
+  "soft_notes": [
+    "Fresh place-QA run_id; Fri aapl-900-place-qa-20260925.json PASS is void for place (no fill / Auto-review interrupt).",
+    "Mirror A cash $2869.94 (user-etoro) is cash truth; keys $1120.49 ignored for cash gate.",
+    "Live mirror A positions: JNJ DE XLK VTRS CRWD P \u2014 TGT/PLTR present on keys ledger but absent from mirror A positions snapshot; AAPL absent on both.",
+    "Single-resume 1-stock VCP buy; pack \u22643 stocks / \u22642 breakouts OK (0 BO + 1 VCP today).",
+    "EVENT_VOL_FREEZE false for 2026-09-28 / next NYSE 2026-09-29 (no FOMC/CPI/NFP).",
+    "Trader claim cash $2869.94 matches independent live read; value drifted 7799.16\u21927811.79 MTM."
+  ],
+  "hard_fail": false,
+  "authorize_place": true,
+  "qa_places": false,
+  "note": "PASS AAPL BUY $900 \u00d71 mkt SL 320.79 fixed VCP_SETUP. Cash OK on mirror A 11630170. QA never places. Trader may FULL AUTO prepare+place on user-Momentum-HHHGDTJ after this PASS. Post-fill QA required."
+}

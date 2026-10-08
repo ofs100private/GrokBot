@@ -1,0 +1,190 @@
+{
+  "account": "OfersClaw5-PRIYN",
+  "accountType": "REAL (not demo/virtual; agentPortfolioVirtualBalance ignored)",
+  "mcpNamespace": "user-OfersClaw5",
+  "approval": "Ofer approved rebalance plan 2026-10-08 ~20:26 IDT; BAC skipped (not prepared)",
+  "placeGate": "NOT PLACED. place requires QA PASS + Ofer/CoS authorize; tokens expire ~2 min (not stored) - re-prepare identical params at place time.",
+  "sequencing": "Sells first: 1) SMH trim -> 2) SPY -> 3) TMO -> 4) XLE",
+  "preparedAt": "2026-10-08T20:28:22+03:00",
+  "file": "classic-rebalance-batch-20261008-keys.json",
+  "liveSnapshot": {
+    "source": "user-OfersClaw5 get-my-portfolio-summary (real) 2026-10-08T17:28:00Z = 20:28 IDT + get-instruments-overview live quotes",
+    "account": "OfersClaw5-PRIYN",
+    "accountType": "REAL",
+    "totalValue_reported": 7283.02,
+    "availableCash": 4048.63,
+    "frozenCash": 0,
+    "usedMargin": 2959.73,
+    "unrealizedPnl_reported": 274.66,
+    "pendingOrders": [],
+    "copiedTraders": [],
+    "positions": [
+      {
+        "symbol": "SMH",
+        "instrumentId": 6357,
+        "positionId": 3581725275,
+        "units": 2.65783,
+        "openRate": 564.35,
+        "snapshotRate": 618.3,
+        "snapshotValue": 1643.34,
+        "liveBid": 601.27,
+        "liveValue": 1598.07,
+        "stopLossRate": 581.8,
+        "leverage": 1
+      },
+      {
+        "symbol": "QQQ",
+        "instrumentId": 3006,
+        "positionId": 3523504426,
+        "units": 1.106357,
+        "openRate": 677.9,
+        "snapshotRate": 752.83,
+        "snapshotValue": 832.9,
+        "liveBid": 743.67,
+        "liveValue": 822.76,
+        "stopLossRate": 644.0,
+        "leverage": 1
+      },
+      {
+        "symbol": "XLV",
+        "instrumentId": 3017,
+        "positionId": 3498067688,
+        "units": 4.537045,
+        "openRate": 156.44,
+        "snapshotRate": 167.1,
+        "snapshotValue": 758.15,
+        "liveBid": 167.1,
+        "liveValue": 758.14,
+        "stopLossRate": 148.62,
+        "leverage": 1
+      }
+    ],
+    "note": "Portfolio-summary SMH rate 618.3 lags the live quote (bid 601.27, SMH -3.80% on the day). Live equity ~ cash + live values.",
+    "liveEquity": 7227.6
+  },
+  "packs": [
+    {
+      "seq": 1,
+      "symbol": "SMH",
+      "instrumentId": 6357,
+      "side": "SELL (partial close of existing long)",
+      "usd": 754,
+      "units": 1.25401,
+      "SL": {
+        "rate": 581.8,
+        "type": "existing fixed SL kept on remaining units",
+        "cushionVsBidPct": 3.24
+      },
+      "TP": null,
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-smh-trim-754-20261008-keys.json",
+      "flags": [
+        "SMH -3.80% on the day; live remainder ~$844 (below $860 target because price fell; trimming ~$738 instead would leave ~$860)",
+        "Existing SL 581.80 is only 3.2% below live bid - could trigger soon",
+        "Partial close supported: prepare-close verdict ready with unitsToDeduct"
+      ]
+    },
+    {
+      "seq": 2,
+      "symbol": "SPY",
+      "instrumentId": 3000,
+      "side": "BUY (open long)",
+      "usd": 700,
+      "units": 0.908324,
+      "SL": {
+        "rate": 709.03,
+        "pctBelowAsk": 8.0,
+        "type": "trailing"
+      },
+      "TP": null,
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-spy-700-20261008-keys.json",
+      "flags": [
+        "SPY -0.84% on day"
+      ]
+    },
+    {
+      "seq": 3,
+      "symbol": "TMO",
+      "instrumentId": 1592,
+      "side": "BUY (open long)",
+      "usd": 500,
+      "units": 0.775362,
+      "SL": {
+        "rate": 574.26,
+        "pctBelowAsk": 11.0,
+        "type": "trailing"
+      },
+      "TP": null,
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-tmo-500-20261008-keys.json",
+      "flags": [
+        "TMO -2.63% on day (buying a dip within uptrend)",
+        "Healthcare sleeve XLV+TMO ~32.0% of invested"
+      ]
+    },
+    {
+      "seq": 4,
+      "symbol": "XLE",
+      "instrumentId": 3008,
+      "side": "BUY (open long)",
+      "usd": 300,
+      "units": 4.599111,
+      "SL": {
+        "rate": 60.01,
+        "pctBelowAsk": 8.0,
+        "type": "trailing"
+      },
+      "TP": null,
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-xle-300-20261008-keys.json",
+      "flags": [
+        "CHASING - recommend wait: XLE +2.94% on the day (> 2% threshold); review also said do not buy on a +2% day"
+      ]
+    }
+  ],
+  "skipped": [
+    "BAC (per Ofer)"
+  ],
+  "cash": {
+    "before": 4048.63,
+    "smhProceedsNetEst": 752.87,
+    "buysRequired": 1502.61,
+    "afterAll": 3298.89,
+    "floor": 2500,
+    "pass": true
+  },
+  "postTrade": {
+    "valuesUsd": {
+      "SMH": 844.07,
+      "QQQ": 822.76,
+      "XLV": 758.14,
+      "SPY": 700.0,
+      "TMO": 500.0,
+      "XLE": 300.0
+    },
+    "investedUsd": 3924.97,
+    "weightsPctOfInvested": {
+      "SMH": 21.5,
+      "QQQ": 21.0,
+      "XLV": 19.3,
+      "SPY": 17.8,
+      "TMO": 12.7,
+      "XLE": 7.6
+    },
+    "sleevesPct": {
+      "growth (SMH+QQQ)": 42.5,
+      "healthcare (XLV+TMO)": 32.0,
+      "broad (SPY)": 17.8,
+      "energy (XLE)": 7.6
+    },
+    "equityEst": 7223.86,
+    "cashPctOfEquity": 45.7
+  },
+  "capChecks": {
+    "name_cap_30pct": true,
+    "single_stock_TMO_le_15pct": true,
+    "sleeve_cap_45pct": true,
+    "cash_floor_2500": true
+  },
+  "supportingFiles": [
+    "/workspace/classic-rebalance/screen.json",
+    "/workspace/classic-rebalance/classic-rebalance-review-20261008.md"
+  ]
+}

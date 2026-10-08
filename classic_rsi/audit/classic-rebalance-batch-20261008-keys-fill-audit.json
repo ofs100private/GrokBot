@@ -1,0 +1,172 @@
+{
+  "account": "OfersClaw5-PRIYN",
+  "accountType": "REAL",
+  "mcpNamespace": "user-OfersClaw5",
+  "authorization": {
+    "text": "Authorize: trim SMH ~$822 (1.3656u), buy SPY $700 and TMO $500 ×1 — place after re-QA PASS on the SMH size",
+    "time": "2026-10-08 20:32 IDT",
+    "by": "Ofer; CoS confirmed"
+  },
+  "qa": {
+    "verdictFile": "/workspace/classic_rsi/audit/qa-verdict-classic-rebalance-v2-20261008-keys.json",
+    "rebase": "rebase_2036 PASS (bands SMH bid 600-612, SPY ask 769.30-773.94, TMO ask 644.33-648.21; growth<=45.5%)"
+  },
+  "file": "classic-rebalance-batch-20261008-keys-fill-audit.json",
+  "status": "ALL 3 EXECUTED (SMH -> SPY -> TMO); XLE/BAC not traded",
+  "sequence": [
+    {
+      "symbol": "SMH",
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-smh-trim-1.3656u-20261008-keys-fill-audit.json",
+      "orderId": 1586828791,
+      "positionId": 3581725275,
+      "fill": 604.56,
+      "units": 1.3656
+    },
+    {
+      "symbol": "SPY",
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-spy-700-20261008-keys-fill-audit.json",
+      "orderId": 1606045678,
+      "positionId": 3601641208,
+      "fill": 771.96,
+      "units": 0.906782
+    },
+    {
+      "symbol": "TMO",
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-tmo-500-20261008-keys-fill-audit.json",
+      "orderId": 1607578514,
+      "positionId": 3601642886,
+      "fill": 647.18,
+      "units": 0.772582
+    }
+  ],
+  "placeCalls": 3,
+  "cashSequence": {
+    "start": 4048.63,
+    "afterSMH": 4872.98,
+    "afterSPY": 4171.93,
+    "afterTMO": 3671.18
+  },
+  "finalSnapshot": {
+    "xRequestIds": [
+      "9d62ec68-1c65-449a-acdd-2635b8cf0e4d",
+      "8f522fd2-7357-4370-8760-f318f6524eb3",
+      "02c2220b-83f6-49a3-9155-7d0ca1444023"
+    ],
+    "at": "2026-10-08T17:37:03Z (20:37:03 IDT)",
+    "cash": 3671.18,
+    "pendingOrders": 0,
+    "positions": {
+      "SMH": {
+        "positionId": 3581725275,
+        "units": 1.29223,
+        "openRate": 564.35,
+        "SL": 581.8,
+        "TSL": false,
+        "TP": null
+      },
+      "QQQ": {
+        "positionId": 3523504426,
+        "units": 1.106357,
+        "openRate": 677.9,
+        "SL": 644.0,
+        "TSL": false,
+        "TP": null
+      },
+      "XLV": {
+        "positionId": 3498067688,
+        "units": 4.537045,
+        "openRate": 156.44,
+        "SL": 148.62,
+        "TSL": false,
+        "TP": null
+      },
+      "SPY": {
+        "positionId": 3601641208,
+        "units": 0.906782,
+        "openRate": 771.96,
+        "SL": 710.2,
+        "TSL": true,
+        "TP": null
+      },
+      "TMO": {
+        "positionId": 3601642886,
+        "units": 0.772582,
+        "openRate": 647.18,
+        "SL": 575.99,
+        "TSL": true,
+        "TP": null
+      }
+    },
+    "valuationNote": "Weights at live bids (overview 17:37:09Z); portfolio-summary currentRate is stale cache (SMH 618.4, SPY 775.58, QQQ 753.97) so its totalValue 7264.88 overstates",
+    "liveValues": {
+      "SMH": 780.58,
+      "QQQ": 824.99,
+      "XLV": 757.69,
+      "SPY": 699.87,
+      "TMO": 499.37
+    },
+    "investedLive": 3562.5,
+    "weightsPct": {
+      "SMH": 21.91,
+      "QQQ": 23.16,
+      "XLV": 21.27,
+      "SPY": 19.65,
+      "TMO": 14.02
+    },
+    "growthPct": 45.07,
+    "healthcarePct": 35.29,
+    "equityLive": 7233.68
+  },
+  "checks": {
+    "cash_ge_2500": true,
+    "growth_le_45_5": true,
+    "TMO_le_15": true,
+    "name_le_30": true
+  },
+  "haltRecord_2035": {
+    "file": "classic-rebalance-batch-20261008-keys-fill-audit.json",
+    "status": "HALTED - NOTHING PLACED",
+    "account": "OfersClaw5-PRIYN (REAL)",
+    "ns": "user-OfersClaw5",
+    "authorization": "Ofer 20:32 IDT: \"Authorize: trim SMH ~$822 (1.3656u), buy SPY $700 and TMO $500 ×1 — place after re-QA PASS on the SMH size\"; CoS confirmed; QA PASS qa-verdict-classic-rebalance-v2-20261008-keys.json",
+    "haltReason": "SMH live bid drift exceeded 0.1% gate vs pack (603.66-603.95)",
+    "smh": {
+      "positionId": 3581725275,
+      "unitsToDeduct": 1.3656,
+      "reprepare": {
+        "verdict": "ready",
+        "xRequestId": "99e728b4-be26-4b27-8f2e-48f1bdee5559",
+        "currentRate": 605.3,
+        "token": "[not stored; expired 17:36:53Z unused]"
+      },
+      "liveQuote": {
+        "xRequestId": "c2602aae-4eb2-4291-b490-0f8c4a2c1ac3",
+        "bid": 605.3,
+        "ask": 605.56,
+        "asOf": "2026-10-08T17:34:53.01Z (20:34:53 IDT)"
+      },
+      "stale618Check": "not stale (605.30, not 618.x)",
+      "driftPct_vs_603.95": 0.224,
+      "driftPct_vs_603.66": 0.272,
+      "gatePct": 0.1,
+      "placed": false
+    },
+    "spy": {
+      "placed": false,
+      "reason": "gated on SMH fill (not attempted)",
+      "liveAsk": 771.94,
+      "asOf": "2026-10-08T17:34:53.56Z",
+      "driftPct_vs_771.62": 0.041
+    },
+    "tmo": {
+      "placed": false,
+      "reason": "gated on SMH fill (not attempted)",
+      "liveAsk": 645.63,
+      "asOf": "2026-10-08T17:34:48.60Z",
+      "driftPct_vs_646.27": -0.099
+    },
+    "placeCallsMade": 0,
+    "bookUnchanged": "cash 4048.63; SMH 2.65783u SL581.80; QQQ 1.106357u SL644; XLV 4.537045u SL148.62; 0 pending (per 20:32:45 snapshot)",
+    "nextStep": "Re-base pack to live SMH bid (~605.30) + re-QA, or explicit waiver of the 0.1% drift gate (move is favorable for a sell: +~$1.84 proceeds on 1.3656u)"
+  }
+}

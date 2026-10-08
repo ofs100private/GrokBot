@@ -1,0 +1,389 @@
+{
+ "gate": "breakout-ta-tab-data-qa-gate",
+ "run_id": "breakout-auto-20261007-232113-7a2eba6a",
+ "verdict": "PASS",
+ "status": "PASS_WITH_SOFT_FIX_REQUIRED",
+ "go_live_refresh_done": false,
+ "verdict_note": "No hard-FAIL condition triggered (SKILL.md lines 35-41). G1-G4 PASS. G5 SOFT: Classic comparison book stale + failed-breakout overlaps not surfaced. Re-QA required after comparison refresh + re-dual-write.",
+ "asOf_utc": "2026-10-07T20:23Z",
+ "asOf_idt": "2026-10-07 23:23 IDT",
+ "hard_fail_codes": [],
+ "soft_codes": [
+  "BT_COMPARISON_CLASSIC_BOOK_STALE",
+  "BT_COMPARISON_FAILED_OVERLAP_NOT_SURFACED"
+ ],
+ "advisory_codes": [
+  "BT_NTAP_VOL_BELOW_PREFERRED_1_5X",
+  "BT_CLASSIC_GS_CLOSED_TP_NOT_6_HOLDINGS",
+  "BT_CLASSIC_CASH_DIFFERS_FROM_EXPECTED",
+  "BT_MOMENTUM_KEYS_NOT_REPORTING_TRUTH",
+  "BT_CAT_OHLC_ANOMALY_HIGH_LT_OPEN",
+  "BT_RSI_RUN_ID_NOT_CITED_IN_COMPARISON"
+ ],
+ "hard_fail_classification": {
+  "stale_comparison_book_is_hard_fail": false,
+  "cite": "SKILL.md L33 'G5 Live book overlap (soft exact)'; Hard FAIL list L35-41 = missing dual-write/mismatched copies, place flags/shorts, Momentum keys alone as Momentum truth / rejecting OfersClaw5 Classic truth, comparison claiming places authorized, hardcoded stale run_id. Stale comparison book_symbols is not listed -> SOFT."
+ },
+ "gates": {
+  "G1_dual_write": {
+   "status": "PASS",
+   "sha256": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235",
+   "copies": {
+    "/workspace/etoroview/public/breakout-ta.json": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235",
+    "/workspace/etoroview/dist/breakout-ta.json": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235",
+    "/workspace/GrokBot/app/etoroview/public/breakout-ta.json": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235",
+    "/workspace/GrokBot/app/etoroview/dist/breakout-ta.json": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235"
+   },
+   "extra_copies": {
+    "/workspace/etoroview/latest/breakout-ta.json": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235",
+    "/workspace/GrokBot/app/etoroview/latest/breakout-ta.json": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235",
+    "/workspace/breakout_ta/breakout-ta.json": "4b16f89afcb9f5ae6e754b39523d602f8e958c4fc2c6b3200504ffb8085ce235"
+   },
+   "all_identical": true,
+   "size_bytes": 21842,
+   "mtime_idt": "2026-10-07 23:21:14",
+   "claimed_sha256_prefix_suffix": "4b16f89a\u2026ce235",
+   "claim_verified": true,
+   "feed_run_id": "breakout-auto-20261007-232113-7a2eba6a",
+   "feed_asOf": "2026-10-07T23:21:14.961040+03:00",
+   "run_id_match": true,
+   "asOf_match": "feed 2026-10-07T23:21:14.961+03:00 vs audit asOfIDT 2026-10-07 23:21:14 IDT"
+  },
+  "G2_audit_integrity": {
+   "status": "PASS",
+   "audit_sha256": "bd9031c97c20ba318bd992a7fd53f21c114a493fbc51a4ab61424927c1922570",
+   "latest_auto_eq_run_file": true,
+   "index_entry": {
+    "run_id": "breakout-auto-20261007-232113-7a2eba6a",
+    "asOfIDT": "2026-10-07 23:21:14 IDT",
+    "path": "/workspace/breakout_ta/audit/breakout-auto-20261007-232113-7a2eba6a.json",
+    "n_symbols": 22,
+    "confirmed": 1,
+    "watch": 10,
+    "failed": 4
+   },
+   "audit_counts": {
+    "confirmed": 1,
+    "watch": 10,
+    "failed": 4,
+    "symbols": 22
+   },
+   "feed_counts": {
+    "confirmedCount": 1,
+    "watchCount": 10,
+    "failedCount": 4,
+    "symbolCount": 22
+   },
+   "rows_identical_audit_vs_feed": {
+    "confirmed": true,
+    "watch": true,
+    "failed": true
+   },
+   "do_not_place": true,
+   "place": false,
+   "doNotPlaceFromThisUi": true,
+   "confirmed": [
+    "NTAP"
+   ],
+   "watch": [
+    "SMH",
+    "QQQ",
+    "XLV",
+    "P",
+    "XLK",
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "SPY"
+   ],
+   "failed": [
+    "CAT",
+    "CRWD",
+    "MRVL",
+    "AMD"
+   ],
+   "claimed_counts_match": true
+  },
+  "G3_signal_honesty": {
+   "status": "PASS",
+   "no_shorts": true,
+   "longOnly": true,
+   "all_rows_do_not_place": true,
+   "NTAP": {
+    "timeframe": "1D",
+    "R": 228.45,
+    "close": 235.77000427246094,
+    "close_above_R": true,
+    "upper_third_close": true,
+    "touches_near_R": 2,
+    "bars_since_close_above_R": 59,
+    "entry": 235.77,
+    "stop": 222.6907,
+    "target": 261.9287,
+    "atr": 8.7196,
+    "vol_ratio": 1.163,
+    "stop_lt_entry_lt_target": true,
+    "stop_below_R": true,
+    "math": "stop = 235.77 - 1.5*8.7196 = 222.6906 (ATR stop; struct floor 183.60; capped <= 0.99R=226.17); target = entry + 2R = 235.77 + 2*13.0794 = 261.9287 -> verified",
+    "volume_rule": "skill: >= avg required, prefer 1.5x; params vol_min_ratio=1.0, vol_confirm_ratio=1.5. 1.163x passes minimum (code path: vol>=1.0 AND upper_third -> CONFIRMED) but below preferred 1.5x -> advisory low-conviction, not a fail",
+    "flag": "BT_NTAP_VOL_BELOW_PREFERRED_1_5X"
+   }
+  },
+  "G4_comparison": {
+   "status": "PASS",
+   "methods": [
+    "breakout_ta",
+    "classic_rsi",
+    "momentum_breakout"
+   ],
+   "methods_complete": true,
+   "method_place": {
+    "breakout_ta": false,
+    "classic_rsi": "after QA PASS (not FULL AUTO)",
+    "momentum_breakout": "FULL AUTO after QA"
+   },
+   "overlap_subseteq_universe": true,
+   "invented_dollars": false,
+   "place_authorized": false,
+   "overlap_feed": {
+    "breakout_confirmed_in_classic_book": [],
+    "breakout_confirmed_in_momentum_book": [
+     "NTAP"
+    ],
+    "breakout_watch_in_classic_book": [
+     "QQQ",
+     "SMH",
+     "XLV"
+    ],
+    "breakout_watch_in_momentum_book": [
+     "P",
+     "XLK"
+    ],
+    "classic_rsi_buy_also_breakout_confirmed": [],
+    "classic_rsi_buy_also_breakout_watch": []
+   },
+   "classic_rsi_ref": {
+    "feed_latest_rsi_buy_packs": [],
+    "feed_latest_rsi_risk_off": [
+     "ELV"
+    ],
+    "latest_rsi_run": "classic-rsi-auto-20261007-224319-a4c8af94 (asOf 22:43 IDT, buy_packs=0, risk_off=[ELV])",
+    "content_matches_latest": true,
+    "run_id_cited_in_feed": false,
+    "required_by_skill": false,
+    "note": "Content matches the latest RSI run; feed does not cite RSI run_id (advisory only)."
+   }
+  },
+  "G5_live_book_overlap": {
+   "status": "SOFT_FAIL",
+   "classic": {
+    "source": "LIVE user-OfersClaw5 get-my-portfolio-summary + get-my-positions-and-orders, 2026-10-07T20:22Z (23:22 IDT)",
+    "feed_book_symbols": [
+     "QQQ",
+     "SMH",
+     "XLV"
+    ],
+    "live_symbols": [
+     "ADBE",
+     "CAT",
+     "QQQ",
+     "SMH",
+     "XLV"
+    ],
+    "missing_from_feed": [
+     "ADBE",
+     "CAT"
+    ],
+    "feed_only": [],
+    "exact": false,
+    "feed_book_source": "/workspace/etoroview/public/classic-portfolio.json asOf 2026-10-07 18:55 IDT (positions SMH/QQQ/XLV) - build_comparison() reads it first and only falls back to /workspace/classic-portfolio-for-app.json (asOf 21:51 IDT, 6 names incl. GS, now also stale)",
+    "RBRK": {
+     "held": false,
+     "closed": "2026-10-07T13:30:06Z (16:30 IDT) @122.08, SL, netProfit -18.65, pos 3598873555",
+     "in_feed": false
+    },
+    "GS": {
+     "held": false,
+     "pos": 3600708857,
+     "opened": "2026-10-07 21:50:37 IDT @884.08",
+     "closed": "2026-10-07 22:54:07 IDT @887.51 (TP 887.43 hit)",
+     "netProfit": 1.94
+    },
+    "cash_available": 3053.44,
+    "cash_expected_by_CoS": 2552.25,
+    "cash_delta": 501.19,
+    "cash_note": "Delta \u2248 GS $500 returned + $1.94 profit (residual -0.75). Summary totalValue 7318.74.",
+    "confirmed_in_classic_live": [],
+    "watch_in_classic_live": [
+     "QQQ",
+     "SMH",
+     "XLV"
+    ],
+    "failed_in_classic_live": [
+     "CAT"
+    ],
+    "no_signal_in_classic_live": [
+     "ADBE"
+    ],
+    "mirror_11368142_optional": [
+     "ADBE",
+     "CAT",
+     "QQQ",
+     "SMH",
+     "XLV"
+    ]
+   },
+   "momentum": {
+    "source": "Reporting truth = mirror 11630170 via user-etoro get-my-positions-and-orders 2026-10-07T20:22Z (SKILL.md L33, L39)",
+    "feed_book_symbols": [
+     "CRWD",
+     "MRVL",
+     "NTAP",
+     "P",
+     "VTRS",
+     "XLK"
+    ],
+    "mirror_11630170_symbols": [
+     "CRWD",
+     "MRVL",
+     "NTAP",
+     "P",
+     "VTRS",
+     "XLK"
+    ],
+    "exact": true,
+    "keys_user_Momentum_HHHGDTJ_symbols": [
+     "AAPL",
+     "CRWD",
+     "DE",
+     "ETH",
+     "FTNT",
+     "MRVL",
+     "NDSN",
+     "NTAP",
+     "P",
+     "VTRS",
+     "XLK"
+    ],
+    "keys_only_not_in_mirror": [
+     "AAPL",
+     "DE",
+     "ETH",
+     "FTNT",
+     "NDSN"
+    ],
+    "keys_note": "Keys hold 11; mirror holds 6. Judging the feed against keys alone would itself be a hard-FAIL pattern (SKILL.md L39). Feed Momentum book is correct.",
+    "confirmed_in_momentum": [
+     "NTAP"
+    ],
+    "watch_in_momentum": [
+     "P",
+     "XLK"
+    ],
+    "failed_in_momentum": [
+     "CRWD",
+     "MRVL"
+    ],
+    "keys_only_watch": [
+     "AAPL"
+    ]
+   },
+   "failed_overlap_issue": "Comparison overlap block has no failed-breakout fields; CAT (FAILED) is a fresh Classic holding (pos 3600708904, opened 21:51 IDT @811.23) and CRWD/MRVL (FAILED) are Momentum holdings - none surfaced."
+  }
+ },
+ "live_books": {
+  "classic_user_OfersClaw5": {
+   "timestamp_utc": "2026-10-07T20:22:23Z",
+   "totals": {
+    "totalValue": 7318.74,
+    "availableCash": 3053.44,
+    "unrealizedPnl": 305.57,
+    "usedMargin": 3959.73
+   },
+   "positions": [
+    {
+     "symbol": "SMH",
+     "positionId": 3581725275,
+     "invested": 1499.95,
+     "openRate": 564.35,
+     "sl": 581.8
+    },
+    {
+     "symbol": "QQQ",
+     "positionId": 3523504426,
+     "invested": 750.0,
+     "openRate": 677.9,
+     "sl": 644.0
+    },
+    {
+     "symbol": "XLV",
+     "positionId": 3498067688,
+     "invested": 709.78,
+     "openRate": 156.44,
+     "sl": 148.62
+    },
+    {
+     "symbol": "CAT",
+     "positionId": 3600708904,
+     "invested": 500.0,
+     "openRate": 811.23,
+     "sl": 798.61,
+     "tp": 834.14,
+     "openTime_idt": "2026-10-07 21:51:00"
+    },
+    {
+     "symbol": "ADBE",
+     "positionId": 3600708313,
+     "invested": 500.0,
+     "openRate": 233.03,
+     "sl": 226.24,
+     "tp": 235.13,
+     "openTime_idt": "2026-10-07 21:50:13"
+    }
+   ],
+   "pendingOrders": [],
+   "mirrors": []
+  },
+  "momentum_mirror_11630170": {
+   "timestamp_utc": "2026-10-07T20:22:50Z",
+   "invested": 8000.0,
+   "value": 7959.1,
+   "availableCash": 3170.57,
+   "symbols": [
+    "CRWD",
+    "MRVL",
+    "NTAP",
+    "P",
+    "VTRS",
+    "XLK"
+   ]
+  },
+  "momentum_keys_user_Momentum_HHHGDTJ": {
+   "timestamp_utc": "2026-10-07T20:22:46Z",
+   "symbols": [
+    "AAPL",
+    "CRWD",
+    "DE",
+    "ETH",
+    "FTNT",
+    "MRVL",
+    "NDSN",
+    "NTAP",
+    "P",
+    "VTRS",
+    "XLK"
+   ],
+   "note": "context only, not reporting truth"
+  }
+ },
+ "fix_required": [
+  "Rerun or patch the comparison block from LIVE user-OfersClaw5: Classic book_symbols = ADBE, CAT, QQQ, SMH, XLV (5; GS closed on TP 22:54 IDT, RBRK closed on SL 16:30 IDT - neither held).",
+  "Add failed-breakout overlap: breakout_failed_in_classic_book=[CAT]; breakout_failed_in_momentum_book=[CRWD, MRVL] (Momentum = mirror 11630170, unchanged otherwise).",
+  "Root cause: build_comparison() prefers stale /workspace/etoroview/public/classic-portfolio.json (18:55 IDT); refresh that sidecar from live keys or source from live user-OfersClaw5.",
+  "Optional: cite classic_rsi run_id classic-rsi-auto-20261007-224319-a4c8af94 in the comparison.",
+  "Re-dual-write all 4 copies (+ latest/ and breakout_ta/ copies) so hashes match, then send back for re-QA."
+ ],
+ "qa_never_places": true,
+ "no_actions_taken": "read-only MCP reads only; nothing placed/prepared/closed/edited"
+}

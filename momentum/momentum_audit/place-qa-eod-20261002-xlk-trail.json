@@ -1,0 +1,198 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_place_qa_2026-10-02_xlk_trail",
+  "asOf_il": "2026-10-02T22:49:07+03:00",
+  "screener_run_id": "screener-20261002-224453-e769fabd",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/screener-qa-screener-20261002-224453-e769fabd.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20261002-2240-primary-qa-bundle.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS",
+  "LIVE_READ_LIMITED": false,
+  "live_read_note": "Mirror A truth via user-etoro SSO (authChannel=bearer). REJECT keys-B / OfersClaw5 as book cash. Keys infra WATCH only \u2014 not AVOID.",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 4361.46,
+    "value": 7833.65,
+    "invested": 8000.0,
+    "openPnl": -129.18,
+    "closedPnl": -401.64,
+    "source": "user-etoro SSO get-my-portfolio-summary copiedTraders[11630170]",
+    "xRequestId_portfolio": "e263a205-8b0c-4c47-aca1-9e27dd4c5b64",
+    "xRequestId_positions": "c0c86038-7e99-4827-b045-7e6cea99fda2",
+    "held_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "asOf_utc": "2026-10-02T19:48:12.7867025Z",
+    "note": "Mirror A availableCash=$4361.46 is book cash TRUTH ($8k basis). Parent Trading cash=$1386.90 is NOT Momentum book. Keys-B REJECTED as book cash."
+  },
+  "keys_ledger": {
+    "authChannel": "keys_WATCH_not_book",
+    "mcp": "user-OfersClaw5",
+    "availableCash_NOT_TRUTH": null,
+    "note": "Keys/x-user-key infra WATCH only \u2014 NOT book cash; not AVOID. Fills/execution path for Trader FULL AUTO; QA never places.",
+    "positionId_keys_from_audit": {
+      "CRWD": 3579391383,
+      "XLK": null
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": true,
+    "hard_halt": false,
+    "spx_close": 7725.0,
+    "spx_sma50": 7657.69,
+    "vix_close": 15.44,
+    "freeze_reason": "NFP today=2026-10-02 \u2014 0 new buys tonight"
+  },
+  "pack_sleeve": {
+    "stocks": 0,
+    "breakout_momentum": 0,
+    "volume_breakout": 0,
+    "vcp": 0,
+    "etf": 0,
+    "commodity": 0,
+    "ok": true,
+    "note": "EVENT_VOL_FREEZE \u2014 pack correctly empty; FAIL any BUY pack"
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 4361.46,
+    "buys_tonight": 0,
+    "covers": true,
+    "note": "No buys on freeze day \u2014 cash unused for new risk; XLK TRAIL + CRWD BE are SL patches only"
+  },
+  "verdicts": {
+    "CRWD_MOVE_SL_BREAKEVEN": {
+      "verdict": "PASS_REUSE",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "hard_fail": false,
+      "qa_places": false,
+      "action": "MOVE_SL_BREAKEVEN",
+      "symbol": "CRWD",
+      "reason": "HIT_2R sticky",
+      "reuse": true,
+      "reuse_from": "/workspace/momentum_audit/place-qa-eod-20261001-crwd-be.json",
+      "reuse_prior_overall": "PASS_WITH_GATE_OK",
+      "reuse_note": "REUSE prior PASS_WITH_GATE_OK \u2014 same pos 3579391384, same SL 230.85\u2192242.0, params unchanged. Live SL still 230.85 OK (not noop). No fresh place-QA needed. Keys/x-user-key infra WATCH is not AVOID.",
+      "positionId_keys_audit": 3579391383,
+      "positionId_mirror_A": 3579391384,
+      "on_mirror_A": true,
+      "prior_stop": 230.85,
+      "new_stop": 242.0,
+      "entry": 242.0,
+      "live_mirror": {
+        "positionId": 3579391384,
+        "openRate": 242.0,
+        "currentRate": 269.37,
+        "pnlPercent": 11.32,
+        "stopLossRate": 230.85,
+        "invested": 799.98,
+        "units": 3.305702,
+        "direction": "long",
+        "leverage": 1
+      },
+      "r_multiple_pm": 2.47,
+      "checks": {
+        "params_unchanged_vs_prior_pass": true,
+        "same_position": true,
+        "live_sl_still_prior": true,
+        "mirror_A_holds_CRWD": true,
+        "long_x1_open": true,
+        "new_stop_eq_entry_breakeven": true,
+        "new_stop_ge_prior": true
+      },
+      "note": "REUSE PASS MOVE_SL_BREAKEVEN CRWD: SL 230.85\u2192242.0 (=entry BE). Live still 230.85. Sticky HIT_2R. FULL AUTO patch OK. QA never places."
+    },
+    "XLK_TRAIL_SL": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "hard_fail": false,
+      "qa_places": false,
+      "action": "TRAIL_SL",
+      "symbol": "XLK",
+      "reason": "HIT_1R",
+      "fresh": true,
+      "positionId_mirror_A": 3577022320,
+      "on_mirror_A": true,
+      "prior_stop": 176.58,
+      "new_stop": 187.8,
+      "entry": 187.8,
+      "trail_floor_10d": 190.97,
+      "formula": "new_stop = max(prior, min(entry, 10d_low)) = max(176.58, min(187.8, 190.97)) = 187.8",
+      "formula_ok": true,
+      "live_mirror": {
+        "positionId": 3577022320,
+        "openRate": 187.8,
+        "currentRate": 199.48,
+        "pnlPercent": 6.22,
+        "stopLossRate": 176.58,
+        "invested": 799.89,
+        "units": 4.259291,
+        "direction": "long",
+        "leverage": 1
+      },
+      "pm": {
+        "last": 199.93,
+        "sma50": 186.1331,
+        "entry": 187.8,
+        "r_multiple": 1.08,
+        "trail_floor": 190.97,
+        "rationale": "Trail SL on XLK: R=1.08 \u2265 1R \u2014 new_stop=187.8000 (10d_low=190.9700, entry=187.8000, prior=176.58)"
+      },
+      "r_multiple_pm": 1.0811,
+      "r_multiple_live_est": 1.041,
+      "r_width": 11.22,
+      "checks": {
+        "TRAIL_at_ge_1R": true,
+        "new_stop_ge_prior": true,
+        "10d_low_floor_cited": true,
+        "formula_min_entry_10d_then_max_prior": true,
+        "never_trail_above_entry_via_TRAIL": true,
+        "long_only": true,
+        "lev_eq_1": true,
+        "priority_not_CLOSE": true,
+        "priority_not_BE": true,
+        "pnl_pct_gt_neg4": true,
+        "above_sma50_pm": true,
+        "mirror_A_holds_XLK_at_pos": true,
+        "not_noop_already_at_new": true,
+        "not_loosen": true
+      },
+      "priority_vs_close_be": "TRAIL_OK: last>sma50 (199.93>186.13); pnl% +6.22 > -4 \u2192 not CLOSE; R_pm=1.08 < 2 \u2192 not BE yet; TRAIL@1R correct",
+      "note": "PASS TRAIL_SL XLK mirror pos 3577022320: SL 176.58\u2192187.80 (=entry; formula max(prior,min(entry,10d_low))). R_pm=1.08 R_live\u22481.04 \u22651. Long x1. FULL AUTO patch OK. QA never places."
+    },
+    "BUY_PACK": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_codes": [
+        "EVENT_VOL_FREEZE"
+      ],
+      "buys": [],
+      "note": "EVENT_VOL_FREEZE \u2014 0 new buys required; FAIL any BUY pack. Screener buys=[] verified.",
+      "qa_places": false
+    }
+  },
+  "authorize_place_summary": {
+    "CRWD_MOVE_SL_BREAKEVEN_REUSE": true,
+    "XLK_TRAIL_SL": true,
+    "any_BUY": false
+  },
+  "execution_handoff": {
+    "qa_places": false,
+    "full_auto_after_pass": [
+      "XLK TRAIL_SL mirror pos 3577022320 SL 176.58\u2192187.80",
+      "CRWD MOVE_SL_BREAKEVEN mirror pos 3579391384 SL 230.85\u2192242.00 (REUSE prior PASS)"
+    ],
+    "actor": "Trader_momentum / eToro Account \u2014 NOT QA Bot",
+    "note": "On place-QA PASS \u2192 FULL AUTO prepare+place XLK TRAIL + CRWD BE only. QA never places. Do not buy tonight."
+  },
+  "paste_for_Trader_momentum_and_CoS": "=== QA Bot EOD 2026-10-02 primary \u2014 paste for Trader_momentum + CoS ===\nscreener-run QA: PASS (fail_codes=[])\n  run_id=screener-20261002-224453-e769fabd\n  regime=HEALTHY + EVENT_VOL_FREEZE (NFP 2026-10-02)\n  universe_n=520 sp500_n=503 valid_n=517\n  buys=[] HALT@22:45:04 IDT \u226422:50 (not EOD_SCREENER_MISSED)\n  hard_gates all clear (no SPX_* / SCREENER_RUN_CRASH / SCREENER_AUDIT_INCOMPLETE / BUY_ON_FREEZE)\n  paths: screener-qa-screener-20261002-224453-e769fabd.json\n\nplace-QA: PASS (qa_places=false \u2014 QA NEVER places)\n  mirror A 11630170 Momentum-HHHGDTJ cash=$4361.46 held=[XLK,VTRS,CRWD,P]\n  XLK_TRAIL_SL HIT_1R: PASS authorize_place=true (FRESH)\n    pos_mirror_A=3577022320 entry=187.80 prior_SL=176.58 \u2192 new_SL=187.80\n    formula max(prior,min(entry,10d_low=190.97))=187.80; R_pm=1.08 R_live\u22481.04 \u22651; long x1\n    priority OK (not CLOSE/BE); live SL still 176.58 (not noop)\n  CRWD_MOVE_SL_BREAKEVEN HIT_2R sticky: PASS_REUSE authorize_place=true\n    reuse /workspace/momentum_audit/place-qa-eod-20261001-crwd-be.json PASS_WITH_GATE_OK\n    same pos 3579391384 SL 230.85\u2192242.00; live SL still 230.85\n  BUY pack: DO_NOT_PLACE (EVENT_VOL_FREEZE) \u2014 FAIL any BUY\n  Keys/x-user-key infra: WATCH (not AVOID); rejected as book cash\n\nFULL AUTO after place PASS: XLK TRAIL + CRWD BE PATCH only (Trader/eToro Account). QA never places.\nplace-qa path: /workspace/momentum_audit/place-qa-eod-20261002-xlk-trail.json\n=== end paste ==="
+}

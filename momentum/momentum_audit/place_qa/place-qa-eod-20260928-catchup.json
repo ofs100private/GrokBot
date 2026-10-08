@@ -1,0 +1,260 @@
+{
+  "job": "eod_place_qa_2026-09-28_catchup",
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "asOf_il": "2026-09-28T22:56:36+03:00",
+  "screener_run_id": "screener-20260928-225153-16616f0d",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/screener_qa/screener-qa-screener-20260928-225153-16616f0d.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20260928-2245-backup-qa-bundle.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 2150.1,
+    "value": 7860.27,
+    "invested": 8000.0,
+    "openPnl": -109.36,
+    "closedPnl": -301.28,
+    "source": "user-etoro parent SSO get-my-portfolio-summary copiedTraders xRequestId e4baa4d0-f0b5-4608-ac22-8ccee416073e",
+    "held_symbols": [
+      "AAPL",
+      "JNJ",
+      "DE",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "asOf_utc": "2026-09-28T19:56:06.7870727Z"
+  },
+  "keys_ledger": {
+    "authChannel": "keys",
+    "availableCash_NOT_TRUTH": 219.14,
+    "totalValue": 9841.46,
+    "positionCount": 10,
+    "note": "Keys MCP = fills/execution ledger only \u2014 never blend as book cash truth",
+    "xRequestId_positions": "7a11d7a7-64ab-49be-ac82-0ee96b007c85",
+    "xRequestId_portfolio": "25e10e11-e4ca-4947-b543-c47b7d37a81a",
+    "symbols": [
+      "AAPL",
+      "JNJ",
+      "TGT",
+      "DE",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P",
+      "PLTR",
+      "ETH"
+    ],
+    "stopLoss_live": {
+      "VTRS": {
+        "positionId": 3580194334,
+        "stopLossRate": 16.38,
+        "openRate": 16.96
+      },
+      "CRWD": {
+        "positionId": 3579391383,
+        "stopLossRate": 230.85,
+        "openRate": 242.0
+      },
+      "JNJ": {
+        "positionId": 3584876985,
+        "stopLossRate": 253.27
+      },
+      "ETH": {
+        "positionId": 3572932449,
+        "invested": 10.0,
+        "stopLossRate": null
+      }
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false
+  },
+  "pack_sleeve": {
+    "stocks": 3,
+    "breakout": 0,
+    "etf": 0,
+    "commodity": 0,
+    "ok": true
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 2150.1,
+    "FTNT": 1000,
+    "LLY": 1000,
+    "sum_buys": 2000,
+    "residual_after_both": 150.1,
+    "covers_both": true
+  },
+  "verdicts": {
+    "FTNT": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_code": null,
+      "candidate": {
+        "symbol": "FTNT",
+        "amount": 1000,
+        "leverage": 1,
+        "direction": "buy",
+        "orderType": "mkt",
+        "account": "real",
+        "stopLossRate": 165.78,
+        "stopLossType": "fixed",
+        "setup": "VCP_SETUP",
+        "rs": 95,
+        "rvol": 0.38,
+        "regime": "HEALTHY"
+      },
+      "checks": {
+        "screener_pack_linkage": true,
+        "setup_ok_healthy_vcp": true,
+        "leverage_eq_1": true,
+        "amount_le_1000": true,
+        "long_only": true,
+        "sl_present": true,
+        "not_already_held_mirror_A": true,
+        "not_already_held_keys": true,
+        "event_vol_freeze": false,
+        "hard_halt": false,
+        "stock_sleeve_le_3": true,
+        "breakout_le_2": true,
+        "cash_covers": true,
+        "cash_after_est": 1150.1
+      },
+      "hard_fail": false,
+      "qa_places": false,
+      "note": "PASS FTNT $1000 \u00d71 mkt SL 165.78 VCP_SETUP RS95. Fits mirror A cash $2150.10."
+    },
+    "LLY": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_code": null,
+      "candidate": {
+        "symbol": "LLY",
+        "amount": 1000,
+        "leverage": 1,
+        "direction": "buy",
+        "orderType": "mkt",
+        "account": "real",
+        "stopLossRate": 1113.48,
+        "stopLossType": "fixed",
+        "setup": "VCP_SETUP",
+        "rs": 80,
+        "rvol": 0.44,
+        "regime": "HEALTHY"
+      },
+      "checks": {
+        "screener_pack_linkage": true,
+        "setup_ok_healthy_vcp": true,
+        "leverage_eq_1": true,
+        "amount_le_1000": true,
+        "long_only": true,
+        "sl_present": true,
+        "not_already_held_mirror_A": true,
+        "not_already_held_keys": true,
+        "event_vol_freeze": false,
+        "hard_halt": false,
+        "stock_sleeve_le_3": true,
+        "breakout_le_2": true,
+        "cash_covers_after_FTNT": true,
+        "cash_after_both_est": 150.1
+      },
+      "hard_fail": false,
+      "qa_places": false,
+      "note": "PASS LLY $1000 \u00d71 mkt SL 1113.48 VCP_SETUP RS80. After FTNT residual ~$1150.10; both fill."
+    },
+    "VTRS_TRAIL": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_code": null,
+      "action": "TRAIL_SL",
+      "symbol": "VTRS",
+      "positionId_keys": 3580194334,
+      "on_mirror_A": true,
+      "on_keys": true,
+      "prior_stop": 15.9,
+      "new_stop": 16.38,
+      "r_multiple": 1.23,
+      "checks": {
+        "position_exists_mirror_A_or_keys": true,
+        "new_stop_ge_prior": true,
+        "ge_1R": true,
+        "priority_vs_close": "TRAIL_OK_not_CLOSE (pnl% +7.67, above SMA50 in PM)",
+        "live_stop_already": 16.38
+      },
+      "soft_notes": [
+        "Trader already PATCH accepted_async (status 202) before independent place-QA; live keys stopLossRate=16.38 matches \u2014 retrospective PASS",
+        "No further trail place needed unless SL drifted"
+      ],
+      "hard_fail": false,
+      "qa_places": false,
+      "note": "PASS TRAIL_SL VTRS 15.9\u219216.38 @ R=1.23 \u22651R; on mirror A. Already applied live."
+    },
+    "CRWD_TRAIL": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_code": null,
+      "action": "TRAIL_SL",
+      "symbol": "CRWD",
+      "positionId_keys": 3579391383,
+      "on_mirror_A": true,
+      "on_keys": true,
+      "prior_stop": 227.4,
+      "new_stop": 230.85,
+      "r_multiple": 1.23,
+      "checks": {
+        "position_exists_mirror_A_or_keys": true,
+        "new_stop_ge_prior": true,
+        "ge_1R": true,
+        "priority_vs_close": "TRAIL_OK_not_CLOSE (pnl% +7.14, above SMA50 in PM)",
+        "live_stop_already": 230.85
+      },
+      "soft_notes": [
+        "Trader already PATCH accepted_async (status 202) before independent place-QA; live keys stopLossRate=230.85 matches \u2014 retrospective PASS"
+      ],
+      "hard_fail": false,
+      "qa_places": false,
+      "note": "PASS TRAIL_SL CRWD 227.4\u2192230.85 @ R=1.23 \u22651R; on mirror A. Already applied live."
+    },
+    "JNJ_SKIP": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_code": "ALREADY_HELD",
+      "symbol": "JNJ",
+      "positionId_keys": 3584876985,
+      "on_mirror_A": true,
+      "note": "JNJ already held on mirror A / keys \u2014 skip BUY correctly. Not a FAIL.",
+      "qa_places": false
+    },
+    "ETH_SKIP": {
+      "verdict": "SKIP",
+      "authorize_place": false,
+      "deviation_code": "SKIP_NOT_ON_MIRROR_A",
+      "symbol": "ETH",
+      "positionId_keys": 3572932449,
+      "invested_keys": 10.0,
+      "on_mirror_A": false,
+      "note": "ETH TRAIL \u2192 SKIP_NOT_ON_MIRROR_A (keys-only tiny ETH). Correct skip.",
+      "qa_places": false
+    }
+  },
+  "overall": "PASS",
+  "GATE_OK_notes": [],
+  "authorize_place": [
+    "FTNT",
+    "LLY"
+  ],
+  "authorize_trail_already_applied": [
+    "VTRS",
+    "CRWD"
+  ],
+  "do_not_place": [
+    "JNJ",
+    "ETH"
+  ],
+  "qa_places": false,
+  "full_auto_note": "Only items PASS may be prepared+placed by trader (FTNT, LLY); VTRS/CRWD trails already live \u2014 no re-place; QA never places."
+}

@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from momentum_qa.eod_miss_check import is_miss
+from momentum_qa.eod_miss_check import is_miss, screener_actions_by_deadline
 
 IL = ZoneInfo("Asia/Jerusalem")
 AUDIT_DIR = Path("/workspace/momentum_audit")
@@ -42,6 +42,7 @@ def build_report(day: str) -> dict:
 
     keep = []
     avoid = []
+    gate_ok_seen = set()  # collapse duplicate INSUFFICIENT_CASH SKIP+DEVIATION
     for a in actions:
         code = a.get("deviation_code")
         intentional_dwm_skip = (
@@ -49,10 +50,31 @@ def build_report(day: str) -> dict:
             and code == "DWM_STRENGTH_FAIL"
             and a.get("qa_verdict") == "PASS"
         )
+        # QA Bot 2026-09-22: INSUFFICIENT_CASH = GATE_OK protective reject, not AVOID
+        cash_gate_ok = code == "INSUFFICIENT_CASH" or (
+            a.get("qa_verdict") == "FAIL"
+            and "INSUFFICIENT_CASH" in str(a.get("qa_reasons") or "")
+        )
         # Intentional DWM SKIP (no place) = KEEP per QA Bot 2026-09-11
-        if intentional_dwm_skip or (
+        if intentional_dwm_skip or cash_gate_ok or (
             a.get("qa_verdict") == "PASS" and not a.get("deviation")
         ):
+            if cash_gate_ok:
+                key = ("INSUFFICIENT_CASH", a.get("symbol"))
+                if key in gate_ok_seen:
+                    continue
+                gate_ok_seen.add(key)
+                keep.append(
+                    {
+                        "tag": "KEEP",
+                        "action": a.get("action") or "SKIP",
+                        "symbol": a.get("symbol"),
+                        "rationale": a.get("rationale") or "INSUFFICIENT_CASH protective gate on mirror A",
+                        "deviation_code": "INSUFFICIENT_CASH",
+                        "gate": "GATE_OK",
+                    }
+                )
+                continue
             keep.append(
                 {
                     "tag": "KEEP",
@@ -65,7 +87,7 @@ def build_report(day: str) -> dict:
             continue
         if a.get("deviation") or a.get("qa_verdict") == "FAIL":
             # Do not AVOID intentional DWM SKIP rows mis-flagged as deviation
-            if intentional_dwm_skip:
+            if intentional_dwm_skip or cash_gate_ok:
                 continue
             avoid.append(
                 {
@@ -84,6 +106,22 @@ def build_report(day: str) -> dict:
             or "SKIP" in str(d.get("rationale") or "")
         ):
             # Process note only — intentional skip already KEEP via ACTION
+            continue
+        # QA Bot 2026-09-22: cash gate is protective, not playbook AVOID
+        if d.get("deviation_code") == "INSUFFICIENT_CASH":
+            key = ("INSUFFICIENT_CASH", d.get("symbol"))
+            if key not in gate_ok_seen:
+                gate_ok_seen.add(key)
+                keep.append(
+                    {
+                        "tag": "KEEP",
+                        "action": "DEVIATION",
+                        "symbol": d.get("symbol"),
+                        "rationale": d.get("rationale"),
+                        "deviation_code": "INSUFFICIENT_CASH",
+                        "gate": "GATE_OK",
+                    }
+                )
             continue
         avoid.append(
             {
@@ -148,11 +186,18 @@ def build_report(day: str) -> dict:
             }
         )
     miss, miss_status = is_miss()
-    report["eod_screener_miss"] = {"miss": miss, **miss_status}
+    # Standing gate (QA Bot 2026-09-11/23): HIGH AVOID iff no screener ACTION ≤22:50 IL.
+    # Early/manual EOD counts. Catch-up after 22:50 never clears a true miss.
+    # Late 22:45 cron when an earlier ≤22:50 ACTION exists → soft SCHEDULED_2245_LATE only.
+    by_2250 = screener_actions_by_deadline(day, 22, 50)
+    first_by_2250 = None
+    for a in by_2250:
+        ts = a.get("ts_il")
+        if ts and (first_by_2250 is None or ts < first_by_2250):
+            first_by_2250 = ts
+    true_miss = len(by_2250) == 0 and datetime.now(tz=IL).weekday() < 5
 
-    # Scheduled-on-time AVOID: first EOD screener ACTION after 22:46 means cron was late
-    # even if catch-up later makes is_miss() false (QA Bot 2026-09-15 soft fix).
-    scheduled_late = False
+    # First evening ACTION (T21–T23) for hygiene / soft late flag
     first_action_ts = None
     for a in (miss_status.get("actions") or []):
         ts = a.get("ts_il")
@@ -160,41 +205,66 @@ def build_report(day: str) -> dict:
             continue
         if first_action_ts is None or ts < first_action_ts:
             first_action_ts = ts
-    if first_action_ts and "T22:" in first_action_ts:
+    # Also consider by_2250 actions (may be earlier than T22-only miss_status)
+    if first_by_2250 and (first_action_ts is None or first_by_2250 < first_action_ts):
+        first_action_ts = first_by_2250
+
+    scheduled_2245_late = False
+    if first_by_2250 and first_action_ts:
+        # Soft: early ACTION existed, but first T22:45-window cron action was late —
+        # only flag soft if we also saw a post-22:46 ACTION (catch-up/cron) AND
+        # the ≤22:50 ACTION was before the scheduled window (manual early).
         try:
-            hhmm = first_action_ts.split("T22:")[1][:5]
-            h, m = map(int, hhmm.split(":"))
-            if h * 60 + m > 22 * 60 + 46:  # after 22:46
-                scheduled_late = True
-        except Exception:
-            pass
-    # Also if no action until after 22:46 window but actions exist later same night
-    if first_action_ts and ("T22:5" in first_action_ts or "T22:4" in first_action_ts[11:16] if len(first_action_ts) > 16 else False):
-        pass  # handled above
-    if first_action_ts:
-        # simpler minute check from ISO
-        try:
-            from datetime import datetime as _dt
-            fa = _dt.fromisoformat(first_action_ts)
-            if fa.hour == 22 and fa.minute >= 47:
-                scheduled_late = True
-            if fa.hour >= 23:
-                scheduled_late = True
+            fa = datetime.fromisoformat(first_by_2250)
+            if fa.hour < 22 or (fa.hour == 22 and fa.minute < 40):
+                # Manual/early satisfied gate; check if scheduled window also produced ACTION
+                post = [
+                    a for a in (miss_status.get("actions") or [])
+                    if a.get("ts_il") and (
+                        "T22:4" in a["ts_il"] or "T22:5" in a["ts_il"] or "T23:" in a["ts_il"]
+                    )
+                ]
+                # Soft hygiene only when cron/catch-up ran after 22:46 despite early ACTION
+                for a in post:
+                    try:
+                        dt = datetime.fromisoformat(a["ts_il"])
+                        if dt.hour == 22 and dt.minute >= 47 or dt.hour >= 23:
+                            scheduled_2245_late = True
+                            break
+                    except Exception:
+                        pass
         except Exception:
             pass
 
-    already = any(
+    report["eod_screener_miss"] = {
+        "miss": miss,
+        **miss_status,
+        "actions_by_2250": [
+            {"ts_il": a.get("ts_il"), "action": a.get("action"), "symbol": a.get("symbol")}
+            for a in by_2250
+        ],
+        "true_miss_no_action_by_2250": true_miss,
+        "first_action_ts": first_action_ts,
+        "scheduled_2245_late": scheduled_2245_late,
+        "gate": "EOD_SCREENER_MISSED iff no screener ACTION ≤22:50 IL; early/manual counts",
+    }
+
+    already_miss = any(
         x.get("deviation_code") == "EOD_SCREENER_MISSED" for x in report["deviations_clear"]
     )
-    if (miss or scheduled_late) and not already:
+    already_soft = any(
+        x.get("deviation_code") == "SCHEDULED_2245_LATE" for x in report["deviations_clear"]
+    )
+
+    if true_miss and not already_miss:
         report["deviations_clear"].append(
             {
                 "tag": "AVOID",
                 "action": "EOD_SCREENER_MISSED",
                 "rationale": (
-                    "Scheduled 22:45 screener missed or late"
-                    + (f" (first EOD ACTION {first_action_ts})" if first_action_ts else "")
-                    + ". Catch-up does not clear process AVOID."
+                    "No momentum_screener ACTION (BUY/HALT/SKIP) by 22:50 IL"
+                    + (f" (first later ACTION {first_action_ts})" if first_action_ts else "")
+                    + ". Catch-up does not clear this HIGH AVOID."
                 ),
                 "deviation_code": "EOD_SCREENER_MISSED",
                 "severity": "HIGH",
@@ -203,12 +273,49 @@ def build_report(day: str) -> dict:
         report["lessons"].append(
             {
                 "tag": "AVOID",
-                "text": "EOD_SCREENER_MISSED — catch up immediately; scheduled-on-time failure stays AVOID even after clean catch-up.",
+                "text": "EOD_SCREENER_MISSED — no ACTION ≤22:50 IL; catch up immediately; catch-up never clears this AVOID.",
             }
         )
         report["counts"]["deviations"] = report["counts"].get("deviations", 0) + 1
         report["counts"]["avoid"] = len(report["deviations_clear"])
         report["eod_screener_miss"]["scheduled_miss_avoid"] = True
+    elif scheduled_2245_late and not already_soft and not true_miss:
+        report["deviations_clear"].append(
+            {
+                "tag": "WATCH",
+                "action": "SCHEDULED_2245_LATE",
+                "rationale": (
+                    "22:45 cron/catch-up ran after 22:46 IL but an earlier ≤22:50 ACTION already "
+                    f"satisfied the miss gate (first ≤22:50: {first_by_2250}). Soft hygiene only."
+                ),
+                "deviation_code": "SCHEDULED_2245_LATE",
+                "severity": "LOW",
+            }
+        )
+        report["lessons"].append(
+            {
+                "tag": "WATCH",
+                "text": "SCHEDULED_2245_LATE — cron late but early/manual ACTION ≤22:50 already cleared miss gate.",
+            }
+        )
+        # Soft WATCH does not bump HIGH avoid counts the same way; still list under deviations_clear
+        report["eod_screener_miss"]["scheduled_miss_avoid"] = False
+        report["counts"]["avoid"] = len(
+            [x for x in report["deviations_clear"] if x.get("tag") == "AVOID"]
+        )
+    else:
+        report["eod_screener_miss"]["scheduled_miss_avoid"] = False
+
+    from collections import Counter as _Counter
+    report["top_deviation_codes"] = _Counter(
+        (x.get("deviation_code") or "UNKNOWN")
+        for x in report["deviations_clear"]
+        if x.get("deviation_code")
+    ).most_common(10)
+    report["counts"]["avoid"] = len(
+        [x for x in report["deviations_clear"] if x.get("tag") == "AVOID"]
+    )
+    report["counts"]["deviations"] = len(report["deviations_clear"])
     return report
 
 

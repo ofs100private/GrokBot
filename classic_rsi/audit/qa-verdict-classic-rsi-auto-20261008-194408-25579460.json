@@ -1,0 +1,271 @@
+{
+  "skill": "classic-rsi-1h-run-qa",
+  "run_id": "classic-rsi-auto-20261008-194408-25579460",
+  "propose_run_id": "classic-rsi-propose-20261008-194413-fe6db6e7",
+  "verdict": "PASS",
+  "overall": "PASS",
+  "deviation_codes": [],
+  "authorize_hand_packs": true,
+  "authorize_place": false,
+  "order_qa_required": [
+    "classic-real-money-order-qa-gate for BAC"
+  ],
+  "qa_places": false,
+  "place": false,
+  "slot": "12:35 ET routine; ran 12:44 ET / 19:44 IDT 2026-10-08",
+  "asOfIDT": "2026-10-08 19:45 IDT",
+  "timestamp_iso": "2026-10-08T19:45:38+03:00",
+  "timezone": "Asia/Jerusalem",
+  "kind": "auto",
+  "status": "PROPOSE",
+  "timeframe": "1H",
+  "confirmed_close": true,
+  "long_only": true,
+  "do_not_place": true,
+  "portfolio": "OfersClaw5-PRIYN",
+  "mirrorId": 11368142,
+  "checks": {
+    "audit_json": true,
+    "audit_sha256": "dcccd99104eade5db29f21104f654662ed840f0bf8a7e14d46c62c7bf4fc47d0",
+    "audit_sha256_matches_claim": true,
+    "latest_auto_matches": true,
+    "latest_auto_note": "latest-auto.json == audit.payload + 'audit' pointer (content-equal, 0 value diffs; not byte-identical by design; sha bac83e24…daaa)",
+    "index_row": true,
+    "index_row_propose": true,
+    "index_rows_unique": true,
+    "propose_file": true,
+    "latest_propose_matches": true,
+    "latest_propose_note": "byte-identical, sha256 90164be8…4140",
+    "auto_params_fingerprint": "e9d0f53065e7a234",
+    "buy_packs": 1,
+    "risk_off": 1,
+    "inner_outer_packs_equal": true,
+    "crypto": false,
+    "short_or_pip": false,
+    "atr_sl_tp": true,
+    "wrong_book": false,
+    "place_from_auto": false,
+    "run_crash": false,
+    "per_symbol": {
+      "count": 54,
+      "timeframe_1H": 54,
+      "confirmed_only": 54,
+      "last_bar_time": "2026-10-08 15:30:00+00:00 (all 54)",
+      "errors": 0
+    },
+    "confirmed_bar_note": "Run 12:44 ET. Last bar 15:30Z = 11:30 ET 1H bar, closed 12:30 ET < 12:44 → confirmed. Yahoo returns a forming 16:30Z (12:30 ET) bar; drop_forming_bar removes it. No partial bar used.",
+    "universe": {
+      "pool": 502,
+      "liquid": 492,
+      "rising": 50,
+      "book_count": 4,
+      "size": 54,
+      "used_fallback": false,
+      "error_count": 0
+    }
+  },
+  "pack_hygiene": {
+    "buy_packs": [
+      {
+        "symbol": "BAC",
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "leverage": 1,
+        "route": "REAL",
+        "portfolio": "OfersClaw5-PRIYN",
+        "timeframe": "1H",
+        "bar_confirmed": true,
+        "bar_time": "2026-10-08 15:30:00+00:00",
+        "raw_signal": "BUY_70",
+        "strength_tag": "ZONE_70",
+        "zone": "SUPPORT",
+        "rsi": 30.4627,
+        "zone_mapping_check": "Support 34.90 ≥ RSI 30.46 > Over Sold 19.90 → SUPPORT; Support + strong bullish candle → BUY_70 → CANDIDATE_LONG (weaker long timing) per skill",
+        "entry": 52.5,
+        "atr": 0.3638693,
+        "stop_loss": 51.954196,
+        "take_profit": 53.227739,
+        "r_multiple": 1.3333,
+        "arithmetic_check": "52.50−1.5×0.3638693=51.954196 ✓; 52.50+2.0×0.3638693=53.227739 ✓; reward/risk=0.72774/0.54580=1.333 ✓ (claimed 51.954/53.228/1.33 ✓)",
+        "independent_recompute": {
+          "source": "yfinance 1h at 19:45 IDT, truncated at 15:30Z",
+          "close": 52.495,
+          "open": 52.32,
+          "rsi": 30.35,
+          "zone": "SUPPORT",
+          "raw": "BUY_70",
+          "body": 0.175,
+          "strong_threshold_1.2xSMA20": 0.1456,
+          "strong_bull": true,
+          "atr": 0.363869,
+          "note": "Reproduces. Yahoo revised 15:30Z close 52.50→52.495 after the run (RSI 30.46→30.35); ATR identical to 6dp. Prior two bars were SUPPORT without strong candle → first fire this visit."
+        },
+        "pack_run_id": "classic-rsi-propose-20261008-194413-fe6db6e7",
+        "pack_run_id_note": "Pack cites paired propose_run_id (same as prior PASS precedent); auto envelope cites both.",
+        "pending_fields_for_trader": [
+          "suggested_notional_usd",
+          "fee_estimate",
+          "overnight_financing_estimate",
+          "prepared_order"
+        ],
+        "held_live": false,
+        "qa_read": "Valid long-only ATR pack. Not placeable until Trader live gates + prepare + classic-real-money-order-qa-gate PASS."
+      }
+    ],
+    "risk_off": [
+      {
+        "symbol": "MPC",
+        "bar_time": "2026-10-08 15:30:00+00:00",
+        "raw_signal": "SELL_70",
+        "strength_tag": "ZONE_70",
+        "zone": "RESISTANCE",
+        "rsi": 77.61,
+        "close": 461.35,
+        "never_short": true,
+        "zone_mapping_check": "Over Buy 79.90 > RSI 77.6 ≥ Resistance 67.90 → RESISTANCE; strong bearish → SELL_70 → RISK_OFF (no short)",
+        "independent_recompute": {
+          "rsi": 77.36,
+          "zone": "RESISTANCE",
+          "raw": "SELL_70",
+          "strong_bear": true,
+          "note": "Dropped from OVER_BUY (SELL_80 fired earlier) into RESISTANCE"
+        },
+        "held_live": false,
+        "qa_read": "No-add/no-chase only; MPC not held → no action."
+      }
+    ]
+  },
+  "mandate_gates": {
+    "weekend": false,
+    "us_rth": true,
+    "available_cash_envelope": 3544.56,
+    "available_cash_live": 4048.63,
+    "cash_floor_usd": 2500.0,
+    "headroom_envelope_usd": 1044.56,
+    "headroom_live_usd": 1548.63,
+    "blocks": [],
+    "allow_new_buys": true,
+    "force": false,
+    "bac_cash_after_live": {
+      "500": {
+        "cash_after": 3548.63,
+        "headroom_after": 1048.63,
+        "ok": true
+      },
+      "1000": {
+        "cash_after": 3048.63,
+        "headroom_after": 548.63,
+        "ok": true
+      }
+    },
+    "bac_cash_after_envelope": {
+      "500": {
+        "cash_after": 3044.56,
+        "headroom_after": 544.56,
+        "ok": true
+      },
+      "1000": {
+        "cash_after": 2544.56,
+        "headroom_after": 44.56,
+        "ok": true
+      }
+    },
+    "max_bac_notional_live_to_keep_floor": 1548.63,
+    "qa_read": "Gate checks current cash only, not cash-after-trade. Both $500 and $1,000 BAC sizes keep live cash ≥ $2.5k. On the stale envelope figure a $1,000 pack leaves only $44.56 headroom — Trader must size from LIVE cash."
+  },
+  "live_book": {
+    "source": "user-OfersClaw5",
+    "authChannel": "keys",
+    "username": "OfersClaw5-PRIYN",
+    "profile_xRequestId": "f302ec4f-a77f-428e-86fe-878ac1e24bbf",
+    "portfolio_xRequestId": "6a57b4a5-8b1b-46ef-a3fb-ad6be3c8c2fa",
+    "history_xRequestId": "53bce4ca-49a5-492d-8b8e-765e501a13bd",
+    "timestamp_utc": "2026-10-08T16:45:19.3785742Z",
+    "timestamp_idt": "2026-10-08 19:45 IDT",
+    "availableCash": 4048.63,
+    "equity": 7276.25,
+    "invested": 2959.73,
+    "unrealizedPnl": 267.89,
+    "pendingOrders": 0,
+    "holdings": [
+      {
+        "symbol": "SMH",
+        "invested": 1499.95,
+        "value": 1642.55,
+        "currentRate": 618.0,
+        "stopLossRate": 581.8
+      },
+      {
+        "symbol": "QQQ",
+        "invested": 750.0,
+        "value": 833.09,
+        "currentRate": 753.0,
+        "stopLossRate": 644.0
+      },
+      {
+        "symbol": "XLV",
+        "invested": 709.78,
+        "value": 751.98,
+        "currentRate": 165.74,
+        "stopLossRate": 148.62
+      }
+    ],
+    "closed_today": [
+      {
+        "symbol": "CAT",
+        "close_idt": "13:25",
+        "netProfit": -8.14,
+        "why": "SL"
+      },
+      {
+        "symbol": "ADBE",
+        "close_idt": "16:32",
+        "netProfit": 4.83,
+        "why": "TP"
+      }
+    ],
+    "bac_held": false,
+    "mpc_held": false
+  },
+  "envelope_book": {
+    "book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV",
+      "ADBE"
+    ],
+    "availableCash": 3544.56,
+    "equity": 7302.98,
+    "source": "user-OfersClaw5",
+    "snapshot_path": "/workspace/classic-portfolio-for-app.json",
+    "snapshot_asOf": "2026-10-08T15:58:00+03:00"
+  },
+  "book_source_check": {
+    "run_used": "user-OfersClaw5 (OfersClaw5-PRIYN)",
+    "other_account": false,
+    "wording_conflict": "CoS message says 'reject keys-B'; standing 2026-10-06 rule: OfersClaw5 = former keys-B and IS the Classic truth. Not rejected; flagged for CoS to align wording."
+  },
+  "soft_notes": [
+    "STALE_ENVELOPE_BOOK: book_symbols include ADBE (TP-closed 16:32 IDT) and cash $3,544.56 vs live $4,048.63; snapshot /workspace/classic-portfolio-for-app.json not refreshed since 15:58 IDT (~3h45m before run). Soft — skill makes only Momentum/wrong/invented book hard.",
+    "Stale ADBE in universe is immaterial: ADBE NEUTRAL (RSI 47.6), no pack, no risk-off.",
+    "Yahoo post-close revision of BAC 15:30Z bar (close 52.50→52.495, RSI 30.46→30.35) — signal unchanged.",
+    "Cash-floor gate is current-cash-only; Trader must verify cash-after ≥ $2.5k on live cash.",
+    "CoS 'reject keys-B' wording conflicts with standing rule; OfersClaw5 accepted."
+  ],
+  "hard_fail_evaluation": {
+    "RSI_RUN_MISSING": false,
+    "RSI_AUDIT_INCOMPLETE": false,
+    "RSI_TF_NOT_1H": false,
+    "RSI_UNCONFIRMED_BARS": false,
+    "RSI_SHORT_OR_PIP": false,
+    "RSI_CRYPTO": false,
+    "RSI_WRONG_BOOK": false,
+    "RSI_PLACE_FROM_AUTO": false,
+    "RSI_RUN_CRASH": false
+  },
+  "messages": {
+    "trader_classic": "QA Bot — Classic RSI 1H run QA: PASS\nrun_id=classic-rsi-auto-20261008-194408-25579460 (auto, PROPOSE, slot 12:35 ET, ran 12:44 ET / 19:44 IDT)\npropose_run_id=classic-rsi-propose-20261008-194413-fe6db6e7\nTF=1H confirmed_close=true long_only=true do_not_place=true place=false. Hard codes: none.\nBUY pack → hand-off to you: BAC long ×1, ZONE_70 SUPPORT (BUY_70, Support + strong bullish), RSI 30.46, confirmed 1H bar 15:30Z (11:30 ET bar, closed 12:30 ET); forming 12:30 ET bar dropped. Entry 52.50 | ATR(14) 0.3639 | SL 51.954 (−1.5 ATR) | TP 53.228 (+2 ATR) | R 1.33. QA reproduced signal independently.\nRISK_OFF: MPC (RESISTANCE, RSI 77.6, SELL_70) = no-add/no-chase only, never_short=true; MPC not held → no action.\nLive Classic OfersClaw5-PRIYN (user-OfersClaw5): SMH, QQQ, XLV | cash $4,048.63 | no pending orders. Envelope book (incl. ADBE) + cash $3,544.56 STALE (15:58 snapshot) — soft; size from LIVE cash.\nCash-after BAC (live): $500 → $3,548.63 (+$1,048.63 over $2.5k floor); $1,000 → $3,048.63 (+$548.63). Max to stay ≥ floor ≈ $1,548.\nNext: run your live Fear/cash/sleeve gates + sell-before-buy check, set size (×1, ATR SL/TP above, recompute from live entry), prepare-trade (do NOT place), then send the prepared pack to QA Bot for classic-real-money-order-qa-gate citing run_id + propose_run_id. Place only after that PASS.",
+    "chief_of_staff": "QA Bot — Classic RSI 1H run QA: PASS for classic-rsi-auto-20261008-194408-25579460 (propose classic-rsi-propose-20261008-194413-fe6db6e7). 1 buy pack BAC (ZONE_70 SUPPORT, RSI 30.46, ATR SL 51.954 / TP 53.228) handed to Trader_Classic for live gates → prepare → order-QA; not placeable yet. 1 risk-off MPC (not held, no short). Live OfersClaw5-PRIYN: SMH/QQQ/XLV, cash $4,048.63; envelope soft-STALE (ADBE/$3,544.56 from 15:58 snapshot). Note: run used user-OfersClaw5 = correct Classic truth per standing 2026-10-06 rule (former keys-B); 'reject keys-B' wording does not apply to it."
+  },
+  "user_summary": "PASS classic-rsi-auto-20261008-194408-25579460: BAC ZONE_70 long pack valid (SL 51.954/TP 53.228) → Trader gates + order-QA; MPC risk-off not held; live SMH/QQQ/XLV cash $4,048.63 (envelope soft-stale)."
+}

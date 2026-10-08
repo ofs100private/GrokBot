@@ -1,0 +1,114 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20261002-224453-e769fabd",
+  "slot": "eod_2240_primary",
+  "asOf": "2026-10-02",
+  "qaAt": "2026-10-02T22:48:45+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "soft_notes": [
+    "EVENT_VOL_FREEZE (NFP today=2026-10-02): 0 BUY required \u2014 buys=[] verified; 5 EVENT_VOL_FREEZE SKIPs (NTAP/ANET/FFIV/NDSN/XOM) + HALT; drop_counts.event_freeze=6 vs ACTION SKIP n=5 soft taxonomy (same class as prior days)",
+    "HALT ACTION @ 22:45:04 IDT \u226422:50 \u2014 on-time; not EOD_SCREENER_MISSED",
+    "near-miss TRACE count 55 vs file top-N 25 (same taxonomy soft as prior days)",
+    "sp500_symbols.json count=503 asOf 2026-10-02T19:44:53.785530Z; universe_n=520; valid_n=517; watch NOW/PANW/CRM in TRACE \u2014 no mega-cap stub",
+    "regime HEALTHY (spx 7725.0 > sma50 7657.69 +0.879%; vix 15.44); TRACE regime/universe/download_ok/near_misses/event_vol_freeze/pack_done/run_summary_written present",
+    "Trader claims verified independently: HEALTHY + EVENT_VOL_FREEZE; universe_n=520; buys=[]; HALT @ 22:45:04 IDT",
+    "Pack PASS 0 buys (stocks=0 breakout=0 etf=0 commodity=0, 6 rows=1 HALT+5 SKIP); FAIL-any-BUY-on-freeze: no BUY in audit"
+  ],
+  "evidence_quotes": {
+    "universe_n": 520,
+    "sp500_n": 503,
+    "sp500_cache_count": 503,
+    "valid_n": 517,
+    "regime": "HEALTHY",
+    "spx_close": 7725.0,
+    "spx_sma50": 7657.69,
+    "spx_pct_vs_sma50": 0.879,
+    "vix_close": 15.44,
+    "event_vol_freeze": true,
+    "event_vol_freeze_reason": "EVENT_VOL_FREEZE today=2026-10-02 event=NFP",
+    "hard_halt": false,
+    "ACTION_HALT_ts_il": "2026-10-02T22:45:04.133898+03:00",
+    "RUN_START_il": "2026-10-02T22:44:53.139986+03:00",
+    "RUN_END_il": "2026-10-02T22:45:04.134693+03:00",
+    "buys": [],
+    "skips": [
+      {
+        "symbol": "NTAP",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "ANET",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "FFIV",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "NDSN",
+        "reason": "EVENT_VOL_FREEZE"
+      },
+      {
+        "symbol": "XOM",
+        "reason": "EVENT_VOL_FREEZE"
+      }
+    ],
+    "sleeve": "stocks=0 breakout=0 etf=0 commodity=0 (freeze halt)",
+    "near_miss_trace": 55,
+    "near_miss_file_topn": 25,
+    "pack_qa_verdict": "PASS",
+    "drop_counts": {
+      "minervini": 458,
+      "rs": 8,
+      "setup": 45,
+      "dwm_data": 0,
+      "dwm_fail": 0,
+      "regime_hard": 0,
+      "regime_soft_etf": 0,
+      "regime_soft_rs": 0,
+      "regime_soft_vcp": 0,
+      "event_freeze": 6
+    }
+  },
+  "paths_checked": [
+    "/workspace/momentum_audit/screener-run-screener-20261002-224453-e769fabd.json",
+    "/workspace/momentum_audit/near-miss-2026-10-02.json",
+    "/workspace/momentum_audit/2026-10-02.jsonl",
+    "/workspace/sp500_symbols.json",
+    "/workspace/momentum_audit/eod_miss_check_2026-10-02_pm_2240_primary.json",
+    "/workspace/momentum_audit/pm-2026-10-02-2240-primary-decision.json"
+  ],
+  "hard_gates": {
+    "SPX_UNIVERSE_TOO_SMALL": false,
+    "SPX_MEGACAP_FALLBACK": false,
+    "SPX_FETCH_BROKEN": false,
+    "SPX_SCAN_NOT_FULL": false,
+    "SCREENER_RUN_CRASH": false,
+    "SCREENER_AUDIT_INCOMPLETE": false,
+    "BUY_ON_EVENT_VOL_FREEZE": false
+  },
+  "coherence": {
+    "RUN_START": true,
+    "TRACE_regime_universe_download_near_miss_freeze_pack": true,
+    "ACTION_HALT": true,
+    "ACTION_buys": false,
+    "ACTION_skips_freeze": true,
+    "RUN_END": true,
+    "screener_run_json_has_regime_universe_n": true,
+    "near_miss_present": true,
+    "run_summary_written": true
+  },
+  "eod_timing": {
+    "deadline_il": "22:50",
+    "action_il": "22:45:04",
+    "eod_screener_missed_hard": false,
+    "note": "HALT ACTION 22:45:04 IDT \u226422:50 \u2014 on-time; not EOD_SCREENER_MISSED"
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "place-QA: REUSE CRWD MOVE_SL_BREAKEVEN; FRESH XLK TRAIL_SL HIT_1R; NO buys (EVENT_VOL_FREEZE). QA never places."
+}

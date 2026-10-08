@@ -1,0 +1,71 @@
+{
+  "from": "Trader_momentum",
+  "wake": "Momentum EOD PM 22:42 backup catch-up 2026-09-30",
+  "requests": [
+    {
+      "type": "screener-run-qa",
+      "skill": "momentum-screener-run-qa",
+      "run_id": "screener-20260930-224513-4fa06dab",
+      "evidence": {
+        "run_summary": "/workspace/momentum_audit/screener-run-screener-20260930-224513-4fa06dab.json",
+        "near_miss": "/workspace/momentum_audit/near-miss-2026-09-30.json",
+        "stderr": "/workspace/screener_2026-09-30_eod_2242_backup.stderr",
+        "stdout_pack": "/workspace/screener_2026-09-30_eod_2242_backup.stdout",
+        "audit": "/workspace/momentum_audit/2026-09-30.jsonl",
+        "universe_n": 520,
+        "regime": "HEALTHY",
+        "spx_list": "live 503"
+      }
+    },
+    {
+      "type": "place-qa",
+      "skill": "momentum-real-money-qa-gate",
+      "portfolio": "Momentum-HHHGDTJ",
+      "mirror_A": 11630170,
+      "mirror_A_cash_at_snapshot": 549.77,
+      "note": "Cash low; CLOSE JNJ first may free ~$800 A; re-check A cash before authorizing buys. Skip already-held FTNT/NDSN/XLK.",
+      "actions": [
+        {
+          "action": "CLOSE",
+          "symbol": "JNJ",
+          "reason": "BELOW_SMA50",
+          "positionId_keys_known": 3584876985,
+          "positionId_mirror_A": 3584876986,
+          "last": 265.05,
+          "sma50": 265.3936,
+          "pnl_pct": -1.59,
+          "pm_qa": "PASS"
+        },
+        {
+          "action": "MOVE_SL_BREAKEVEN",
+          "symbol": "CRWD",
+          "new_stop_loss": 242.0,
+          "prior_stop_loss": 230.85,
+          "entry": 242.0,
+          "r_multiple": 2.07,
+          "positionId_keys_known": 3579391383,
+          "positionId_mirror_A": 3579391384,
+          "pm_qa": "PASS"
+        },
+        {
+          "action": "BUY",
+          "symbol": "RVTY",
+          "amount": 1000,
+          "leverage": 1,
+          "stop_loss": 145.07,
+          "sleeve": "VOLUME_BREAKOUT",
+          "mcp_order_params": {
+            "account": "real",
+            "direction": "buy",
+            "symbol": "RVTY",
+            "orderType": "mkt",
+            "leverage": 1,
+            "amount": 1000,
+            "stopLossRate": 145.07,
+            "stopLossType": "fixed"
+          }
+        }
+      ]
+    }
+  ]
+}

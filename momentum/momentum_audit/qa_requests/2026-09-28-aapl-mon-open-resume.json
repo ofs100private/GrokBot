@@ -1,0 +1,69 @@
+{
+  "job": "aapl-mon-open-place-resume",
+  "routine": "AAPL Mon-open place resume",
+  "routine_folder": "aapl-mon-open-place-resume",
+  "fired_at_utc": "2026-09-28T13:48:14.166Z",
+  "asOf_il": "2026-09-28T16:49:59.867701+03:00",
+  "asOf_ny": "2026-09-28T09:49:59.867709-04:00",
+  "nyse_session": "OPEN (AAPL allowOpenPosition=true, live quote)",
+  "intraday_ban_window_il": "16:30-18:30",
+  "note_on_ban": "Routine intentionally fires at NYSE open (~16:30 IDT). Proceeding per standing Mon-open resume; not a discretionary intraday add.",
+  "step1_positions_orders": {
+    "aapl_open": false,
+    "aapl_pending": false,
+    "pending_orders": [],
+    "open_symbols": [
+      "JNJ",
+      "TGT",
+      "DE",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P",
+      "PLTR",
+      "ETH"
+    ],
+    "keys_mcp": {
+      "availableCash": 1120.49,
+      "totalValue": 9797.25,
+      "source": "user-Momentum-HHHGDTJ get-my-portfolio-summary 2026-09-28T13:48:39Z",
+      "authority": "fills/positions only \u2014 NOT reporting cash truth"
+    }
+  },
+  "aapl_quote": {
+    "ask": 342.22,
+    "bid": 342.14,
+    "dailyChangePercent": 0.3137,
+    "weeklyChangePercent": 0.3137,
+    "monthlyChangePercent": 7.9817,
+    "instrumentId": 1001,
+    "allowOpenPosition": true,
+    "asOf": "2026-09-28T13:48:58.6524219Z"
+  },
+  "proposed_place": {
+    "account": "real",
+    "direction": "buy",
+    "symbol": "AAPL",
+    "orderType": "mkt",
+    "leverage": 1,
+    "amount": 900,
+    "stopLossRate": 320.79,
+    "stopLossType": "fixed",
+    "setup": "VCP_SETUP",
+    "screener_run_id": "screener-20260925-224937-f841c72c",
+    "do_not_reuse_fri_place_qa": true,
+    "reason": "QA standing after Auto-review interrupt/no fill \u2014 fresh place-QA required"
+  },
+  "mirror_A": {
+    "id": 11630170,
+    "status": "STALE_NEED_LIVE",
+    "last_known_availableCash": 904.64,
+    "last_known_asOf": "2026-09-28T02:24:20.3379481Z",
+    "last_known_source": "daily_brief morning user-etoro get-my-portfolio-summary xRequestId 78951911-c4bb-442f-9926-46f1b4d46497",
+    "fri_eod_availableCash": 904.64,
+    "blocker": "user-etoro MCP needsAuth; OfersClaw5 copiedTraders empty; Momentum agent-portfolios 403. Parent must pull live mirror A via eToro Account agent (7b604913-c0fd-49bc-897a-c9ce38589c63) or reconnect user-etoro."
+  },
+  "blocker": "Automation subagent has no SendToAgent and cannot auth user-etoro. Parent must: (1) live mirror A cash, (2) fresh place-QA to QA Bot, (3) FULL AUTO place on PASS, (4) tell user+CoS, (5) delete routine on terminal outcome.",
+  "do_not_place_until": "fresh QA Bot place-QA PASS on live mirror A cash/book (PLACE_WITHOUT_QA_BOT_RECHECK if skipped)",
+  "met_note": "MET only if cash frees AND separate fresh place-QA PASS \u2014 not in this resume scope unless cash clearly covers after AAPL"
+}

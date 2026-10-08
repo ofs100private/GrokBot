@@ -1,0 +1,117 @@
+{
+ "overall": "PASS",
+ "gate": "classic-real-money-order-qa-gate",
+ "step": "post-execution audit (fill)",
+ "symbol": "GS",
+ "batch_id": "classic-batch-adbe-gs-cat-500-20261007-keys-ofer",
+ "timestamp": "2026-10-07T21:53:00+03:00",
+ "timezone": "Asia/Jerusalem",
+ "qa_places": false,
+ "read_only": true,
+ "order_qa_verdict": {
+  "verdict": "PASS",
+  "path": "/workspace/classic_rsi/audit/qa-verdict-classic-batch-adbe-gs-cat-500-20261007-keys-ofer.json",
+  "time": "21:49 IDT"
+ },
+ "fill_audit_paths": [
+  "/workspace/classic-gs-500-20261007-keys-ofer-fill-audit.json",
+  "/workspace/classic_rsi/audit/classic-gs-500-20261007-keys-ofer-fill-audit.json"
+ ],
+ "fill_audit_twins_identical": true,
+ "account": {
+  "mcp": "user-OfersClaw5",
+  "portfolio": "OfersClaw5-PRIYN",
+  "account": "real",
+  "route": "REAL",
+  "demo": false
+ },
+ "authorized": {
+  "instrumentId": 1467,
+  "amount": 500,
+  "leverage": 1,
+  "direction": "long",
+  "SL": 864.05,
+  "TP": 887.43
+ },
+ "claimed": {
+  "orderId": 1605938930,
+  "positionId": 3600708857,
+  "units": 0.565559,
+  "openRate": 884.08,
+  "prepareAsk": 883.94,
+  "SL": 864.05,
+  "TP": 887.43,
+  "fee": 0.75
+ },
+ "live": {
+  "positionId": 3600708857,
+  "instrumentId": 1467,
+  "direction": "long",
+  "isBuy": true,
+  "leverage": 1,
+  "invested": 500.0,
+  "units": 0.565559,
+  "openRate": 884.08,
+  "stopLossRate": 864.05,
+  "takeProfitRate": 887.43,
+  "currentRate": 882.16,
+  "unrealizedPnl": -1.09,
+  "isOpen": true,
+  "duplicates": 0,
+  "xRequestId_positions": "ad85478b-6cf8-491f-bc45-d1df89110e0a",
+  "asOf": "2026-10-07 21:52:39 IDT"
+ },
+ "order_info": {
+  "route": "GET /api/v1/trading/info/real/orders/1605938930",
+  "statusID": 3,
+  "errorCode": 0,
+  "instrumentID": 1467,
+  "amount": 500.0,
+  "units": 0.565559,
+  "positionID": 3600708857,
+  "rate": 884.08,
+  "executedIDT": "2026-10-07 21:50:38 IDT",
+  "xRequestId": "76d6776c-2787-4b92-82b5-076688e0eaec"
+ },
+ "checks": {
+  "position_exists": "PASS",
+  "ids_match": "PASS",
+  "long_x1": "PASS",
+  "invested_500": "PASS",
+  "openRate_matches_claim": "PASS",
+  "SL_TP_exact": "PASS",
+  "not_demo": "PASS",
+  "slippage": {
+   "result": "PASS",
+   "fill_minus_prepare": 0.14,
+   "pct": 0.0158,
+   "threshold_pct": 0.5
+  },
+  "fee": {
+   "result": "PASS",
+   "actual_transaction_fee": 0.75,
+   "qa_estimate": 0.9,
+   "prepare_totalUpfrontCost": 0.87,
+   "note": "$0.75 is the fixed transaction fee; estimate also included spread (embedded in price, not charged to cash). Under estimate = fine."
+  },
+  "cash_delta": {
+   "result": "PASS",
+   "expected": 500.75
+  },
+  "gs_tp_status": {
+   "result": "OPEN_NOT_HIT",
+   "TP": 887.43,
+   "currentRate_positions": 882.16,
+   "currentRate_portfolio": 883.64,
+   "tp_distance_pct_from_positions_rate": 0.6,
+   "closed_trades_today_for_GS": 0,
+   "xRequestId_history": "c50b6eff-d62b-4f4b-a1a5-2cc221293000"
+  }
+ },
+ "fail_codes": [],
+ "mismatches": [],
+ "soft_warnings": [
+  "TP_NEAR_LIVE (carried from order-QA): TP 887.43 ~0.4-0.6% above market; may auto-close soon. A TP close is expected behavior, not a QA fail.",
+  "Slippage +$0.14/share (+0.016%) vs prepare ask; well under 0.5%."
+ ]
+}

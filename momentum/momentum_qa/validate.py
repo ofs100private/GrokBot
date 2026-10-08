@@ -265,19 +265,15 @@ def validate_screener_output(
             all_reasons.extend(v.reasons)
             all_devs.extend(v.deviations)
 
-    # Pack rules (2026-09-16): max 3 STOCK (prefer ≤2 breakout) + 1 sector ETF; total <= 4
-    if stock_buys > 3:
-        all_reasons.append(f"Too many STOCK BUYs: {stock_buys} > 3")
-        all_devs.append({"code": "MAX_STOCK_PICKS", "stock_buys": stock_buys})
+    # Pack rules (2026-10-05 Ofer): unlimited open stocks; ≥1 ETF policy elsewhere;
+    # prefer ≤2 breakouts per pack night; max 1 new ETF; no hard stock/buy_count caps.
+    # stock_buys > 3 / buy_count > max_picks / SLEEVE_CAPACITY_FULL are obsolete.
     if breakout_buys > 2:
         all_reasons.append(f"Too many MOMENTUM_BREAKOUT BUYs: {breakout_buys} > 2")
         all_devs.append({"code": "MAX_BREAKOUT_PICKS", "breakout_buys": breakout_buys})
     if etf_buys > 1:
         all_reasons.append(f"Too many ETF BUYs: {etf_buys} > 1")
         all_devs.append({"code": "MAX_ETF_PICKS", "etf_buys": etf_buys})
-    if buy_count > max_picks:
-        all_reasons.append(f"Too many BUYs: {buy_count} > max_picks {max_picks}")
-        all_devs.append({"code": "MAX_PICKS"})
 
     if all_reasons:
         overall = _fail(all_reasons, all_devs)
@@ -315,11 +311,26 @@ def validate_position_action(action: dict[str, Any]) -> QaVerdict:
         deviations.append({"code": "NO_RATIONALE", "symbol": sym})
 
     if act == "CLOSE":
-        if action.get("reason") != "BELOW_SMA50" and "SMA50" not in str(rationale).upper():
-            reasons.append("CLOSE must be justified by BELOW_SMA50")
-            deviations.append({"code": "CLOSE_WITHOUT_SMA50_RULE", "symbol": sym})
-        if action.get("last") is None or action.get("sma50") is None:
-            reasons.append("CLOSE missing last/sma50 evidence")
+        reason = action.get("reason")
+        if reason == "LOSS_PCT_GE_4":
+            pnl = action.get("pnl_pct")
+            if pnl is None:
+                reasons.append("CLOSE LOSS_PCT_GE_4 missing pnl_pct")
+                deviations.append({"code": "CLOSE_LOSS_NO_PNL", "symbol": sym})
+            elif float(pnl) > -4.0 + 1e-9:
+                reasons.append(f"CLOSE LOSS_PCT_GE_4 but pnl_pct {pnl} > -4")
+                deviations.append({"code": "CLOSE_LOSS_NOT_HIT", "symbol": sym})
+            if action.get("last") is None or action.get("avg_price") is None:
+                reasons.append("CLOSE LOSS_PCT_GE_4 missing last/avg_price evidence")
+                deviations.append({"code": "CLOSE_LOSS_NO_EVIDENCE", "symbol": sym})
+        elif reason != "BELOW_SMA50" and "SMA50" not in str(rationale).upper():
+            reasons.append("CLOSE must be BELOW_SMA50 or LOSS_PCT_GE_4")
+            deviations.append({"code": "CLOSE_WITHOUT_RULE", "symbol": sym})
+            if action.get("last") is None or action.get("sma50") is None:
+                reasons.append("CLOSE missing last/sma50 evidence")
+        else:
+            if action.get("last") is None or action.get("sma50") is None:
+                reasons.append("CLOSE missing last/sma50 evidence")
     elif act == "MOVE_SL_BREAKEVEN":
         if action.get("reason") != "HIT_2R" and "2R" not in str(rationale).upper():
             reasons.append("MOVE_SL_BREAKEVEN must cite HIT_2R")

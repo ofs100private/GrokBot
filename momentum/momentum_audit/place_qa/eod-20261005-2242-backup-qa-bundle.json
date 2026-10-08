@@ -1,0 +1,37 @@
+{
+  "from": "Trader_momentum",
+  "wake": "Momentum EOD PM 22:42 backup catch-up 2026-10-05 (fired 22:46 IL)",
+  "day": "2026-10-05",
+  "eod_miss_check": "/workspace/momentum_audit/eod_miss_check_2026-10-05_pm_2242_backup.json (pm_miss=true, screener_miss=true at 22:46:49 IL; no 22:40 primary audit)",
+  "pm": {
+    "run_id": "posmgr-20261005-224726-3bbd5ce3",
+    "positions_input": "/workspace/momentum_audit/pm-positions-mapped-2026-10-05-eod-2242-backup.json",
+    "stdout": "/workspace/momentum_audit/pm-2026-10-05-eod-2242-backup.stdout",
+    "result": "9 HOLD (AAPL DE NTAP XLK FTNT VTRS CRWD P NDSN), 0 risk actions; ETH $10 dust excluded (not on mirror A)",
+    "place_needed": false
+  },
+  "screener": {
+    "run_ids": ["screener-20261005-224733-685b5520 (stdout truncated by my pipe; complete audit RUN_END)", "screener-20261005-224819-a6552f3c (authoritative, full stdout/stderr captured)"],
+    "authoritative_run_id": "screener-20261005-224819-a6552f3c",
+    "run_summary": "/workspace/momentum_audit/screener-run-screener-20261005-224819-a6552f3c.json",
+    "stdout_pack": "/workspace/screener_2026-10-05_eod_2242_backup.stdout",
+    "stderr": "/workspace/screener_2026-10-05_eod_2242_backup.stderr",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-10-05.json",
+    "regime": "HEALTHY (SPX 7780 vs SMA50 7665, VIX 15.6)",
+    "event_vol_freeze": false,
+    "universe_n": 520,
+    "pack": [
+      {"symbol": "MU", "price": 1061.78, "stop_loss": 998.07, "amount_usd": 1000, "setup": "VCP_READY", "rs": 98},
+      {"symbol": "FTNT", "price": 183.81, "stop_loss": 172.78, "amount_usd": 1000, "setup": "VCP_READY", "rs": 95, "note": "ALREADY HELD on keys (pos 3590220047) — skip"},
+      {"symbol": "PSX", "price": 268.95, "stop_loss": 252.81, "amount_usd": 1000, "setup": "VCP_READY", "rs": 94}
+    ]
+  },
+  "place_qa_request": {
+    "skill": "momentum-real-money-qa-gate",
+    "candidates": ["MU $1000 SL 998.07", "PSX $1000 SL 252.81"],
+    "keys_cash_usd": 610.87,
+    "keys_cash_asOf": "2026-10-05T19:48:39Z",
+    "expected": "INSUFFICIENT_CASH protective reject on keys book (<$1000 per name); GATE_OK not AVOID"
+  },
+  "status": "AWAITING QA Bot screener-run QA + place-QA; 0 places this wake"
+}

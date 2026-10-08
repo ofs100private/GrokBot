@@ -1,0 +1,158 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_place_qa_2026-10-01_crwd_be",
+  "asOf_il": "2026-10-01T22:50:51+03:00",
+  "screener_run_id": "screener-20261001-224711-d0b57b81",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/screener-qa-screener-20261001-224711-d0b57b81.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20261001-2242-backup-qa-bundle.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS_WITH_GATE_OK",
+  "LIVE_READ_LIMITED": true,
+  "live_read_note": "Keys MCP (user-Momentum-HHHGDTJ / OfersClaw5) may be blocked/422 \u2014 book cash/positions from user-etoro mirror 11630170 ONLY. Never blend parent Trading cash as Momentum book.",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 2782.67,
+    "value": 7825.46,
+    "invested": 8000.0,
+    "openPnl": -139.74,
+    "closedPnl": -383.54,
+    "source": "user-etoro SSO get-my-portfolio-summary copiedTraders[11630170]",
+    "xRequestId_portfolio": "21521aa6-ab19-4ede-8f9c-6b35b24aeb1c",
+    "xRequestId_positions": "dab4241f-e217-45f9-9619-b0cffde93430",
+    "held_symbols": [
+      "XLK",
+      "FTNT",
+      "VTRS",
+      "CRWD",
+      "P",
+      "NDSN"
+    ],
+    "asOf_utc": "2026-10-01T19:50:14.0678538Z",
+    "note": "Mirror A availableCash=$2782.67 is book cash TRUTH \u2014 JNJ sticky CLOSE cleared (position gone). Parent Trading cash is NOT Momentum book."
+  },
+  "keys_ledger": {
+    "authChannel": "BLOCKED_OR_UNREAD",
+    "mcp": "user-Momentum-HHHGDTJ / keys absent",
+    "availableCash_NOT_TRUTH": null,
+    "note": "Keys MCP = fills/execution ledger ONLY when healthy \u2014 currently LIVE_READ_LIMITED; positionId_keys from prior audit sidecar only",
+    "positionId_keys_from_audit": {
+      "CRWD": 3579391383
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": true,
+    "hard_halt": false,
+    "spx_close": 7677.9,
+    "spx_sma50": 7651.58,
+    "vix_close": 16.33,
+    "freeze_reason": "NFP next_open=2026-10-02 \u2014 0 new buys tonight"
+  },
+  "pack_sleeve": {
+    "stocks": 0,
+    "breakout_momentum": 0,
+    "volume_breakout": 0,
+    "vcp": 0,
+    "etf": 0,
+    "commodity": 0,
+    "ok": true,
+    "note": "EVENT_VOL_FREEZE \u2014 pack correctly empty; FAIL any BUY pack"
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 2782.67,
+    "buys_tonight": 0,
+    "covers": true,
+    "note": "No buys on freeze day \u2014 cash unused for new risk; CRWD BE is SL patch only"
+  },
+  "verdicts": {
+    "CRWD_MOVE_SL_BREAKEVEN": {
+      "verdict": "PASS",
+      "authorize_place": true,
+      "deviation_codes": [],
+      "hard_fail": false,
+      "qa_places": false,
+      "action": "MOVE_SL_BREAKEVEN",
+      "symbol": "CRWD",
+      "reason": "HIT_2R",
+      "positionId_keys_audit": 3579391383,
+      "positionId_mirror_A": 3579391384,
+      "on_mirror_A": true,
+      "prior_stop": 230.85,
+      "new_stop": 242.0,
+      "entry": 242.0,
+      "live_mirror": {
+        "positionId": 3579391384,
+        "openRate": 242.0,
+        "currentRate": 266.86,
+        "pnlPercent": 10.28,
+        "stopLossRate": 230.85,
+        "invested": 799.98,
+        "units": 3.305702,
+        "direction": "long",
+        "leverage": 1
+      },
+      "r_multiple_pm": 2.28,
+      "r_multiple_live_est": 2.2296,
+      "pm": {
+        "last": 267.37,
+        "sma50": 218.0906,
+        "entry": 242.0,
+        "r_multiple": 2.28
+      },
+      "checks": {
+        "long_x1_open": true,
+        "new_stop_eq_entry_breakeven": true,
+        "new_stop_ge_prior": true,
+        "not_noop_already_at_new": true,
+        "not_loosen": true,
+        "R_ge_2": true,
+        "not_short": true,
+        "priority_not_CLOSE": true,
+        "pnl_pct_gt_neg4": true,
+        "above_sma50_pm": true,
+        "mirror_A_holds_CRWD": true,
+        "lev_ok": true
+      },
+      "priority_vs_close": "BE_OK_not_CLOSE (pnl% +10.28 live; PM sma50=218.0906 last>sma50)",
+      "live_sl_note": "Live stopLossRate still 230.85 at QA time (not yet at 242) \u2014 not noop. Audit has prior PLACED ack @ 22:49:49 IDT (status 202 async) referencing Wed place-QA; SL not reflected yet \u2014 Trader/eToro Account FULL AUTO PATCH after THIS tonight place-QA PASS.",
+      "note": "PASS MOVE_SL_BREAKEVEN CRWD mirror pos 3579391384: SL 230.85\u2192242.0 (=entry BE). Live still 230.85. R_live\u22482.23 R_pm=2.28 \u22652. Long x1. FULL AUTO patch OK. QA never places."
+    },
+    "JNJ_CLOSE": {
+      "verdict": "NO_ACTION_CLEARED",
+      "authorize_place": false,
+      "deviation_codes": [],
+      "symbol": "JNJ",
+      "on_mirror_A": false,
+      "note": "Sticky Wed CLOSE cleared \u2014 JNJ absent from mirror A held; cash freed 549.77\u21922782.67. No CLOSE to place.",
+      "qa_places": false
+    },
+    "BUY_PACK": {
+      "verdict": "DO_NOT_PLACE",
+      "authorize_place": false,
+      "deviation_codes": [
+        "EVENT_VOL_FREEZE"
+      ],
+      "buys": [],
+      "note": "EVENT_VOL_FREEZE \u2014 0 new buys required; FAIL any BUY pack. Screener buys=[] verified.",
+      "qa_places": false
+    }
+  },
+  "authorize_place_summary": {
+    "CRWD_MOVE_SL_BREAKEVEN": true,
+    "any_BUY": false,
+    "JNJ_CLOSE": false
+  },
+  "execution_handoff": {
+    "qa_places": false,
+    "full_auto_after_pass": [
+      "CRWD MOVE_SL_BREAKEVEN mirror pos 3579391384 SL 230.85\u2192242.00"
+    ],
+    "actor": "Trader_momentum / eToro Account \u2014 NOT QA Bot",
+    "note": "On place-QA PASS \u2192 FULL AUTO prepare+place CRWD BE only. QA never places. Do not buy tonight."
+  },
+  "paste_for_Trader_momentum_and_CoS": "=== QA Bot EOD 2026-10-01 backup \u2014 paste for Trader_momentum + CoS ===\nscreener-run QA: PASS (fail_codes=[])\n  run_id=screener-20261001-224711-d0b57b81\n  regime=HEALTHY + EVENT_VOL_FREEZE (NFP 2026-10-02)\n  universe_n=520 sp500_n=503 valid_n=517\n  buys=[] HALT@22:47:22 IDT \u226422:50 (not EOD_SCREENER_MISSED)\n  hard_gates all clear (no SPX_* / SCREENER_RUN_CRASH / SCREENER_AUDIT_INCOMPLETE / BUY_ON_FREEZE)\n  paths: screener-qa-screener-20261001-224711-d0b57b81.json\n\nplace-QA: PASS_WITH_GATE_OK (qa_places=false \u2014 QA NEVER places)\n  mirror A 11630170 Momentum-HHHGDTJ cash=$2782.67 held=[XLK,FTNT,VTRS,CRWD,P,NDSN] (JNJ gone)\n  CRWD_MOVE_SL_BREAKEVEN HIT_2R: PASS authorize_place=true\n    pos_mirror_A=3579391384 entry=242.00 prior_SL=230.85 \u2192 new_SL=242.00\n    R_pm=2.28 R_live\u22482.23 \u22652; long x1; new\u2265prior; live SL still 230.85 (not noop)\n  BUY pack: DO_NOT_PLACE (EVENT_VOL_FREEZE) \u2014 FAIL any BUY\n  JNJ CLOSE: NO_ACTION_CLEARED (position gone)\n\nFULL AUTO after place PASS: CRWD BE PATCH only (Trader/eToro Account). QA never places.\nplace-qa path: /workspace/momentum_audit/place-qa-eod-20261001-crwd-be.json\n=== end paste ==="
+}

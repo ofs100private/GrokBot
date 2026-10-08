@@ -1,0 +1,158 @@
+{
+  "skill": "classic-real-money-order-qa-gate",
+  "also_checked": [
+    "trader-classic-strategy",
+    "classic-rebalance (installed 2026-10-08 20:27 IDT)"
+  ],
+  "batch": "classic-rebalance-batch-20261008-keys",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "route": "REAL",
+  "asOfIDT": "2026-10-08 20:31 IDT",
+  "timestamp_iso": "2026-10-08T20:31:14+03:00",
+  "timezone": "Asia/Jerusalem",
+  "qa_places": false,
+  "place": false,
+  "authorize_place_scope": "QA only; placement additionally needs explicit Ofer/CoS authorization naming symbol + size (classic-rebalance Step 6.4)",
+  "live_reads": {
+    "positions_orders_xRequestId": "766fb020-25c7-4673-bd57-5cf3d90787d0",
+    "portfolio_xRequestId": "0b2d18ba-562e-450b-8377-70f8a080804c",
+    "asOf_utc": "2026-10-08T17:30:00Z (20:30 IDT)",
+    "quotes_xRequestIds": [
+      "e0cb546e-9a32-475c-bb83-dff5cf851068",
+      "5abc22df-ced7-4627-a6c9-386c94ba0cf7"
+    ],
+    "availableCash": 4048.63,
+    "frozenCash": 0,
+    "pendingOrders": 0,
+    "stale_quote_note": "eToro overview returned STALE cached quotes for SMH (618.30/618.43 @15:23:56Z), SPY (775.5 @16:17:41Z) and QQQ (753.9 @16:17Z) on two reads. TMO/XLE/XLV were fresh (@17:29:57\u201317:30:00Z). Fresh cross-checks: SMH position currentRate 602.35 @17:30Z; Yahoo 1m @13:30 ET: SMH 602.43, SPY 771.02, QQQ 744.36, TMO 645.13, XLE 65.25."
+  },
+  "authorization_evidence": {
+    "claimed": "Ofer approved rebalance plan 2026-10-08 ~20:26 IDT; BAC skipped (batch/pack files + qa-request .md, all written by Trader_Classic 20:28 IDT)",
+    "corroboration": "The classic-rebalance workflow skill was installed at 20:27:00 IDT. That timing is consistent with plan adoption, but the skill contains no approval text.",
+    "independent_record_found": false,
+    "note": "I found no CoS note, Ofer message, or audit row confirming the approval or naming symbols and sizes. Treat placement as pending explicit Ofer/CoS authorization."
+  },
+  "w8ben": "Informational. requiresW8Ben=true on SPY/XLE and also on the held SMH/QQQ/XLV, which were bought successfully, so a W-8BEN is very likely on file. Neither skill makes it a gate.",
+  "pack_id": "classic-rebalance-batch-20261008-keys",
+  "pack_path": "/workspace/classic_rsi/audit/classic-rebalance-batch-20261008-keys.json",
+  "request_path": "/workspace/classic_rsi/audit/classic-rebalance-qa-request-20261008.md",
+  "verdict": "PARTIAL_PASS",
+  "authorize_place_by_pack": {
+    "SMH_trim_1.25401u": true,
+    "SPY_700": true,
+    "TMO_500": true,
+    "XLE_300": false
+  },
+  "hard_fail_codes": [],
+  "xle_codes": [
+    "NO_CHASE_EVENT_VOL",
+    "MIN_POSITION_LT_400",
+    "NEW_NAMES_GT_2_PER_MONTH"
+  ],
+  "superseded": {
+    "BAC_750": "classic-bac-750-20261008-keys-rsi: SUPERSEDED/SKIPPED per Ofer-approved rebalance (claimed ~20:26 IDT)"
+  },
+  "audit_files": {
+    "batch_and_4_packs_exist": true,
+    "consistent": true,
+    "workspace_twins": "none (not required)",
+    "prepared_at": "2026-10-08T20:28:22+03:00",
+    "tokens_expired_at": "20:30:22\u201320:30:23 IDT"
+  },
+  "cash_sequence_live": {
+    "start": 4048.63,
+    "after_smh_trim": 4802.85,
+    "after_spy": 4101.78,
+    "after_tmo": 3600.74,
+    "after_xle_if_included": 3300.24,
+    "final_without_xle": 3600.74,
+    "worst_case_smh_unfilled": {
+      "with_xle": 2546.02,
+      "without_xle": 2846.52
+    },
+    "floor": 2500,
+    "floor_ok_all_paths": true,
+    "note": "Worst case includes fees (the trader's $2,548.63 / $2,848.63 exclude fees)."
+  },
+  "weights_after_live": {
+    "with_xle": {
+      "values": {
+        "SMH": 845.59,
+        "QQQ": 823.53,
+        "XLV": 757.92,
+        "SPY": 700.0,
+        "TMO": 500.0,
+        "XLE": 300.0
+      },
+      "invested": 3927.04,
+      "weights_pct": {
+        "SMH": 21.5,
+        "QQQ": 21.0,
+        "XLV": 19.3,
+        "SPY": 17.8,
+        "TMO": 12.7,
+        "XLE": 7.6
+      },
+      "sleeves_pct": {
+        "growth (SMH+QQQ)": 42.5,
+        "healthcare (XLV+TMO)": 32.0,
+        "broad (SPY)": 17.8,
+        "energy (XLE)": 7.6
+      }
+    },
+    "without_xle": {
+      "values": {
+        "SMH": 845.59,
+        "QQQ": 823.53,
+        "XLV": 757.92,
+        "SPY": 700.0,
+        "TMO": 500.0
+      },
+      "invested": 3627.04,
+      "weights_pct": {
+        "SMH": 23.3,
+        "QQQ": 22.7,
+        "XLV": 20.9,
+        "SPY": 19.3,
+        "TMO": 13.8
+      },
+      "sleeves_pct": {
+        "growth (SMH+QQQ)": 46.0,
+        "healthcare (XLV+TMO)": 34.7,
+        "broad (SPY)": 19.3
+      }
+    }
+  },
+  "growth_sleeve_flag": "If XLE is deferred (QA verdict), growth = 46.0% > the 45% cap (classic-rebalance drift trigger 1). Options for Ofer/CoS: (a) accept ~46% until the XLE/next add; (b) enlarge the SMH trim to \u22651.3656u (\u2248$823) via a new prepare-close + re-QA.",
+  "conditions_for_place": [
+    "Explicit Ofer/CoS authorization naming each symbol + size (no independent record of the ~20:26 approval found)",
+    "Order: SMH trim \u2192 confirm fill \u2192 SPY \u2192 TMO; XLE NOT placed",
+    "Re-prepare each with identical params immediately before place (tokens ~2 min TTL), one place per approval",
+    "Every re-prepare quote/rate must be fresh (asOf within seconds); eToro served stale SMH 618.30 @15:23Z and SPY 775.5 @16:17Z quotes",
+    "Drift >~0.1% vs the prepare price on a buy \u2192 re-base trailing SL % and re-QA",
+    "Before each buy: cash \u2265 required and \u2265 $2,500 after; no pending orders",
+    "Fill audit to QA: SMH remainder SL 581.80 intact; actual fills/fees; final cash"
+  ],
+  "per_pack_paths": {
+    "smh": "/workspace/classic_rsi/audit/qa-verdict-classic-rebalance-smh-trim-754-20261008-keys.json",
+    "spy": "/workspace/classic_rsi/audit/qa-verdict-classic-rebalance-spy-700-20261008-keys.json",
+    "tmo": "/workspace/classic_rsi/audit/qa-verdict-classic-rebalance-tmo-500-20261008-keys.json",
+    "xle": "/workspace/classic_rsi/audit/qa-verdict-classic-rebalance-xle-300-20261008-keys.json"
+  },
+  "messages": {
+    "trader_classic": "QA Bot \u2014 Classic order-QA, rebalance batch 2026-10-08 (OfersClaw5-PRIYN): PARTIAL PASS. No hard-fail codes.\n1) SMH trim 1.25401u (pos 3581725275): PASS, authorize_place=true (QA). Live 602.35 \u2192 proceeds \u2248$755.35; remainder 1.40382u \u2248$845.59; SL 581.80 live (3.4% cushion). Prepare-close showed the stale 618.30 rate, so check freshness at re-prepare.\n2) SPY $700: PASS, authorize_place=true. Ask 770.65 vs live ~771.02 (+0.05%); trailing SL 709.03 = \u22128.0% \u2713; no TP \u2713; \u22120.8% day.\n3) TMO $500: PASS, authorize_place=true. Ask 645.24 fresh (+0.06%); trailing SL 574.26 = \u221211.0% \u2713; single stock 13.8% \u226415% \u2713.\n4) XLE $300: FAIL \u2192 HOLD/WAIT, authorize_place=false. +2.97% on the oil-shock day (no-chase); $300 < the $400 minimum; would be a 3rd new name (cap 2/month). Resubmit \u2265$400 on a red day/RSI Support.\nCash: $4,048.63 \u2192 SMH $4802.85 \u2192 SPY $4101.78 \u2192 TMO $3600.74 (floor \u2713). Worst case if SMH doesn't fill: $2846.52 without XLE / $2546.02 with XLE (both \u2713).\nWeights without XLE: SMH 23.3 QQQ 22.7 XLV 20.9 SPY 19.3 TMO 13.8; growth 46.0% (>45% cap). Fix with a \u22651.3656u SMH trim (new prepare + re-QA) or get Ofer/CoS to accept it.\nBefore place: explicit Ofer/CoS authorization naming each symbol and size (QA found no independent record of the 20:26 approval). Order SMH \u2192 confirm fill \u2192 SPY \u2192 TMO. Re-prepare identical params just before each place and check the quote asOf is fresh (eToro served stale SMH 618.30 / SPY 775.5). Drift >~0.1% \u2192 re-base + re-QA. Fill audit back to QA (SMH remainder SL 581.80). BAC $750 = SUPERSEDED. QA does not place.",
+    "chief_of_staff": "QA Bot \u2014 Classic rebalance batch 2026-10-08: PARTIAL PASS. SMH trim 1.25401u, SPY $700 and TMO $500 PASS (authorize_place=true, QA only). XLE $300 FAIL \u2192 HOLD/WAIT (+2.97% oil-shock chase, below the $400 minimum, 3rd new name). Cash $4,048.63 \u2192 $3600.74 after SMH/SPY/TMO; worst case $2846.52 if SMH doesn't fill (floor \u2713). Without XLE the growth sleeve is ~46.0% (>45%): accept it, or trim SMH \u22651.3656u with re-QA. Authorization: QA found no independent record of Ofer's ~20:26 IDT approval (only Trader_Classic's files). Please confirm explicit authorization for SMH trim 1.25401u, SPY $700 and TMO $500 before any place. BAC $750 marked SUPERSEDED."
+  },
+  "user_summary": "Rebalance QA: SMH trim, SPY $700 and TMO $500 PASS; XLE $300 HOLD (chasing +3%, below the $400 minimum). Cash ends $3600.74. Growth ~46.0% without XLE. Still needs explicit Ofer/CoS authorization.",
+  "qa_override": {
+    "at": "2026-10-08T20:32:00+03:00",
+    "by": "QA Bot",
+    "reason": "CoS 20:31 IDT: no record of Ofer approving the rebalance; classic-rebalance skill (installed 20:27) unconfirmed for gating. HOLD until Ofer confirms in CoS chat and the skill is sanctioned.",
+    "codes": [
+      "AUTH_UNCONFIRMED_COS_HOLD"
+    ],
+    "update_2032": "CoS 20:32 IDT: Ofer 20:26 msg in Trader_Classic chat 'Approve the process and prepare the rebalance trades for QA (skip BAC)' sanctions classic-rebalance skill for gating + prepare only. authorize_place stays false until Ofer authorizes per symbol/size via CoS; then re-prepare + re-QA."
+  },
+  "authorize_place": false
+}

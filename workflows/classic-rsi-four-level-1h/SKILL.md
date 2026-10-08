@@ -3,7 +3,8 @@ name: Classic RSI four-level 1H
 description: >-
   use this when running Classic-only 1H RSI four-level entries (Over
   Buy/Resistance/Support/Over Sold) with ATR equity stops, long-only remap,
-  confirmed close, and QA before place on OfersClaw5-PRIYN — Fear is a dip
+  confirmed close, cash-floor sizing (cut size or fewer symbols),
+  sell-before-buy check, and QA before place on OfersClaw5-PRIYN — Fear is a dip
   window, never Momentum
 ---
 # Classic RSI four-level entries (1H)
@@ -16,10 +17,23 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 
 - Long-only ×1; **no shorts** from Sell triangles
 - No crypto opens
-- Cash floor ≥ ~$2.5k after adds; weekend = no new opens unless Ofer overrides
+- **Cash floor ≥ ~$2.5k after adds** (see sizing rule below); weekend = no new opens unless Ofer overrides
 - **Classic account truth:** Classic account (OfersClaw5-PRIYN) via `user-OfersClaw5` (execution + reporting). Parent SSO mirror `11368142` is optional copy/UI corroboration only — never required, never the rejection reason
 - **QA Bot PASS** required before any prepare/place ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) or standing Classic order gate)
 - **Fear is the dip window (Ofer 2026-10-04):** CNN Fear or Extreme Fear is when Support / Over Sold longs are most in play. Do **not** block a pack only because F&G is Fear or the brief says No Buy for that reason. Still block on cash floor, weekend, explicit Ofer/CoS hold, and risk-off (no add) on that same name.
+
+## Cash floor sizing (Ofer 2026-10-07)
+
+If a buy pack would leave Classic cash **under ~$2,500**:
+1. **Lower** notional per name, and/or
+2. **Trade fewer symbols** (keep best sleeve-fit / conviction),
+3. Re-check cash-after ≥ floor before prepare / order-QA.
+
+Do not auto-override the floor unless Ofer explicitly sizes knowing the breach.
+
+## Sell / rotate before buy (Ofer 2026-10-07)
+
+Before preparing RSI buy packs, check whether selling or rotating a weak holding first is better (near stop, broken thesis, overcrowded sleeve). Report that choice; sequence closes ahead of buys when that frees cash cleanly.
 
 ## Timeframe
 
@@ -67,12 +81,13 @@ Routine **classic-rsi-1h-auto**: weekdays `CRON_TZ=America/New_York 35 9-15 * * 
 - Soft gates: weekend / outside US RTH / cash floor → `GATED` (buys suppressed). Fear / brief No-Buy-from-Fear is **not** a soft gate.
 - **Every run** → QA Bot [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) citing `run_id` (0 packs and GATED still validated)
 - On run-QA **FAIL** → QA messages Trader_Classic to **rerun** `auto_1h` (max 2/hour) → re-validate new `run_id`
-- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/explicit hold; Fear = dip, not a block) → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → place only on PASS
+- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/sell-first check/explicit hold; Fear = dip, not a block; cut size or drop names to keep ~$2.5k cash) → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → place only on PASS
 
 ## Automation flow (manual or auto)
 
 1. `auto_1h` or `propose` on confirmed 1H bars
 2. Mandate filter — RSI cannot override cash, weekend, or an explicit hold. It **should** be used in Fear.
-3. QA Bot **run QA** with `run_id` (FAIL → Classic rerun → re-QA)
-4. If packs remain after run PASS → order QA → place only after PASS
-5. Post-fill audit
+3. Sell/rotate check + size so cash-after ≥ ~$2.5k
+4. QA Bot **run QA** with `run_id` (FAIL → Classic rerun → re-QA)
+5. If packs remain after run PASS → order QA → place only after PASS
+6. Post-fill audit

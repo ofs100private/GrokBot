@@ -1,0 +1,80 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20260928-225153-16616f0d",
+  "slot": "eod_2245_backup_catchup",
+  "asOf": "2026-09-28",
+  "qaAt": "2026-09-28T22:56:36+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "soft_notes": [
+    "ACTION BUY @ 22:52:07 IDT \u2014 past 22:50 deadline; catch-up hygiene (EOD_SCREENER_MISSED soft in jsonl). Universe/pack still PASS; place-QA required.",
+    "near-miss TRACE count 69 vs file top-N 25 (same taxonomy soft as prior days)",
+    "Pack all VCP_SETUP breakout=0 stocks=3 etf=0 \u2014 sleeve OK under HEALTHY; place-QA filters held JNJ",
+    "stderr log placeholder only (not captured); TRACE regime/universe/pack_done present in jsonl \u2014 not SCREENER_AUDIT_INCOMPLETE",
+    "sp500_symbols.json count=503; universe_n=520; valid_n=517; watch NOW/PANW/CRM in universe \u2014 no mega-cap stub"
+  ],
+  "evidence_quotes": {
+    "universe_n": 520,
+    "sp500_n": 503,
+    "sp500_cache_count": 503,
+    "regime": "HEALTHY",
+    "spx_close": 7684.14,
+    "spx_sma50": 7640.61,
+    "spx_pct_vs_sma50": 0.57,
+    "vix_close": 16.07,
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "ACTION_ts_il": "2026-09-28T22:52:07.341273+03:00",
+    "RUN_START_il": "2026-09-28T22:51:53.365084+03:00",
+    "RUN_END_il": "2026-09-28T22:52:07.341558+03:00",
+    "pack_symbols": [
+      "FTNT",
+      "JNJ",
+      "LLY"
+    ],
+    "pack_tags": {
+      "FTNT": "VCP_SETUP RS95 RVOL0.38 SL165.78",
+      "JNJ": "VCP_SETUP RS82 RVOL0.51 SL255.75",
+      "LLY": "VCP_SETUP RS80 RVOL0.44 SL1113.48"
+    },
+    "sleeve": "stocks=3 breakout=0 etf=0 commodity=0",
+    "near_miss_trace": 69,
+    "near_miss_file_topn": 25,
+    "pack_qa_verdict": "PASS"
+  },
+  "paths_checked": [
+    "/workspace/momentum_audit/screener-run-screener-20260928-225153-16616f0d.json",
+    "/workspace/momentum_audit/near-miss-2026-09-28.json",
+    "/workspace/momentum_audit/2026-09-28.jsonl",
+    "/workspace/momentum_audit/screener-2026-09-28-pack.json",
+    "/workspace/momentum_audit/screener-2026-09-28-pack-filtered.json",
+    "/workspace/momentum_audit/screener-2026-09-28-stderr.log",
+    "/workspace/sp500_symbols.json"
+  ],
+  "hard_gates": {
+    "SPX_UNIVERSE_TOO_SMALL": false,
+    "SPX_MEGACAP_FALLBACK": false,
+    "SPX_FETCH_BROKEN": false,
+    "SPX_SCAN_NOT_FULL": false,
+    "SCREENER_RUN_CRASH": false,
+    "SCREENER_AUDIT_INCOMPLETE": false
+  },
+  "coherence": {
+    "RUN_START": true,
+    "TRACE_regime_universe_freeze_pack": true,
+    "ACTION_buys": true,
+    "RUN_END": true,
+    "screener_run_json_has_regime_universe_n": true,
+    "near_miss_present": true
+  },
+  "eod_timing": {
+    "deadline_il": "22:50",
+    "action_il": "22:52:07",
+    "eod_screener_missed_hard": false,
+    "note": "Catch-up ACTION ~2m past deadline \u2014 soft process note only; not hard FAIL"
+  },
+  "next": "place-QA for FTNT/LLY + TRAIL_SL VTRS/CRWD; skip JNJ (held) and ETH (not on mirror A). QA never places."
+}

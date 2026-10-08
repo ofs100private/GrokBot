@@ -4,7 +4,8 @@ description: >-
   Use this when planning, reviewing, or executing Trader_Classic trades on
   OfersClaw5-PRIYN (keys execution) — any fitting liquid large-cap/ETF, SPX
   heatmap Change 1D URL, cross-regime diversification, beat-SPX after fees/tax,
-  hard mandate rules, Fear-as-dip window, and post-trade self-improvement.
+  hard mandate rules, Fear-as-dip window, cash-floor sizing, sell-before-buy
+  check, and post-trade self-improvement.
 ---
 # Trader Classic strategy
 
@@ -20,10 +21,30 @@ Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PR
 
 - Long-only, leverage **×1**; **no crypto** opens
 - Prefer large liquid US companies / sector ETFs, then commodities
-- Prefer leaving cash uninvested; never all-in. Prefer ~$2.5k+ residual when Classic account cash allows; Ofer may override size when Classic account cash is smaller
+- Prefer leaving cash uninvested; never all-in
 - REAL only; QA PASS → place → fill audit → CoS
 - No place under an explicit Ofer/CoS buy HOLD or without auth after PASS
 - Weekend: no new size unless Ofer overrides
+
+## Cash floor sizing (Ofer 2026-10-07)
+
+**Hard preference:** leave **~$2,500+** residual cash on the Classic account after any buy batch.
+
+If a proposed pack would leave cash **below ~$2,500**:
+1. **Lower** each trade’s notional, and/or
+2. **Buy fewer symbols** (keep the best sleeve-fit / highest-conviction names),
+3. Re-check cash-after ≥ floor, then prepare / order-QA.
+
+Do **not** propose a floor override unless Ofer **explicitly** sizes knowing cash will go under ~$2.5k. Never auto-place a pack that breaches the floor without that explicit override.
+
+## Sell / rotate before buy (Ofer 2026-10-07)
+
+**Before every new buy pack**, check whether it is better to **sell or rotate** a weak holding first:
+- Names near stop, thesis broken, sleeve overcrowded, or clearly weaker than the candidate
+- Freeing cash by closing first can fund the buy without breaching the floor
+- Report the sell-first vs buy-only choice in the prepare/handoff notes to CoS
+
+If a clean sell/rotation is better, prepare the close (and order-QA) **before** or sequenced ahead of the new buys.
 
 ## Fear is the dip window (Ofer 2026-10-04)
 
@@ -45,15 +66,17 @@ Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. 
 ## Research loop
 
 1. Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`) snapshot (+ optional mirror `11368142` copy view) + sleeve weights
-2. **SPX heatmap (1D):** open  
+2. **Sell/rotate check** (see above) before proposing new buys
+3. **SPX heatmap (1D):** open  
    `https://www.tradingview.com/heatmap/stock/#%7B%22dataSource%22%3A%22SPX500%22%2C%22blockColor%22%3A%22change%22%2C%22blockSize%22%3A%22market_cap_basic%22%2C%22grouping%22%3A%22sector%22%7D`  
    Confirm UI label **Change 1D, %** (blockColor `change`). Not 1h (`change|60`). If tiles blank/rate-limited → eToro batch quotes + sector ETFs
-3. Rel performance vs SPX/QQQ; beat SPX after costs
-4. X Tier-1 (small cost; X MCP guide first)
-5. Event calendar (~48h CPI/FOMC/NFP)
-6. Timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close. **In Fear, Support/Over Sold buys are the dip.** RSI still does not bypass weekend or an explicit hold.
-7. prepare on **Classic account** (`user-OfersClaw5`) — fees + tax haircut
-8. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
+4. Rel performance vs SPX/QQQ; beat SPX after costs
+5. X Tier-1 (small cost; X MCP guide first)
+6. Event calendar (~48h CPI/FOMC/NFP)
+7. Timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close. **In Fear, Support/Over Sold buys are the dip.** RSI still does not bypass weekend or an explicit hold.
+8. Size so cash-after ≥ ~$2.5k (cut notional or drop symbols first)
+9. prepare on **Classic account** (`user-OfersClaw5`) — fees + tax haircut
+10. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
 
 ## After every fill / skip / QA FAIL
 
@@ -65,4 +88,4 @@ Hold cash if the dip is not clean; event-vol freeze; in Fear lean into quality d
 
 ## Do not
 
-Crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy).
+Crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy); auto-place packs that leave cash under ~$2.5k without Ofer’s explicit override; skip the sell/rotate check before new buys.

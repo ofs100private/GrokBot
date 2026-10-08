@@ -70,3 +70,25 @@ Run: `cd /workspace && /workspace/screener-venv/bin/python momentum_qa/test_vali
 - Full yfinance EOD screener run
 - Git commit
 - Place trades / SendToAgent
+
+## 2026-09-22 — LOSS_PCT_GE_4 hard close (Ofer)
+
+Position manager: **CLOSE** when unrealized PnL% vs avg open **≤ −4.0%**, even if still above SMA50.
+Priority unchanged: CLOSE (BELOW_SMA50 **or** LOSS_PCT_GE_4) → MOVE_SL_BREAKEVEN (≥2R) → TRAIL_SL (≥1R) → HOLD.
+QA accepts reason `LOSS_PCT_GE_4` with `pnl_pct` + `avg_price` evidence. FULL AUTO after place-QA PASS.
+
+
+## 2026-09-22 — place-QA recheck after cash-block (CoS)
+
+`INSUFFICIENT_CASH` = GATE_OK protective reject (not playbook AVOID).
+Flow: place-QA FAIL on cash → later cash frees (closes) → **fresh** QA Bot place-QA with new mirror A cash → place only on new PASS.
+AVOID code if skipped: `PLACE_WITHOUT_QA_BOT_RECHECK`.
+
+## Feedback miss scoring (2026-09-23)
+
+`EOD_SCREENER_MISSED` = no screener ACTION ≤22:50 IL (early/manual counts). Catch-up does not clear. Soft `SCHEDULED_2245_LATE` for late 22:45 cron when earlier ACTION cleared the gate. Scorer fix live in `momentum_qa/eod_miss_check.py` + `feedback_daily.py`.
+
+
+## 2026-10-01 — post place-QA place ACK + sticky pending (CoS analysis)
+
+Incident: Wed EOD place-QA PASS for JNJ CLOSE + CRWD BE never executed (Mirror A cash still $549.77 Oct 1; CRWD SL still 230.85). Fixes in skill + `/workspace/momentum_audit/improvement-2026-10-01.md`. No trades in this doc change.

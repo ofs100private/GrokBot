@@ -1,0 +1,105 @@
+{
+ "overall": "PASS",
+ "gate": "classic-real-money-order-qa-gate",
+ "step": "post-execution audit (fill)",
+ "symbol": "CAT",
+ "batch_id": "classic-batch-adbe-gs-cat-500-20261007-keys-ofer",
+ "timestamp": "2026-10-07T21:53:00+03:00",
+ "timezone": "Asia/Jerusalem",
+ "qa_places": false,
+ "read_only": true,
+ "order_qa_verdict": {
+  "verdict": "PASS",
+  "path": "/workspace/classic_rsi/audit/qa-verdict-classic-batch-adbe-gs-cat-500-20261007-keys-ofer.json",
+  "time": "21:49 IDT"
+ },
+ "fill_audit_paths": [
+  "/workspace/classic-cat-500-20261007-keys-ofer-fill-audit.json",
+  "/workspace/classic_rsi/audit/classic-cat-500-20261007-keys-ofer-fill-audit.json"
+ ],
+ "fill_audit_twins_identical": true,
+ "account": {
+  "mcp": "user-OfersClaw5",
+  "portfolio": "OfersClaw5-PRIYN",
+  "account": "real",
+  "route": "REAL",
+  "demo": false
+ },
+ "authorized": {
+  "instrumentId": 1012,
+  "amount": 500,
+  "leverage": 1,
+  "direction": "long",
+  "SL": 798.61,
+  "TP": 834.14
+ },
+ "claimed": {
+  "orderId": 1606670179,
+  "positionId": 3600708904,
+  "units": 0.616348,
+  "openRate": 811.23,
+  "prepareAsk": 811.23,
+  "SL": 798.61,
+  "TP": 834.14,
+  "fee": 0.75
+ },
+ "live": {
+  "positionId": 3600708904,
+  "instrumentId": 1012,
+  "direction": "long",
+  "isBuy": true,
+  "leverage": 1,
+  "invested": 500.0,
+  "units": 0.616348,
+  "openRate": 811.23,
+  "stopLossRate": 798.61,
+  "takeProfitRate": 834.14,
+  "currentRate": 811.15,
+  "unrealizedPnl": -0.05,
+  "isOpen": true,
+  "duplicates": 0,
+  "xRequestId_positions": "ad85478b-6cf8-491f-bc45-d1df89110e0a",
+  "asOf": "2026-10-07 21:52:39 IDT"
+ },
+ "order_info": {
+  "route": "GET /api/v1/trading/info/real/orders/1606670179",
+  "statusID": 3,
+  "errorCode": 0,
+  "instrumentID": 1012,
+  "amount": 500.0,
+  "units": 0.616348,
+  "positionID": 3600708904,
+  "rate": 811.23,
+  "executedIDT": "2026-10-07 21:51:00 IDT",
+  "xRequestId": "bb573ab9-b80a-4626-8db1-4ee5356a57b0"
+ },
+ "checks": {
+  "position_exists": "PASS",
+  "ids_match": "PASS",
+  "long_x1": "PASS",
+  "invested_500": "PASS",
+  "openRate_matches_claim": "PASS",
+  "SL_TP_exact": "PASS",
+  "not_demo": "PASS",
+  "slippage": {
+   "result": "PASS",
+   "fill_minus_prepare": 0.0,
+   "pct": 0.0,
+   "threshold_pct": 0.5
+  },
+  "fee": {
+   "result": "PASS",
+   "actual_transaction_fee": 0.75,
+   "qa_estimate": 1.06,
+   "prepare_totalUpfrontCost": 1.0,
+   "note": "$0.75 is the fixed transaction fee; estimate also included spread (embedded in price, not charged to cash). Under estimate = fine."
+  },
+  "cash_delta": {
+   "result": "PASS",
+   "expected": 500.75
+  }
+ },
+ "fail_codes": [],
+ "mismatches": [],
+ "soft_warnings": []
+}

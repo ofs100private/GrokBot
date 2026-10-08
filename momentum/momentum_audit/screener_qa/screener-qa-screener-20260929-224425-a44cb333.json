@@ -1,0 +1,85 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20260929-224425-a44cb333",
+  "slot": "eod_2242_backup_catchup",
+  "asOf": "2026-09-29",
+  "qaAt": "2026-09-29T22:52:08+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "soft_notes": [
+    "ACTION BUY @ 22:44:39 IDT \u2014 within \u226422:50 deadline; not EOD_SCREENER_MISSED",
+    "near-miss TRACE count 63 vs file top-N 25 (same taxonomy soft as prior days)",
+    "Pack all VCP_SETUP breakout=0 stocks=3 etf=0 \u2014 sleeve OK under HEALTHY; place-QA filters held FTNT",
+    "stderr log empty (not captured); TRACE regime/universe/freeze/pack_done + stdout present \u2014 not SCREENER_AUDIT_INCOMPLETE",
+    "sp500_symbols.json count=503 asOf 2026-09-29T19:44:26Z; universe_n=520; valid_n=517; watch NOW/PANW/CRM in universe \u2014 no mega-cap stub",
+    "Live Wikipedia list: 503 symbols (stdout); event_vol_freeze=false"
+  ],
+  "evidence_quotes": {
+    "universe_n": 520,
+    "sp500_n": 503,
+    "sp500_cache_count": 503,
+    "valid_n": 517,
+    "regime": "HEALTHY",
+    "spx_close": 7670.69,
+    "spx_sma50": 7645.15,
+    "spx_pct_vs_sma50": 0.334,
+    "vix_close": 16.02,
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "ACTION_ts_il": "2026-09-29T22:44:39.324660+03:00",
+    "RUN_START_il": "2026-09-29T22:44:25.920017+03:00",
+    "RUN_END_il": "2026-09-29T22:44:39.325178+03:00",
+    "pack_symbols": [
+      "FTNT",
+      "NDSN",
+      "LLY"
+    ],
+    "pack_tags": {
+      "FTNT": "VCP_SETUP RS95 RVOL0.34 SL165.05 DWM=-0.42/0.76/5.78",
+      "NDSN": "VCP_SETUP RS86 RVOL0.42 SL310.19 DWM=-0.40/3.23/1.97",
+      "LLY": "VCP_SETUP RS80 RVOL0.43 SL1113.58 DWM=-0.01/1.24/0.86"
+    },
+    "sleeve": "stocks=3 breakout=0 etf=0 commodity=0",
+    "near_miss_trace": 63,
+    "near_miss_file_topn": 25,
+    "pack_qa_verdict": "PASS"
+  },
+  "paths_checked": [
+    "/workspace/momentum_audit/screener-run-screener-20260929-224425-a44cb333.json",
+    "/workspace/momentum_audit/near-miss-2026-09-29.json",
+    "/workspace/momentum_audit/2026-09-29.jsonl",
+    "/workspace/momentum_audit/screener-2026-09-29-pack.json",
+    "/workspace/momentum_audit/screener-2026-09-29-pack-filtered.json",
+    "/workspace/momentum_audit/screener-2026-09-29-stdout.log",
+    "/workspace/momentum_audit/screener-2026-09-29-stderr.log",
+    "/workspace/sp500_symbols.json"
+  ],
+  "hard_gates": {
+    "SPX_UNIVERSE_TOO_SMALL": false,
+    "SPX_MEGACAP_FALLBACK": false,
+    "SPX_FETCH_BROKEN": false,
+    "SPX_SCAN_NOT_FULL": false,
+    "SCREENER_RUN_CRASH": false,
+    "SCREENER_AUDIT_INCOMPLETE": false
+  },
+  "coherence": {
+    "RUN_START": true,
+    "TRACE_regime_universe_freeze_pack": true,
+    "ACTION_buys": true,
+    "RUN_END": true,
+    "screener_run_json_has_regime_universe_n": true,
+    "near_miss_present": true
+  },
+  "eod_timing": {
+    "deadline_il": "22:50",
+    "action_il": "22:44:39",
+    "eod_screener_missed_hard": false,
+    "note": "First ACTION 22:44:39 IDT \u226422:50 \u2014 on-time; not EOD_SCREENER_MISSED"
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "place-QA for VTRS MOVE_SL_BREAKEVEN + NDSN/LLY BUY; skip FTNT (held), CRWD trail noop, ETH not on mirror A. QA never places."
+}

@@ -1,0 +1,52 @@
+{
+  "gate": "momentum-real-money-qa-gate",
+  "stage": "pre-place",
+  "verdict": "GATE_OK",
+  "deviation_code": "INSUFFICIENT_CASH",
+  "asOf_il": "2026-09-25T22:53:37+03:00",
+  "asOf_utc": "2026-09-25T19:53:37Z",
+  "screener_run_id": "screener-20260925-224937-f841c72c",
+  "screener_run_qa": "PASS",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mirror_A": {
+    "id": 11630170,
+    "availableCash": 904.64,
+    "source": "user-etoro parent SSO copiedTraders"
+  },
+  "candidate": {
+    "symbol": "MET",
+    "amount": 1000,
+    "leverage": 1,
+    "direction": "buy",
+    "orderType": "mkt",
+    "account": "real",
+    "stopLossRate": 92.31,
+    "stopLossType": "fixed",
+    "setup": "VCP_SETUP",
+    "rs": 84,
+    "rvol": 0.56,
+    "dwm": {
+      "d": 0.98,
+      "w": 1.2,
+      "m": 1.75
+    },
+    "regime": "HEALTHY"
+  },
+  "checks": {
+    "screener_run_pass": true,
+    "not_already_held": true,
+    "setup_ok_healthy_vcp": true,
+    "dwm_not_red": true,
+    "leverage_eq_1": true,
+    "amount_le_1000": true,
+    "cash_covers_pre_aapl": false,
+    "cash_covers_after_aapl_est": false,
+    "requested_amount": 1000,
+    "pre_aapl_cash": 904.64,
+    "post_aapl_cash_est": 4.64
+  },
+  "hard_fail": false,
+  "authorize_place": false,
+  "qa_places": false,
+  "note": "INSUFFICIENT_CASH GATE_OK (not AVOID): MET $1000 > mirror A $904.64 even before AAPL; residual after AAPL ~$4.64. Do NOT place MET. Fresh place-QA required if cash frees or size trimmed."
+}

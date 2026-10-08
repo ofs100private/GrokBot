@@ -1,0 +1,95 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "fresh_place_qa_FTNT_LLY_after_TGT_PLTR_close_2026-09-28",
+  "asOf_il": "2026-09-28T23:02:26+03:00",
+  "screener_run_id": "screener-20260928-225153-16616f0d",
+  "screener_run_qa": "PASS",
+  "prior_buy_place_qa": "NOT_REUSED",
+  "prior_catchup_artifact": "/workspace/momentum_audit/place_qa/place-qa-eod-20260928-catchup.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/fresh-place-qa-ftnt-lly-20260928-after-closes.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "qa_never_places": true,
+  "closes_verified": {
+    "TGT": {
+      "positionId": 3581081151,
+      "orderId": 1586886412,
+      "absent_from_keys_now": true
+    },
+    "PLTR": {
+      "positionId": 3586291200,
+      "orderId": 1586886413,
+      "absent_from_keys_now": true
+    },
+    "keys_positionCount": 8,
+    "keys_symbols": [
+      "AAPL",
+      "JNJ",
+      "DE",
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P",
+      "ETH"
+    ]
+  },
+  "mirror_A": {
+    "id": 11630170,
+    "availableCash": 2150.1,
+    "value": 7848.0,
+    "invested": 8000.0,
+    "source": "user-etoro parent SSO xRequestId 75aefff7-417c-45e6-82d9-d9e6e779e045",
+    "note": "reporting truth; keys-only closes did not change copy cash"
+  },
+  "keys_executable": {
+    "availableCash": 2675.04,
+    "totalValue": 9808.18,
+    "covers_both_1000": true,
+    "residual_after_both": 675.04,
+    "source": "user-Momentum-HHHGDTJ get-my-portfolio-summary xRequestId 37c9fe02-cd48-4f44-a299-f446df3a677b",
+    "positions_xRequestId": "857348a1-4527-4872-bbf7-2a45ed013ea4"
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false
+  },
+  "sleeve": {
+    "stocks_requested": 2,
+    "breakout": 0,
+    "etf": 0,
+    "ok": true
+  },
+  "items": [
+    {
+      "symbol": "FTNT",
+      "action": "BUY",
+      "verdict": "PASS",
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "stopLossRate": 165.78,
+      "setup": "VCP_SETUP",
+      "held": false,
+      "notes": "screener pack VCP RS95; HEALTHY; not held; keys cash covers"
+    },
+    {
+      "symbol": "LLY",
+      "action": "BUY",
+      "verdict": "PASS",
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "stopLossRate": 1113.48,
+      "setup": "VCP_SETUP",
+      "held": false,
+      "notes": "screener pack VCP RS80; HEALTHY; not held; keys cash covers"
+    }
+  ],
+  "skip": {
+    "JNJ": "ALREADY_HELD pos 3584876985",
+    "ETH": "SKIP_NOT_ON_MIRROR_A keys-only $10"
+  },
+  "full_auto": "PASS \u2014 Trader_momentum may prepare+place FTNT then LLY on user-Momentum-HHHGDTJ without user/CoS confirm. QA never places. If INSUFFICIENT_CASH or state change mid-place, stop and request new place-QA."
+}

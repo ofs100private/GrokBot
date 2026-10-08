@@ -1,0 +1,69 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20260925-224937-f841c72c",
+  "slot": "eod_2242_backup_catchup",
+  "asOf": "2026-09-25",
+  "qaAt": "2026-09-25T22:52:48+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "verdict": "PASS",
+  "fail_codes": [],
+  "soft_notes": [
+    "ACTION BUY @ 22:50:02 IDT \u2014 2s past 22:50 gate; PM ran 22:49 first (explicit catch-up). Catch-up packs still eligible for place-QA; process timing soft only (not universe FAIL).",
+    "near-miss TRACE count 72 vs file top-N 25 (same taxonomy soft as prior days)",
+    "Pack all VCP_SETUP breakout=0 stocks=3 \u2014 sleeve/size still go through place-QA",
+    "JNJ already open (pos 3584876985) \u2014 suppress double-buy at place (not screener FAIL)",
+    "stderr: Yahoo crumb HTTP 429 (continued); 5 download fails XYZ/SOLV/DE/BDX/UHS; valid_n=512/520 \u2014 not SPX_FETCH_BROKEN",
+    "Trader plans AAPL $900 / MET $1000 after PASS \u2014 amounts differ from pack $1000; place-QA will re-check cash"
+  ],
+  "evidence": {
+    "summary": "/workspace/momentum_audit/screener-run-screener-20260925-224937-f841c72c.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-09-25.json",
+    "audit": "/workspace/momentum_audit/2026-09-25.jsonl",
+    "stdout_pack": "/workspace/momentum_audit/screener-2026-09-25-stdout.log",
+    "stderr": "/workspace/momentum_audit/screener-2026-09-25-stderr.log",
+    "sp500": "/workspace/sp500_symbols.json"
+  },
+  "trace": {
+    "regime": "HEALTHY",
+    "hard_halt": false,
+    "event_vol_freeze": false,
+    "universe_n": 520,
+    "sp500_n": 503,
+    "sp500_cache_count": 503,
+    "watch_in_universe": {
+      "NOW": true,
+      "PANW": true,
+      "CRM": true
+    },
+    "valid_n": 512,
+    "near_miss_trace": 72,
+    "near_miss_file_topn": 25,
+    "buys": [
+      "AAPL",
+      "MET",
+      "JNJ"
+    ],
+    "sleeve": "VCP_SETUP",
+    "RUN_START_il": "2026-09-25T22:49:37+03:00",
+    "ACTION_il": "2026-09-25T22:50:02+03:00",
+    "RUN_END_il": "2026-09-25T22:50:02+03:00",
+    "live_spx_list": "S&P 500 live list: 503 symbols"
+  },
+  "hard_gates": {
+    "SPX_UNIVERSE_TOO_SMALL": false,
+    "SPX_MEGACAP_FALLBACK": false,
+    "SPX_FETCH_BROKEN": false,
+    "SPX_SCAN_NOT_FULL": false,
+    "SCREENER_RUN_CRASH": false,
+    "SCREENER_AUDIT_INCOMPLETE": false
+  },
+  "eod_timing": {
+    "deadline_il": "22:50",
+    "action_il": "22:50:02",
+    "pm_before_screener": true,
+    "eod_screener_missed_hard": false,
+    "note": "Borderline 2s past deadline on catch-up; ACTION present \u2014 universe PASS; place-QA still required"
+  },
+  "next": "place-QA required for AAPL/MET (not JNJ, not ETH) before any place; QA never places"
+}

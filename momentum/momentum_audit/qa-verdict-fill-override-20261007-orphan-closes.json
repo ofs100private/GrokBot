@@ -1,0 +1,354 @@
+{
+ "op": "qa.verdict.momentum_real_money_postfill",
+ "run_id": "override-20261007-orphan-closes",
+ "job": "postfill_keys_only_orphan_close_FTNT_NDSN_DE_AAPL_ETH_2026-10-07",
+ "asOf_il": "2026-10-07T23:38:51+03:00",
+ "qa_by": "QA Bot (executor, read-only)",
+ "qa_never_places": true,
+ "portfolio": "Momentum-HHHGDTJ",
+ "mcp": "user-Momentum-HHHGDTJ",
+ "account": "real",
+ "authority": "Ofer via CoS 2026-10-07 23:30 IDT; place-QA PASS_WITH_CONDITIONS (qa-verdict-place-override-20261007-orphan-closes.json)",
+ "verdict": "PASS",
+ "verdict_detail": "PASS_WITH_NOTES: all 5 closed in full at the claimed prices; protected book and mirror A untouched; cash reconciles to $0.00 residual",
+ "deviation_codes": [],
+ "codes": {
+  "info": [
+   "CLOSE_FILLED_EXTENDED_HOURS (supersedes CLOSE_QUEUED_TO_OPEN)",
+   "CLOSE_COSTS_NOT_IN_HISTORY",
+   "HISTORY_ORDERID_IS_POSITION_OPEN_ORDER",
+   "PLACE_CLOSE_EXECUTED_BEFORE_POLL_TERMINAL",
+   "DE_HISTORY_FEES_SEPARATE",
+   "MIRROR_A_UNCHANGED",
+   "FREED_CASH_NEEDS_FRESH_PLACE_QA"
+  ],
+  "warn": [
+   "NDSN_STALE_BID_FILL"
+  ],
+  "fail": []
+ },
+ "refs": {
+  "placed_ack": "/workspace/momentum_audit/place_ack/override-20261007-orphan-closes-placed.json",
+  "audit": "/workspace/momentum_audit/2026-10-07.jsonl (6 rows, 23:36:05-23:37:59 IDT, consistent with ack)",
+  "place_qa": "/workspace/momentum_audit/qa-verdict-place-override-20261007-orphan-closes.json"
+ },
+ "checks": {
+  "1_positions_gone": {
+   "result": "PASS",
+   "positions_xRequestId": "3816a93f-9547-44ee-a3a1-9c1a9ae77f99",
+   "summary_xRequestId": "7d0873aa-1914-47db-9475-c106986c7d90",
+   "keys_positionCount": 6,
+   "closed_ids_present": [],
+   "partial_remainder": "none (no FTNT/NDSN/DE/AAPL/ETH holdings)",
+   "orders": [],
+   "pendingOrders": [],
+   "mirrors": []
+  },
+  "2_history_match": {
+   "result": "PASS",
+   "history_xRequestId": "580bfe33-dc7e-4d48-82d5-ea611f53599b",
+   "rows_today": 5,
+   "all_full_units": true,
+   "all_closeRate_equal_claimed": true,
+   "all_closeTime_equal_close_order_time_to_ms": true,
+   "orderId_reconciliation": "Join on positionId (1:1 for all 5). History orderId is the position's OPENING order: the IDs rise with openTime (ETH 09-09 1580804320 < DE 09-18 1588377659 < AAPL 09-28 13:55 1597282198 < FTNT 09-28 20:03 1597282497 < NDSN 09-29 1598547491). The place-close orderIds are the separate close orders. The mismatch is expected, not an error."
+  },
+  "3_protected_unchanged": {
+   "result": "PASS",
+   "vs_snapshot": "2026-10-07T23:33:05 IDT (xRequestId 18656354-...)",
+   "positions": {
+    "CRWD 3579391383": {
+     "units": 4.132231,
+     "SL": 242.0,
+     "TP": null
+    },
+    "MRVL 3599509752": {
+     "units": 1.741553,
+     "SL": 266.0,
+     "TP": null
+    },
+    "NTAP 3597307544": {
+     "units": 4.528165,
+     "SL": 205.97,
+     "TP": null
+    },
+    "P 3587299961": {
+     "units": 8.139345,
+     "SL": 122.86,
+     "TP": null
+    },
+    "VTRS 3580194334": {
+     "units": 58.962264,
+     "SL": 16.96,
+     "TP": null
+    },
+    "XLK 3577022318": {
+     "units": 5.324246,
+     "SL": 187.8,
+     "TP": null
+    }
+   },
+   "note": "Units, SL, openRate and invested are identical to the pre-close snapshot; TP is unset before and after. P SL = 122.86 confirmed."
+  },
+  "4_cash_reconciliation": {
+   "result": "PASS",
+   "keys_cash_before": 110.12,
+   "gross_units_x_fill": 3911.42,
+   "close_costs_implied": 5.87,
+   "net_proceeds": 3905.55,
+   "expected_cash": 4015.67,
+   "live_availableCash": 4015.67,
+   "live_frozenCash": 0,
+   "residual_vs_live": 0.0,
+   "preview_cash": 4021.84,
+   "delta_vs_preview": -6.17,
+   "delta_breakdown": {
+    "close_costs": -5.87,
+    "price_drift_vs_preview": -0.3,
+    "of_which": {
+     "ETH": -0.028,
+     "AAPL": -0.265,
+     "FTNT": -0.001,
+     "DE": -0.005,
+     "NDSN": 0.0
+    },
+    "unexplained": 0.0
+   },
+   "ndsn_note": "NDSN filled at exactly the QA preview bid 324.74, so it adds $0 to the delta vs $4,021.84. The reported ~$10.76 is measured against the re-prepare mark 328.29 (3.030394 \u00d7 3.55), which was never in the preview.",
+   "residual_flag_over_1usd": false
+  },
+  "5_mirror_A": {
+   "result": "PASS",
+   "positions_xRequestId": "7cbe2426-13f4-49aa-9633-40e153652f93",
+   "summary_xRequestId": "e410b6bf-10af-4d1b-a71f-bc31da3f59e9",
+   "availableCash": 3170.57,
+   "value": 7965.99,
+   "invested": 8000.0,
+   "closedPnl": -401.64,
+   "positions": {
+    "NTAP": [
+     3597307545,
+     3.589839
+    ],
+    "XLK": [
+     3577022320,
+     4.259291
+    ],
+    "VTRS": [
+     3580194335,
+     47.168632
+    ],
+    "MRVL": [
+     3599509753,
+     1.38046
+    ],
+    "CRWD": [
+     3579391384,
+     3.305702
+    ],
+    "P": [
+     3587299963,
+     6.510499
+    ]
+   },
+   "unchanged": "Cash, IDs, units and SLs are identical to 23:33; closedPnl is unchanged; value moves with marks only.",
+   "keys_minus_mirrorA_cash_before": -3060.45,
+   "keys_minus_mirrorA_cash_after": 845.1
+  },
+  "6_realized_pnl": {
+   "history_netProfit_sum": 1.42,
+   "cash_basis_sum": -4.45,
+   "note": "netProfit is price-only (closeRate\u2212openRate)\u00d7units and excludes the close costs. The cash basis (proceeds \u2212 invested) is the real realized result. DE history fees \u22121.66 are reported separately and are NOT in the close cash flow (DE close cost was 1.44). Their sign and timing are ambiguous, so fully-loaded DE \u2248 \u221240.74 (cash basis) to \u221242.40 if the 1.66 is an extra charge."
+  }
+ },
+ "items": [
+  {
+   "symbol": "ETH",
+   "positionId": 3572932449,
+   "verdict": "PASS",
+   "closed_full": true,
+   "remainder_on_keys": false,
+   "units_closed": 0.004011,
+   "history_units": 0.004011,
+   "fill_price_claimed": 2568.4218,
+   "history_closeRate": 2568.4218,
+   "price_match": true,
+   "close_time_il": "2026-10-07T23:36:05.873+03:00",
+   "close_orderId": 1606848390,
+   "history_orderId": 1580804320,
+   "gross_units_x_fill": 10.3,
+   "proceeds_cash": 10.29,
+   "close_cost_implied": 0.01,
+   "close_cost_pct": 0.097,
+   "vs_QA_preview_value": -0.03,
+   "vs_reprepare_mark": 0.0,
+   "realized": {
+    "history_netProfit": 0.3,
+    "history_fees": 0.0,
+    "cash_basis_proceeds_minus_invested": 0.29
+   }
+  },
+  {
+   "symbol": "AAPL",
+   "positionId": 3589579685,
+   "verdict": "PASS",
+   "closed_full": true,
+   "remainder_on_keys": false,
+   "units_closed": 2.628581,
+   "history_units": 2.628581,
+   "fill_price_claimed": 336.4,
+   "history_closeRate": 336.4,
+   "price_match": true,
+   "close_time_il": "2026-10-07T23:36:14.683+03:00",
+   "close_orderId": 1586690965,
+   "history_orderId": 1597282198,
+   "gross_units_x_fill": 884.25,
+   "proceeds_cash": 882.92,
+   "close_cost_implied": 1.33,
+   "close_cost_pct": 0.15,
+   "vs_QA_preview_value": -0.27,
+   "vs_reprepare_mark": 0.0,
+   "realized": {
+    "history_netProfit": -15.75,
+    "history_fees": 0.0,
+    "cash_basis_proceeds_minus_invested": -17.08
+   }
+  },
+  {
+   "symbol": "FTNT",
+   "positionId": 3590220047,
+   "verdict": "PASS",
+   "closed_full": true,
+   "remainder_on_keys": false,
+   "units_closed": 5.657708,
+   "history_units": 5.657708,
+   "fill_price_claimed": 189.49,
+   "history_closeRate": 189.49,
+   "price_match": true,
+   "close_time_il": "2026-10-07T23:36:24.047+03:00",
+   "close_orderId": 1606890067,
+   "history_orderId": 1597282497,
+   "gross_units_x_fill": 1072.08,
+   "proceeds_cash": 1070.47,
+   "close_cost_implied": 1.61,
+   "close_cost_pct": 0.15,
+   "vs_QA_preview_value": 0.0,
+   "vs_reprepare_mark": 0.0,
+   "realized": {
+    "history_netProfit": 72.08,
+    "history_fees": 0.0,
+    "cash_basis_proceeds_minus_invested": 70.47
+   }
+  },
+  {
+   "symbol": "DE",
+   "positionId": 3581779392,
+   "verdict": "PASS",
+   "closed_full": true,
+   "remainder_on_keys": false,
+   "units_closed": 1.463871,
+   "history_units": 1.463871,
+   "fill_price_claimed": 656.27,
+   "history_closeRate": 656.27,
+   "price_match": true,
+   "close_time_il": "2026-10-07T23:36:33.190+03:00",
+   "close_orderId": 1586690966,
+   "history_orderId": 1588377659,
+   "gross_units_x_fill": 960.69,
+   "proceeds_cash": 959.26,
+   "close_cost_implied": 1.43,
+   "close_cost_pct": 0.149,
+   "vs_QA_preview_value": -0.01,
+   "vs_reprepare_mark": 0.0,
+   "realized": {
+    "history_netProfit": -39.3,
+    "history_fees": -1.66,
+    "cash_basis_proceeds_minus_invested": -40.74
+   }
+  },
+  {
+   "symbol": "NDSN",
+   "positionId": 3591649728,
+   "verdict": "PASS",
+   "closed_full": true,
+   "remainder_on_keys": false,
+   "units_closed": 3.030394,
+   "history_units": 3.030394,
+   "fill_price_claimed": 324.74,
+   "history_closeRate": 324.74,
+   "price_match": true,
+   "close_time_il": "2026-10-07T23:36:50.453+03:00",
+   "close_orderId": 1606848393,
+   "history_orderId": 1598547491,
+   "gross_units_x_fill": 984.09,
+   "proceeds_cash": 982.61,
+   "close_cost_implied": 1.48,
+   "close_cost_pct": 0.15,
+   "vs_QA_preview_value": 0.0,
+   "vs_reprepare_mark": -10.76,
+   "realized": {
+    "history_netProfit": -15.91,
+    "history_fees": 0.0,
+    "cash_basis_proceeds_minus_invested": -17.39
+   }
+  }
+ ],
+ "anomalies_assessment": [
+  {
+   "code": "CLOSE_FILLED_EXTENDED_HOURS",
+   "severity": "info",
+   "finding": "All 4 stocks filled at 23:36 IDT in extended hours instead of queuing to the 16:30 open. This matches the place-QA caveat (prepare 'ready' with no queue warning). Not a deviation: authorized, market close only. Lesson: after-hours 'ready' on a US stock means an immediate extended-hours fill."
+  },
+  {
+   "code": "NDSN_STALE_BID_FILL",
+   "severity": "warn",
+   "finding": "NDSN filled at 324.74 = the stale 23:09 bid, which equals the QA preview, so there is no loss vs the preview. It is ~$10.76 below the re-prepare mark 328.29. QA had flagged GAP_RISK_STALE_WIDE_QUOTE. Lesson: for illiquid names with a stale after-hours quote or >1% spread, prefer a regular-session close unless cash is urgent."
+  },
+  {
+   "code": "CLOSE_COSTS_NOT_IN_HISTORY",
+   "severity": "info",
+   "finding": "$5.87 of costs: about 0.15% of notional on each stock (AAPL 1.33, FTNT 1.61, DE 1.44, NDSN 1.48) and ETH 0.01. Fully explained by the cash ledger (residual $0.00). History netProfit/fees omit them; use cash basis for realized P/L."
+  },
+  {
+   "code": "HISTORY_ORDERID_IS_POSITION_OPEN_ORDER",
+   "severity": "info",
+   "finding": "The order ID mismatch is explained (history carries the opening order ID). The positionId join is 1:1 and close times match to the millisecond."
+  },
+  {
+   "code": "PLACE_CLOSE_EXECUTED_BEFORE_POLL_TERMINAL",
+   "severity": "info",
+   "finding": "The tool said 'executed' before the poll reached a terminal state. All 5 were later confirmed statusID 3 / errorCode 0, and positions are gone. No action needed."
+  }
+ ],
+ "live_snapshot": {
+  "keys": {
+   "ts_il": "2026-10-07T23:38:48+03:00",
+   "totalValue": 10021.18,
+   "availableCash": 4015.67,
+   "frozenCash": 0,
+   "usedMargin": 5499.89,
+   "unrealizedPnl": 505.62,
+   "positionCount": 6,
+   "orders": 0
+  },
+  "mirror_A": {
+   "ts_il": "2026-10-07T23:38:51+03:00",
+   "availableCash": 3170.57,
+   "value": 7965.99,
+   "positionCount": 6,
+   "orders": 0
+  }
+ },
+ "conditions_next": [
+  "No new buys under this override (Ofer: free cash, no new buys).",
+  "Any buy using the freed ~$4,015.67 (including the 22:45 EOD pack ZBRA/HPQ/XOM, which was GATE_OK at $110.12) needs a NEW place-QA with a fresh keys + mirror A cash snapshot. Prior guidance is not authority to place (PLACE_WITHOUT_QA_BOT_RECHECK if self-PASS).",
+  "Book keys now = mirror A names only (CRWD/MRVL/NTAP/P/VTRS/XLK); keys cash exceeds mirror A cash by $845.10.",
+  "Report fills to the user."
+ ],
+ "routing": {
+  "verdict_to": "Trader_momentum",
+  "copy": "CoS",
+  "user": "fills summary"
+ },
+ "ts_il": "2026-10-07T23:40:00+03:00"
+}

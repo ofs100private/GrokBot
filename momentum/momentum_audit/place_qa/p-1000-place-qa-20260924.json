@@ -1,0 +1,58 @@
+{
+  "gate": "momentum-real-money-qa-gate",
+  "stage": "pre-place",
+  "verdict": "PASS",
+  "asOf_utc": "2026-09-24T19:47:27Z",
+  "screener_run_id": "screener-20260924-224322-b547bc0e",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mirror_A": {
+    "id": 11630170,
+    "availableCash": 1705.72,
+    "source": "user-etoro live 2026-09-24T19:46:54Z"
+  },
+  "candidate": {
+    "symbol": "P",
+    "instrumentId": 6823,
+    "etoro_name": "Everpure Inc",
+    "yahoo_name": "Everpure, Inc.",
+    "yahoo_price": 123.06,
+    "etoro_ask": 123.07,
+    "etoro_dailyChangePercent": 12.16,
+    "amount": 1000,
+    "leverage": 1,
+    "direction": "buy",
+    "orderType": "mkt",
+    "stopLossRate": 108.11,
+    "setup": "VOLUME_BREAKOUT",
+    "rs": 95,
+    "rvol": 2.17,
+    "dwm": "12.83/26.75/23.18",
+    "route": "REAL"
+  },
+  "identity_check": {
+    "soft_flag_everpure_name": "CLEARED",
+    "reason": "eToro instrumentId 6823 symbol P name Everpure Inc matches Yahoo P (Everpure, Inc.) price ~123 and ~+12% day; P in SPX list (503); not a wrong-symbol / Pandora stale mapping"
+  },
+  "checks": {
+    "screener_run_pass": true,
+    "regime_HEALTHY": true,
+    "event_vol_freeze": false,
+    "amount_le_1000": true,
+    "leverage_eq_1": true,
+    "long_only": true,
+    "rvol_ge_2_breakout": true,
+    "breakout_count_in_executable": 1,
+    "stock_buys_executable_after_held": 2,
+    "cash_covers_P": true,
+    "cash_after_P_est": 705.72,
+    "not_already_held": true,
+    "allowOpenPosition": true
+  },
+  "hard_fail": false,
+  "soft": [
+    "eToro display name Everpure Inc is correct identity (Yahoo agrees) \u2014 soft flag cleared",
+    "SL 108.11 \u224812.7% under propose ask 123.81 (ATR/setup stop, not 4% fixed) \u2014 present and attached"
+  ],
+  "authorize_place": true,
+  "qa_places": false
+}

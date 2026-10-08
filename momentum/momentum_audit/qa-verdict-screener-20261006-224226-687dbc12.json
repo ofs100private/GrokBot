@@ -1,0 +1,132 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20261006-224226-687dbc12",
+  "slot": "eod_2240_primary",
+  "asOf": "2026-10-06",
+  "qaAt": "2026-10-06T22:46:00+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "verdict": "PASS",
+  "deviation_codes": [],
+  "fail_codes": [],
+  "soft_notes": [
+    "near-miss TRACE count 65 vs file top-N 25 (same taxonomy soft as prior days)",
+    "sp500_symbols.json count=503 asOf 2026-10-06T19:42:27.471135Z; universe_n=520; valid_n=517; watch NOW/PANW/CRM in TRACE \u2014 no mega-cap stub",
+    "regime HEALTHY (spx 7824.15 > sma50 7673.1 +1.969%; vix 15.06); TRACE regime/universe/download_ok/near_misses/event_vol_freeze/pack_done/run_summary_written present",
+    "Trader claims verified independently: HEALTHY; universe_n=520; halt=false; EVENT_VOL_FREEZE=false; HARD_HALT=false; buys MRVL VOLUME_BREAKOUT SL266.00, APA VCP SL41.47, ZBRA VCP SL364.02, XLK ETF VCP (held\u2192dropped at place); ACTION ts_il 22:42:42 IDT",
+    "Pack PASS 4 buys (stocks=3 breakout=0 etf=1 commodity=0); VCP allowed in HEALTHY; VOLUME_BREAKOUT not tagged MOMENTUM_BREAKOUT in pack (breakout=0)"
+  ],
+  "evidence_quotes": {
+    "universe_n": 520,
+    "sp500_n": 503,
+    "sp500_cache_count": 503,
+    "sp500_cache_asOf": "2026-10-06T19:42:27.471135Z",
+    "valid_n": 517,
+    "drop_short_or_nan": 3,
+    "regime": "HEALTHY",
+    "spx_close": 7824.15,
+    "spx_sma50": 7673.1,
+    "spx_pct_vs_sma50": 1.969,
+    "vix_close": 15.06,
+    "event_vol_freeze": false,
+    "event_vol_freeze_reason": "no_event_freeze today=2026-10-06 next_open=2026-10-07",
+    "hard_halt": false,
+    "halt": false,
+    "RUN_START_il": "2026-10-06T22:42:26.860436+03:00",
+    "ACTION_BUY_ts_il": "2026-10-06T22:42:42.924825+03:00",
+    "RUN_END_il": "2026-10-06T22:42:42.925198+03:00",
+    "buys": [
+      {
+        "symbol": "MRVL",
+        "setup": "VOLUME_BREAKOUT",
+        "amount_usd": 1000,
+        "stop_loss": 266.0,
+        "rs": 97,
+        "rvol": 2.18,
+        "dwm": "5.35/8.54/27.83"
+      },
+      {
+        "symbol": "APA",
+        "setup": "VCP_SETUP",
+        "amount_usd": 1000,
+        "stop_loss": 41.47,
+        "rs": 94,
+        "rvol": 0.39,
+        "dwm": "0.62/4.57/3.16"
+      },
+      {
+        "symbol": "ZBRA",
+        "setup": "VCP_SETUP",
+        "amount_usd": 1000,
+        "stop_loss": 364.02,
+        "rs": 93,
+        "rvol": 0.65,
+        "dwm": "3.43/3.34/7.11"
+      },
+      {
+        "symbol": "XLK",
+        "setup": "VCP_SETUP",
+        "asset_class": "ETF",
+        "amount_usd": 1000,
+        "stop_loss": 189.96,
+        "rs": 88,
+        "rvol": 0.69,
+        "dwm": "0.57/3.90/8.03"
+      }
+    ],
+    "skips": [],
+    "sleeve": "stocks=3 breakout=0 etf=1 commodity=0",
+    "near_miss_trace": 65,
+    "near_miss_file_topn": 25,
+    "pack_qa_verdict": "PASS",
+    "drop_counts": {
+      "minervini": 445,
+      "rs": 13,
+      "setup": 50,
+      "dwm_data": 0,
+      "dwm_fail": 0,
+      "regime_hard": 0,
+      "regime_soft_etf": 0,
+      "regime_soft_rs": 0,
+      "regime_soft_vcp": 0,
+      "event_freeze": 0
+    }
+  },
+  "paths_checked": [
+    "/workspace/momentum_audit/screener-run-screener-20261006-224226-687dbc12.json",
+    "/workspace/momentum_audit/near-miss-2026-10-06.json",
+    "/workspace/momentum_audit/2026-10-06.jsonl",
+    "/workspace/sp500_symbols.json",
+    "/workspace/momentum_audit/place_qa/eod-20261006-2240-qa-bundle.json",
+    "/workspace/momentum_audit/pm-2026-10-06-eod-2240-decision.json"
+  ],
+  "hard_gates": {
+    "SPX_UNIVERSE_TOO_SMALL": false,
+    "SPX_MEGACAP_FALLBACK": false,
+    "SPX_FETCH_BROKEN": false,
+    "SPX_SCAN_NOT_FULL": false,
+    "SCREENER_RUN_CRASH": false,
+    "SCREENER_AUDIT_INCOMPLETE": false,
+    "BUY_ON_EVENT_VOL_FREEZE": false
+  },
+  "coherence": {
+    "RUN_START": true,
+    "TRACE_regime_universe_download_near_miss_freeze_pack": true,
+    "ACTION_HALT": false,
+    "ACTION_buys": true,
+    "ACTION_skips_freeze": false,
+    "RUN_END": true,
+    "screener_run_json_has_regime_universe_n": true,
+    "near_miss_present": true,
+    "run_summary_written": true
+  },
+  "verified": {
+    "universe_n": 520,
+    "regime": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "Gate A PASS \u2014 proceed to place-QA on BUY candidates MRVL/APA/ZBRA (XLK already held dropped). Expect keys INSUFFICIENT_CASH GATE_OK (~$610.87). QA never places."
+}

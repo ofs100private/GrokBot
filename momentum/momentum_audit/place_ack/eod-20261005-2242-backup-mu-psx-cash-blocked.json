@@ -1,0 +1,20 @@
+{
+  "op": "place_ack.momentum_buy_pack",
+  "job": "eod_2026-10-05_2242_backup",
+  "asOf_il": "2026-10-05T22:51:00+03:00",
+  "portfolio": "Momentum-HHHGDTJ",
+  "write_path": "none — authorize_place FALSE",
+  "authority": "/workspace/momentum_audit/place_qa/qa-verdict-eod-20261005-2242-backup.json (QA Bot place-QA PASS_WITH_GATE_OK; authorize_place false)",
+  "screener_run_id": "screener-20261005-224819-a6552f3c",
+  "screener_qa": "/workspace/momentum_audit/qa-verdict-screener-20261005-224819-a6552f3c.json PASS",
+  "pm": {"run_id": "posmgr-20261005-224726-3bbd5ce3", "result": "9 HOLD, 0 risk actions"},
+  "placed": [],
+  "not_placed": [
+    {"symbol": "MU", "amount": 1000, "stopLossRate": 998.07, "reason": "INSUFFICIENT_CASH GATE_OK", "detail": "keys availableCash ~$610.87 < ~$1000; authorize_place false"},
+    {"symbol": "PSX", "amount": 1000, "stopLossRate": 252.81, "reason": "INSUFFICIENT_CASH GATE_OK", "detail": "same keys cash shortfall; authorize_place false"},
+    {"symbol": "FTNT", "amount": 1000, "reason": "SKIP_ALREADY_HELD"}
+  ],
+  "cash": {"keys_usd": 610.87, "mirror_A_11630170_usd": 3567.49, "note": "keys cash gates place; Mirror A reporting only"},
+  "gate_note": "INSUFFICIENT_CASH = GATE_OK / protective_reject. Do not place. Fresh place-QA required after keys cash ≥~$1000 covers a sequenced fill. No self-PASS.",
+  "status": "SKIPPED"
+}

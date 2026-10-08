@@ -1,0 +1,58 @@
+{
+  "asOf_il": "2026-09-25T22:50:30+03:00",
+  "job": "22:42 backup catch-up after EOD_PM_MISSED",
+  "screener_run_qa": {
+    "run_id": "screener-20260925-224937-f841c72c",
+    "summary": "/workspace/momentum_audit/screener-run-screener-20260925-224937-f841c72c.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-09-25.json",
+    "audit": "/workspace/momentum_audit/2026-09-25.jsonl",
+    "stdout": "/workspace/momentum_audit/screener-2026-09-25-stdout.log",
+    "regime": "HEALTHY",
+    "universe_n": 520,
+    "event_vol_freeze": false,
+    "buys": [
+      "AAPL",
+      "MET",
+      "JNJ"
+    ]
+  },
+  "place_qa": [
+    {
+      "symbol": "AAPL",
+      "amount": 900,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 320.79,
+      "stopLossType": "fixed",
+      "setup": "VCP_SETUP",
+      "mirror_A_cash": 904.64,
+      "portfolio": "Momentum-HHHGDTJ",
+      "mirrorId": 11630170
+    },
+    {
+      "symbol": "MET",
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 92.31,
+      "stopLossType": "fixed",
+      "setup": "VCP_SETUP",
+      "mirror_A_cash": 904.64,
+      "portfolio": "Momentum-HHHGDTJ",
+      "mirrorId": 11630170,
+      "expect": "likely INSUFFICIENT_CASH GATE_OK unless AAPL not placed"
+    }
+  ],
+  "do_not_place": [
+    {
+      "symbol": "JNJ",
+      "reason": "already_held"
+    },
+    {
+      "symbol": "ETH",
+      "reason": "TRAIL_SL SKIP_NOT_ON_MIRROR_A"
+    }
+  ]
+}

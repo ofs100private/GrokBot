@@ -1,0 +1,131 @@
+{
+  "account": "OfersClaw5-PRIYN",
+  "accountType": "REAL (not demo/virtual)",
+  "mcpNamespace": "user-OfersClaw5",
+  "ofersAuthorization": {
+    "text": "Authorize: trim SMH ~$822 (1.3656u), buy SPY $700 and TMO $500 ×1 — place after re-QA PASS on the SMH size",
+    "time": "2026-10-08 20:32 IDT",
+    "by": "Ofer (his chat)",
+    "excluded": [
+      "XLE",
+      "BAC"
+    ]
+  },
+  "placeGate": "NOT PLACED. Place only after QA re-gate PASS (incl. SMH size) + per Ofer authorization; tokens (~2 min) not stored — re-prepare identical params at place time.",
+  "sequencing": "1) SMH partial close -> 2) SPY buy -> 3) TMO buy (sells first)",
+  "preparedAt": "2026-10-08T17:32:50Z (20:32:50 IDT)",
+  "liveSnapshot": {
+    "source": "user-OfersClaw5 get-my-portfolio-summary(real) xRequestId cba7c95f-fe8b-4b1c-ae5f-778fbf8cfa1b @2026-10-08T17:32:45Z (20:32:45 IDT) + get-instruments-overview xRequestId e2c680e4-34e1-4d50-9c54-6548911e808c",
+    "account": "OfersClaw5-PRIYN",
+    "accountType": "REAL",
+    "availableCash": 4048.63,
+    "frozenCash": 0,
+    "totalValue": 7236.61,
+    "pendingOrders": [],
+    "copiedTraders": [],
+    "SMH": {
+      "positionId": 3581725275,
+      "units": 2.65783,
+      "openRate": 564.35,
+      "summaryRate": 603.95,
+      "liveBid": 603.95,
+      "stopLossRate": 581.8,
+      "slCushionPct": 3.67,
+      "value": 1605.21
+    },
+    "QQQ": {
+      "positionId": 3523504426,
+      "units": 1.106357,
+      "rate": 745.42,
+      "value": 824.71,
+      "stopLossRate": 644.0
+    },
+    "XLV": {
+      "positionId": 3498067688,
+      "units": 4.537045,
+      "rate": 167.08,
+      "value": 758.06,
+      "stopLossRate": 148.62
+    },
+    "staleCheck": "summary SMH rate 603.95 == live bid 603.95 (no longer the stale 618.30)"
+  },
+  "file": "classic-rebalance-batch-20261008-keys-v2.json",
+  "supersedes": "classic-rebalance-batch-20261008-keys.json (v1; XLE dropped, SMH size changed)",
+  "packs": [
+    {
+      "seq": 1,
+      "symbol": "SMH",
+      "instrumentId": 6357,
+      "side": "SELL (partial close of existing long)",
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-smh-trim-1.3656u-20261008-keys.json"
+    },
+    {
+      "seq": 2,
+      "symbol": "SPY",
+      "instrumentId": 3000,
+      "side": "BUY (open long)",
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-spy-700-20261008-keys-v2.json"
+    },
+    {
+      "seq": 3,
+      "symbol": "TMO",
+      "instrumentId": 1592,
+      "side": "BUY (open long)",
+      "path": "/workspace/classic_rsi/audit/classic-rebalance-tmo-500-20261008-keys-v2.json"
+    }
+  ],
+  "cashSequence": {
+    "liveStart": 4048.63,
+    "afterSMH_net": 4871.75,
+    "afterSPY": 4170.68,
+    "afterTMO": 3668.99,
+    "worstCase_SMH_not_filled": 2845.87,
+    "floor": 2500,
+    "pass": true
+  },
+  "postTrade": {
+    "valuesUsd": {
+      "SMH": 780.44,
+      "QQQ": 824.71,
+      "XLV": 758.06,
+      "SPY": 700.0,
+      "TMO": 500.0
+    },
+    "investedUsd": 3563.21,
+    "weightsPct": {
+      "SMH": 21.9,
+      "QQQ": 23.15,
+      "XLV": 21.27,
+      "SPY": 19.65,
+      "TMO": 14.03
+    },
+    "growthPct": 45.05,
+    "healthcarePct": 35.31
+  },
+  "postTrade_if_SMH_not_filled": {
+    "valuesUsd": {
+      "SMH": 1605.2,
+      "QQQ": 824.71,
+      "XLV": 758.06,
+      "SPY": 700.0,
+      "TMO": 500.0
+    },
+    "investedUsd": 4387.97,
+    "weightsPct": {
+      "SMH": 36.58,
+      "QQQ": 18.79,
+      "XLV": 17.28,
+      "SPY": 15.95,
+      "TMO": 11.39
+    },
+    "growthPct": 55.38,
+    "healthcarePct": 28.67
+  },
+  "capChecks": {
+    "growth_le_45": false,
+    "growthPct": 45.05,
+    "TMO_le_15": true,
+    "name_le_30": true,
+    "growthNote": "Growth 45.05% at live bid 603.95 is 0.05pp over the 45% cap. Getting to <=45.00% needs SMH remainder <= $777.34 (<= 1.28709u), i.e. trim >= 1.37074u (~$827.86), which is 0.00514u (~$3.10) more than the authorized 1.3656u and would need Ofer to re-authorize."
+  }
+}

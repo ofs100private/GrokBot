@@ -1,0 +1,176 @@
+{
+  "skill": "classic-real-money-order-qa-gate",
+  "pack_id": "classic-bac-750-20261008-keys-rsi",
+  "pack_path": "/workspace/classic_rsi/audit/classic-bac-750-20261008-keys-rsi.json",
+  "workspace_pack_path": "/workspace/classic-bac-750-20261008-keys-rsi.json",
+  "verdict": "PASS_CONDITIONAL",
+  "overall": "INTEGRITY_PASS_REQUOTE_REQUIRED",
+  "authorize_place": false,
+  "hard_fail_codes": [],
+  "soft_codes": [
+    "STALE_PREPARE_QUOTE",
+    "PREPARE_TOKEN_EXPIRED",
+    "ASK_DRIFT_GT_0.05_REBASE_REQUIRED",
+    "AUTH_PENDING_COS_OFER",
+    "PREEXISTING_CONCENTRATION_SMH_GROWTH"
+  ],
+  "qa_places": false,
+  "place": false,
+  "asOfIDT": "2026-10-08 19:50 IDT",
+  "timestamp_iso": "2026-10-08T19:50:05+03:00",
+  "timezone": "Asia/Jerusalem",
+  "run_id": "classic-rsi-auto-20261008-194408-25579460",
+  "propose_run_id": "classic-rsi-propose-20261008-194413-fe6db6e7",
+  "run_qa_verdict": "PASS",
+  "run_qa_path": "/workspace/classic_rsi/audit/qa-verdict-classic-rsi-auto-20261008-194408-25579460.json",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "route": "REAL",
+  "symbol": "BAC",
+  "instrumentId": 1011,
+  "side": "buy",
+  "direction": "long",
+  "leverage": 1,
+  "amount": 750,
+  "checks": {
+    "1_audit": {
+      "exists": true,
+      "twin_sha256": "91454536fa8c6c3fbf4684cbfac3a585fb9e97bf145ee150af392c1052d032c2",
+      "twin_identical": true,
+      "cites_run_id": true,
+      "cites_propose_run_id": true,
+      "thesis_cites_both": true
+    },
+    "2_mandate": {
+      "leverage_1": true,
+      "long": true,
+      "crypto": false,
+      "assetClass": "stocks",
+      "route_real": true,
+      "account": "OfersClaw5-PRIYN via user-OfersClaw5 — Classic truth, not rejected as keys-B",
+      "instrument_1011_is_BAC": true,
+      "eligibility_allowOpenPosition": true
+    },
+    "3_arithmetic": {
+      "atr": 0.3639,
+      "ask_used": 52.54,
+      "sl_calc": 51.9941,
+      "tp_calc": 53.2678,
+      "sl_prepared": 51.99,
+      "tp_prepared": 53.27,
+      "rounding_ok": true,
+      "live_ask_now": 52.63,
+      "live_asOf_utc": "2026-10-08T16:49:15.8479337Z",
+      "live_xRequestId": "50ad8b79-c9e1-4d8f-a867-9428b659c34e",
+      "sl_below_live": true,
+      "tp_above_live": true,
+      "rebased_at_live": {
+        "stop_loss": 52.08,
+        "take_profit": 53.36,
+        "sl_exact": 52.084,
+        "tp_exact": 53.358,
+        "est_units": 14.2504
+      }
+    },
+    "4_prepare_quote": {
+      "prepare_quote_ask": 52.3,
+      "prepare_quote_asOf_utc": "2026-10-08T15:43:05.8600244Z",
+      "run_asOf_utc": "2026-10-08T16:44:13Z",
+      "quote_predates_run_min": 61,
+      "prepare_expiresAt_idt": "2026-10-08 19:49:36 IDT",
+      "token_expired": true,
+      "estimatedUnits_priced_off_stale_quote": true,
+      "feed_note": "QA's own first overview read returned stale ask 52.31 @15:44:19Z (xRequestId c12a3854-…); an immediate re-read returned 52.63 @16:49:15Z. The eToro quote cache is intermittently stale, so always check quote.asOf.",
+      "ask_drift_vs_52.54": 0.09,
+      "rule": "Δ > $0.05 → re-base SL/TP and return for re-QA",
+      "result": "REQUOTE + RE-QA REQUIRED"
+    },
+    "5_costs": {
+      "fee_estimate_usd": 1.26,
+      "breakdown": {
+        "transactionFee": 1.12,
+        "marketSpread": 0.14,
+        "markup": 0
+      },
+      "spread_check": "0.01 × 14.34u ≈ $0.14 ✓",
+      "overnight_usd": 0.0,
+      "overnight_plausible": "US stock ×1 long, no financing ✓",
+      "present": true
+    },
+    "6_cash": {
+      "live_xRequestId": "180ad206-a3ea-4ff6-94f8-075b39a742eb",
+      "live_asOf_utc": "2026-10-08T16:49:10Z",
+      "availableCash": 4048.63,
+      "frozenCash": 0,
+      "pendingOrders": 0,
+      "positions_orders_xRequestId": "989d3121-a971-4a42-81f5-5b353ab236e4",
+      "required": 751.26,
+      "cash_after": 3297.37,
+      "floor": 2500.0,
+      "headroom_after": 797.37,
+      "ok": true
+    },
+    "7_sleeve_concentration": {
+      "basis": "live values 16:49Z + $750",
+      "after_pct": {
+        "SMH": 41.1,
+        "QQQ": 20.9,
+        "XLV": 19.0,
+        "BAC": 18.9
+      },
+      "growth_sleeve_before": 75.9,
+      "growth_sleeve_after": 62.0,
+      "financials_after": 18.9,
+      "bac_name_cap_ok": true,
+      "financials_sleeve_cap_ok": true,
+      "note": "SMH name (~41% after) and growth sleeve (~62%) are already over the 25–30% / 40–45% caps. This predates the pack, and BAC reduces both. Soft; trimming SMH is an optional CoS/Ofer call."
+    },
+    "8_signal_still_valid": {
+      "latest_confirmed_bar": "2026-10-08 15:30:00+00:00",
+      "rsi": 30.35,
+      "zone": "SUPPORT",
+      "raw": "BUY_70",
+      "forming_bar_16:30Z_info_only": {
+        "close": 52.625,
+        "rsi": 33.41,
+        "zone": "SUPPORT"
+      },
+      "next_confirm": "12:30 ET bar closes 13:30 ET = 20:30 IDT",
+      "valid": true
+    },
+    "9_authorization": {
+      "trader_PLACE": "NO",
+      "qa_authorize_place": false,
+      "findings": [
+        "2026-10-07 CoS 'HOLD ALL places until CoS says authorize' (old ADBE/GS $750 + CAT/PHM $750 packs) — recorded in classic-*-750-20261007 audits.",
+        "Superseded for one batch by Ofer direct to QA Bot 2026-10-07 21:44 IDT ('Buy ADBE, GS, CAT, PHM 500 x1'), scoped to ADBE/GS/CAT $500 at 21:48 IDT. Those filled.",
+        "No explicit general lift of the CoS HOLD found and no new 2026-10-08 HOLD found. The 15:30 IDT brief says 'No Buy Today from this brief' but Fear = dip window, and RSI Support pack + QA allowed (cites ≤$500 sizing).",
+        "No BAC-specific CoS/Ofer authorization found."
+      ],
+      "required": "Explicit CoS/Ofer authorize for BAC $750 after re-QA PASS"
+    }
+  },
+  "soft_notes": [
+    "Brief 15:30 IDT suggested ≤$500 per RSI pack (headroom then $1,044.56 on stale cash). Live headroom is now $1,548.63, so $750 keeps $797 over the floor; sizing is within mandate.",
+    "Trader's rationale for $750 rather than $1,000 (daily RSI 19.7, −16% over 20 days, weaker BUY_70) is sound.",
+    "Sell-before-buy BUY_ONLY is acceptable; SMH concentration flagged for CoS/Ofer."
+  ],
+  "conditions_for_authorize_place": [
+    "Re-prepare on user-OfersClaw5 real: buy 1011 mkt lev 1 $750 fixed SL/TP re-based from the fresh ask (at 52.63 → SL 52.08 / TP 53.36)",
+    "Prepare quote asOf must be after the run (16:44Z) and fresh (≤~1 min); reject cached 15:4xZ quotes",
+    "Return the re-prepared snapshot to QA for re-QA within the token TTL; place only within the TTL after re-QA PASS",
+    "If the ask at re-prepare is >$0.05 from the QA-checked ask, re-base and re-QA again",
+    "Explicit CoS/Ofer authorization for BAC",
+    "Cash-after ≥ $2,500 and no pending orders at re-prepare"
+  ],
+  "messages": {
+    "trader_classic": "QA Bot — Classic order-QA BAC $750 ×1 (classic-bac-750-20261008-keys-rsi): integrity PASS, but authorize_place=FALSE for the current prepared order. No hard codes.\nrun_id=classic-rsi-auto-20261008-194408-25579460 | propose_run_id=classic-rsi-propose-20261008-194413-fe6db6e7 (run-QA PASS).\n✓ Audit + /workspace twin byte-identical (sha 91454536…32c2), cites both ids. ✓ BAC=1011, long, lev 1, REAL, stocks (no crypto), OfersClaw5-PRIYN via user-OfersClaw5 (Classic truth, not rejected). ✓ Fee $1.26 (txn 1.12 + spread 0.14), overnight $0 — plausible. ✓ Thesis cites run ids + ATR + confirmed close. ✓ Live cash $4,048.63, no pending orders; after $751.26 → $3,297.37 (+$797.37 over floor). ✓ BAC 18.9% name / financials 18.9% sleeve; reduces growth sleeve 77→62%. ✓ BUY_70 still valid: latest confirmed 1H bar still 15:30Z (SUPPORT, RSI 30.35); forming 12:30 ET bar RSI ~33.4, still SUPPORT.\n✗ Prepare quote 52.30 @15:43:05Z predates the run (16:44Z) by ~61 min and the token expired 19:49:36 IDT. The eToro feed gave QA a stale 52.31 @15:44Z on one read too. Units 14.34 were priced off that stale quote.\n✗ Live ask now 52.63 @16:49:15Z (19:49 IDT): Δ +0.09 vs 52.54, more than $0.05 → re-base needed. Re-based levels: SL 52.084→52.08, TP 53.358→53.36 (±1.5/2.0×0.3639); ~14.25u.\nTo get authorize_place: re-prepare on user-OfersClaw5 real (buy 1011 mkt lev1 $750 fixed SL/TP at the re-based levels from the fresh ask). Check the prepare quote asOf is fresh (after 16:44Z, within ~1 min). Send it back to QA for re-QA within the token TTL. Do NOT place.\nAlso, placement separately needs explicit CoS/Ofer authorization for BAC. I found none: the 2026-10-07 CoS HOLD ALL covered the old $750 packs, then Ofer's 21:44 IDT direct order authorized only the ADBE/GS/CAT $500 batch. Soft: SMH ~41% name and growth ~62% sleeve are already over caps (pre-existing; BAC improves both).",
+    "chief_of_staff": "QA Bot — Classic order-QA BAC $750 ×1 (run classic-rsi-auto-20261008-194408-25579460 / propose …fe6db6e7): integrity PASS, no hard codes, authorize_place=FALSE pending re-prepare and re-QA. The prepare quote (52.30 @15:43Z) predates the run, the token has expired, and the live ask is now 52.63 (Δ0.09 > 0.05) → re-base to SL 52.08 / TP 53.36. Live OfersClaw5-PRIYN cash $4,048.63, no pending orders; after $750 → $3,297.37 (above the $2.5k floor). Authorization: I found no BAC authorization on record. The 10-07 HOLD ALL was superseded only for Ofer's ADBE/GS/CAT $500 batch. Please confirm whether you or Ofer authorize BAC $750 after re-QA PASS. Wording note: OfersClaw5 = Classic truth (former keys-B), so it is not rejected."
+  },
+  "user_summary": "BAC $750 order-QA: integrity PASS but authorize_place=false. The prepare quote was stale and has expired, and the ask moved to 52.63, so re-prepare with SL 52.08 / TP 53.36 and re-QA; CoS/Ofer authorization still needed. Cash after $3,297 (above the floor).",
+  "status": "SUPERSEDED",
+  "superseded": true,
+  "superseded_at": "2026-10-08T20:31:14+03:00",
+  "superseded_by": "classic-rebalance-batch-20261008-keys",
+  "superseded_reason": "BAC SKIPPED per Ofer-approved Classic rebalance plan (~20:26 IDT per Trader_Classic); do not re-prepare or place this pack"
+}

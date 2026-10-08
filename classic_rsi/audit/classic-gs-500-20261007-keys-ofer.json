@@ -1,0 +1,159 @@
+{
+  "kind": "classic-rsi-order-qa",
+  "qa_gate": "classic-real-money-order-qa-gate",
+  "do_not_place": true,
+  "qa_places": false,
+  "PLACE": "NO",
+  "asOfIDT": "2026-10-07 21:45:23 IDT",
+  "ofer_instruction": "2026-10-07 ~21:44 IDT via QA Bot \u2014 prepare 4\u00d7$500 long \u00d71; do NOT place; cash floor \u2265$2.5k WAIVED this batch only",
+  "ofer_cash_floor_override": true,
+  "cashFloorUsd": null,
+  "cashFloorWaivedNote": "Ofer sized knowing cash (~$4054.50 \u2192 ~$2048 after 4\u00d7($500+fees)); residual positive required",
+  "supersedes": [
+    "/workspace/classic_rsi/audit/classic-adbe-750-20261007-keys-rsi.json",
+    "/workspace/classic_rsi/audit/classic-gs-750-20261007-keys-rsi.json",
+    "/workspace/classic_rsi/audit/classic-cat-750-20261007-keys-rsi.json",
+    "/workspace/classic_rsi/audit/classic-phm-750-20261007-keys-rsi.json",
+    "/workspace/classic_rsi/audit/classic-gs-1000-20261007-keys-rsi.json"
+  ],
+  "run_id": "classic-rsi-auto-20261007-185115-516fa110",
+  "propose_run_id": "classic-rsi-propose-20261007-185120-94f07df9",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mcp": "user-OfersClaw5",
+  "ledger": "keys",
+  "route": "REAL",
+  "account": "real",
+  "side": "BUY",
+  "action": "OPEN_LONG",
+  "leverage": 1,
+  "direction": "long",
+  "orderType": "mkt",
+  "stopLossType": "fixed",
+  "symbol": "GS",
+  "instrumentId": 1467,
+  "assetClass": "stocks",
+  "amount": 500,
+  "estimatedUnits": 0.5657708628005658,
+  "stopLossRate": 864.05,
+  "takeProfitRate": 887.43,
+  "sleeve": "financials",
+  "levels_from_rsi": {
+    "entry_bar_close": 874.0700073242188,
+    "stop_loss": 864.05,
+    "take_profit": 887.43,
+    "atr": 6.67859144284942,
+    "rsi": 29.316705507435543,
+    "zone": "SUPPORT",
+    "raw_signal": "BUY_70",
+    "atr_sl_mult": 1.5,
+    "atr_tp_mult": 2.0,
+    "bar": "1H 14:30Z confirmed",
+    "sl_tp_source": "prior RSI ATR(14) 1H from classic-rsi-auto-20261007-185115-516fa110; still SL<ask<TP vs live ask 883.75"
+  },
+  "quote_at_prepare": {
+    "ask": 883.75,
+    "bid": 883.49,
+    "spread": 0.26,
+    "asOf": "2026-10-07T18:44:53.2929473Z"
+  },
+  "feeEstimateUsd": 0.9,
+  "feeBreakdown": {
+    "transactionFee": 0.75,
+    "markup": 0,
+    "marketSpread": 0.15,
+    "overnightFee": 0
+  },
+  "overnightFinancingEstimateUsd": 0.0,
+  "overnightNote": "US stock \u00d71 long \u2014 overnight financing $0 on prepare",
+  "cashBefore": 3553.6,
+  "cashRemainingAfterThis": 3052.7,
+  "cashRemainingAfterBatch": 2050.58,
+  "batchCashPlan": {
+    "ADBE": 500,
+    "GS": 500,
+    "CAT": 500,
+    "PHM": 500,
+    "feesEst": 3.92,
+    "cashStart": 4054.5,
+    "cashAfterAll": 2050.58,
+    "sequence": [
+      {
+        "symbol": "ADBE",
+        "cashBefore": 4054.5,
+        "required": 500.9,
+        "cashAfter": 3553.6
+      },
+      {
+        "symbol": "GS",
+        "cashBefore": 3553.6,
+        "required": 500.9,
+        "cashAfter": 3052.7
+      },
+      {
+        "symbol": "CAT",
+        "cashBefore": 3052.7,
+        "required": 501.06,
+        "cashAfter": 2551.64
+      },
+      {
+        "symbol": "PHM",
+        "cashBefore": 2551.64,
+        "required": 501.06,
+        "cashAfter": 2050.58
+      }
+    ],
+    "ofer_cash_floor_override": true,
+    "finalPositive": true
+  },
+  "liveBook": {
+    "symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "equity": 7317.62,
+    "availableCash": 4054.5,
+    "unrealizedPnl": 303.39,
+    "usedMargin": 2959.73,
+    "note": "None of ADBE/GS/CAT/PHM open; supersedes abandoned $750 packs; ofer cash floor waived this batch only",
+    "xRequestId_portfolio": "cbe658c8-d9b3-4601-bf1f-963284052382",
+    "xRequestId_positions": "8d5fac06-b776-4f4a-93f5-5729991a41a6"
+  },
+  "thesis": "Ofer direct 21:44 IDT Buy ADBE/GS/CAT/PHM $500\u00d71; RSI context run classic-rsi-auto-20261007-195118-adb106f5 / propose \u202678e2f466 for CAT/PHM; ADBE/GS from classic-rsi-auto-20261007-185115-516fa110",
+  "preparedOrderSnapshot": {
+    "immutable": true,
+    "prepare_xRequestId": "c6edf440-11f5-48ad-b4f6-ae400c6c1d33",
+    "prepare_expiresAt": "2026-10-07T18:46:56Z",
+    "token_redacted": true,
+    "token_fresh_at_prepare": true,
+    "note": "Token short-lived; re-prepare IDENTICAL params after order-QA PASS + auth before any place. PLACE=NO now.",
+    "params": {
+      "account": "real",
+      "direction": "buy",
+      "instrumentId": 1467,
+      "symbol": "GS",
+      "orderType": "mkt",
+      "leverage": 1,
+      "amount": 500,
+      "stopLossRate": 864.05,
+      "takeProfitRate": 887.43,
+      "stopLossType": "fixed"
+    },
+    "verdict": "ready",
+    "totalUpfrontCost": 0.9,
+    "required": 500.9,
+    "estimatedUnits": 0.5657708628005658
+  },
+  "mandateChecks": {
+    "longOnly": true,
+    "leverageEq1": true,
+    "notCrypto": true,
+    "notDemo": true,
+    "notWeekend": true,
+    "keysLedger": true,
+    "oferCashFloorOverride": true,
+    "finalCashPositive": true,
+    "PLACE": "NO"
+  },
+  "placeOnlyAfterQaPass": true
+}

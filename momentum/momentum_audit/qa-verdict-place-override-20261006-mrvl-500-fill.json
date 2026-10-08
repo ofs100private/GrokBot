@@ -1,0 +1,126 @@
+{
+  "op": "qa_verdict.place_override_fill",
+  "job": "ofer_override_mrvl_500_2026-10-06_post_fill",
+  "asOf_il": "2026-10-06T23:10:19+03:00",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mcp": "user-Momentum-HHHGDTJ",
+  "prior_place_qa": "/workspace/momentum_audit/qa-verdict-place-override-20261006-mrvl-500.json",
+  "place_ack": "/workspace/momentum_audit/place_ack/override-20261006-mrvl-500-placed.json",
+  "qa_places": false,
+  "hard_fail": false,
+  "overall": "PASS",
+  "verdict": "PASS",
+  "authorize_place": null,
+  "note": "Post-fill verification only. QA NEVER places.",
+  "expected_from_place_ack": {
+    "orderId": 1604403712,
+    "positionId": 3599509752,
+    "instrumentId": 4358,
+    "symbol": "MRVL",
+    "amount": 500,
+    "units": 1.741553,
+    "avgPrice": 287.1,
+    "stopLossRate": 266,
+    "leverage": 1,
+    "outcome": "executed",
+    "openTime_utc": "2026-10-06T20:08:05.723Z"
+  },
+  "live": {
+    "xRequestId_positions": "afea4f50-bb61-4c4a-a086-42fab096d38c",
+    "xRequestId_portfolio": "bbf3fe78-4363-40e7-8e5d-47bfe3f576ab",
+    "timestamp_utc": "2026-10-06T20:09:57.1386305Z",
+    "position": {
+      "positionId": 3599509752,
+      "instrumentId": 4358,
+      "symbol": "MRVL",
+      "units": 1.741553,
+      "openRate": 287.1,
+      "stopLossRate": 266.0,
+      "invested": 500.0,
+      "leverage": 1,
+      "direction": "long",
+      "openTime": "2026-10-06T20:08:06.037",
+      "pnl": -1.03,
+      "pnlPercent": -0.2
+    },
+    "availableCash": 110.12,
+    "totalValue": 10026.0,
+    "keys_cash_pre_fill_claimed": 610.87,
+    "cash_delta_approx": 500.75
+  },
+  "match_checks": [
+    {
+      "field": "positionId",
+      "expected": 3599509752,
+      "live": 3599509752,
+      "ok": true
+    },
+    {
+      "field": "instrumentId",
+      "expected": 4358,
+      "live": 4358,
+      "ok": true
+    },
+    {
+      "field": "symbol",
+      "expected": "MRVL",
+      "live": "MRVL",
+      "ok": true
+    },
+    {
+      "field": "units",
+      "expected": 1.741553,
+      "live": 1.741553,
+      "ok": true
+    },
+    {
+      "field": "openRate",
+      "expected": 287.1,
+      "live": 287.1,
+      "ok": true
+    },
+    {
+      "field": "stopLossRate",
+      "expected": 266,
+      "live": 266.0,
+      "ok": true
+    },
+    {
+      "field": "invested",
+      "expected": 500,
+      "live": 500.0,
+      "ok": true
+    },
+    {
+      "field": "leverage",
+      "expected": 1,
+      "live": 1,
+      "ok": true
+    },
+    {
+      "field": "orderId_in_place_ack",
+      "expected": 1604403712,
+      "live": "present_in_ack",
+      "ok": true
+    },
+    {
+      "field": "cash_after_fill",
+      "expected": "~110 (610.87-500)",
+      "live": 110.12,
+      "ok": true
+    }
+  ],
+  "all_match": true,
+  "audit_lag": {
+    "fill_in_jsonl": false,
+    "fill_in_place_ack": true,
+    "fill_in_daily_feedback": false,
+    "jsonl_last_ts_il": "2026-10-06T22:43:34.547647+03:00",
+    "place_ack_asOf_il": "2026-10-06T23:08:00+03:00",
+    "feedback_asOf_il": "2026-10-06T23:08:45.253686+03:00",
+    "recommendation": "AUDIT_LAG \u2014 append place_ack/FILLED row to 2026-10-06.jsonl; feedback under-counts fills (actions=15 screener/PM only, 0 fill rows). Do not invent; append from override-20261006-mrvl-500-placed.json."
+  },
+  "fail_codes": [],
+  "GATE_OK_codes": [],
+  "deviation_codes": []
+}

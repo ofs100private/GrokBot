@@ -1,0 +1,261 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_manual_1600_place_qa_2026-10-05_buy_pack",
+  "asOf_il": "2026-10-05T16:08:08+03:00",
+  "screener_run_id": "screener-20261005-160452-88488e84",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/qa-verdict-screener-20261005-160452-88488e84.json",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20261005-manual-1600-qa-bundle.json",
+  "pm_decision_ref": "/workspace/momentum_audit/pm-2026-10-05-manual-1600-decision.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "qa_places": false,
+  "hard_fail": true,
+  "overall": "FAIL",
+  "verdict": "FAIL",
+  "deviation_codes": [
+    "SLEEVE_CAPACITY_FULL"
+  ],
+  "fail_codes": [
+    "SLEEVE_CAPACITY_FULL"
+  ],
+  "LIVE_READ_LIMITED": false,
+  "live_read_note": "Mirror A truth via user-etoro SSO (authChannel=bearer) get-my-portfolio-summary copiedTraders[11630170] + get-my-positions-and-orders mirrors[11630170]. REJECT keys MCP / user-Momentum-HHHGDTJ balances as $8k book.",
+  "mirror_A": {
+    "id": 11630170,
+    "username": "Momentum-HHHGDTJ",
+    "availableCash": 4361.46,
+    "value": 7842.24,
+    "invested": 8000.0,
+    "openPnl": -120.59,
+    "closedPnl": -401.64,
+    "source": "user-etoro SSO get-my-portfolio-summary copiedTraders[11630170]",
+    "xRequestId_portfolio": "e747e745-322d-4a3d-84c5-4715ea1dc883",
+    "xRequestId_positions": "9811428c-87f4-40b3-a669-b060bd29cb0c",
+    "held_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "asOf_utc": "2026-10-05T13:07:19.6201745Z",
+    "positions_asOf_utc": "2026-10-05T13:07:19.9756246Z",
+    "live_positions": [
+      {
+        "symbol": "XLK",
+        "positionId": 3577022320,
+        "openRate": 187.8,
+        "stopLossRate": 187.8,
+        "invested": 799.89,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "VTRS",
+        "positionId": 3580194335,
+        "openRate": 16.96,
+        "stopLossRate": 16.96,
+        "invested": 799.98,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "CRWD",
+        "positionId": 3579391384,
+        "openRate": 242.0,
+        "stopLossRate": 242.0,
+        "invested": 799.98,
+        "direction": "long",
+        "leverage": 1
+      },
+      {
+        "symbol": "P",
+        "positionId": 3587299963,
+        "openRate": 122.86,
+        "stopLossRate": 108.11,
+        "invested": 799.88,
+        "direction": "long",
+        "leverage": 1
+      }
+    ],
+    "absent_from_mirror_A": [
+      "DE",
+      "FTNT",
+      "JNJ",
+      "AAPL",
+      "NDSN",
+      "ETH"
+    ],
+    "note": "Mirror A availableCash=$4361.46 is book cash TRUTH ($8k basis). Parent Trading cash/holdings are NOT Momentum book. Keys extras AAPL/DE/FTNT/NDSN (+ETH dust) never allocation truth."
+  },
+  "live_vs_claimed": {
+    "claimed_cash": 4361.46,
+    "live_cash": 4361.46,
+    "cash_match": true,
+    "claimed_value": 7841.77,
+    "live_value": 7842.24,
+    "value_delta": 0.47,
+    "claimed_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "live_symbols": [
+      "XLK",
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "symbols_match": true,
+    "note": "Minor MTM value drift vs claimed 7841.77 \u2014 cash+symbols exact match"
+  },
+  "pm_risk": {
+    "placeable": [],
+    "all_HOLD": true,
+    "sticky_excluded_from_this_place_qa": {
+      "CRWD": {
+        "live_sl_mirror": 242.0,
+        "action": "MOVE_SL_BREAKEVEN",
+        "ack": "/workspace/momentum_audit/place_ack/eod-20261005-crwd-be-xlk-trail-placed.json",
+        "include_in_place_qa": false
+      },
+      "XLK": {
+        "live_sl_mirror": 187.8,
+        "action": "TRAIL_SL",
+        "ack": "/workspace/momentum_audit/place_ack/eod-20261005-crwd-be-xlk-trail-placed.json",
+        "include_in_place_qa": false
+      }
+    },
+    "note": "PM placeable risk NONE \u2014 sticky CRWD\u2192242 + XLK\u2192187.8 already live ~15:59 IDT; EXCLUDED from this place-QA (do not re-validate place)"
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "spx_close": 7722.72,
+    "spx_sma50": 7657.64,
+    "vix_close": 16.2
+  },
+  "sleeve": {
+    "stocks_held": [
+      "VTRS",
+      "CRWD",
+      "P"
+    ],
+    "etf_held": [
+      "XLK"
+    ],
+    "stocks_n": 3,
+    "etf_n": 1,
+    "max_stocks": 3,
+    "max_etf": 1,
+    "stock_room": 0,
+    "etf_room": 0,
+    "status": "FULL",
+    "ok_for_new_stock_buys": false,
+    "note": "Playbook max \u22643 stocks + \u22641 sector ETF. Mirror A already at max. Cash $4361.46 irrelevant while sleeve full. Adding ANY of NTAP/ANET/FFIV would exceed stock cap \u2192 decide 0 buys."
+  },
+  "pack_sleeve_requested": {
+    "stocks": 3,
+    "breakout_momentum": 0,
+    "volume_breakout": 1,
+    "vcp": 2,
+    "etf": 0,
+    "commodity": 0,
+    "ok_vs_pack_shape": true,
+    "ok_vs_live_capacity": false,
+    "note": "Pack shape alone \u22642 MOMENTUM_BREAKOUT then fill to \u22643 stocks OK (1 VOLUME_BREAKOUT + 2 VCP); capacity gate fails"
+  },
+  "cash_plan": {
+    "mirror_A_availableCash": 4361.46,
+    "buys_requested_usd": 3000,
+    "cash_covers_if_room": true,
+    "buys_authorized": 0,
+    "note": "Cash would cover 3\u00d7$1000 but sleeve FULL blocks all \u2014 cash irrelevant"
+  },
+  "order_hygiene": {
+    "no_ETH": true,
+    "no_shorts": true,
+    "all_leverage_1": true,
+    "all_amount_le_1000": true,
+    "all_long_buy_mkt": true,
+    "event_vol_freeze_blocks_buy": false,
+    "soft_regime_vcp_block": false
+  },
+  "items": [
+    {
+      "symbol": "NTAP",
+      "action": "BUY",
+      "verdict": "FAIL",
+      "authorize_place": false,
+      "deviation_codes": [
+        "SLEEVE_CAPACITY_FULL"
+      ],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 205.97,
+      "setup": "VOLUME_BREAKOUT",
+      "setup_type": "BREAKOUT",
+      "rs_rating": 95,
+      "rvol": 2.06,
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "healthy_rules_independent": "PASS \u2014 VOLUME_BREAKOUT RVOL 2.06\u22652; RS95; DWM green; HEALTHY allows",
+      "notes": "FAIL SLEEVE_CAPACITY_FULL \u2014 stock_room=0 (held VTRS/CRWD/P). Do not place."
+    },
+    {
+      "symbol": "ANET",
+      "action": "BUY",
+      "verdict": "FAIL",
+      "authorize_place": false,
+      "deviation_codes": [
+        "SLEEVE_CAPACITY_FULL"
+      ],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 194.91,
+      "setup": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "rs_rating": 92,
+      "rvol": 0.68,
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "healthy_rules_independent": "PASS \u2014 VCP (not breakout) so RVOL 0.68 fine; RS92; DWM ok; HEALTHY allows VCP",
+      "notes": "FAIL SLEEVE_CAPACITY_FULL \u2014 stock_room=0. RVOL low is OK for VCP. Do not place."
+    },
+    {
+      "symbol": "FFIV",
+      "action": "BUY",
+      "verdict": "FAIL",
+      "authorize_place": false,
+      "deviation_codes": [
+        "SLEEVE_CAPACITY_FULL"
+      ],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "stopLossRate": 426.8,
+      "setup": "VCP_SETUP",
+      "setup_type": "VCP_READY",
+      "rs_rating": 90,
+      "rvol": 1.04,
+      "dwm_ok": true,
+      "held_on_mirror_A": false,
+      "healthy_rules_independent": "PASS \u2014 VCP (not breakout) so RVOL 1.04 fine; RS90; DWM ok; HEALTHY allows VCP",
+      "notes": "FAIL SLEEVE_CAPACITY_FULL \u2014 stock_room=0. Do not place."
+    }
+  ],
+  "buys_authorized": [],
+  "buys_authorized_n": 0,
+  "scheduling_note": "16:30\u201318:30 IL place ban is trader scheduling \u2014 not used as workaround. Sleeve FAIL \u2192 HOLD all buys until a CLOSE frees stock capacity, then fresh place-QA required (PLACE_WITHOUT_QA_BOT_RECHECK if skipped).",
+  "full_auto": "FAIL \u2014 Trader MUST NOT place NTAP/ANET/FFIV. Sleeve FULL (3 stocks + XLK). HOLD until CLOSE frees capacity \u2192 fresh place-QA. QA never places. FULL AUTO only after PASS.",
+  "xRequestIds": {
+    "portfolio": "e747e745-322d-4a3d-84c5-4715ea1dc883",
+    "positions": "9811428c-87f4-40b3-a669-b060bd29cb0c"
+  }
+}
