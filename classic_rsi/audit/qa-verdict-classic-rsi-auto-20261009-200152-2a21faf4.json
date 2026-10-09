@@ -1,0 +1,154 @@
+{
+  "verdict": "PASS",
+  "run_id": "classic-rsi-auto-20261009-200152-2a21faf4",
+  "propose_run_id": "classic-rsi-propose-20261009-200156-1ab2caf4",
+  "at": "2026-10-09T20:08:00+03:00",
+  "by": "QA Bot",
+  "hard_fail_codes": [],
+  "checks": {
+    "latest_auto_match": true,
+    "latest_auto_equals_payload": true,
+    "index_row": true,
+    "index_unique": true,
+    "propose_index_row": true,
+    "rows": 222,
+    "fingerprint_match": "650b4cfde4545b4b",
+    "status": "PROPOSE",
+    "timeframe": "1H all (44/44)",
+    "confirmed_close": true,
+    "confirmed_only_per_symbol": "44/44",
+    "long_only": true,
+    "do_not_place": true,
+    "place": false,
+    "per_symbol_place": "44/44 false",
+    "pack_do_not_place": "1/1 true, PROPOSE_ONLY, prepared_order null, size null",
+    "leverage": "1",
+    "shorts": false,
+    "pip_sl_tp": false,
+    "crypto": false,
+    "errors": 0,
+    "patched_script_keys": "book_snapshot_stale=null, flags=[] present (guard v2)",
+    "snapshot": "asOf 2026-10-09 19:33:44 IDT (mtime 19:34:08), 28.1 min before the 20:01:52 run: within the 30-min limit, but only by about 2 min. No refresh landed at 19:42; the file is still the 19:33 one. xRequestIds 165a5027-7455-4653-a98d-4f06a80574ff / a7526d0c-c52d-4310-8cf1-869c7895f7a5; latest openTime 2026-10-08 20:36:59 IDT",
+    "bars": "last_bar_time 2026-10-09 15:30Z for all 44 (11:30-12:30 ET, closed 16:30Z); run 17:01:52Z = 13:01 ET; forming 16:30Z bar excluded. Confirmed",
+    "gates": "weekend=false, us_rth=true (13:01 ET), blocks=[], allow_new_buys=true, cash 3671.18 >= 2500",
+    "live_book": "user-OfersClaw5 2026-10-09 20:03:54 IDT: QQQ 1.106357u SL 644.00; SMH 1.29223u SL 581.80; XLV 4.537045u SL 148.62; SPY 0.906782u SL 717.07 (trailing); TMO 0.772582u SL 589.95 (trailing); all long x1; cash 3671.18; totalValue 7273.45; 0 pending; 0 mirrors. Matches run book",
+    "live_xRequestIds": {
+      "get-my-portfolio-summary": "5b37f4c9-8705-43fb-8b8f-7db78843ae67",
+      "get-my-positions-and-orders": "eacfe3dd-7ee1-4ec7-a58a-d20e535db8f5",
+      "get-instruments-overview": "4d817162-b787-469b-bb00-7f2e2bba557b"
+    }
+  },
+  "universe_check": {
+    "meta": "pool 502 / liquid 492 / rising 39 / book 5 / 44, used_fallback=false, error_count 0",
+    "held_names_included": "QQQ, SMH, XLV, SPY, TMO all present",
+    "independent_rescan": "Ran the same screener functions read-only at ~20:04 IDT: liquid 492 (0 daily errors); hourly data for 492/492 (0 missing, 0 short); confirmed last bar 15:30Z for all 492. The scan was full, so this is not an SPX_SCAN_NOT_FULL / fetch failure.",
+    "drop_explanation": "The smaller rising set comes from the 1H volume data, not scan coverage. 15:30Z is the 11:30-12:30 ET lunch bar, which has structurally lower volume than SMA20, and Yahoo's volumes for the latest bar are unstable between calls. My re-scan got 51 risers, overlapping the run's 39 on 32 names. Examples: DE last_vol 1,067,494 in the run vs 461,342 on re-fetch; BBY/CNC/IR/MAS/MRSH/VMRK risers in the run but ratio <0.7 on re-fetch; MSFT changed between two of my own fetches. UBER/VZ/T/COR match exactly.",
+    "soft_code": "RISING_SET_VOLUME_NOISE (soft; not a Hard FAIL; the T pack is unaffected because T is a riser in both scans, ratio 3.57)"
+  },
+  "instrument_guard": {
+    "envelope": "instrument_guard present: map sha c09aaed3b62e... (NEW map, asOf 19:03:35 IDT, resolved 508), dropped 0, unresolved_universe 0; per_symbol guard ok 44/44",
+    "ids": {
+      "T": {
+        "instrumentId": 1030,
+        "etoroSymbol": "T.US",
+        "live_name": "AT&T Inc",
+        "ok": true,
+        "note": "bare T id 100528 = Threshold Network crypto; not used"
+      },
+      "SBAC": {
+        "instrumentId": 4141,
+        "live_name": "SBA Communications Corporation",
+        "ok": true
+      },
+      "SOLV": {
+        "instrumentId": 1335,
+        "live_name": "Solventum Corporation",
+        "ok": true,
+        "note": "new map entry"
+      }
+    },
+    "map": "SOLV -> 1335 added; T -> T.US 1030 unchanged; coverage 509 tickers / 508 resolved (VYLR still ambiguous)",
+    "sha256": {
+      "auto_1h.py": "43158d90d76853c2327272757db774acad9e9bcae2faea2fd97d7ef0e5f1b147",
+      "instruments.py": "5ec6670def0dd2b726a6fef0699f2614e34e7e89f763470391690452967c90cf",
+      "propose.py": "f27bb5cf37269c7f39e840216268c3d85c634d68c5057fc7e3fc43909c5d6423",
+      "test_instruments.py": "9cbb51cf...",
+      "universe.py": "e6e79871...",
+      "etoro_instrument_map.json": "c09aaed3b62eb7ab91a7c39c400d28ce7ac154178e14d1169d71e8ce87f5b778",
+      "copies_match": "/workspace/classic_rsi == /workspace/GrokBot/classic_rsi for all; code unchanged, map only"
+    }
+  },
+  "pack_hygiene": {
+    "buy_packs": [
+      {
+        "symbol": "T",
+        "etoroSymbol": "T.US",
+        "instrumentId": 1030,
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "leverage": 1,
+        "raw_signal": "BUY_80",
+        "zone": "OVER_SOLD",
+        "rsi": 17.3,
+        "rsi_reproduced": 17.297,
+        "bar_time": "2026-10-09 15:30:00+00:00",
+        "bar_confirmed": true,
+        "candle": "strong bearish (O 22.631, C 22.165). Over Sold fires on touch alone, no candle condition",
+        "entry": 22.165,
+        "stop_loss": 21.6003,
+        "take_profit": 22.918,
+        "atr_1h": 0.3765,
+        "atr_reproduced": true,
+        "r_multiple": 1.333,
+        "sl_below_entry": true,
+        "tp_above_entry": true,
+        "pack_run_id": "classic-rsi-propose-20261009-200156-1ab2caf4",
+        "status": "PROPOSE_ONLY",
+        "do_not_place": true,
+        "suggested_notional_usd": null,
+        "live_ask": 22.17,
+        "live_asOf": "2026-10-09 20:03:54 IDT",
+        "drift_atr": 0.01,
+        "meets_0_5_atr_rule": true
+      }
+    ]
+  },
+  "risk_off": [
+    {
+      "symbol": "SBAC",
+      "instrumentId": 4141,
+      "signal": "SELL_70",
+      "zone": "RESISTANCE",
+      "rsi": 76.65,
+      "reproduced": true,
+      "note": "strong bearish candle after 14:30Z Over Buy (80.37); +6.4% day",
+      "held": false,
+      "never_short": true
+    }
+  ],
+  "held_name_advisories": [],
+  "book_rsi": {
+    "QQQ": 46.97,
+    "SMH": 29.87,
+    "XLV": 63.78,
+    "SPY": 58.86,
+    "TMO": 53.6
+  },
+  "trader_classic_advisories": {
+    "DRIFT": "T live ask 22.17 is +0.01 ATR from the entry; passes the 0.5xATR rule (the only gate it passes)",
+    "NEW_NAME_CAP": "T is a new name; October cap (2) already used by 7 opens (RBRK, SPCX, ADBE, GS, CAT, SPY, TMO); RSI timing gives no exemption -> likely block",
+    "TREND_RS": "FAIL: 22.17 < 50DMA 24.96 and < 200DMA 24.80; 3M +2.9% vs SPY +4.2% (RS -1.3pp, now negative; it was +1.6 at 18:11); 6M -15.1% vs SPY +15.1% (RS -30.2pp)",
+    "EVENT": "Ex-dividend today ($0.2775). Down ~10.9% on the day (prev close 24.87) on the SpaceX 800 MHz spectrum deal. The selloff is continuing: RSI 22.8 (13:30Z) -> 20.2 -> 17.3 (15:30Z), and the signal bar itself is a strong bearish candle. Q3 earnings 10-21",
+    "PRIOR_GATING": "T BUY_70 gated/no-prepare at 18:04 (180434, failed RSI_CRYPTO) and 18:11 (181126)",
+    "CASH": "room above floor $1,171.18 (fits <=2 x $400)",
+    "STOP_STYLE": "Rebalance Step 5: no 1H-ATR initial stops or fixed 2xATR TP on swing positions"
+  },
+  "soft_codes": [
+    "RISING_SET_VOLUME_NOISE",
+    "SNAPSHOT_NEAR_LIMIT_28MIN"
+  ],
+  "info_codes": [
+    "PACK_CITES_PROPOSE_RUN_ID"
+  ],
+  "notes": "Run-level PASS. The envelope recorded the NEW map sha c09aaed3 (T.US 1030 unchanged). The next run (~21:01 IDT) will fail closed as BOOK_SNAPSHOT_STALE unless the book snapshot is refreshed. QA did not message any agent per Ofer's instruction."
+}

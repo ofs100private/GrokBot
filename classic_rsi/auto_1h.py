@@ -23,6 +23,7 @@ from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 from .audit import DEFAULT_AUDIT_DIR, append_audit, new_run_id
+from .instruments import guard_symbol, map_meta
 from .propose import propose_from_symbols
 from .universe import build_screened_universe
 
@@ -186,6 +187,7 @@ def run_auto_1h(
     notional: Optional[float] = None,
     force: bool = False,
     dry_run: bool = False,
+    note: Optional[str] = None,
 ) -> dict[str, Any]:
     book_syms, cash, summary = load_book_symbols()
     book_stale = book_snapshot_staleness()
@@ -246,6 +248,30 @@ def run_auto_1h(
         buy_packs = list(propose_payload.get("buy_packs") or [])
         risk_off = list(propose_payload.get("risk_off") or [])
 
+    # Instrument guard (fail closed): packs without a resolved US stock/ETF eToro id were
+    # dropped inside propose_from_symbols; surface the flags + dropped list here.
+    pp = propose_payload or {}
+    instrument_dropped = list(pp.get("instrument_dropped") or [])
+    # gated_buy_packs_suppressed are already guarded (guard runs before gating)
+    unresolved_universe = []
+    for s in universe:
+        g = guard_symbol(s)
+        if not g["ok"]:
+            unresolved_universe.append({"symbol": s, "flag": g["flag"], "reason": g["reason"]})
+    flags: list[str] = ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else []
+    for f in sorted({d.get("flag") for d in instrument_dropped if d.get("flag")}):
+        flags.append(f)
+    instrument_guard = {
+        "map": map_meta(),
+        "rule": "drop pack if no instrumentId, crypto asset class/exchange, or not a US stock/ETF",
+        "dropped": [
+            {k: d.get(k) for k in ("kind", "symbol", "flag", "reason", "carriedInstrumentId")}
+            for d in instrument_dropped
+        ],
+        "dropped_count": len(instrument_dropped),
+        "unresolved_universe_symbols": unresolved_universe,
+    }
+
     envelope: dict[str, Any] = {
         "run_id": rid,
         "kind": "auto",
@@ -266,7 +292,9 @@ def run_auto_1h(
         "book_symbols": book_syms,
         "book_summary": summary,
         "book_snapshot_stale": book_stale,
-        "flags": ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else [],
+        "flags": flags,
+        "note": note,
+        "instrument_guard": instrument_guard,
         "mandate_gates": gates,
         "buy_packs": buy_packs,
         "risk_off": risk_off,
@@ -296,7 +324,9 @@ def run_auto_1h(
                 "force": force,
                 "notional": notional,
                 "status": status,
-                "flags": ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else [],
+                "flags": flags,
+                "note": note,
+                "instrument_map_sha256": instrument_guard["map"].get("sha256"),
             },
         )
         envelope["audit"] = meta
@@ -315,6 +345,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--force", action="store_true", help="Ignore weekend/RTH/cash soft gates")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--out", default="")
+    p.add_argument("--note", default=None, help="Audit note (e.g. rerun reason citing a failed run_id)")
     args = p.parse_args(argv)
 
     env = run_auto_1h(
@@ -323,6 +354,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         notional=args.notional,
         force=args.force,
         dry_run=args.dry_run,
+        note=args.note,
     )
     text = json.dumps(env, indent=2, default=str)
     if args.out:
@@ -336,7 +368,9 @@ def main(argv: Optional[list[str]] = None) -> int:
             f"liquid={um.get('liquid_count')} rising={um.get('rising_count')} "
             f"fallback={um.get('used_fallback')} "
             f"buys={len(env['buy_packs'])} risk_off={len(env['risk_off'])} "
-            f"gates={env['mandate_gates']['blocks'] or 'clear'} do_not_place=True"
+            f"gates={env['mandate_gates']['blocks'] or 'clear'} "
+            f"flags={env['flags'] or 'none'} "
+            f"instrument_dropped={env['instrument_guard']['dropped_count']} do_not_place=True"
         )
     return 0
 

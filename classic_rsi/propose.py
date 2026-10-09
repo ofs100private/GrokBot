@@ -21,6 +21,7 @@ import pandas as pd
 from .backtest import DEFAULT_SYMBOLS, fetch_1h, _normalize_ohlc
 from .levels import LevelsConfig, atr, atr_long_levels, levels_to_dict
 from .audit import append_audit, attach_run_id_to_packs, new_run_id
+from .instruments import guard_items, guard_symbol, load_map, map_meta
 from .signals import RSILevels, StrongCandleConfig, compute_signals, long_only_remap
 
 IDT = ZoneInfo("Asia/Jerusalem")
@@ -148,7 +149,7 @@ def _buy_pack(
         "route": "REAL",
         "side": "buy",
         "action": "CANDIDATE_LONG",
-        "instrument": {"symbol": symbol, "assetClass": "equity_or_etf"},
+        "instrument": _instrument_block(symbol),
         "leverage": 1,
         "timeframe": TIMEFRAME,
         "bar_confirmed": True,
@@ -183,10 +184,25 @@ def _buy_pack(
     return pack
 
 
-def _risk_off_note(symbol: str, bar_time: str, row: pd.Series) -> dict[str, Any]:
-    remap = long_only_remap(row["raw_signal"])
+def _instrument_block(symbol: str) -> dict[str, Any]:
+    """eToro instrument identity for a pack (never trust the bare ticker — see instruments.py)."""
+    g = guard_symbol(symbol)
     return {
         "symbol": symbol,
+        "etoroSymbol": g["etoroSymbol"],
+        "instrumentId": g["instrumentId"],
+        "assetClass": g["assetClass"],
+        "exchangeId": g["exchangeId"],
+    }
+
+
+def _risk_off_note(symbol: str, bar_time: str, row: pd.Series) -> dict[str, Any]:
+    remap = long_only_remap(row["raw_signal"])
+    g = guard_symbol(symbol)
+    return {
+        "symbol": symbol,
+        "etoroSymbol": g["etoroSymbol"],
+        "instrumentId": g["instrumentId"],
         "timeframe": TIMEFRAME,
         "bar_time": bar_time,
         "action": "RISK_OFF",
@@ -217,6 +233,7 @@ def propose_from_symbols(
     strong_cfg = strong_cfg or StrongCandleConfig()
     lvl_cfg = lvl_cfg or LevelsConfig()
 
+    imap = load_map()
     results = []
     buy_packs = []
     risk_off = []
@@ -242,9 +259,19 @@ def propose_from_symbols(
                 "risk_off": [],
                 "error": str(exc),
             }
+        g = guard_symbol(sym, imap)
+        one["etoroSymbol"] = g["etoroSymbol"]
+        one["instrumentId"] = g["instrumentId"]
+        one["instrument_guard"] = {"ok": g["ok"], "flag": g["flag"], "reason": g["reason"]}
         results.append(one)
         buy_packs.extend(one.get("buy_packs") or [])
         risk_off.extend(one.get("risk_off") or [])
+
+    # Fail-closed instrument guard: drop any pack/note without a resolved US stock/ETF id
+    buy_packs, dropped_buys = guard_items(buy_packs, "buy_pack", imap)
+    risk_off, dropped_ro = guard_items(risk_off, "risk_off", imap)
+    instrument_dropped = dropped_buys + dropped_ro
+    instrument_flags = sorted({d["flag"] for d in instrument_dropped if d.get("flag")})
 
     now = datetime.now(IDT).strftime("%Y-%m-%d %H:%M:%S IDT")
     rid = new_run_id("propose")
@@ -256,6 +283,7 @@ def propose_from_symbols(
         "symbols": list(symbols),
         "suggested_notional_usd": suggested_notional_usd,
         "confirmed_only": True,
+        "instrument_map_sha256": map_meta().get("sha256"),
     }
     payload = {
         "asOfIDT": now,
@@ -282,6 +310,9 @@ def propose_from_symbols(
         },
         "buy_packs": buy_packs,
         "risk_off": risk_off,
+        "instrument_map": map_meta(),
+        "instrument_flags": instrument_flags,
+        "instrument_dropped": instrument_dropped,
         "per_symbol": results,
     }
     payload = attach_run_id_to_packs(payload, rid)

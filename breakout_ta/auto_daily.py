@@ -94,14 +94,22 @@ def append_audit(record: dict[str, Any], run_id: str) -> Path:
 
 
 APP_FEED_NAME = "breakout-ta.json"
+# latest/ folders the App serves (QA LATEST_SUBDIR_FEED_STALE + LATEST_SUBDIR_CLASSIC_SIDECAR_STALE, 2026-10-09).
+# Both breakout-ta.json and classic-portfolio.json are written to every folder here.
+APP_LATEST_ROOTS = [
+    Path("/workspace/etoroview/latest"),
+    Path("/workspace/etoroview/public/latest"),
+    Path("/workspace/etoroview/dist/latest"),
+    Path("/workspace/GrokBot/app/etoroview/latest"),
+    Path("/workspace/GrokBot/app/etoroview/public/latest"),
+    Path("/workspace/GrokBot/app/etoroview/dist/latest"),
+]
 APP_ROOTS = [
     Path("/workspace/etoroview/public"),
     Path("/workspace/etoroview/dist"),
-    Path("/workspace/etoroview/latest"),
     Path("/workspace/GrokBot/app/etoroview/public"),
     Path("/workspace/GrokBot/app/etoroview/dist"),
-    Path("/workspace/GrokBot/app/etoroview/latest"),
-]
+] + APP_LATEST_ROOTS
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +129,7 @@ APP_ROOTS = [
 CLASSIC_SOURCE = "user-OfersClaw5"
 CLASSIC_PORTFOLIO = "OfersClaw5-PRIYN"
 CLASSIC_MIRROR_ID = 11368142  # optional mirror; not required for truth
+CLASSIC_AGENT_PORTFOLIO_ID = "90db6cc2-57e3-48e0-9a12-3cbe82ac49ed"  # OfersClaw5-PRIYN agent portfolio (data source)
 CLASSIC_MAX_AGE_MIN = 30
 CLASSIC_SIDECARS = [
     Path("/workspace/etoroview/public/classic-portfolio.json"),
@@ -130,7 +139,7 @@ CLASSIC_SIDECAR_MIRRORS = [
     Path("/workspace/etoroview/dist/classic-portfolio.json"),
     Path("/workspace/GrokBot/app/etoroview/public/classic-portfolio.json"),
     Path("/workspace/GrokBot/app/etoroview/dist/classic-portfolio.json"),
-]
+] + [root / "classic-portfolio.json" for root in APP_LATEST_ROOTS]
 MOMENTUM_SIDECAR = Path("/workspace/etoroview/public/momentum-portfolio.json")
 MOMENTUM_MIRROR_ID = 11630170
 
@@ -194,6 +203,8 @@ def classic_snapshot_from_live_summary(live: dict[str, Any], *, slot: str = "bre
     cash_pct = round(100.0 * float(cash) / float(equity), 1) if cash is not None and equity else None
     return {
         "mirrorId": CLASSIC_MIRROR_ID,
+        "mirrorIdRole": "reference only: user-etoro copy mirror of OfersClaw5-PRIYN; data below is from the agent portfolio (user-OfersClaw5)",
+        "agentPortfolioId": CLASSIC_AGENT_PORTFOLIO_ID,
         "username": CLASSIC_PORTFOLIO,
         "equity": equity,
         "cash": cash,

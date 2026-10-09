@@ -1,0 +1,462 @@
+# Classic RSI instrument-map fix — reason: QA FAIL RSI_CRYPTO on run_id classic-rsi-auto-20261009-180434-176376d2
+# Rerun: run_id=classic-rsi-auto-20261009-181126-e5234dc3 propose_run_id=classic-rsi-propose-20261009-181131-c769a26c
+# New data file (not inlined): classic_rsi/etoro_instrument_map.json sha256=d9e1275a7a4387a633b2bc78d0b545331da02a2bbc6f1f86415520866f4eafcc
+# GrokBot copy identical: /workspace/GrokBot/classic_rsi/{propose,auto_1h,instruments,test_instruments}.py + etoro_instrument_map.json
+--- a/classic_rsi/propose.py
++++ b/classic_rsi/propose.py
+@@ -21,6 +21,7 @@
+ from .backtest import DEFAULT_SYMBOLS, fetch_1h, _normalize_ohlc
+ from .levels import LevelsConfig, atr, atr_long_levels, levels_to_dict
+ from .audit import append_audit, attach_run_id_to_packs, new_run_id
++from .instruments import guard_items, guard_symbol, load_map, map_meta
+ from .signals import RSILevels, StrongCandleConfig, compute_signals, long_only_remap
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+@@ -148,7 +149,7 @@
+         "route": "REAL",
+         "side": "buy",
+         "action": "CANDIDATE_LONG",
+-        "instrument": {"symbol": symbol, "assetClass": "equity_or_etf"},
++        "instrument": _instrument_block(symbol),
+         "leverage": 1,
+         "timeframe": TIMEFRAME,
+         "bar_confirmed": True,
+@@ -183,10 +184,25 @@
+     return pack
+ 
+ 
++def _instrument_block(symbol: str) -> dict[str, Any]:
++    """eToro instrument identity for a pack (never trust the bare ticker — see instruments.py)."""
++    g = guard_symbol(symbol)
++    return {
++        "symbol": symbol,
++        "etoroSymbol": g["etoroSymbol"],
++        "instrumentId": g["instrumentId"],
++        "assetClass": g["assetClass"],
++        "exchangeId": g["exchangeId"],
++    }
++
++
+ def _risk_off_note(symbol: str, bar_time: str, row: pd.Series) -> dict[str, Any]:
+     remap = long_only_remap(row["raw_signal"])
++    g = guard_symbol(symbol)
+     return {
+         "symbol": symbol,
++        "etoroSymbol": g["etoroSymbol"],
++        "instrumentId": g["instrumentId"],
+         "timeframe": TIMEFRAME,
+         "bar_time": bar_time,
+         "action": "RISK_OFF",
+@@ -217,6 +233,7 @@
+     strong_cfg = strong_cfg or StrongCandleConfig()
+     lvl_cfg = lvl_cfg or LevelsConfig()
+ 
++    imap = load_map()
+     results = []
+     buy_packs = []
+     risk_off = []
+@@ -242,10 +259,20 @@
+                 "risk_off": [],
+                 "error": str(exc),
+             }
++        g = guard_symbol(sym, imap)
++        one["etoroSymbol"] = g["etoroSymbol"]
++        one["instrumentId"] = g["instrumentId"]
++        one["instrument_guard"] = {"ok": g["ok"], "flag": g["flag"], "reason": g["reason"]}
+         results.append(one)
+         buy_packs.extend(one.get("buy_packs") or [])
+         risk_off.extend(one.get("risk_off") or [])
+ 
++    # Fail-closed instrument guard: drop any pack/note without a resolved US stock/ETF id
++    buy_packs, dropped_buys = guard_items(buy_packs, "buy_pack", imap)
++    risk_off, dropped_ro = guard_items(risk_off, "risk_off", imap)
++    instrument_dropped = dropped_buys + dropped_ro
++    instrument_flags = sorted({d["flag"] for d in instrument_dropped if d.get("flag")})
++
+     now = datetime.now(IDT).strftime("%Y-%m-%d %H:%M:%S IDT")
+     rid = new_run_id("propose")
+     params = {
+@@ -256,6 +283,7 @@
+         "symbols": list(symbols),
+         "suggested_notional_usd": suggested_notional_usd,
+         "confirmed_only": True,
++        "instrument_map_sha256": map_meta().get("sha256"),
+     }
+     payload = {
+         "asOfIDT": now,
+@@ -282,6 +310,9 @@
+         },
+         "buy_packs": buy_packs,
+         "risk_off": risk_off,
++        "instrument_map": map_meta(),
++        "instrument_flags": instrument_flags,
++        "instrument_dropped": instrument_dropped,
+         "per_symbol": results,
+     }
+     payload = attach_run_id_to_packs(payload, rid)
+--- a/classic_rsi/auto_1h.py
++++ b/classic_rsi/auto_1h.py
+@@ -23,6 +23,7 @@
+ from zoneinfo import ZoneInfo
+ 
+ from .audit import DEFAULT_AUDIT_DIR, append_audit, new_run_id
++from .instruments import guard_symbol, map_meta
+ from .propose import propose_from_symbols
+ from .universe import build_screened_universe
+ 
+@@ -186,6 +187,7 @@
+     notional: Optional[float] = None,
+     force: bool = False,
+     dry_run: bool = False,
++    note: Optional[str] = None,
+ ) -> dict[str, Any]:
+     book_syms, cash, summary = load_book_symbols()
+     book_stale = book_snapshot_staleness()
+@@ -246,6 +248,30 @@
+         buy_packs = list(propose_payload.get("buy_packs") or [])
+         risk_off = list(propose_payload.get("risk_off") or [])
+ 
++    # Instrument guard (fail closed): packs without a resolved US stock/ETF eToro id were
++    # dropped inside propose_from_symbols; surface the flags + dropped list here.
++    pp = propose_payload or {}
++    instrument_dropped = list(pp.get("instrument_dropped") or [])
++    # gated_buy_packs_suppressed are already guarded (guard runs before gating)
++    unresolved_universe = []
++    for s in universe:
++        g = guard_symbol(s)
++        if not g["ok"]:
++            unresolved_universe.append({"symbol": s, "flag": g["flag"], "reason": g["reason"]})
++    flags: list[str] = ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else []
++    for f in sorted({d.get("flag") for d in instrument_dropped if d.get("flag")}):
++        flags.append(f)
++    instrument_guard = {
++        "map": map_meta(),
++        "rule": "drop pack if no instrumentId, crypto asset class/exchange, or not a US stock/ETF",
++        "dropped": [
++            {k: d.get(k) for k in ("kind", "symbol", "flag", "reason", "carriedInstrumentId")}
++            for d in instrument_dropped
++        ],
++        "dropped_count": len(instrument_dropped),
++        "unresolved_universe_symbols": unresolved_universe,
++    }
++
+     envelope: dict[str, Any] = {
+         "run_id": rid,
+         "kind": "auto",
+@@ -266,7 +292,9 @@
+         "book_symbols": book_syms,
+         "book_summary": summary,
+         "book_snapshot_stale": book_stale,
+-        "flags": ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else [],
++        "flags": flags,
++        "note": note,
++        "instrument_guard": instrument_guard,
+         "mandate_gates": gates,
+         "buy_packs": buy_packs,
+         "risk_off": risk_off,
+@@ -296,7 +324,9 @@
+                 "force": force,
+                 "notional": notional,
+                 "status": status,
+-                "flags": ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else [],
++                "flags": flags,
++                "note": note,
++                "instrument_map_sha256": instrument_guard["map"].get("sha256"),
+             },
+         )
+         envelope["audit"] = meta
+@@ -315,6 +345,7 @@
+     p.add_argument("--force", action="store_true", help="Ignore weekend/RTH/cash soft gates")
+     p.add_argument("--dry-run", action="store_true")
+     p.add_argument("--out", default="")
++    p.add_argument("--note", default=None, help="Audit note (e.g. rerun reason citing a failed run_id)")
+     args = p.parse_args(argv)
+ 
+     env = run_auto_1h(
+@@ -323,6 +354,7 @@
+         notional=args.notional,
+         force=args.force,
+         dry_run=args.dry_run,
++        note=args.note,
+     )
+     text = json.dumps(env, indent=2, default=str)
+     if args.out:
+@@ -336,7 +368,9 @@
+             f"liquid={um.get('liquid_count')} rising={um.get('rising_count')} "
+             f"fallback={um.get('used_fallback')} "
+             f"buys={len(env['buy_packs'])} risk_off={len(env['risk_off'])} "
+-            f"gates={env['mandate_gates']['blocks'] or 'clear'} do_not_place=True"
++            f"gates={env['mandate_gates']['blocks'] or 'clear'} "
++            f"flags={env['flags'] or 'none'} "
++            f"instrument_dropped={env['instrument_guard']['dropped_count']} do_not_place=True"
+         )
+     return 0
+ 
+--- /dev/null
++++ b/classic_rsi/instruments.py
+@@ -0,0 +1,177 @@
++"""eToro instrument resolution + fail-closed guard for Classic RSI packs.
++
++Every scanned ticker must map to a US stock/ETF eToro instrument before a pack or
++proposal may leave this package. Bare tickers can collide with crypto on eToro
++(e.g. 'T' = Threshold Network crypto 100528; AT&T is 'T.US' 1030), so the symbol
++alone is never trusted: packs carry ``instrumentId`` + ``etoroSymbol``.
++
++Guard (fail closed) — a pack is dropped when:
++  * no resolved instrumentId                       -> INSTRUMENT_UNRESOLVED
++  * resolved asset class / exchange is crypto      -> INSTRUMENT_CRYPTO
++  * resolved instrument is not a US stock/ETF      -> INSTRUMENT_UNRESOLVED (reason not_us_stock_etf)
++
++Map cache: etoro_instrument_map.json (built from read-only user-OfersClaw5 getSecurities).
++"""
++
++from __future__ import annotations
++
++import hashlib
++import json
++from functools import lru_cache
++from pathlib import Path
++from typing import Any, Optional
++
++MAP_PATH = Path(__file__).resolve().parent / "etoro_instrument_map.json"
++
++FLAG_UNRESOLVED = "INSTRUMENT_UNRESOLVED"
++FLAG_CRYPTO = "INSTRUMENT_CRYPTO"
++
++US_EXCHANGE_IDS = frozenset({4, 5, 20, 57})  # Nasdaq, NYSE, CBOE, Texas SE
++CRYPTO_EXCHANGE_IDS = frozenset({8})  # Digital Currency
++ALLOWED_TYPES = frozenset({"Stocks", "ETF"})
++ALLOWED_ASSET_CLASSES = frozenset({"stock", "etf"})
++CRYPTO_WORDS = frozenset({"crypto", "cryptocurrency", "digital currency"})
++
++
++@lru_cache(maxsize=4)
++def _load(path_str: str) -> dict[str, Any]:
++    return json.loads(Path(path_str).read_text())
++
++
++def load_map(path: Optional[Path] = None) -> dict[str, Any]:
++    """Load the cached instrument map. Missing/unreadable map -> empty (everything unresolved)."""
++    p = Path(path) if path else MAP_PATH
++    try:
++        return _load(str(p))
++    except Exception:  # noqa: BLE001
++        return {"instruments": {}, "cryptoInstrumentIds": [], "_error": f"map unreadable: {p}"}
++
++
++def map_meta(path: Optional[Path] = None) -> dict[str, Any]:
++    p = Path(path) if path else MAP_PATH
++    m = load_map(p)
++    sha = None
++    try:
++        sha = hashlib.sha256(p.read_bytes()).hexdigest()
++    except OSError:
++        pass
++    return {
++        "path": str(p),
++        "sha256": sha,
++        "asOf": m.get("asOf"),
++        "schema": m.get("schema"),
++        "resolved": len(m.get("instruments") or {}),
++        "error": m.get("_error"),
++    }
++
++
++def _norm(symbol: str) -> str:
++    return str(symbol or "").upper().strip()
++
++
++def resolve(symbol: str, imap: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
++    """Return the map entry for a scanned ticker (Yahoo or eToro form), else None."""
++    imap = imap if imap is not None else load_map()
++    inst = imap.get("instruments") or {}
++    s = _norm(symbol)
++    if not s:
++        return None
++    for key in (s, s.replace(".", "-")):
++        if key in inst:
++            return dict(inst[key])
++    # eToro-form lookup (T.US, BRK.B)
++    for v in inst.values():
++        if _norm(v.get("etoroSymbol")) == s:
++            return dict(v)
++    return None
++
++
++def check_entry(entry: Optional[dict[str, Any]], imap: Optional[dict[str, Any]] = None) -> tuple[bool, Optional[str], str]:
++    """Apply the fail-closed guard to a resolved entry. Returns (ok, flag, reason)."""
++    imap = imap if imap is not None else load_map()
++    if not entry:
++        return False, FLAG_UNRESOLVED, "no map entry"
++    iid = entry.get("instrumentId")
++    try:
++        iid = int(iid)
++    except (TypeError, ValueError):
++        return False, FLAG_UNRESOLVED, "no resolved instrumentId"
++    crypto_ids = {int(x) for x in (imap.get("cryptoInstrumentIds") or [])}
++    typ = str(entry.get("type") or "")
++    ac = str(entry.get("assetClass") or "").lower()
++    try:
++        exch = int(entry.get("exchangeId"))
++    except (TypeError, ValueError):
++        exch = None
++    if (
++        iid in crypto_ids
++        or typ.lower() in CRYPTO_WORDS
++        or ac in CRYPTO_WORDS
++        or exch in CRYPTO_EXCHANGE_IDS
++    ):
++        return False, FLAG_CRYPTO, f"resolved instrument {iid} is crypto"
++    if typ not in ALLOWED_TYPES or ac not in ALLOWED_ASSET_CLASSES or exch not in US_EXCHANGE_IDS:
++        return False, FLAG_UNRESOLVED, f"not_us_stock_etf (type={typ or None} assetClass={ac or None} exchangeId={exch})"
++    if not entry.get("etoroSymbol"):
++        return False, FLAG_UNRESOLVED, "no etoroSymbol"
++    return True, None, "ok"
++
++
++def guard_symbol(symbol: str, imap: Optional[dict[str, Any]] = None) -> dict[str, Any]:
++    """Resolve + guard one ticker. Always returns a dict with ok/flag/reason/instrument fields."""
++    imap = imap if imap is not None else load_map()
++    entry = resolve(symbol, imap)
++    ok, flag, reason = check_entry(entry, imap)
++    return {
++        "symbol": _norm(symbol),
++        "ok": ok,
++        "flag": flag,
++        "reason": reason,
++        "instrumentId": (entry or {}).get("instrumentId") if ok else None,
++        "etoroSymbol": (entry or {}).get("etoroSymbol") if ok else None,
++        "assetClass": (entry or {}).get("assetClass") if ok else None,
++        "type": (entry or {}).get("type") if ok else None,
++        "exchangeId": (entry or {}).get("exchangeId") if ok else None,
++        "resolvedEntry": entry,
++    }
++
++
++def guard_items(items: list[dict[str, Any]], kind: str, imap: Optional[dict[str, Any]] = None,
++                symbol_getter=None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
++    """Split packs/notes into (kept, dropped). Kept items get instrumentId/etoroSymbol stamped.
++
++    A pack that already carries an instrumentId is re-checked against that id (it must match
++    the map entry for its symbol) so a stale/crypto id can never pass.
++    """
++    imap = imap if imap is not None else load_map()
++    get_sym = symbol_getter or (lambda it: (it.get("instrument") or {}).get("symbol") or it.get("symbol"))
++    kept: list[dict[str, Any]] = []
++    dropped: list[dict[str, Any]] = []
++    for it in items:
++        sym = get_sym(it)
++        g = guard_symbol(sym, imap)
++        carried = (it.get("instrument") or {}).get("instrumentId", it.get("instrumentId"))
++        if g["ok"] and carried is not None:
++            try:
++                carried_i = int(carried)
++            except (TypeError, ValueError):
++                carried_i = None
++            if carried_i != int(g["instrumentId"]):
++                crypto_ids = {int(x) for x in (imap.get("cryptoInstrumentIds") or [])}
++                g = {**g, "ok": False,
++                     "flag": FLAG_CRYPTO if carried_i in crypto_ids else FLAG_UNRESOLVED,
++                     "reason": f"carried instrumentId {carried} != resolved {g['instrumentId']}"}
++        if not g["ok"]:
++            dropped.append({"kind": kind, "symbol": g["symbol"], "flag": g["flag"],
++                            "reason": g["reason"], "carriedInstrumentId": carried,
++                            "item": {**it, "status": f"DROPPED_{g['flag']}", "do_not_place": True}})
++            continue
++        it = dict(it)
++        if isinstance(it.get("instrument"), dict):
++            it["instrument"] = {**it["instrument"], "instrumentId": g["instrumentId"],
++                                "etoroSymbol": g["etoroSymbol"], "assetClass": g["assetClass"],
++                                "exchangeId": g["exchangeId"]}
++        it["instrumentId"] = g["instrumentId"]
++        it["etoroSymbol"] = g["etoroSymbol"]
++        kept.append(it)
++    return kept, dropped
+--- /dev/null
++++ b/classic_rsi/test_instruments.py
+@@ -0,0 +1,85 @@
++"""Offline tests for the eToro instrument map + fail-closed guard (no network, no audit writes).
++
++Run: cd /workspace && ./screener-venv/bin/python -m classic_rsi.test_instruments
++"""
++
++from __future__ import annotations
++
++from .instruments import (FLAG_CRYPTO, FLAG_UNRESOLVED, check_entry, guard_items,
++                          guard_symbol, load_map, resolve)
++from .propose import _instrument_block
++
++
++def _pack(symbol, instrument=None):
++    return {"action": "CANDIDATE_LONG", "side": "buy", "leverage": 1,
++            "instrument": instrument or _instrument_block(symbol), "do_not_place": True}
++
++
++def run() -> list[tuple[str, bool, str]]:
++    imap = load_map()
++    out: list[tuple[str, bool, str]] = []
++
++    def t(name, cond, detail=""):
++        out.append((name, bool(cond), detail))
++
++    # 1) T resolves to AT&T T.US / 1030 (not Threshold crypto 100528)
++    e = resolve("T", imap)
++    t("T resolves to 1030 / T.US", e and e["instrumentId"] == 1030 and e["etoroSymbol"] == "T.US", str(e))
++    g = guard_symbol("T", imap)
++    t("T passes guard", g["ok"] and g["instrumentId"] == 1030, f"{g['flag']} {g['reason']}")
++    t("T.US (eToro form) resolves to 1030", (resolve("T.US", imap) or {}).get("instrumentId") == 1030)
++    t("CVX -> CVX.US 1014", (resolve("CVX", imap) or {}).get("instrumentId") == 1014)
++    t("DIA -> DIA.US 3026 ETF", (resolve("DIA", imap) or {}).get("instrumentId") == 3026)
++    kept, dropped = guard_items([_pack("T")], "buy_pack", imap)
++    t("T pack kept with instrumentId+etoroSymbol",
++      len(kept) == 1 and kept[0]["instrumentId"] == 1030 and kept[0]["etoroSymbol"] == "T.US"
++      and kept[0]["instrument"]["instrumentId"] == 1030, str(kept[:1]))
++
++    # 2) Crypto id rejected
++    ok, flag, why = check_entry({"instrumentId": 100528, "etoroSymbol": "T", "type": "Stocks",
++                                 "assetClass": "stock", "exchangeId": 5}, imap)
++    t("crypto id 100528 rejected even if labelled stock", not ok and flag == FLAG_CRYPTO, why)
++    ok, flag, why = check_entry({"instrumentId": 999999, "etoroSymbol": "XYZCOIN", "type": "Crypto",
++                                 "assetClass": "crypto", "exchangeId": 8}, imap)
++    t("type Crypto / exchange 8 rejected", not ok and flag == FLAG_CRYPTO, why)
++    bad = _pack("T", {"symbol": "T", "instrumentId": 100528, "etoroSymbol": "T"})
++    kept, dropped = guard_items([bad], "buy_pack", imap)
++    t("T pack carrying crypto id 100528 dropped INSTRUMENT_CRYPTO",
++      not kept and dropped and dropped[0]["flag"] == FLAG_CRYPTO, str([d["reason"] for d in dropped]))
++
++    # 3) Unmapped ticker dropped
++    kept, dropped = guard_items([_pack("ZZZZQ")], "buy_pack", imap)
++    t("unmapped ZZZZQ dropped INSTRUMENT_UNRESOLVED",
++      not kept and dropped and dropped[0]["flag"] == FLAG_UNRESOLVED, str([d["reason"] for d in dropped]))
++    kept, dropped = guard_items([_pack("VYLR")], "buy_pack", imap)
++    t("ambiguous VYLR dropped INSTRUMENT_UNRESOLVED", not kept and dropped and dropped[0]["flag"] == FLAG_UNRESOLVED)
++    ok, flag, why = check_entry({"instrumentId": 1234, "etoroSymbol": "BARC.L", "type": "Stocks",
++                                 "assetClass": "stock", "exchangeId": 7}, imap)
++    t("non-US exchange rejected", not ok and flag == FLAG_UNRESOLVED, why)
++    ok, flag, why = check_entry({"etoroSymbol": "SPY", "type": "ETF", "assetClass": "etf", "exchangeId": 5}, imap)
++    t("missing instrumentId rejected", not ok and flag == FLAG_UNRESOLVED, why)
++    kept, dropped = guard_items([{"symbol": "ZZZZQ", "action": "RISK_OFF"}], "risk_off", imap)
++    t("unmapped risk_off note dropped", not kept and dropped and dropped[0]["flag"] == FLAG_UNRESOLVED)
++
++    # Book names resolve to the live-book instruments
++    for sym, iid in (("QQQ", 3006), ("SMH", 6357), ("XLV", 3017), ("SPY", 3000), ("TMO", 1592)):
++        t(f"book {sym} -> {iid}", (resolve(sym, imap) or {}).get("instrumentId") == iid)
++    # No mapped instrument is a crypto id / crypto exchange
++    crypto_ids = set(imap.get("cryptoInstrumentIds") or [])
++    leaks = [k for k, v in (imap.get("instruments") or {}).items()
++             if v["instrumentId"] in crypto_ids or v.get("exchangeId") == 8 or v.get("type") not in ("Stocks", "ETF")]
++    t("no crypto/non-stock entries in map", not leaks, str(leaks))
++    return out
++
++
++def main() -> int:
++    res = run()
++    for name, ok, detail in res:
++        print(f"{'PASS' if ok else 'FAIL'}  {name}" + (f"  [{detail}]" if not ok and detail else ""))
++    n_fail = sum(1 for _, ok, _ in res if not ok)
++    print(f"{len(res) - n_fail}/{len(res)} passed")
++    return 1 if n_fail else 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

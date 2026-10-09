@@ -1,0 +1,141 @@
+{
+  "verdict": "PASS",
+  "run_id": "classic-rsi-auto-20261009-204904-0e37c26c",
+  "propose_run_id": "classic-rsi-propose-20261009-204908-cae48b5b",
+  "at": "2026-10-09T20:55:00+03:00",
+  "by": "QA Bot",
+  "hard_fail_codes": [],
+  "checks": {
+    "latest_auto_match": true,
+    "latest_auto_equals_payload": true,
+    "index_row": true,
+    "index_unique": true,
+    "propose_index_row": true,
+    "rows": 224,
+    "fingerprint_match": "4ab2437d7b8d8528",
+    "status": "PROPOSE",
+    "timeframe": "1H all (44/44)",
+    "confirmed_close": true,
+    "confirmed_only_per_symbol": "44/44",
+    "long_only": true,
+    "do_not_place": true,
+    "place": false,
+    "per_symbol_place": "44/44 false",
+    "pack_do_not_place": "1/1 true, PROPOSE_ONLY, prepared_order null, size null",
+    "leverage": "1",
+    "shorts": false,
+    "pip_sl_tp": false,
+    "crypto": false,
+    "errors": 0,
+    "patched_script_keys": "book_snapshot_stale=null, flags=[] present (guard v2)",
+    "snapshot": "asOf 2026-10-09 20:48:26.97 IDT (ssoTimestamp 17:48:11Z), 0.6 min before the 20:49:04 run; slot classic_book_refresh_before_rsi_1h; xRequestId 318005f6-bf5f-42c8-87ad-ab4644c1aa73. Only the portfolio-summary xRequestId is recorded this time (no positions-and-orders id), but pendingOrders=[] and openTimes are present. Earlier refreshes (manual after 20:04, 20:12, 20:42) were overwritten and can't be verified; the one that matters landed at 20:48",
+    "bars": "last_bar_time 2026-10-09 16:30Z for all 44 (12:30-13:30 ET, closed 17:30Z); run 17:49:04Z = 13:49 ET; forming 17:30Z bar excluded. Confirmed; moved from 15:30Z in the 20:01 run",
+    "gates": "weekend=false, us_rth=true (13:49 ET), blocks=[], allow_new_buys=true, cash 3671.18 >= 2500",
+    "live_book": "user-OfersClaw5 2026-10-09 20:50:07 IDT: QQQ 1.106357u SL 644.00; SMH 1.29223u SL 581.80; XLV 4.537045u SL 148.62; SPY 0.906782u SL 717.07; TMO 0.772582u SL 591.22 (trailing up); all long x1; cash 3671.18; totalValue 7272.32; 0 pending; 0 mirrors. Matches run book and snapshot",
+    "live_xRequestIds": {
+      "get-my-portfolio-summary": "c4cc0430-0cd4-4f14-9e3a-c9337465e2a7",
+      "get-my-positions-and-orders": "6d90f43f-6f1b-4f8e-ba33-7620d4866fb6",
+      "get-instruments-overview(ids+MOS)": "3d868c28-3f32-4cec-8916-90759fab3905",
+      "get-instruments-overview(query MOS)": "67fb83eb-5a1d-4aa8-84fc-2a40bda25f64"
+    }
+  },
+  "universe_check": {
+    "meta": "pool 502 / liquid 492 / rising 39 / book 5 / 44, no fallback, 0 errors; scan asOf 20:48:32 IDT",
+    "fresh_scan": "YES. The 39 rising names are not reused: only 17 of 44 symbols overlap the 20:01 run (27 new incl. GDDY, WAB, MCO, GS, MOS, UNP, CMI; 27 gone incl. UBER, TSLA, CNC, MRSH, VEEV). universe-latest.json was rewritten 20:49:04 with a new rising list (top GDDY 5.06, DE 4.76, WAB 3.52). last_bar moved 15:30Z -> 16:30Z for all 44. The identical 44/39 count is a coincidence (top_n=50 cap not hit both times).",
+    "held_names_included": "QQQ, SMH, XLV, SPY, TMO all present"
+  },
+  "instrument_guard": {
+    "envelope": "instrument_guard present: map sha c09aaed3..., resolved 508, dropped 0, unresolved_universe 0; per_symbol guard ok 44/44",
+    "ids": {
+      "MOS": {
+        "instrumentId": 1146,
+        "etoroSymbol": "MOS",
+        "live_name": "Mosaic Co",
+        "ok": true,
+        "bare_symbol_check": "bare 'MOS' symbol lookup and free-text query both resolve to 1146 Mosaic (plus MOS.RTH 15102 W-8BEN and an unrelated LSE name); no crypto collision"
+      },
+      "CCI": {
+        "instrumentId": 4255,
+        "live_name": "Crown Castle International",
+        "ok": true
+      }
+    },
+    "sha256": {
+      "auto_1h.py": "43158d90d76853c2327272757db774acad9e9bcae2faea2fd97d7ef0e5f1b147",
+      "instruments.py": "5ec6670def0dd2b726a6fef0699f2614e34e7e89f763470391690452967c90cf",
+      "propose.py": "f27bb5cf37269c7f39e840216268c3d85c634d68c5057fc7e3fc43909c5d6423",
+      "etoro_instrument_map.json": "c09aaed3b62eb7ab91a7c39c400d28ce7ac154178e14d1169d71e8ce87f5b778",
+      "universe.py": "e6e79871...",
+      "copies_match": "/workspace/classic_rsi == /workspace/GrokBot/classic_rsi; unchanged"
+    }
+  },
+  "pack_hygiene": {
+    "buy_packs": [
+      {
+        "symbol": "MOS",
+        "etoroSymbol": "MOS",
+        "instrumentId": 1146,
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "leverage": 1,
+        "raw_signal": "BUY_80",
+        "zone": "OVER_SOLD",
+        "rsi": 17.32,
+        "rsi_reproduced": 17.315,
+        "bar_time": "2026-10-09 16:30:00+00:00",
+        "bar_confirmed": true,
+        "candle": "strong bearish (O 19.31, C 18.99); Over Sold fires on touch. Prior bars sat in Support 20.7-27.2",
+        "entry": 18.99,
+        "stop_loss": 18.5521,
+        "take_profit": 19.5738,
+        "atr_1h": 0.2919,
+        "atr_reproduced": true,
+        "r_multiple": 1.333,
+        "sl_below_entry": true,
+        "tp_above_entry": true,
+        "pack_run_id": "classic-rsi-propose-20261009-204908-cae48b5b",
+        "status": "PROPOSE_ONLY",
+        "do_not_place": true,
+        "live_ask": 18.99,
+        "live_asOf": "2026-10-09 20:50:07 IDT",
+        "drift_atr": 0.0,
+        "meets_0_5_atr_rule": true
+      }
+    ]
+  },
+  "risk_off": [
+    {
+      "symbol": "CCI",
+      "instrumentId": 4255,
+      "signal": "SELL_70",
+      "zone": "RESISTANCE",
+      "rsi": 78.28,
+      "reproduced": true,
+      "note": "strong bearish candle after leaving Over Buy (82.6 at 15:30Z); +12.5% day",
+      "held": false,
+      "never_short": true
+    }
+  ],
+  "held_name_advisories": [],
+  "book_rsi": {
+    "QQQ": 46.83,
+    "SMH": 31.11,
+    "XLV": 64.2,
+    "SPY": 58.98,
+    "TMO": 54.4
+  },
+  "trader_classic_advisories": {
+    "DRIFT": "MOS live ask 18.99 = entry (0.00 ATR); passes the 0.5xATR rule",
+    "NEW_NAME_CAP": "MOS is a new name; October cap (2) already used by 7 opens; RSI timing gives no exemption -> likely block",
+    "TREND_RS": "FAIL: 18.99 < 50DMA 23.20 < 200DMA 24.03 (50 below 200); 3M -14.2% vs SPY +4.1% (RS -18.3pp); 6M -21.9% vs SPY +15.1% (RS -37.0pp). New 52-week low today (18.79). Rebalance Step 4: Fear-dip means a pullback in a trend-OK name, not a downtrend.",
+    "EVENTS": "No earnings imminent: Q3 is estimated Tue 2026-11-03 after close (not yet confirmed by Mosaic). Selloff drivers: RBC downgrade to Sector Perform on 10-05 (PT 27->25, phosphate recovery may slip to mid-2027); Freedom Broker downgrade to Sell (PT 17); S&P outlook revised to negative on sulfur/ammonia cost squeeze; possible Belarus potash supply deal. -3.8% today, about -10% on the week.",
+    "SLEEVE": "Materials/fertilizer is not a defined sleeve (growth/tech, healthcare, industrials/financials, energy/hard assets, broad core). Closest is hard assets, but the mandate names commodity ETFs, not single fertilizer stocks. Single-stock cap 15% of invested.",
+    "CASH": "room above floor $1,171.18 (fits <=2 x $400)",
+    "STOP_STYLE": "1H-ATR SL 18.55 (-2.3%) / 2xATR TP don't fit rebalance Step 5 swing stops (single stocks ~10-12% trail or 2.5-3x daily ATR); similar 1H-ATR stops on SPCX/RBRK/CAT were hit within about 1 day"
+  },
+  "info_codes": [
+    "PACK_CITES_PROPOSE_RUN_ID",
+    "SNAPSHOT_SINGLE_XREQUESTID"
+  ],
+  "notes": "Run-level PASS. The MOS pack is clean on hygiene and drift but fails the trader gates (new-name cap, trend/RS, sleeve, stop style). QA did not message any agent per Ofer's instruction."
+}

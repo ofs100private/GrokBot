@@ -1,0 +1,29 @@
+{
+  "qa": "breakout-ta-tab-data-qa-gate",
+  "run_id": "breakout-auto-20261009-062832-fb7cd1d4",
+  "supersedes": "breakout-auto-20261009-062535-129738c9 (FAIL G5_MOMENTUM_BOOK_STALE)",
+  "run_asOfIDT": "2026-10-09 06:28:34 IDT",
+  "qa_asOfIDT": "2026-10-09 06:29:24 IDT",
+  "verdict": "PASS",
+  "fail_codes": [],
+  "warn_codes": ["LATEST_SUBDIR_CLASSIC_SIDECAR_STALE", "TMP_EV_BUILD_STALE_COPIES", "ROUTINE_PIN_NOT_VERIFIABLE_ON_BOX"],
+  "resolved_vs_062535": ["G5_MOMENTUM_BOOK_STALE", "LATEST_SUBDIR_FEED_STALE", "CLASSIC_SIDECAR_LABEL_MIRRORID_11368142_LEDGER_KEYS"],
+  "gates": {
+    "G1_dual_write": {"status": "PASS", "md5": "cf041d0f35147b1b3f81192819e574ac", "copies_verified": 12, "all_run_id": "breakout-auto-20261009-062832-fb7cd1d4", "paths": ["/workspace/breakout_ta/breakout-ta.json", "/workspace/GrokBot/breakout_ta/breakout-ta.json", "/workspace/etoroview/{public,dist,latest}/breakout-ta.json", "/workspace/etoroview/{public,dist}/latest/breakout-ta.json", "/workspace/GrokBot/app/etoroview/{public,dist,latest}/breakout-ta.json", "/workspace/GrokBot/app/etoroview/{public,dist}/latest/breakout-ta.json"], "note": "/tmp/ev-build/app/etoroview/* copies still hold Oct 2/Oct 6 runs (build scratch dir, outside scope)"},
+    "G2_audit_integrity": {"status": "PASS", "detail": "{run_id}.json == latest-auto.json == latest.json (md5 db7a2b0d...); index.jsonl appended (n 21, confirmed 0, watch 6, failed 5); feed watch/failed/confirmed arrays identical to audit"},
+    "G3_signal_honesty": {"status": "PASS", "detail": "21/21 rows 1D on 2026-10-08 bar with volume ratios; HPQ/ANET/ZBRA scanned (HPQ NONE, ANET FAILED_BREAKOUT, ZBRA WATCH -1.01% below R=386.05); watch QQQ/XLV/SPY/ZBRA/AAPL/MSFT all close below R within 2%; failed P/NTAP/ANET/GOOGL/AMZN; 0 confirmed; MRVL dropped from universe; no shorts; doNotPlaceFromThisUi true; no place:true flags"},
+    "G4_comparison": {"status": "PASS", "detail": "3 methods present; overlap symbols subset of the 21 scanned; breakout_watch_in_momentum_book ZBRA, breakout_failed_in_momentum_book ANET/NTAP/P, momentum_book_no_breakout_signal CRWD/HPQ/XLK, Classic watch QQQ/SPY/XLV, no-signal SMH/TMO; no place authorization"},
+    "G5_live_overlap": {"status": "PASS",
+      "classic": {"live_xRequestIds": ["5023644b-af4e-488b-b2c7-7ca9e0f4505f", "bd705584-a59a-498f-b228-d32b8bce7d49"], "live": {"cash": 3671.18, "equity": 7248.19, "names": ["QQQ", "SMH", "XLV", "SPY", "TMO"], "pending": 0, "SL": {"QQQ": 644.0, "SMH": 581.8, "XLV": 148.62, "SPY": 714.55, "TMO": 581.84}}, "feed_book": {"asOfIDT": "2026-10-09 06:28:23", "xRequestId": "27b32c3d-564c-48e5-9620-a1a64b60b2e5", "cash": 3671.18, "totalValue": 7248.26, "pending": 0}, "classic_portfolio_for_app": {"md5": "876995b1014ebe57b0250321d8ecc80f", "identical_main_sidecars": 5, "units_exact": true, "SL_current": true, "equity_delta_vs_live": 0.07, "label": "mirrorId 11368142 + ledger keys retained; agentPortfolioId 90db6cc2-57e3-48e0-9a12-3cbe82ac49ed; mirrorIdRole='reference only: user-etoro copy mirror of OfersClaw5-PRIYN; data below is from the agent portfolio (user-OfersClaw5)' -> accepted, label warning resolved"}},
+      "momentum": {"source": "mirror 11630170 live read momentum-mirror-live-20261009-062742.json (xRequestId 1bd695a9-..., 06:27:38 IDT)", "feed_symbols": ["ANET", "CRWD", "HPQ", "NTAP", "P", "XLK", "ZBRA"], "live_mirror_11630170_xRequestId": "c3181d97-c3f1-472e-bf7b-27130ad713bf", "live_mirror_symbols": ["HPQ", "NTAP", "XLK", "ANET", "CRWD", "ZBRA", "P"], "units_SL_match_sidecar": true, "keys_xRequestId": "b417fa90-8928-4853-906b-3182cb08a079", "keys_symbols_same_7": true, "MRVL_removed": true, "sidecar_md5": "7cee5e9eccc3ecd0478efa6f73d24198 (all etoroview/GrokBot public/dist/latest copies)"}
+    }
+  },
+  "never_place": {"status": "PASS", "pending": {"classic": 0, "momentum_mirror_11630170": 0, "classic_mirror_11368142": 0, "momentum_keys": 0}, "notes": "No new positions since 2026-10-08 ~22:09 IDT on any book; QA read-only"},
+  "freshness": {"status": "PASS", "classic_live_to_run_s": 11, "momentum_live_to_run_s": 56},
+  "valid_json": {"status": "PASS"},
+  "warnings": {
+    "LATEST_SUBDIR_CLASSIC_SIDECAR_STALE": "classic-portfolio.json in etoroview/{public,dist,latest}/latest... specifically /workspace/etoroview/{public,dist}/latest/, /workspace/etoroview/latest/, /workspace/GrokBot/app/etoroview/{public,dist}/latest/, /workspace/GrokBot/app/etoroview/latest/ (md5 a445d5ca...) is the 2026-10-08 15:58 IDT snapshot: cash 3544.56, equity 7302.98, holds ADBE and SMH 2.65783u, no SPY/TMO. Not in breakout gate scope and the requested classic-portfolio-for-app.json is correct, but if the App reads latest/classic-portfolio.json it shows a wrong Classic book. auto_daily writes latest/ for breakout-ta and momentum but not classic-portfolio.",
+    "TMP_EV_BUILD_STALE_COPIES": "/tmp/ev-build/app/etoroview breakout-ta.json copies are Oct 2/Oct 6 runs (scratch)",
+    "ROUTINE_PIN_NOT_VERIFIABLE_ON_BOX": "skill pins /workspace/screener-venv/bin/python; routine text not on box"
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "verdict": "PASS",
+  "run_id": "classic-rsi-auto-20261009-181126-e5234dc3",
+  "propose_run_id": "classic-rsi-propose-20261009-181131-c769a26c",
+  "supersedes_failed_run": "classic-rsi-auto-20261009-180434-176376d2 (RSI_CRYPTO)",
+  "at": "2026-10-09T18:16:00+03:00",
+  "by": "QA Bot",
+  "hard_fail_codes": [],
+  "checks": {
+    "latest_auto_match": true,
+    "latest_auto_equals_payload": true,
+    "propose_audit_exists": true,
+    "index_row": true,
+    "index_unique": true,
+    "propose_index_row": true,
+    "rows": 218,
+    "fingerprint_match": "074f7ab81648b61a",
+    "audit_note_cites_failed_run": true,
+    "status": "PROPOSE",
+    "timeframe": "1H all (55/55)",
+    "confirmed_close": true,
+    "confirmed_only_per_symbol": "55/55",
+    "long_only": true,
+    "do_not_place": true,
+    "place": false,
+    "per_symbol_place": "55/55 false",
+    "pack_do_not_place": "3/3 true, PROPOSE_ONLY, prepared_order null",
+    "leverage": "1 on all packs",
+    "shorts": false,
+    "pip_sl_tp": false,
+    "crypto": false,
+    "errors": 0,
+    "patched_script_keys": "book_snapshot_stale=null, flags=[] present (guard v2)",
+    "snapshot": "asOf 2026-10-09 17:46:55 IDT, 24.5 min before the 18:11:26 run (<=30, not future); latest openTime 2026-10-08T17:36:59Z = 20:36:59 IDT (asOf later); xRequestIds b3dc67bb-fa54-40dd-9743-15e8e1c3c09c / e421cb39-4dad-4ff6-bb2b-aca50f3d5d4d",
+    "bars": "last_bar_time 2026-10-09 13:30Z for all 55 (closed 14:30Z); run 15:11:26Z = 11:11 ET; forming 14:30Z bar dropped. Confirmed. RSI/zone/signal/ATR for T, VZ, DAL re-fetched and reproduced (DAL ATR 0.9616, a slight data revision vs 0.9620 in 180434)",
+    "atr_levels": "SL = entry - 1.5*ATR and TP = entry + 2*ATR verified; R 1.33 on all 3",
+    "universe": "pool 502 / liquid 492 / rising 50 / book 5 / 55, no fallback, 0 errors",
+    "gates": "weekend=false, us_rth=true (11:11 ET), blocks=[], allow_new_buys=true, cash 3671.18 >= 2500",
+    "live_book": "user-OfersClaw5 2026-10-09 18:12:51 IDT: QQQ 1.106357u SL 644.00; SMH 1.29223u SL 581.80; XLV 4.537045u SL 148.62; SPY 0.906782u SL 716.15; TMO 0.772582u SL 589.42; all long x1; cash 3671.18; totalValue 7262.82; 0 pending orders; 0 mirrors. Matches run book",
+    "live_xRequestIds": {
+      "get-my-portfolio-summary": "3112a94d-f362-4d09-89e8-f69f0fb8706d",
+      "get-my-positions-and-orders": "df8ad7c3-ac47-44bc-9078-02f7c40412c1",
+      "get-instruments-overview(ids)": "ca9f91d1-9b33-4518-95ce-17b693e7fad7",
+      "get-instruments-overview(bare 55)": "8d64b3e0-4bd1-45ff-aa2e-f4fe2f4d2713"
+    }
+  },
+  "instrument_checks": {
+    "packs": {
+      "T": {
+        "instrumentId": 1030,
+        "etoroSymbol": "T.US",
+        "live_name": "AT&T Inc",
+        "ok": true
+      },
+      "VZ": {
+        "instrumentId": 1034,
+        "etoroSymbol": "VZ",
+        "live_name": "Verizon",
+        "ok": true
+      },
+      "DAL": {
+        "instrumentId": 1521,
+        "etoroSymbol": "DAL",
+        "live_name": "Delta Air Lines Inc (DE)",
+        "ok": true
+      }
+    },
+    "risk_off": {
+      "CCI": {
+        "instrumentId": 4255,
+        "live_name": "Crown Castle International",
+        "ok": true
+      },
+      "AMT": {
+        "instrumentId": 1946,
+        "live_name": "American Tower Corp",
+        "ok": true
+      },
+      "HUM": {
+        "instrumentId": 1512,
+        "live_name": "Humana Inc",
+        "ok": true
+      },
+      "JKHY": {
+        "instrumentId": 4452,
+        "live_name": "Jack Henry & Associates Inc",
+        "ok": true
+      }
+    },
+    "risk_off_held": "none",
+    "collisions_14": "All 14 map ids verified live as the US stock/ETF: T.US 1030, CVX.US 1014, DIA.US 3026, A.US 1764 Agilent, ABT.US 1552, AMP.US 1644, DASH.US 8048, FIS.US 1792, FOX.US 8842, IP.US 1539, MDT.US 1477, MET.US 1478, STX.US 4356, WELL.US 4278. The 14 cryptoInstrumentIds in the map are all live crypto names (Threshold, Convex, DIA, Vaulta, Arcblock, Amp, Dash, Stafi, Shapeshift, Story, Measurable Data Token, Meteora, Stacks, Moonwell) and none is mapped.",
+    "universe_55": "All 55 map ids verified live; the etoroSymbol matches eToro for every one, and none is crypto (COIN = Coinbase Global equity 6168). A bare-symbol lookup of the 55 found exactly one crypto collision, T -> 100528, which the map covers. DG and IVZ are not found bare on eToro; the map uses DG.US 5391 and IVZ.US 9438 correctly. Envelope instrument_guard: dropped 0, unresolved_universe 0"
+  },
+  "code_checks": {
+    "diff": "auto_1h-instrument-map-20261009.diff read: propose.py adds _instrument_block + guard_items on buy_packs and risk_off (fail-closed, drops with INSTRUMENT_UNRESOLVED/INSTRUMENT_CRYPTO; a carried id that doesn't match the map is dropped too); auto_1h.py surfaces instrument_guard/flags, re-checks the universe, adds --note",
+    "guard_in_auto_path": "Yes. auto_1h.run_auto_1h calls propose_from_symbols on both PROPOSE and GATED paths, and the guard runs inside it before buy_packs are returned (gated suppressed packs are guarded too). STALE/DRY_RUN paths emit no packs. This run's envelope carries instrument_guard (map sha d9e1275a\u2026, resolved 507, dropped 0), and per_symbol carries an instrument_guard per symbol.",
+    "tests": "./screener-venv/bin/python -m classic_rsi.test_instruments -> 20/20 passed, exit 0 (custom runner; pytest is not installed in screener-venv)",
+    "sha256": {
+      "auto_1h.py": "43158d90d76853c2327272757db774acad9e9bcae2faea2fd97d7ef0e5f1b147",
+      "instruments.py": "5ec6670def0dd2b726a6fef0699f2614e34e7e89f763470391690452967c90cf",
+      "propose.py": "f27bb5cf37269c7f39e840216268c3d85c634d68c5057fc7e3fc43909c5d6423",
+      "test_instruments.py": "9cbb51cfcc057d2652b07dbea40b7cc4a33dccdf00c664adef7a540276fd6180",
+      "etoro_instrument_map.json": "d9e1275a7a4387a633b2bc78d0b545331da02a2bbc6f1f86415520866f4eafcc",
+      "copies_match": "/workspace/classic_rsi == /workspace/GrokBot/classic_rsi for all of the above plus signals/levels/universe/audit/backtest; no other copies on box",
+      "previous_auto_1h_sha": "130c1b260f31df38af69350b429ea5d1ff5370d223d3a211520cc10203949aaf"
+    }
+  },
+  "packs_live_drift": [
+    {
+      "symbol": "T.US",
+      "instrumentId": 1030,
+      "entry": 22.985,
+      "atr": 0.3446,
+      "live_ask": 22.83,
+      "drift_atr": -0.45
+    },
+    {
+      "symbol": "VZ",
+      "instrumentId": 1034,
+      "entry": 43.0275,
+      "atr": 0.5473,
+      "live_ask": 42.39,
+      "drift_atr": -1.16
+    },
+    {
+      "symbol": "DAL",
+      "instrumentId": 1521,
+      "entry": 80.57,
+      "atr": 0.9616,
+      "live_ask": 80.52,
+      "drift_atr": -0.05
+    }
+  ],
+  "trader_classic_advisories": {
+    "gated_no_prepare": "Consistent. Live shows 0 pending orders and no new positions. Blocking reasons still stand from 180434: NEW_NAME_CAP (7 new names in October vs a cap of 2, and RSI timing gets no exemption), Step-2 trend fail on all 3, VZ drift -1.16 ATR (>0.5), DAL earnings today (10:00 ET call inside the signal bar), T/VZ telecom concentration plus SpaceX shock and ex-dividend, cash room 1171.18 fits at most 2 x $400, 1H-ATR stops not allowed for swing positions.",
+    "snapshot_age": "24.5 min at run time; any run after ~18:16 IDT will fail closed BOOK_SNAPSHOT_STALE unless the 18:12 refresh lands"
+  },
+  "soft_notes": [
+    "SOLV is in sp500_symbols.json (503 entries) but absent from the map and not listed under map.unresolved, which only lists VYLR. That's fail-closed (it would be dropped as INSTRUMENT_UNRESOLVED), but the coverage note '508/507' is slightly inaccurate. Not in this run's universe.",
+    "Packs cite propose_run_id (accepted precedent)."
+  ],
+  "info_codes": [
+    "PACK_CITES_PROPOSE_RUN_ID"
+  ],
+  "notes": "RSI_CRYPTO from 180434 is fixed: the T pack now carries T.US/1030 and the guard is fail-closed in the auto path. Run-level PASS; packs remain subject to Trader_Classic gates and order-QA, and the trader's 'signal valid, gated, no prepare' is the consistent outcome. QA did not message any agent per Ofer's instruction."
+}

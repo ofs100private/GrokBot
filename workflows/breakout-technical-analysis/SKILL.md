@@ -14,7 +14,7 @@ Reference lesson (logic only): `https://www.youtube.com/watch?v=reUIJ6clllo`.
 
 ## Automation
 
-- Runner: `python -m breakout_ta.auto_daily`  
+- Runner: `/workspace/screener-venv/bin/python -m breakout_ta.auto_daily`  
 - Audit: `/workspace/breakout_ta/audit/`  
 - App feed: `breakout-ta.json` (etoroview + GrokBot public/dist/latest) including **comparison** vs Classic RSI 1H and Momentum EOD breakout sleeve  
 - Routine **breakout-ta-daily-auto**: weekdays `CRON_TZ=America/New_York 15 16 * * 1-5` — **always** send Ofer a nightly digest; ping QA (`breakout-ta-tab-data-qa-gate`)  
@@ -24,11 +24,11 @@ Reference lesson (logic only): `https://www.youtube.com/watch?v=reUIJ6clllo`.
 
 The Python job can't call MCP itself. Before running it:
 1. Do a live Classic account read (`user-OfersClaw5` portfolio summary) and save the raw JSON, e.g. `/workspace/breakout_ta/live/classic-live-<YYYYMMDD-HHMMSS>.json`.
-2. Run `python -m breakout_ta.auto_daily --classic-live-json <that file>`.
+2. Run `/workspace/screener-venv/bin/python -m breakout_ta.auto_daily --classic-live-json <that file>`.
 
 `load_classic_book()` refuses any Classic snapshot older than 30 min (`STALE_SNAPSHOT_REFUSED`, which leaves the Classic book empty). If you skip the live read, the comparison will show no Classic names and QA will flag it.
 
-To fix only the comparison for an existing run: `python -m breakout_ta.auto_daily --refresh-comparison <run_id> --classic-live-json <file>`, then re-dual-write and re-QA.
+To fix only the comparison for an existing run: `/workspace/screener-venv/bin/python -m breakout_ta.auto_daily --refresh-comparison <run_id> --classic-live-json <file>`, then re-dual-write and re-QA.
 
 ## Signals
 

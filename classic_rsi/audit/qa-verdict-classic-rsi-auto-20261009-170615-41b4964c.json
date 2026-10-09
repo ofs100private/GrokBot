@@ -1,0 +1,95 @@
+{
+  "verdict": "PASS",
+  "run_id": "classic-rsi-auto-20261009-170615-41b4964c",
+  "propose_run_id": "classic-rsi-propose-20261009-170620-debc3342",
+  "at": "2026-10-09T17:09:00+03:00",
+  "by": "QA Bot",
+  "checks": {
+    "latest_auto_match": true,
+    "latest_auto_equals_payload": true,
+    "propose_audit_exists": true,
+    "index_row": true,
+    "index_unique": true,
+    "propose_index_row": true,
+    "rows": 214,
+    "fingerprint_match": "ed9de41200d4b2ef",
+    "status": "PROPOSE",
+    "timeframe": "1H all (55/55 per_symbol)",
+    "confirmed_close": true,
+    "confirmed_only_per_symbol": "55/55 true",
+    "long_only": true,
+    "do_not_place": true,
+    "place": false,
+    "per_symbol_place": "55/55 false",
+    "buy_packs": 0,
+    "risk_off": 4,
+    "shorts_or_leverage": false,
+    "pip_sl_tp": false,
+    "crypto": false,
+    "errors": 0,
+    "patched_script_keys": "book_snapshot_stale=null, flags=[] present (staleness guard v2)",
+    "script_sha256": "130c1b260f31df38af69350b429ea5d1ff5370d223d3a211520cc10203949aaf \u2014 /workspace/classic_rsi/auto_1h.py == /workspace/GrokBot/classic_rsi/auto_1h.py (both 12742 B, mtime 2026-10-08 21:55 IDT); no copy under sand-data/agent-data",
+    "snapshot": "asOf 2026-10-09 16:47:28 IDT (18.8 min before run 17:06:15; <=30, not future); latest openTime 2026-10-08T17:36:59Z = 20:36:59 IDT (asOf later); cash 3671.18, equity 7270.98; snapshot xRequestIds bba7991e-1c3f-4aa5-9e87-c530b199801a / c998772b-5065-49c9-ade0-887c71a61b8a",
+    "live_book": "user-OfersClaw5 2026-10-09 17:07:54 IDT: QQQ 1.106357u SL 644.00; SMH 1.29223u SL 581.80; XLV 4.537045u SL 148.62; SPY 0.906782u SL 716.15; TMO 0.772582u SL 589.42; all long x1; cash 3671.18; totalValue 7264.19; 0 pending; 0 mirrors. Matches run book_symbols/book_summary (units, cash, invested 3389.05) \u2014 not wrong book",
+    "live_xRequestIds": {
+      "get-my-portfolio-summary": "c9e33fc1-cb08-4c85-bdfd-72627b51c6e7",
+      "get-my-positions-and-orders": "cc4c0ca7-29d9-4894-b444-703bd9e6a9ce"
+    },
+    "bars": "last_bar_time 2026-10-08 19:30Z (15:30-16:00 ET prior-session final bar, closed 20:00Z) for all 55; run 14:06:15Z = 10:06 ET; today's 13:30Z bar (09:30-10:30 ET) was still forming and correctly dropped by drop_forming_bar",
+    "universe": "pool 502 / liquid 492 / rising 50 / book 5 / 55, used_fallback=false, error_count 0",
+    "gates": "weekend=false, us_rth=true (10:06 ET), blocks=[], allow_new_buys=true, cash 3671.18 >= floor 2500; 0 packs"
+  },
+  "risk_off": [
+    {
+      "symbol": "YUM",
+      "signal": "SELL_70",
+      "zone": "RESISTANCE",
+      "rsi": 70.94,
+      "close": 143.08,
+      "bar_time": "2026-10-08T19:30Z",
+      "reason": "Resistance + strong bearish \u2014 no adds / no chase (not a short)",
+      "held": false
+    },
+    {
+      "symbol": "CSGP",
+      "signal": "SELL_80",
+      "zone": "OVER_BUY",
+      "rsi": 79.93,
+      "close": 29.805,
+      "bar_time": "2026-10-08T19:30Z",
+      "reason": "Over Buy touch \u2014 risk-off only, no adds / no chase (not a short)",
+      "held": false
+    },
+    {
+      "symbol": "CBOE",
+      "signal": "SELL_70",
+      "zone": "RESISTANCE",
+      "rsi": 69.31,
+      "close": 294.53,
+      "bar_time": "2026-10-08T19:30Z",
+      "reason": "Resistance + strong bearish \u2014 no adds / no chase (not a short)",
+      "held": false
+    },
+    {
+      "symbol": "PM",
+      "signal": "SELL_70",
+      "zone": "RESISTANCE",
+      "rsi": 70.44,
+      "close": 200.51,
+      "bar_time": "2026-10-08T19:30Z",
+      "reason": "Resistance + strong bearish \u2014 no adds / no chase (not a short)",
+      "held": false
+    }
+  ],
+  "held_name_advisories": [],
+  "book_rsi": {
+    "QQQ": 39.79,
+    "SMH": 33.12,
+    "XLV": 53.15,
+    "SPY": 48.01,
+    "TMO": 46.1
+  },
+  "info_codes": [],
+  "notes": "0 packs, PROPOSE in RTH; all never_short=true, none of the 4 risk_off names is held, so no Trader_Classic advisory. The 19:30Z prior-session final bar was included this time (it was excluded post-close in 233619); it's fully closed, so not RSI_UNCONFIRMED_BARS. SMH is in SUPPORT zone (RSI 33.12) but no buy signal fired on the last bar. Live SMH 604.30 vs SL 581.80 (~3.7% cushion). TMO trailing SL has moved up to 589.42 (snapshot showed 587.35). COIN in the universe is the Coinbase equity, not a crypto asset (and it has no packs). The /workspace/GrokBot copy now hashes identical to the patched script, so 'unpatched backup' no longer holds; the run came from the patched code either way (guard keys present).",
+  "hard_fail_codes": []
+}
