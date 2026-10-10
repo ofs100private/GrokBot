@@ -1,0 +1,67 @@
+{
+  "skill": "classic-rsi-1h-run-qa",
+  "verdict": "PASS",
+  "run_id": "classic-rsi-auto-20261009-224445-207217a0",
+  "checked_at": "2026-10-09T22:52:00+03:00",
+  "checker": "independent QA (executor, read-only)",
+  "supersedes_note": "Replaces the earlier 22:46:10 PASS verdict at this path (also PASS). That earlier version is saved at /tmp/qa-verdict-classic-rsi-auto-20261009-224445-207217a0.prev-224610.json",
+  "hard_fail_codes": [],
+  "soft_warnings": [
+    "Book snapshot age about 25.7 min at run start (asOf 22:19:05 IDT, run 22:44:45 IDT). Under the 30 min limit but with little margin; the book refresh slot is cutting it close.",
+    "SOLV (Solventum) left out of the pool by the substring crypto regex (pool_excluded crypto_regex). It is a false positive; see the Part B recommendation.",
+    "VYLR skipped (daily, short, 7 bars < 20, 3 attempts). It is a structural miss: the eToro map can't resolve it either. Because full scans require daily_skipped==0, this miss means no scan counts as full, so the liquid reference stays on seed 491."
+  ],
+  "envelope": {
+    "kind": "auto", "status": "PROPOSE", "timeframe": "1H", "confirmed_close": true,
+    "long_only": true, "do_not_place": true, "place": false,
+    "buy_packs": 0, "risk_off": 0, "symbols": 55, "book_symbols": ["QQQ","SMH","XLV","SPY","TMO"],
+    "universe_meta": {"pool_size": 502, "liquid_count": 492, "rising_count": 50, "universe_size": 55, "used_fallback": false, "fallback_reason": null, "error_count": 1},
+    "mandate_gates": {"weekend": false, "us_rth": true, "available_cash": 3671.18, "cash_floor_usd": 2500.0, "blocks": [], "allow_new_buys": true},
+    "cos_precheck_claims": "all confirmed"
+  },
+  "integrity": {
+    "audit_sha256": "883705316060f5c3c67c28a363428f1ec09393d9cc7612ad936783373a83b7af",
+    "latest_auto_matches": "payload == latest-auto.json exactly (latest-auto adds only the 'audit' pointer block). latest-auto, latest.json, and the last index row all point at this run_id. No newer auto run has superseded it.",
+    "index_row": "exactly 1 row; symbols/buy_packs_count/risk_off_count match",
+    "params_fingerprint": "364ad00a53fdcfbf (recomputed sha256(sorted params)[:16], matches the audit, index, and latest-auto)",
+    "propose_child": "classic-rsi-propose-20261009-224451-73b6855e (fp 0c9acdee00422cbc)"
+  },
+  "confirmed_bar": {
+    "last_bar_time_all_55": "2026-10-09 18:30:00+00:00 (14:30 ET bar, closed 15:30 ET = 22:30 IDT)",
+    "run_asOf": "2026-10-09 15:44:51 ET / 22:44:51 IDT",
+    "forming_bar_excluded": "15:30 ET bar (19:30Z) was still forming. confirmed_only=true and timeframe=1H on all 55 rows"
+  },
+  "staleness_guard_v2": {
+    "snapshot": "/workspace/classic-portfolio-for-app.json",
+    "snapshot_asOf": "2026-10-09T22:19:05+03:00", "age_min_at_run": 25.7, "max_age_min": 30,
+    "latest_position_openTime": "2026-10-08T17:36:59Z (TMO), before asOf",
+    "envelope_keys": {"book_snapshot_stale": null, "flags": []},
+    "snapshot_xRequestIds": {"summary": "4a60dd66-13e8-45be-b77f-f4f6225ba1fc", "positionsAndOrders": "57484a87-254a-4e1d-87ec-15979921b63b"},
+    "snapshot_mtime": "22:19:37 IDT (unchanged since, before the run)",
+    "result": "fresh, guard passed"
+  },
+  "instrument_guard": {
+    "map_sha256": "c09aaed3b62eb7ab91a7c39c400d28ce7ac154178e14d1169d71e8ce87f5b778 (matches expected, matches file on disk)",
+    "resolved": 508, "dropped": 0, "unresolved_universe_symbols": [],
+    "per_symbol": "all 55 instrument_guard.ok=true; T -> 1030 (T.US), not crypto 100528"
+  },
+  "patched_code_used": {
+    "answer": "yes",
+    "evidence": "Envelope has the new universe block (skipped [VYLR], skipped_count 1, skipped_by_reason {missing 0, short 1, exception 0}, skipped_by_stage {daily 1}, recovered_on_retry [], liquid_reference {reference 491.0, basis seed, threshold 481.18, drop_pct -0.2, partial false}, pool_excluded [SOLV crypto_regex], error_count 1), plus soft_flags [] (top-level and params) and universe_skipped_count 1. Code mtimes are 21:53 IDT, before the 22:44 run. universe-liquid-reference.json got a 22:44:09 history entry."
+  },
+  "live_book": {
+    "source": "user-OfersClaw5 (OfersClaw5-PRIYN), real",
+    "read_at": "2026-10-09T22:49:16+03:00",
+    "xRequestIds": {"get-my-portfolio-summary": "7408b875-55b8-4196-a6dc-86626a9c3f9b", "get-my-positions-and-orders": "0a29d99b-feb5-45a9-93e6-ed2447f05c61"},
+    "positions": [
+      {"symbol": "QQQ", "id": 3006, "units": 1.106357, "SL": 644.0},
+      {"symbol": "SMH", "id": 6357, "units": 1.29223, "SL": 581.8},
+      {"symbol": "XLV", "id": 3017, "units": 4.537045, "SL": 148.62},
+      {"symbol": "SPY", "id": 3000, "units": 0.906782, "SL": 717.8},
+      {"symbol": "TMO", "id": 1592, "units": 0.772582, "SL": 591.22}
+    ],
+    "availableCash": 3671.18, "totalValue": 7270.65, "unrealizedPnl": 210.42, "pendingOrders": 0, "mirrors": 0,
+    "vs_prior_book": "identical units/cash/SLs, 0 pending. Matches the envelope's book_summary cash 3671.18"
+  },
+  "next": "stop. PASS with empty packs, so no order-QA is needed. Auto never places."
+}

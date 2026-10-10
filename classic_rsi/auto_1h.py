@@ -272,6 +272,22 @@ def run_auto_1h(
         "unresolved_universe_symbols": unresolved_universe,
     }
 
+    # Universe scan completeness (QA SPX_SCAN_PARTIAL_SILENT_DROPS): surface per-ticker
+    # data misses + soft partial-scan flag. Soft only — never changes status or blocks.
+    um_meta = universe_meta if isinstance(universe_meta, dict) else {}
+    soft_flags: list[str] = list(um_meta.get("soft_flags") or [])
+    universe_scan = {
+        "skipped": list(um_meta.get("skipped") or []) if isinstance(um_meta.get("skipped"), list) else [],
+        "skipped_count": um_meta.get("skipped_count", 0) if isinstance(um_meta.get("skipped"), list) else 0,
+        "skipped_by_reason": um_meta.get("skipped_by_reason"),
+        "skipped_by_stage": um_meta.get("skipped_by_stage"),
+        "recovered_on_retry": um_meta.get("recovered_on_retry"),
+        "liquid_count": um_meta.get("liquid_count"),
+        "liquid_reference": um_meta.get("liquid_reference"),
+        "pool_excluded": um_meta.get("pool_excluded"),
+        "error_count": um_meta.get("error_count"),
+    }
+
     envelope: dict[str, Any] = {
         "run_id": rid,
         "kind": "auto",
@@ -293,6 +309,8 @@ def run_auto_1h(
         "book_summary": summary,
         "book_snapshot_stale": book_stale,
         "flags": flags,
+        "soft_flags": soft_flags,
+        "universe": universe_scan,
         "note": note,
         "instrument_guard": instrument_guard,
         "mandate_gates": gates,
@@ -325,6 +343,8 @@ def run_auto_1h(
                 "notional": notional,
                 "status": status,
                 "flags": flags,
+                "soft_flags": soft_flags,
+                "universe_skipped_count": universe_scan["skipped_count"],
                 "note": note,
                 "instrument_map_sha256": instrument_guard["map"].get("sha256"),
             },
@@ -369,7 +389,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             f"fallback={um.get('used_fallback')} "
             f"buys={len(env['buy_packs'])} risk_off={len(env['risk_off'])} "
             f"gates={env['mandate_gates']['blocks'] or 'clear'} "
-            f"flags={env['flags'] or 'none'} "
+            f"flags={env['flags'] or 'none'} soft_flags={env['soft_flags'] or 'none'} "
+            f"skipped={env['universe']['skipped_count']} "
             f"instrument_dropped={env['instrument_guard']['dropped_count']} do_not_place=True"
         )
     return 0

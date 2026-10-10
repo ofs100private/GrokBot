@@ -1,0 +1,175 @@
+# QA-approved follow-ups to universe-drops fix: exact-ticker crypto pre-filter (SOLV restored), full scan = 0 missing + 0 exception skips, no retry for 'short'.
+# auto_1h.py, propose.py, instruments.py unchanged.
+--- a/classic_rsi/universe.py
++++ b/classic_rsi/universe.py
+@@ -13,9 +13,11 @@
+ Does not place trades. Classic only — never Momentum.
+ 
+ Per-ticker data misses are never silent (QA SPX_SCAN_PARTIAL_SILENT_DROPS):
+-  * a ticker whose Yahoo data is missing / too short / raises is retried up to
+-    RETRY_MAX times with backoff (RETRY_BACKOFF_S), then counted as an error and
+-    listed in meta["skipped"] with reason missing|short|exception (+ skipped_count)
++  * a ticker whose Yahoo data is missing / raises is retried up to RETRY_MAX times
++    with backoff (RETRY_BACKOFF_S); 'short' (too few bars, structural) is not retried.
++    Final misses count as errors and are listed in meta["skipped"] with reason
++    missing|short|exception (+ skipped_count)
++  * a scan is "full" when it has 0 missing and 0 exception skips (shorts allowed)
+   * liquid_count is compared with a reference (median of recent full scans, seeded
+     at LIQUID_REF_SEED) kept in audit/universe-liquid-reference.json; a drop of more
+     than LIQUID_DROP_TOL adds the SOFT flag SPX_SCAN_PARTIAL (never blocks the run)
+@@ -24,7 +26,6 @@
+ from __future__ import annotations
+ 
+ import json
+-import re
+ import statistics
+ import time
+ from datetime import datetime, timezone
+@@ -63,12 +64,17 @@
+ LIQUID_DROP_TOL = 0.02  # >2% below reference => SPX_SCAN_PARTIAL (soft)
+ SOFT_FLAG_PARTIAL = "SPX_SCAN_PARTIAL"
+ MISS_REASONS = ("missing", "short", "exception")
++RETRY_REASONS = frozenset({"missing", "exception"})  # 'short' is structural: no retry
++FULL_SCAN_BLOCKING_REASONS = frozenset({"missing", "exception"})  # 'short' keeps a scan full
+ 
+-# Crypto / non-equity ticker hints (S&P list should be clean; belt-and-suspenders)
+-_CRYPTO_RE = re.compile(
+-    r"(BTC|ETH|USDT|USDC|DOGE|SOL|XRP|ADA|DOT|AVAX|CRYPTO|-USD$|=X$)",
+-    re.IGNORECASE,
++# Pre-scan crypto filter (belt-and-suspenders; the binding check is the id-based
++# instrument guard in instruments.py/propose.py). EXACT ticker match only: a ticker
++# is excluded iff it equals a crypto ticker, or a crypto ticker + "-USD" / "=X".
++# (Substring matching wrongly dropped e.g. SOLV because it contains "SOL".)
++CRYPTO_TICKERS = frozenset(
++    {"BTC", "ETH", "USDT", "USDC", "DOGE", "SOL", "XRP", "ADA", "DOT", "AVAX", "CRYPTO"}
+ )
++CRYPTO_SUFFIXES = ("-USD", "=X")
+ 
+ 
+ def _now_idt_str() -> str:
+@@ -83,7 +89,12 @@
+     s = str(symbol).upper().strip()
+     if not s:
+         return True
+-    return bool(_CRYPTO_RE.search(s))
++    if s in CRYPTO_TICKERS:
++        return True
++    for suf in CRYPTO_SUFFIXES:
++        if s.endswith(suf) and s[: -len(suf)] in CRYPTO_TICKERS:
++            return True
++    return False
+ 
+ 
+ def pool_exclusions(path: Path = SP500_PATH) -> list[dict[str, str]]:
+@@ -223,6 +234,8 @@
+ ) -> tuple[dict[str, Any], list[dict[str, Any]], list[str]]:
+     """Download + evaluate with retries for missed tickers.
+ 
++    Only ``missing`` / ``exception`` misses are retried; ``short`` (structural, e.g. a
++    new listing with too few bars) is recorded after the first attempt, no retry.
+     Returns (ok_values, skipped, recovered). ``skipped`` rows:
+     {symbol, stage, reason (missing|short|exception), detail, attempts}.
+     """
+@@ -231,11 +244,11 @@
+     attempts = {s: 1 for s in symbols}
+     recovered: list[str] = []
+     for i in range(max(0, retries)):
+-        if not misses:
++        again = [sym for sym, why in misses.items() if why[0] in RETRY_REASONS]
++        if not again:
+             break
+         if backoff:
+             sleep(float(backoff[min(i, len(backoff) - 1)]))
+-        again = list(misses)
+         ok2, miss2 = _fetch_pass(again, period=period, interval=interval,
+                                  chunk_size=min(chunk_size, RETRY_CHUNK), evaluate=evaluate)
+         for sym in again:
+@@ -403,8 +416,8 @@
+     hist.append(entry)
+     out = {k: v for k, v in state.items() if k not in ("history", "load_error")}
+     out["seed"] = state.get("seed") or LIQUID_REF_SEED
+-    out["note"] = ("full=True scans (no daily skips) feed the reference median; "
+-                   "partial scans are recorded but excluded")
++    out["note"] = ("full=True scans (0 missing + 0 exception skips; 'short' skips allowed) "
++                   "feed the reference median; partial scans are recorded but excluded")
+     out["history"] = hist[-LIQUID_REF_HISTORY_MAX:]
+     ref, basis = liquid_reference_value(out)
+     out["reference"] = ref
+@@ -533,12 +546,17 @@
+         }
+         liq_ref = evaluate_liquid_drop(len(liquid), ref_state)
+         meta.update(_skip_summary(skipped))
++        hard_skips = sum(1 for x in skipped if x["reason"] in FULL_SCAN_BLOCKING_REASONS)
++        meta["full_scan"] = hard_skips == 0
+         meta["recovered_on_retry"] = recovered
+         meta["liquid_reference"] = liq_ref
+         meta["soft_flags"] = [SOFT_FLAG_PARTIAL] if liq_ref["partial"] else []
+         record_liquid_scan(reference_path, ref_state, {
+             "asOf": meta_base["asOf"], "liquid_count": len(liquid), "pool_size": len(pool_syms),
+-            "daily_skipped": daily_skips, "full": daily_skips == 0,
++            "daily_skipped": daily_skips,
++            "hard_skipped": hard_skips,
++            "short_skipped": len(skipped) - hard_skips,
++            "full": hard_skips == 0,
+             "partial_flag": liq_ref["partial"],
+         })
+ 
+--- a/classic_rsi/test_universe.py
++++ b/classic_rsi/test_universe.py
+@@ -91,6 +91,9 @@
+               str(m["skipped_by_reason"]))
+             t("persistent miss tried 1+2 times", sk[("S001", "daily")]["attempts"] == 3 and fake.calls["S001"] == 3,
+               str(fake.calls.get("S001")))
++            t("persistent exception tried 1+2 times", sk[("S003", "daily")]["attempts"] == 3 and fake.calls["S003"] == 3)
++            t("short NOT retried (1 attempt, 1 call)", sk[("S002", "daily")]["attempts"] == 1 and fake.calls["S002"] == 1,
++              str(fake.calls.get("S002")))
+             rec = {x["symbol"] for x in m["recovered_on_retry"] if x["stage"] == "daily"}
+             t("flaky S004 recovered on retry 1", "S004" in rec and ("S004", "daily") not in sk)
+             t("flaky S005 recovered on retry 2", "S005" in rec and ("S005", "daily") not in sk)
+@@ -100,7 +103,8 @@
+             t("SPX_SCAN_PARTIAL vs seed 491", m["soft_flags"] == ["SPX_SCAN_PARTIAL"]
+               and m["liquid_reference"]["basis"] == "seed" and m["liquid_reference"]["reference"] == 491)
+             st = json.loads((tmp / "ref.json").read_text())
+-            t("partial scan recorded but not full", st["history"][-1]["full"] is False and st["reference"] == 491)
++            t("partial scan recorded but not full", st["history"][-1]["full"] is False and st["reference"] == 491
++              and m["full_scan"] is False)
+ 
+         # reference from full scans: 100-name full scans become reference; 2% rule
+         with tempfile.TemporaryDirectory() as d:
+@@ -123,11 +127,36 @@
+             hs = [x for x in r["meta"]["skipped"] if x["stage"] == "hourly"]
+             t("hourly miss recorded stage=hourly", len(hs) == 1 and hs[0]["symbol"] == "S020"
+               and hs[0]["reason"] == "missing", str(hs))
++            # short-only scan is still full and updates the median; short stays listed
++            r = _screen(FakeYF({"S040": ["short"]}), pool, tmp)
++            st = json.loads((tmp / "ref.json").read_text())
++            t("short-only scan counts as full", r["meta"]["full_scan"] is True and st["history"][-1]["full"] is True
++              and st["history"][-1]["short_skipped"] == 1 and st["history"][-1]["hard_skipped"] == 0)
++            t("short still listed in skipped", [(x["symbol"], x["reason"]) for x in r["meta"]["skipped"]] == [("S040", "short")])
++            t("short-only scan feeds median (100, 99 -> 99.5)", st["reference"] == 99.5
++              and st["reference_basis"] == "median_last_2_full_scans", f"{st['reference']} {st['reference_basis']}")
++            # hourly-stage missing makes the scan partial (not full)
++            r = _screen(FakeYF({"S041": ["ok", "missing"]}), pool, tmp)
++            t("hourly missing => not full", r["meta"]["full_scan"] is False)
+             # chunk-level exception => every ticker in chunk counted, then retried
+             r = _screen(FakeYF({"S030": ["raise_chunk", "ok"]}), pool, tmp)
+             t("chunk exception retried and recovered", r["meta"]["skipped_count"] == 0
+               and any(x["symbol"] == "S030" for x in r["meta"]["recovered_on_retry"]))
+ 
++        # pre-scan crypto filter: exact ticker (+ -USD / =X) only
++        t("SOLV included (not crypto)", not U.is_crypto_ticker("SOLV"))
++        t("SOL excluded", U.is_crypto_ticker("SOL"))
++        t("BTC-USD excluded", U.is_crypto_ticker("BTC-USD"))
++        t("ETH=X / DOGE excluded", U.is_crypto_ticker("ETH=X") and U.is_crypto_ticker("doge"))
++        t("substring-containing names kept (SOLV, ADAP, DOTX, BTCS, ADBE, ADSK)",
++          not any(U.is_crypto_ticker(x) for x in ("SOLV", "ADAP", "DOTX", "BTCS", "ADBE", "ADSK", "CRYPTOX")))
++        t("non-crypto -USD / =X suffix kept", not U.is_crypto_ticker("AAPL-USD") and not U.is_crypto_ticker("EURUSD=X"))
++        with tempfile.TemporaryDirectory() as d:
++            sp = Path(d) / "sp.json"
++            sp.write_text(json.dumps({"symbols": ["SOLV", "AAPL", "BRK.B", "SOL", "BTC-USD"]}))
++            t("pool includes SOLV, excludes SOL/BTC-USD", U.load_sp500_pool(sp) == ["SOLV", "AAPL", "BRK-B"])
++            t("pool_excluded reports SOL/BTC-USD", [x["symbol"] for x in U.pool_exclusions(sp)] == ["SOL", "BTC-USD"])
++
+         # auto_1h envelope surfaces skips + soft flag; existing guards unchanged (dry run, no writes)
+         fake_meta = {"liquid_count": 470, "skipped": [{"symbol": "ABC", "stage": "daily", "reason": "missing",
+                                                        "detail": "no rows returned", "attempts": 3}],

@@ -1,0 +1,37 @@
+{
+  "qa": "breakout-ta-tab-data-qa-gate",
+  "run_id": "breakout-auto-20261009-232220-ca459f10",
+  "run_asOfIDT": "2026-10-09 23:22:22 IDT",
+  "comparisonRefreshedAtIDT": "2026-10-09 23:25:07 IDT",
+  "qa_asOfIDT": "2026-10-09 23:26 IDT",
+  "qa_mode": "independent re-QA, read-only (no prepare/place, no messages, no code edits)",
+  "supersedes": "qa-verdict-breakout-auto-20261009-232220-ca459f10-prev.json (FAIL G5_MOMENTUM_BOOK_STALE, md5 859017af0f0193c037c52df3b166fa71)",
+  "verdict": "PASS",
+  "fail_codes": [],
+  "resolved": ["G5_MOMENTUM_BOOK_STALE", "MOMENTUM_SIDECAR_ALL_COPIES_STALE_0717", "NO_MOMENTUM_MIRROR_LIVE_SNAPSHOT_FOR_RUN", "TMP_EV_BUILD_STALE_COPIES (momentum sidecar)"],
+  "warn_codes": ["ARCHIVE_1608_MOMENTUM_SNAPSHOTS_LIST_HPQ", "MIRROR_OPENPNL_FIELD_VS_SUM_POSITION_PNL", "MOMENTUM_KEYS_BALANCE_SCOPE_403"],
+  "gates": {
+    "G1_dual_write": {"status": "PASS", "md5": "ec0a9c9ff1a290c2e918a81cac27029a", "sha256": "17f20ec46cce6ada3762a385c67d79bb41225d0e90df0b3cb9fe83c87aa41cb9 (matches comparison-refresh.jsonl feed_sha256)", "copies_verified": 12, "no_other_copies_found": true, "all_run_id": "breakout-auto-20261009-232220-ca459f10", "comparison_signals_run_id": "breakout-auto-20261009-232220-ca459f10"},
+    "G2_audit_integrity": {"status": "PASS", "detail": "{run_id}.json == latest-auto.json == latest.json md5 d46f57d419b3c69ec1cc7662f2d9e2e6 (unchanged); index.jsonl last line = this run (21/0/11/0); comparison-refresh.jsonl appended for this run 23:25:07"},
+    "G3_signal_honesty": {"status": "PASS", "detail": "feed confirmed/watch/failed arrays identical to unchanged audit; summary 0/11/0/21 and top-level asOf 23:22:22 unchanged; all rows 1D with levels + volume; no shorts; no place:true; doNotPlaceFromThisUi true. Only comparison block (+comparisonRefreshedAt) changed."},
+    "G4_comparison": {"status": "PASS", "detail": "3 methods; overlap symbols subset of 21 scanned; no place authorization. Momentum book_symbols ANET/CRWD/NTAP/P/XLK/ZBRA (asOf 23:24:34, xRequestId 396e5840...); momentum overlap union == live held set; momentum_book_no_breakout_signal = [CRWD] (HPQ removed); no HPQ or FCX anywhere in feed. Classic block unchanged, LIVE xRequestId 36bb931b..."},
+    "G5_live_overlap": {"status": "PASS",
+      "momentum": {
+        "cos_snapshot": {"file": "/workspace/breakout_ta/live/momentum-mirror-live-20261009-232434.json", "positions_xRequestId": "53c1ff3a-edaa-4d59-a46f-f6ab8b9a2a20", "summary_xRequestId": "396e5840-d9ee-47ee-bf19-65e66b4f6d7f", "readAtIDT": "23:24:34", "symbols": ["NTAP", "XLK", "ANET", "CRWD", "ZBRA", "P"], "cash": 2694.47, "equity": 7926.01, "orders": 0},
+        "qa_live_mirror_11630170": {"positions_xRequestId": "b4933686-eae2-455b-9b86-73dc54a2e5ef", "summary_xRequestId": "073b6bbe-d45f-47b4-b228-53ed2a7e3af3", "asOfIDT": "23:25:50", "symbols": ["NTAP", "XLK", "ANET", "CRWD", "ZBRA", "P"], "units_SL": {"NTAP": [3.589839, 205.97], "XLK": [4.259291, 187.8], "ANET": [3.764689, 198.82], "CRWD": [3.305702, 242.0], "ZBRA": [2.07478, 359.81], "P": [6.510499, 122.86]}, "availableCash": 2694.47, "value": 7925.88, "orders": 0},
+        "qa_live_keys": {"summary_xRequestId": "bc6c41d3-a843-4aed-8a98-f40bab921446", "symbols": ["P", "CRWD", "NTAP", "XLK", "ANET", "ZBRA"], "availableCash": 3410.76, "totalValue": 9973.86, "orders": 0, "note": "cross-check only"},
+        "sidecar": {"md5": "3def8cb038a8b3ab3cc85ed18d8cf4b6", "copies": 18, "paths": "/workspace/etoroview/{public,dist,latest}/ + {public,dist}/latest/ (5), /workspace/GrokBot/app/etoroview same (5), /tmp/ev-build/app/etoroview same (5), /workspace/momentum-portfolio.json, /workspace/daily-brief/, /workspace/GrokBot/daily-brief/", "content": "6 names, units/SL/positionIds exact vs live mirror; cash 2694.47; equity 7926.01; invested 4781.65 = sum of positions; cash + position values = 7925.99", "stale_live_copies_remaining": 0},
+        "backup": "/workspace/breakout_ta/backup/momentum-sidecar-pre-20261009-232434/ holds all 18 prior copies + MANIFEST.md5 (2a42f185 x13, 106552c0 x5 /tmp/ev-build)",
+        "HPQ_absent": true, "FCX_absent": true, "held_names_missing": []
+      },
+      "classic": {"status": "PASS", "qa_live_read": {"tool": "user-OfersClaw5 get-my-positions-and-orders", "xRequestId": "b57170fd-11b5-452a-b467-e4faae98f24c", "asOfIDT": "23:25:50", "positions": {"QQQ": 1.106357, "SMH": 1.29223, "SPY": 0.906782, "TMO": 0.772582, "XLV": 4.537045}, "SL": {"QQQ": 644.0, "SMH": 581.8, "SPY": 717.8, "TMO": 591.22, "XLV": 148.62}, "orders": 0}, "feed_book_xRequestId": "36bb931b-7bf1-47f8-baec-88fca626ccd8", "cash": 3671.18, "sidecars_md5": "7a3055c860f7403414a8e751e503d065 (11 copies + classic-portfolio-for-app.json, unchanged, exact vs live)", "classic_mirror_11368142_optional": "same 5 names, 0 orders"}
+    }
+  },
+  "never_place": {"status": "PASS", "pending": {"classic": 0, "classic_mirror_11368142": 0, "momentum_mirror_11630170": 0, "momentum_keys": 0}},
+  "valid_json": {"status": "PASS"},
+  "warnings": {
+    "ARCHIVE_1608_MOMENTUM_SNAPSHOTS_LIST_HPQ": "dated archives /workspace/app-refresh-2026-10-09-pm and /workspace/daily-brief-1530-2026-10-09 momentum-portfolio.json (bdade26a, 16:08 IDT) still list HPQ; intentionally left as historical snapshots, not app-served",
+    "MIRROR_OPENPNL_FIELD_VS_SUM_POSITION_PNL": "sidecar openPnl -29.91 (eToro mirror field) vs sumPositionPnl 449.87; both labeled in notes, pre-existing convention",
+    "MOMENTUM_KEYS_BALANCE_SCOPE_403": "user-Momentum-HHHGDTJ get-my-balances lacks money.balance:read; summary used"
+  }
+}

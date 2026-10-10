@@ -1,0 +1,130 @@
+{
+  "verdict": "PASS",
+  "run_id": "classic-rsi-auto-20261009-214825-d2b3737b",
+  "propose_run_id": "classic-rsi-propose-20261009-214829-834eb2a9",
+  "at": "2026-10-09T21:58:00+03:00",
+  "by": "QA Bot",
+  "hard_fail_codes": [],
+  "soft_codes": [
+    "SPX_SCAN_PARTIAL_SILENT_DROPS"
+  ],
+  "checks": {
+    "latest_auto_match": true,
+    "latest_auto_equals_payload": true,
+    "index_row": true,
+    "index_unique": true,
+    "propose_index_row": true,
+    "rows": 226,
+    "fingerprint_match": "9406317f5b59cf2d",
+    "status": "PROPOSE",
+    "timeframe": "1H all (39/39)",
+    "confirmed_close": true,
+    "confirmed_only_per_symbol": "39/39",
+    "long_only": true,
+    "do_not_place": true,
+    "place": false,
+    "per_symbol_place": "39/39 false",
+    "pack_do_not_place": "1/1 true, PROPOSE_ONLY, prepared_order null, size null",
+    "leverage": "1",
+    "shorts": false,
+    "pip_sl_tp": false,
+    "crypto": false,
+    "errors": 0,
+    "risk_off": 0,
+    "patched_script_keys": "book_snapshot_stale=null, flags=[] present (guard v2)",
+    "snapshot": "asOf 2026-10-09 21:46:11 IDT, 2.2 min before the 21:48:25 run; slot classic_book_refresh_before_rsi_1h; NEW top-level xRequestIds present: summary 6f8d2426-c49c-4562-8706-bb9355b6b787, positionsAndOrders 618ddc82-769d-4328-a501-83898363879f (classic-book-refresh-state.json lastStatus=success, consecutiveFailures=0). Snapshot SPY SL 717.17 vs live 717.73-717.80 (trailing moved since)",
+    "bars": "last_bar_time 2026-10-09 17:30Z for all 39 (13:30-14:30 ET, closed 18:30Z); universe scan at 18:45:03Z, run 18:48:25Z = 14:48 ET; forming 18:30Z bar excluded. Confirmed",
+    "gates": "weekend=false, us_rth=true (14:48 ET), blocks=[], allow_new_buys=true, cash 3671.18 >= 2500",
+    "live_book": "user-OfersClaw5 2026-10-09 21:51:30 IDT: QQQ 1.106357u SL 644.00; SMH 1.29223u SL 581.80; XLV 4.537045u SL 148.62; SPY 0.906782u SL 717.73 (summary) / 717.80 (positions call 2s later), trailing; TMO 0.772582u SL 591.22; all long x1; cash 3671.18; totalValue 7275.68; 0 pending; 0 mirrors. Matches run book",
+    "live_xRequestIds": {
+      "get-my-portfolio-summary": "747dc139-edf9-4302-ba5f-be6e4064e13e",
+      "get-my-positions-and-orders": "1be99a25-6083-4995-a534-3f06a4fe1bf0",
+      "get-instruments-overview": "b3c3cb35-da97-477b-a67d-2d4b66ec499b"
+    }
+  },
+  "universe_check": {
+    "meta": "pool 502 / liquid 472 / rising 34 / book 5 / 39, used_fallback=false, error_count 0",
+    "fresh_scan": "Yes: universe-latest.json rewritten 21:48:25 (scan asOf 21:45:03), last_bar moved 16:30Z -> 17:30Z, only 12/39 symbols overlap the 20:49 run; run risers DVN/BRK-B/CARR/ROL/AEE/BRO ratios reproduce exactly on re-fetch",
+    "held_names_included": "QQQ, SMH, XLV, SPY, TMO all present",
+    "liquid_drop_cause": "Not a real liquidity change: these are Yahoo download failures. universe.filter_liquid_daily silently `continue`s when a ticker frame is missing or shorter than 20 bars. Only whole-chunk exceptions are logged, so error_count=0 hides the per-ticker failures. My re-scan at ~21:55 IDT (same code path, instrumented, run twice): scan1 liquid 491 (fails: LVS no_data); scan2 liquid 489 (fails: AEE, DE, ROK no_data). yfinance printed 'possibly delisted; no price data found' for those large caps, which is transient Yahoo throttling: the failing names change from call to call. The real liquid set is ~491 (the 8 sub-$100M names AOS, BF-B, BXP, ERIE, FOX, GL, NWS, REG, plus SKYD price<$10 and VYLR short history, are the same as earlier runs). Hourly fetch also intermittently missed APH and URI on my re-scan.",
+    "which_names": "Not recoverable exactly. The run persists neither the liquid list nor the skipped names (only the 15-name adv_usd_sample). Likely casualties, inferred from names that are strong 1H risers now but absent from the run's list (some may be volume noise): SPG 4.42, DIS 4.00, ICE 3.99, BEN 3.76, ABT 3.63, EOG 3.54, VICI 3.36, COF 3.27, GE 3.26, SPGI 3.08, AVY 2.87, INVH 2.78, GDDY 2.63, EME 2.49, CFG 2.08",
+    "skill_rule": "The run-QA skill treats the universe as a soft check (no hard-FAIL code for partial scans; fallback/book-only is allowed). The scan was ~96% complete (472/~491), not a fallback. So it's a soft warning SPX_SCAN_PARTIAL_SILENT_DROPS, not a Hard FAIL. The T pack is unaffected: T data was present and reproduces exactly.",
+    "recommendation": "Code fix for Trader_Classic/owner (not done by QA): count missing/short tickers as errors in universe.py (daily and hourly), persist skipped names in universe_meta, and retry them once or flag when liquid_count drops more than ~2% vs the trailing run"
+  },
+  "instrument_guard": {
+    "envelope": "instrument_guard present: map sha c09aaed3..., resolved 508, dropped 0, unresolved_universe 0; per_symbol guard ok 39/39",
+    "ids": {
+      "T": {
+        "instrumentId": 1030,
+        "etoroSymbol": "T.US",
+        "live_name": "AT&T Inc",
+        "ok": true,
+        "crypto_100528": "Threshold Network; not used"
+      }
+    },
+    "sha256": {
+      "auto_1h.py": "43158d90d76853c2327272757db774acad9e9bcae2faea2fd97d7ef0e5f1b147",
+      "instruments.py": "5ec6670def0dd2b726a6fef0699f2614e34e7e89f763470391690452967c90cf",
+      "propose.py": "f27bb5cf37269c7f39e840216268c3d85c634d68c5057fc7e3fc43909c5d6423",
+      "etoro_instrument_map.json": "c09aaed3b62eb7ab91a7c39c400d28ce7ac154178e14d1169d71e8ce87f5b778",
+      "universe.py": "e6e79871...",
+      "copies_match": "/workspace/classic_rsi == /workspace/GrokBot/classic_rsi; unchanged"
+    }
+  },
+  "pack_hygiene": {
+    "buy_packs": [
+      {
+        "symbol": "T",
+        "etoroSymbol": "T.US",
+        "instrumentId": 1030,
+        "side": "buy",
+        "action": "CANDIDATE_LONG",
+        "leverage": 1,
+        "raw_signal": "BUY_80",
+        "zone": "OVER_SOLD",
+        "rsi": 18.86,
+        "rsi_reproduced": 18.857,
+        "bar_time": "2026-10-09 17:30:00+00:00",
+        "bar_confirmed": true,
+        "candle": "strong bearish (O 22.285, C 22.055); new Over Sold visit after a bounce to Support (20.3 at 16:30Z)",
+        "entry": 22.055,
+        "stop_loss": 21.5088,
+        "take_profit": 22.7833,
+        "atr_1h": 0.3641,
+        "atr_reproduced": true,
+        "r_multiple": 1.333,
+        "sl_below_entry": true,
+        "tp_above_entry": true,
+        "pack_run_id": "classic-rsi-propose-20261009-214829-834eb2a9",
+        "status": "PROPOSE_ONLY",
+        "do_not_place": true,
+        "live_ask": 22.19,
+        "live_asOf": "2026-10-09 21:51:29 IDT",
+        "drift_atr": 0.37,
+        "meets_0_5_atr_rule": true
+      }
+    ]
+  },
+  "risk_off": [],
+  "held_name_advisories": [],
+  "book_rsi": {
+    "QQQ": 48.21,
+    "SMH": 32.29,
+    "XLV": 64.36,
+    "SPY": 60.47,
+    "TMO": 53.64
+  },
+  "trader_classic_advisories": {
+    "SIGNAL_HISTORY": "4th T signal today: BUY_70 13:30Z (runs 180434 FAIL / 181126 gated), BUY_80 15:30Z (run 200152 gated), BUY_80 17:30Z (this run). Repeated Over Sold re-entries = selloff continuing, not a reversal",
+    "DRIFT": "live ask 22.19 is +0.37 ATR from the entry; passes the 0.5xATR rule",
+    "NEW_NAME_CAP": "T is a new name; October cap (2) used by 7 opens; RSI timing gives no exemption -> likely block",
+    "TREND_RS": "FAIL: 22.19 < 50DMA 24.96 and < 200DMA 24.80; 3M +3.0% vs SPY +4.3% (RS -1.3pp); 6M -15.0% vs SPY +15.3% (RS -30.3pp)",
+    "EVENT": "-10.8% today (prev close 24.87): SpaceX 800 MHz spectrum deal plus ex-dividend $0.2775; signal bar strong bearish; Q3 earnings 10-21",
+    "STOP_STYLE": "1H-ATR SL 21.51 (-2.5%) and fixed 2xATR TP don't fit rebalance Step 5 swing stops (single stocks ~10-12% or 2.5-3x daily ATR)",
+    "CASH": "room above floor $1,171.18"
+  },
+  "info_codes": [
+    "PACK_CITES_PROPOSE_RUN_ID"
+  ],
+  "notes": "Run-level PASS with soft warning SPX_SCAN_PARTIAL_SILENT_DROPS (Yahoo per-ticker download failures silently skipped; ~20 names). T pack hygiene clean; trader gates still block. QA did not message any agent per Ofer's instruction."
+}

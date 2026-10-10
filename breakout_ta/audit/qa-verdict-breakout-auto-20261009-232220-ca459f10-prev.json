@@ -1,0 +1,43 @@
+{
+  "qa": "breakout-ta-tab-data-qa-gate",
+  "run_id": "breakout-auto-20261009-232220-ca459f10",
+  "run_asOfIDT": "2026-10-09 23:22:22 IDT",
+  "qa_asOfIDT": "2026-10-09 23:25 IDT",
+  "qa_mode": "independent, read-only (no prepare/place, no messages, no code edits)",
+  "verdict": "FAIL",
+  "fail_codes": ["G5_MOMENTUM_BOOK_STALE"],
+  "warn_codes": ["MOMENTUM_SIDECAR_ALL_COPIES_STALE_0717", "NO_MOMENTUM_MIRROR_LIVE_SNAPSHOT_FOR_RUN", "TMP_EV_BUILD_STALE_COPIES", "MOMENTUM_KEYS_BALANCE_SCOPE_403"],
+  "resolved_vs_062832": ["LATEST_SUBDIR_CLASSIC_SIDECAR_STALE"],
+  "gates": {
+    "G1_dual_write": {"status": "PASS", "md5": "893dc69939a882b675de6ea40144b64c", "copies_verified": 12, "all_run_id": "breakout-auto-20261009-232220-ca459f10",
+      "paths": ["/workspace/breakout_ta/breakout-ta.json", "/workspace/GrokBot/breakout_ta/breakout-ta.json", "/workspace/etoroview/{public,dist,latest}/breakout-ta.json", "/workspace/etoroview/{public,dist}/latest/breakout-ta.json", "/workspace/GrokBot/app/etoroview/{public,dist,latest}/breakout-ta.json", "/workspace/GrokBot/app/etoroview/{public,dist}/latest/breakout-ta.json"],
+      "comparison_signals_run_id": "breakout-auto-20261009-232220-ca459f10 (matches audit)"},
+    "G2_audit_integrity": {"status": "PASS", "detail": "{run_id}.json == latest-auto.json == latest.json (md5 d46f57d419b3c69ec1cc7662f2d9e2e6); index.jsonl last line = this run (n 21, confirmed 0, watch 11, failed 0); feed confirmed/watch/failed arrays identical to audit; do_not_place true, place false; claimed summary 0/11/0 do_not_place=true confirmed"},
+    "G3_signal_honesty": {"status": "PASS", "detail": "11 WATCH rows all 1D, bar 2026-10-09, with entry/stop/target + volume ratio (all < 1.0x avg, so none promoted to CONFIRMED despite NTAP/ANET/ZBRA/P/MSFT/AMZN closing 0.3-1.2% above R); QQQ/XLV/SPY/XLK/AAPL close below R; 0 confirmed, 0 failed; no shorts/sell-to-open; doNotPlaceFromThisUi true; no place:true anywhere in feed or audit"},
+    "G4_comparison": {"status": "PASS_WITH_G5_CAVEAT", "detail": "methods breakout_ta/classic_rsi/momentum_breakout present; all overlap symbols subset of 21 scanned; no place authorization; Classic block LIVE (xRequestId 36bb931b..., 20s before run). Momentum block built from stale 07:17 sidecar (see G5)."},
+    "G5_live_overlap": {"status": "FAIL", "code": "G5_MOMENTUM_BOOK_STALE",
+      "classic": {"status": "PASS",
+        "feed_snapshot": {"file": "/workspace/breakout_ta/live/classic-live-20261009-232204.json", "xRequestId": "36bb931b-7bf1-47f8-baec-88fca626ccd8", "asOfIDT": "2026-10-09 23:22:02", "cash": 3671.18, "totalValue": 7268.72, "pending": 0},
+        "qa_live_read": {"tool": "user-OfersClaw5 get-my-positions-and-orders", "xRequestId": "bdb637b3-c1d1-4257-baef-7a2c09682754", "asOfIDT": "2026-10-09 23:23:10", "positions": {"QQQ": 1.106357, "SMH": 1.29223, "SPY": 0.906782, "TMO": 0.772582, "XLV": 4.537045}, "SL": {"QQQ": 644.0, "SMH": 581.8, "SPY": 717.8, "TMO": 591.22, "XLV": 148.62}, "orders": 0, "mirrors": 0},
+        "matches_expected_book": true,
+        "classic_portfolio_sidecars": {"md5": "7a3055c860f7403414a8e751e503d065", "copies": 11, "plus": "/workspace/classic-portfolio-for-app.json identical", "includes_latest_subdirs": true, "asOf": "2026-10-09T23:22:02+03:00", "units_SL_exact_vs_live": true, "status": "FRESH (prior LATEST_SUBDIR_CLASSIC_SIDECAR_STALE resolved)"},
+        "classic_mirror_11368142_optional": {"xRequestId": "b762753c-facf-4193-8a15-f4b24c5f69b9", "symbols": ["TMO", "SPY", "QQQ", "XLV", "SMH"], "orders": 0}},
+      "momentum": {"status": "FAIL",
+        "feed_book": {"source": "sidecar /workspace/etoroview/public/momentum-portfolio.json", "mirrorId": 11630170, "asOf": "2026-10-09T07:17:55+03:00", "xRequestId": "26ee7432-ae2b-4a48-bdcb-15b1eb7f4b0c", "symbols": ["ANET", "CRWD", "HPQ", "NTAP", "P", "XLK", "ZBRA"], "cash": 1949.84},
+        "live_mirror_11630170": {"tool": "user-etoro get-my-positions-and-orders", "xRequestId": "b762753c-facf-4193-8a15-f4b24c5f69b9", "asOfIDT": "2026-10-09 23:23:15", "symbols": ["NTAP", "XLK", "ANET", "CRWD", "ZBRA", "P"], "units": {"NTAP": 3.589839, "XLK": 4.259291, "ANET": 3.764689, "CRWD": 3.305702, "ZBRA": 2.07478, "P": 6.510499}, "orders": 0},
+        "live_keys_user-Momentum-HHHGDTJ": {"positions_xRequestId": "631c5cb6-b32c-4f23-a501-ca639e998ebb", "summary_xRequestId": "a5337abc-fb6e-437f-82b6-363305b739e8", "symbols": ["NTAP", "XLK", "ANET", "CRWD", "ZBRA", "P"], "availableCash": 3410.76, "totalValue": 9973.97, "orders": 0, "note": "keys used for cross-check only, not as Momentum reporting truth"},
+        "matches_expected": "live books = P/CRWD/NTAP/XLK/ANET/ZBRA, HPQ absent (stopped out), FCX absent (not placed), keys cash 3410.76",
+        "defect": "feed comparison momentum book_symbols and overlap.momentum_book_no_breakout_signal include HPQ (no longer held); sidecar asOf 07:17:55 IDT is ~16h old vs run; no held name missing, FCX not shown",
+        "fix": "fresh mirror 11630170 live read -> rewrite momentum-portfolio.json sidecars (all 11 app copies + /workspace + daily-brief) -> auto_daily --refresh-comparison breakout-auto-20261009-232220-ca459f10 -> re-dual-write -> re-QA"}
+    }
+  },
+  "never_place": {"status": "PASS", "pending": {"classic": 0, "classic_mirror_11368142": 0, "momentum_mirror_11630170": 0, "momentum_keys": 0}},
+  "freshness": {"classic_live_to_run_s": 20, "momentum_sidecar_age_at_run": "~16h 04m (07:17:55 -> 23:22:22 IDT)"},
+  "valid_json": {"status": "PASS"},
+  "warnings": {
+    "MOMENTUM_SIDECAR_ALL_COPIES_STALE_0717": "momentum-portfolio.json md5 2a42f185033539c82f27edc73b95436b (07:17:55 IDT, HPQ 24.434809u, cash 1949.84) in /workspace/etoroview/{public,dist,latest}/, /workspace/etoroview/{public,dist}/latest/, /workspace/GrokBot/app/etoroview/{public,dist,latest}/, /workspace/GrokBot/app/etoroview/{public,dist}/latest/, /workspace/momentum-portfolio.json, /workspace/daily-brief/ and GrokBot/daily-brief/. The 16:08 app-refresh-2026-10-09-pm copy (bdade26a...) also still lists HPQ.",
+    "NO_MOMENTUM_MIRROR_LIVE_SNAPSHOT_FOR_RUN": "breakout_ta/live has only momentum-mirror-live-20261009-062742.json; no momentum live read was saved for the 23:22 run",
+    "TMP_EV_BUILD_STALE_COPIES": "/tmp/ev-build/app/etoroview copies are Oct 7/8 (scratch, out of scope)",
+    "MOMENTUM_KEYS_BALANCE_SCOPE_403": "user-Momentum-HHHGDTJ get-my-balances 403 (missing money.balance:read; xRequestId 3f29ea25-9ac8-4367-9b07-bd537f14ad91); cash taken from get-my-portfolio-summary instead"
+  }
+}
