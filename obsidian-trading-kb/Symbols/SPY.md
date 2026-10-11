@@ -1,10 +1,14 @@
 ---
 tags: [symbol]
-ledger: keys-B
+ledger: mirror-A
 symbol: SPY
 ---
 
 # SPY
+
+## Classic open (mirror-A)
+
+[[Positions/Classic/SPY]] · PnL $5.81
 
 ## Classic keys-B closes
 

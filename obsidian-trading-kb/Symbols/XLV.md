@@ -8,4 +8,4 @@ symbol: XLV
 
 ## Classic open (mirror-A)
 
-[[Positions/Classic/XLV]] · PnL $70.77
+[[Positions/Classic/XLV]] · PnL $65.11

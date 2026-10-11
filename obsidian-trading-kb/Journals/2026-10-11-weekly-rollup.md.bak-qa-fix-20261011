@@ -1,0 +1,67 @@
+---
+tags: [journal, weekly-rollup]
+ledger: mirror-A
+week_ending: 2026-10-11
+asOf: "2026-10-11T15:50:00+03:00"
+written_at: "2026-10-11T18:50:23+03:00"
+---
+# Weekly rollup · week ending 2026-10-11 (Sunday IDT)
+
+Evidence-only. No invented PnL. Sidecar equity/cash from Mirror A ids `11368142` / `11630170` (Classic sidecar source `user-OfersClaw5` / OfersClaw5-PRIYN per Oct 6 reporting switch; Momentum from mirror `11630170`).
+
+## Mirror A LIVE (asOf 2026-10-11T15:50:00+03:00)
+
+| Book | Equity | Cash | Symbols |
+|------|--------|------|---------|
+| Classic `11368142` (OfersClaw5-PRIYN) | $7,268.37 | $3,671.18 (~50.5%) | QQQ / SMH / XLV / SPY / TMO |
+| Momentum `11630170` ($8k basis) | $7,925.62 | $2,694.47 (~34.0%) | P / CRWD / XLK / NTAP / ANET / ZBRA |
+| **Live combined** | **$15,193.99** | — | — |
+
+Frozen 70k-plan START (2026-09-30): **$20,649.39** (Classic $12,841.61 + Momentum $7,807.78).  
+Gap to $70k from LIVE: **$54,806.01**. Δ vs start: **−$5,455.40** marked.
+
+**Basis note (not closed PnL):** prior rollup (2026-10-04) used Classic Mirror A SSO equity ~$12,930; from 2026-10-06 Classic reporting sidecars use OfersClaw5-PRIYN (~$7.3k). Do not treat the full Δ vs frozen start as realized trading loss.
+
+Sources: `_raw/classic-portfolio.json`, `_raw/momentum-portfolio.json` (refreshed from `app-refresh-2026-10-11-pm`; Momentum `positionId`/invested enriched from `app-refresh-2026-10-10-am` for open names — marks/pnl from Oct 11 sidecar).
+
+## KEEP (evidence)
+
+1. **Classic Oct 8 rebalance filled with stops** — audit `classic-rebalance-batch-20261008-keys-fill-audit.json` status `ALL 3 EXECUTED (SMH -> SPY -> TMO)`; live sidecar now holds QQQ/SMH/XLV/SPY/TMO with cash $3,671.18 above ~$2,500 floor. Related fills: `classic-rebalance-spy-700-20261008-keys-fill-audit.json`, `classic-rebalance-tmo-500-20261008-keys-fill-audit.json`, SMH trim fill.
+
+## AVOID (evidence)
+
+1. **CAT quick stopout** — Classic CAT $500 fill 2026-10-07 (`classic-cat-500-20261007-keys-ofer-fill-audit.json`, pos `3600708904`); daily_brief 2026-10-08 afternoon documents CAT SL 13:25 IDT at $798.02 (**−$8.14**) → name absent from Oct 11 sidecar. Short hold after entry.
+
+## Top job failures / unexpected (this week · Oct 5–11)
+
+| Status | Run | Note |
+|--------|-----|------|
+| partial | `daily-brief-1530-2026-10-05-no-qa` | Afternoon folder missing qa-verdict → new P2 ticket |
+| partial | `daily-brief-0530-2026-10-10-no-qa` | Morning folder missing qa-verdict → new P2 ticket |
+| blocked | `classic-rsi-auto-20261006-111839-dff9a11d` | QA PASS; blocked vs mandate / no place — expected mapping |
+| blocked | `classic-rsi-auto-20261008-233619-82d83301` | After hours; qa n/a — expected blocked |
+
+No new `status: fail` Job-Runs in Oct 5–11 backfill (69 success / 2 blocked / 2 partial of 73 written). Prior Oct 2 Gate D fail remains historical (superseded PASS).
+
+## Open improvement tickets (6)
+
+1. **P0** [[Process/Improvements/improvement-2026-10-01-momentum-eod-place-gap]] — place_ack / watchdog / keys MCP (still open; book rotated but process fixes not landed)
+2. **P2** [[Process/Improvements/2026-09-30-daily-brief-0530-daily-brief-0530-2026-09-28-no-qa]] — morning missing QA
+3. **P2** [[Process/Improvements/2026-10-04-daily-brief-0530-daily-brief-0530-2026-10-02-no-qa]] — morning missing QA
+4. **P2** [[Process/Improvements/2026-10-04-daily-brief-0530-daily-brief-0530-2026-10-03-no-qa]] — morning missing QA
+5. **P2** [[Process/Improvements/2026-10-11-daily-brief-1530-daily-brief-1530-2026-10-05-no-qa]] — afternoon missing QA (new)
+6. **P2** [[Process/Improvements/2026-10-11-daily-brief-0530-daily-brief-0530-2026-10-10-no-qa]] — morning missing QA (new)
+
+## Notable week moves (evidence paths only; no invented PnL)
+
+- Classic fills: SPCX/RBRK (Oct 6), ADBE/GS/CAT (Oct 7), SMH SL set $581.80, Oct 8 rebalance SMH→SPY/TMO; CAT stopped Oct 8 (−$8.14 per brief).
+- Momentum: VTRS BE stop (brief 2026-10-08); live names now include ANET/ZBRA; MRVL/VTRS absent vs mid-week briefs.
+- Job-Runs backfill this rollup: `Scripts/write_job_run.py --backfill --since 20261004 --cap 500` → Classic-RSI 39 · Breakout-TA 6 · Momentum-EOD 16 · Daily-Brief 11 · QA-Gates 1.
+
+## Vault rebuild
+
+`_raw/build_vault.py` → live combined **15193.99**; frozen start stays **20649.39**; Portfolios/Positions regenerated from refreshed sidecars.
+
+## QA number-gate
+
+**YES — needed.** Equity/cash/symbol set changed vs prior vault asOf 2026-10-08 (and vs 2026-10-04 journal). Classic 7302.98→7268.37; Momentum 7909.58→7925.62; symbols Classic +SPY +TMO −ADBE; Momentum +ANET +ZBRA −MRVL. Parent should ask QA Bot `498c78db-a027-4f2c-8126-3c2be6f0a4bb` vs `_raw/qa-pack-obsidian-kb.json`. This automation did not call QA Bot.

@@ -1,34 +1,42 @@
 ---
 name: Classic rebalance
 description: >-
-  use this when running the weekly check or monthly rebalance of the Classic
-  account (OfersClaw5-PRIYN via user-OfersClaw5), or when a drift trigger fires
-  (name >30% of invested, sleeve >45%, cash <$2.5k or >50% of equity, holding
-  below 50DMA with negative 3M RS, or a trailing stop) — sell/rotate before buy,
-  size to target weights, RSI 1H only as entry timing, QA + Ofer/CoS authorize
-  before every place
+  use this when running the daily (weekday) rebalance check or monthly full
+  rebalance of the Classic account (OfersClaw5-PRIYN via user-OfersClaw5), or
+  when a drift trigger fires (name >30% of invested, sleeve >45%, cash <$2.5k or
+  >50% of equity, holding below 50DMA with negative 3M RS, or a trailing stop) —
+  sell/rotate before buy, size to target weights, RSI 1H only as entry timing,
+  cost/benefit gate, then FULL AUTO place after QA PASS (no Ofer chat auth,
+  no trade-count or new-name cap since 2026-10-11)
 ---
 # Classic rebalance
 
 Applies only to the **Classic account (OfersClaw5-PRIYN)** (REAL MONEY). It composes with [Trader Classic strategy](sand-workflow:trader-classic-strategy) (mandate), [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (timing only), and [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop).
 
-**Why this exists (review 2026-10-08):** the account was −26.75% vs SPY +9.6% from 04-30 to 10-07. 121 closes lost −$2,765 fully loaded. Holds under 7 days caused −$1,951 of that (71%); holds of 30 days or more were about flat; the long-held core (SMH, QQQ, XLV) is all positive. Lesson: **fewer, longer, trend-aligned positions at target weights.**
+**Why this exists (review 2026-10-08):** the account was −26.75% vs SPY +9.6% from 04-30 to 10-07. 121 closes lost −$2,765 fully loaded. Holds under 7 days caused −$1,951 of that (71%); holds of 30 days or more were about flat; the long-held core (SMH, QQQ, XLV) is all positive. Lesson: **fewer, longer, trend-aligned positions at target weights.** With no trade-count cap (2026-10-11), the **cost/benefit gate** below is what stops churn.
 
-## Mandate locks (unchanged)
-Long ×1 only. No crypto (watch for eToro traps: `CVX` = Convex, use `CVX.US` id 1014; `T` and `DIA` are crypto tokens). Liquid large caps and sector ETFs, then commodity ETFs. Cash ≥ ~$2,500 after any batch. No weekend opens. QA PASS and explicit Ofer/CoS authorization before every place.
+## Standing policy (Ofer 2026-10-11)
+- **FULL AUTO.** Daily rebalance actions (trims, rotations, sells, adds) are placed by Trader_Classic automatically once the pack passes the [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) **and** the cost/benefit gate. No chat authorization from Ofer or CoS is needed. If nothing passes, do nothing (still log the run).
+- **Cadence moved from weekly to DAILY** (weekdays).
+- **No limit** on the number of trades and **no monthly new-name cap** (the old "≤2 new names per month" rule is removed).
+- **Every run and every movement is documented** (see Documentation).
+- An explicit Ofer/CoS hold still blocks.
+
+## Mandate locks — kept pending Ofer confirmation
+Kept from the prior playbook, pending Ofer confirmation (2026-10-11): long ×1 only; no crypto (watch for eToro traps: `CVX` = Convex, use `CVX.US` id 1014; `T` and `DIA` are crypto tokens); liquid large caps and sector ETFs, then commodity ETFs; cash ≥ ~$2,500 after any batch (cut size or drop names rather than breach); name caps (30% ETF / 15% single stock) and the 45% sleeve cap; stops (drift triggers 3–5); sell/rotate-before-buy check; no weekend opens; **QA PASS is mandatory before every place.**
 
 ## Cadence
 | When | What | Output |
 |---|---|---|
-| **Weekly**, Fri after the US close (IDT evening) | Read-only check: weights, drift flags, sell-rule flags, RS table, account vs SPY (1W/1M/since 04-30) | Short report. No orders unless a trigger fires. |
-| **Monthly**, first full US trading week | Full rebalance: score, set target weights, propose trades | Rebalance memo plus packs (sells first) |
-| **Ad hoc** | Any drift trigger, or a hard sell rule on a confirmed daily close | Pack for the affected name only |
+| **Daily**, each US weekday after the close (IDT evening) | Rebalance check: weights, drift flags, sell-rule flags, RS table, account vs SPY (1D/1W/1M/since 04-30). Any trigger or rotation that passes → pack → QA → cost gate → auto place | Daily report + run log. No orders when nothing triggers or nothing passes the cost gate. |
+| **Monthly**, first full US trading week | Full rebalance: score, set target weights, packs (sells first) → QA → cost gate → auto place | Rebalance memo plus packs and run log |
+| **Ad hoc** | Any drift trigger, or a hard sell rule on a confirmed daily close | Pack for the affected name only → QA → cost gate → auto place |
 
-## Targets and caps
+## Targets and caps (kept pending Ofer confirmation)
 - Invested sleeves: growth/tech · healthcare · industrials/financials · energy/hard assets · broad core (SPY/RSP). Cash is its own sleeve.
 - Name ≤ 30% of invested (core ETF) or ≤ 15% (single stock). Sleeve ≤ 45% of invested.
-- Cash: floor $2,500. If cash is above 50% of equity and passing candidates exist, deploy toward target. If nothing passes, park it in SPY rather than sit idle.
-- At most **2 new names per month**. Minimum position $400 (smaller positions are not worth the fees).
+- Cash: floor $2,500. If cash is above 50% of equity and passing candidates exist, deploy toward target. If nothing passes, park it in SPY rather than sit idle (only if SPY passes the cost gate).
+- **No new-name cap and no trade-count cap** (Ofer 2026-10-11). Minimum position $400 (smaller positions are not worth the fees).
 
 ## Drift triggers (any one starts an ad-hoc rebalance)
 1. A name above 30% of invested, or a sleeve above 45%.
@@ -48,11 +56,11 @@ For each holding and each candidate (sector ETFs XLK/XLV/XLF/XLI/XLE/XLP/XLU/XLB
 - Data: eToro daily candles via the read route, or Yahoo (yfinance); label the source. Cross-check SPY's last close against eToro.
 
 ## Step 3: Sell / rotate first (always before any buy)
-- A hard sell rule (trigger 3, 4, or 5) means a close or trim.
+- A hard sell rule (trigger 3, 4, or 5) means a close or trim. Stops are risk exits: still record the cost numbers, but a stop exit is not skipped by the cost gate.
 - Cap breach: trim back to target.
-- **Rotation:** replace a holding only if the candidate passes the trend filter, scores at least **5 pp** higher, and fits the caps.
+- **Rotation:** replace a holding only if the candidate passes the trend filter, scores at least **5 pp** higher, fits the caps, **and** the rotation passes the cost/benefit gate (both legs' costs plus tax on the realized gain).
 - Do **not** close a position only to reconcile a ledger without a thesis check (example: CVX.US −$78.67 on 10-06).
-- Include the realized gain or loss and the tax estimate in the memo.
+- Include the realized gain or loss and the tax estimate in the memo and audit.
 
 ## Step 4: Buy list and sizing
 - Only trend-OK names with positive 3M RS, preferring gap sleeves. **Fear = dip window** means a pullback in a trend-OK name (above its 200DMA). It does **not** mean buying a sector below its 50/200DMA (the September rotations into CAT/XLI/CVX/XOM/NEM/GE lost −$304 with 0 wins).
@@ -66,27 +74,42 @@ For each holding and each candidate (sector ETFs XLK/XLV/XLF/XLI/XLE/XLP/XLU/XLB
 - No 1H-ATR initial stops on swing positions (SPCX −1.9%, RBRK −2.3%, CAT −1.56% were all hit within about 1 day).
 - RSI Sell tags mean no add on that name. They never trigger a short, and they are never a standalone sell.
 
-## Step 6: Approval flow (no shortcuts)
-1. Analyst memo (scores, proposed trades, cash after, sleeves after, fees and tax estimate).
-2. Trader_Classic prepares closes and trades (sells sequenced first).
-3. QA Bot runs [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) and must PASS each pack.
-4. Ofer or CoS gives explicit authorization (the size and symbol named).
-5. Place, one call per approval. Then fill audit to QA, then report.
-6. Run the self-improvement loop (KEEP/AVOID).
+## Step 6: Cost/benefit gate (mandatory before every place — Ofer 2026-10-11)
+Applies to every buy, sell, trim, and rotation. For each action compute and record:
+- **Costs:** eToro spread (from prepare/getCost or live bid/ask), any opening/closing fee, overnight/financing for the planned hold, and for sells the **realized PnL and estimated tax** on a winner (round trip = open + close costs).
+- **Expected gain:** for buys/adds, distance to TP (or target weight path) and the ATR-based expected move over the planned hold (daily ATR(14) × √hold days, haircut for probability); for trims/rotations, the score/RS edge of the replacement or the risk reduced, minus tax drag.
+- **Rule:** place only if `expected_net_gain = expected_gain − total_cost` is clearly positive, i.e. `expected_gain ≥ 2 × total_cost` **and** `expected_net_gain > 0` by more than the cost itself. Otherwise **skip** and log `COST_GATE_SKIP` with the numbers.
+- **Exception:** hard risk exits (stops, trigger 3/4, cap breach above the hard cap, cash below floor) are not skipped by the cost gate, but the numbers are still recorded.
+- Record `cost_gate: {spread, fees, overnight, realized_pnl, tax_est, total_cost, expected_gain, expected_net_gain, ratio, method, verdict}` in the audit and hand it to QA.
 
-## Step 7: Reporting templates
-**Weekly:**
+## Step 7: Execution flow (FULL AUTO, no shortcuts)
+1. Analyst memo / daily report (scores, proposed trades, cash after, sleeves after, fees and tax estimate, cost-gate numbers).
+2. Trader_Classic prepares closes and trades on `user-OfersClaw5` (sells sequenced first).
+3. Cost/benefit gate (Step 6) per action; drop failures.
+4. QA Bot runs [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) and must PASS each pack, including the cost-gate numbers.
+5. On PASS, Trader_Classic places automatically, one call per PASSed pack (no Ofer/CoS chat authorization needed since 2026-10-11). Re-check cash ≥ ~$2.5k between sequenced places. An explicit Ofer/CoS hold still blocks.
+6. Fill audit to QA, then report to CoS (and Ofer on fills).
+7. Run the self-improvement loop (KEEP/AVOID).
+
+## Documentation (every run, every movement)
+- Every daily/monthly/ad-hoc run writes a run log `/workspace/classic-rebalance/daily/<YYYY-MM-DD>-daily-check.md` (monthly: `.../monthly/<YYYY-MM>-rebalance.md`) with the report, actions taken or "no action", and the reason.
+- Every pack and place follows the existing audit conventions: run_id audit JSON, append-only `index.jsonl`, QA verdict files, and a Job-Runs note. Add the `cost_gate` block and the order-QA verdict reference to each.
+- Skipped actions (cost gate, cap, cash floor, QA FAIL) are logged too, with numbers.
+
+## Step 8: Reporting templates
+**Daily:**
 ```
-Classic weekly | <date IDT> | equity $ | cash $ (x% eq) | vs SPY 1W/1M/since 04-30
+Classic daily | <date IDT> | equity $ | cash $ (x% eq) | vs SPY 1D/1W/1M/since 04-30
 Weights: SYM x% (sleeve) … | Growth x% | flags: <none | trigger #>
-RS top/bottom: … | Action: none | ad-hoc pack <sym>
+RS top/bottom: … | Actions: none | <side sym $ — QA PASS, cost ratio x.x, placed/skipped>
 ```
-**Monthly memo:** before/after weight table, trades ($, realized P&L, fees, tax est.), scores, rejected candidates with the reason, and data sources.
+**Monthly memo:** before/after weight table, trades ($, realized P&L, fees, tax est., cost-gate ratio), scores, rejected candidates with the reason, and data sources.
 
 ## Do not
-- Trade outside the cadence except on a trigger.
+- Trade outside the daily/monthly cadence except on a trigger (the hourly RSI auto follows its own skill).
 - Add a new name without the sell/rotate check first.
 - Buy trend-failing sectors because they are "cheap".
 - Use leverage above ×1, crypto, or bare `CVX`/`T`/`DIA`.
-- Place without QA PASS and explicit authorization.
-- Invent expected returns. Report realized vs SPY only.
+- Place without QA PASS or without a passing, recorded cost/benefit gate.
+- Place a batch that leaves cash under ~$2,500.
+- Invent expected returns: the cost-gate expected gain must come from TP distance / ATR math with the method recorded. Report realized vs SPY only.

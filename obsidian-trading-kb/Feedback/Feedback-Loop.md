@@ -1,7 +1,7 @@
 ---
 tags: [feedback, qa]
 ledger: mirror-A
-asOf: "2026-10-04T15:51:00+03:00"
+asOf: "2026-10-11T15:50:00+03:00"
 ---
 # Feedback loop
 

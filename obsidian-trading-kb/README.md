@@ -1,7 +1,7 @@
 ---
 tags: [index, readme]
 ledger: mirror-A
-asOf: "2026-10-04T15:51:00+03:00"
+asOf: "2026-10-11T15:50:00+03:00"
 slot: afternoon_1530
 ---
 # Obsidian Trading KB
@@ -26,17 +26,17 @@ Vault for Ofer Sasson trading books. Times in **Asia/Jerusalem (IDT)**.
 ## Start here
 
 - [[Home]] — dashboard
-- [[01-Plan-70k]] — frozen start **$20,649.39** · live **$20,777.58** → $70k
+- [[01-Plan-70k]] — frozen start **$20,649.39** · live **$15,193.99** → $70k
 - [[Indexes/MOC-Vault]] · [[Indexes/MOC-Trades]] · [[Indexes/MOC-Portfolios]]
 - [[Ledgers/Ledger-Truth]]
 - [[Feedback/Feedback-Loop]]
 - QA pack: `_raw/qa-pack-obsidian-kb.json` → CoS asks QA Bot `498c78db-a027-4f2c-8126-3c2be6f0a4bb` to re-check
 
-## Snapshot (2026-10-04T15:51:00+03:00)
+## Snapshot (2026-10-11T15:50:00+03:00)
 
 | Book | Equity | Cash | Ledger |
 |------|--------|------|--------|
-| Classic A `11368142` | $12,930.08 | $7,285.54 | mirror-A |
-| Momentum A `11630170` | $7,847.50 | $4,361.46 | mirror-A |
-| **Live combined (Mirror A)** | **$20,777.58** | — | mirror-A |
+| Classic A `11368142` | $7,268.37 | $3,671.18 | mirror-A |
+| Momentum A `11630170` | $7,925.62 | $2,694.47 | mirror-A |
+| **Live combined (Mirror A)** | **$15,193.99** | — | mirror-A |
 | **Frozen 70k-plan START** | **$20,649.39** | — | mirror-A (2026-09-30) |

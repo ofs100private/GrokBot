@@ -8,4 +8,4 @@ symbol: XLK
 
 ## Momentum open (mirror-A)
 
-[[Positions/Momentum/XLK]] · PnL $51.28
+[[Positions/Momentum/XLK]] · PnL $46.94

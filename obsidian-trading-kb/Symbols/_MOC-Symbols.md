@@ -1,7 +1,7 @@
 ---
 tags: [moc, symbols]
 ledger: mirror-A
-count: 112
+count: 115
 ---
 # Symbols MOC
 
@@ -15,6 +15,7 @@ count: 112
 - [[Symbols/AMAT]]
 - [[Symbols/AMD]]
 - [[Symbols/AMZN]]
+- [[Symbols/ANET]]
 - [[Symbols/ARM]]
 - [[Symbols/ASML]]
 - [[Symbols/ASTS]]
@@ -74,6 +75,7 @@ count: 112
 - [[Symbols/NEM]]
 - [[Symbols/NFLX]]
 - [[Symbols/NSDQ100]]
+- [[Symbols/NTAP]]
 - [[Symbols/NUE]]
 - [[Symbols/NVDA]]
 - [[Symbols/NVTS]]
@@ -102,11 +104,11 @@ count: 112
 - [[Symbols/SPX500]]
 - [[Symbols/SPY]]
 - [[Symbols/TGT]]
+- [[Symbols/TMO]]
 - [[Symbols/TSLA]]
 - [[Symbols/UBER]]
 - [[Symbols/USAR]]
 - [[Symbols/V]]
-- [[Symbols/VTRS]]
 - [[Symbols/W]]
 - [[Symbols/XBI]]
 - [[Symbols/XLE]]
@@ -117,3 +119,4 @@ count: 112
 - [[Symbols/XLV]]
 - [[Symbols/XOM]]
 - [[Symbols/XRP]]
+- [[Symbols/ZBRA]]

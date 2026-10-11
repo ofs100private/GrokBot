@@ -1,7 +1,7 @@
 ---
 tags: [dashboard]
 ledger: mirror-A
-asOf: "2026-10-04T15:51:00+03:00"
+asOf: "2026-10-11T15:50:00+03:00"
 slot: afternoon_1530
 ---
 # Trading Home
@@ -11,19 +11,19 @@ slot: afternoon_1530
 
 ## Market
 
-- F&G **31 — Fear** · Sun afternoon · WEEKEND · Fear 31 · No Buy · next Mon Oct 5
+- F&G **45 — fear** · Good Afternoon
 
 ## Classic · mirror-A `11368142`
 
-Equity **$12,930.08** · Cash **$7,285.54** · Open [[Positions/Classic/SMH|SMH]], [[Positions/Classic/QQQ|QQQ]], [[Positions/Classic/XLV|XLV]]
+Equity **$7,268.37** · Cash **$3,671.18** · Open [[Positions/Classic/QQQ|QQQ]], [[Positions/Classic/SMH|SMH]], [[Positions/Classic/XLV|XLV]], [[Positions/Classic/SPY|SPY]], [[Positions/Classic/TMO|TMO]]
 
 ## Momentum · mirror-A `11630170` · basis $8,000.00
 
-Equity **$7,847.50** · Cash **$4,361.46** · Open [[Positions/Momentum/CRWD|CRWD]], [[Positions/Momentum/VTRS|VTRS]], [[Positions/Momentum/P|P]], [[Positions/Momentum/XLK|XLK]]
+Equity **$7,925.62** · Cash **$2,694.47** · Open [[Positions/Momentum/P|P]], [[Positions/Momentum/CRWD|CRWD]], [[Positions/Momentum/XLK|XLK]], [[Positions/Momentum/NTAP|NTAP]], [[Positions/Momentum/ANET|ANET]], [[Positions/Momentum/ZBRA|ZBRA]]
 
 ## Plan
 
-[[01-Plan-70k]] — frozen start **$20,649.39** · live combined **$20,777.58** (gap to $70k **$49,222.42**).
+[[01-Plan-70k]] — frozen start **$20,649.39** · live combined **$15,193.99** (gap to $70k **$54,806.01**).
 
 ## Indexes
 

@@ -5,7 +5,9 @@ description: >-
   OfersClaw5-PRIYN (keys execution) — any fitting liquid large-cap/ETF, SPX
   heatmap Change 1D URL, cross-regime diversification, beat-SPX after fees/tax,
   hard mandate rules, Fear-as-dip window, cash-floor sizing, sell-before-buy
-  check, and post-trade self-improvement.
+  check, cost/benefit gate, FULL AUTO place after QA PASS (no Ofer chat auth,
+  no trade or new-name cap, daily rebalance since 2026-10-11), full run/trade
+  audit, and post-trade self-improvement.
 ---
 # Trader Classic strategy
 
@@ -17,16 +19,37 @@ Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PR
 
 **Source of truth (Ofer 2026-10-06):** Classic **execution, cash gating, prepare/place, order-QA, AND portfolio reporting** (equity/cash/positions on cards, App, briefs, QA data gates) come from the **Classic account (OfersClaw5-PRIYN)** via MCP `user-OfersClaw5`. Do **not** reject OfersClaw5 keys figures as Classic. Parent SSO mirror `11368142` is only the copy/UI view — optional corroboration, never required, never the rejection reason. `prepare-trade` / `place-trade` run on the Classic account.
 
-## Mandate
+## Standing policy — FULL AUTO (Ofer 2026-10-11)
+
+- **Look for a new opportunity every run** (hourly `classic-rsi-1h-auto`, plus the daily rebalance check). If a valid pack exists, it passes run-QA ([Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa)) and order-QA ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate)), passes the **cost/benefit gate**, and cash after stays ≥ ~$2,500, then **Trader_Classic places automatically — no chat authorization from Ofer or CoS.**
+- **No opportunity → do nothing** (log the run).
+- **Rebalance is DAILY** (weekdays), not weekly — see [Classic rebalance](sand-workflow:classic-rebalance). Daily trims/rotations/sells/adds are also full auto after QA PASS + cost gate.
+- **No limit** on the number of trades and **no monthly new-name cap**.
+- **Every run and every movement is documented** (see Documentation).
+
+## Mandate (kept pending Ofer confirmation, 2026-10-11)
 
 - Long-only, leverage **×1**; **no crypto** opens
 - Prefer large liquid US companies / sector ETFs, then commodities
-- Prefer leaving cash uninvested; never all-in
-- REAL only; QA PASS → place → fill audit → CoS
-- No place under an explicit Ofer/CoS buy HOLD or without auth after PASS
+- Prefer leaving cash uninvested; never all-in; cash floor ~$2,500
+- Name caps 30% ETF / 15% single stock; sleeve cap 45%; stops per [Classic rebalance](sand-workflow:classic-rebalance)
+- REAL only; QA PASS + cost gate → auto place → fill audit → CoS
+- No place under an explicit Ofer/CoS HOLD; QA PASS is mandatory before every place
 - Weekend: no new size unless Ofer overrides
 
-## Cash floor sizing (Ofer 2026-10-07)
+## Cost/benefit gate (mandatory before every place — Ofer 2026-10-11)
+
+Before every buy, sell, trim, or rotation, estimate the round-trip cost against the expected gain:
+- **Costs:** eToro spread/fees (prepare/getCost), any closing fee, overnight/financing for the planned hold, realized PnL and tax impact when selling a winner.
+- **Expected gain:** distance to TP and the ATR-based expected move (haircut for probability); for rotations, the replacement's edge minus both legs' costs and tax.
+- **Rule:** place only if `expected_gain ≥ 2 × total_cost` and the expected net gain is clearly positive. Else skip and log `COST_GATE_SKIP`. Hard risk exits (stops) still execute; numbers still recorded.
+- Put the `cost_gate` numbers in the pack/audit; order-QA must verify them.
+
+## Documentation (every run, every movement)
+
+Follow the existing audit conventions and add the cost-gate numbers: `run_id` audit JSON + `index.jsonl` (`/workspace/classic_rsi/audit/`), run-QA and order-QA verdict files, Job-Runs notes for every run (including "no opportunity — no action" and skips), and for every place: prepare snapshot, `cost_gate` block, QA verdict ref, fill vs prepare, fees, cash after. Daily rebalance runs also write the daily run log per [Classic rebalance](sand-workflow:classic-rebalance).
+
+## Cash floor sizing (Ofer 2026-10-07; kept pending Ofer confirmation)
 
 **Hard preference:** leave **~$2,500+** residual cash on the Classic account after any buy batch.
 
@@ -37,7 +60,7 @@ If a proposed pack would leave cash **below ~$2,500**:
 
 Do **not** propose a floor override unless Ofer **explicitly** sizes knowing cash will go under ~$2.5k. Never auto-place a pack that breaches the floor without that explicit override.
 
-## Sell / rotate before buy (Ofer 2026-10-07)
+## Sell / rotate before buy (Ofer 2026-10-07; kept pending Ofer confirmation)
 
 **Before every new buy pack**, check whether it is better to **sell or rotate** a weak holding first:
 - Names near stop, thesis broken, sleeve overcrowded, or clearly weaker than the candidate
@@ -77,6 +100,8 @@ Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. 
 8. Size so cash-after ≥ ~$2.5k (cut notional or drop symbols first)
 9. prepare on **Classic account** (`user-OfersClaw5`) — fees + tax haircut
 10. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
+11. **Cost/benefit gate** (above) — skip if net expected gain is not clearly positive
+12. Order-QA PASS → **auto place** (no Ofer chat auth) → fill audit → CoS
 
 ## After every fill / skip / QA FAIL
 
@@ -88,4 +113,4 @@ Hold cash if the dip is not clean; event-vol freeze; in Fear lean into quality d
 
 ## Do not
 
-Crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA+auth; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy); auto-place packs that leave cash under ~$2.5k without Ofer’s explicit override; skip the sell/rotate check before new buys.
+Crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA PASS or without a passing, recorded cost/benefit gate; churn trades whose expected gain does not clearly beat round-trip cost + tax; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy); auto-place packs that leave cash under ~$2.5k without Ofer’s explicit override; skip the sell/rotate check before new buys.

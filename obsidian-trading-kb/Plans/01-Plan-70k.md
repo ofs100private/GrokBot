@@ -2,7 +2,8 @@
 tags: [plan, 70k]
 ledger: mirror-A
 starting_capital: 20649.39
-asOf: "2026-10-04T15:51:00+03:00"
+live_combined: 15193.99
+asOf: "2026-10-11T15:50:00+03:00"
 ---
 # Plan · $70k from Mirror A capital
 
@@ -24,31 +25,29 @@ starting_capital = 12841.61 + 7807.78 = 20649.39
 
 | Component | Equity | Cash | Names | Source |
 |-----------|--------|------|-------|--------|
-| Classic `11368142` | **$12,930.08** | $7,285.54 | SMH, QQQ, XLV | `_raw/classic-portfolio.json` |
-| Momentum `11630170` | **$7,847.50** | $4,361.46 | CRWD, VTRS, P, XLK | `_raw/momentum-portfolio.json` |
-| **Live combined** | **$20,777.58** | — | — | live classic + momentum |
-| Δ vs frozen start | $128.19 | — | — | live_combined − 20649.39 |
+| Classic `11368142` | **$7,268.37** | $3,671.18 | QQQ, SMH, XLV, SPY, TMO | `_raw/classic-portfolio.json` |
+| Momentum `11630170` | **$7,925.62** | $2,694.47 | P, CRWD, XLK, NTAP, ANET, ZBRA | `_raw/momentum-portfolio.json` |
+| **Live combined** | **$15,193.99** | — | — | live classic + momentum |
+| Δ vs frozen start | -$5,455.40 | — | — | live_combined − 20649.39 |
 
 ## Target
 
 | Item | Value |
 |------|-------|
 | Target | **$70,000** |
-| Gap from **live** | **$49,222.42** (`70000 − 20777.58`) |
+| Gap from **live** | **$54,806.01** (`70000 − 15193.99`) |
 | Multiple vs frozen start | 3.39× |
 
 ## Path (no invented PnL)
 
 1. Keep Classic cash buffer discipline (mandate cash floor); grow via quality longs after QA PASS.
-2. Momentum: breakout/VCP FULL AUTO after QA; cash now ~55.6%.
+2. Momentum: breakout/VCP FULL AUTO after QA; cash now ~34.0%.
 3. Compound **only** Mirror A marked equity; never count keys-B as progress toward $70k.
 4. Review weekly in [[Journals/2026-10-04-weekly-rollup]] + [[Feedback/Feedback-Loop]].
 
 ## As-of
 
-Sidecar slot `afternoon_1530` · `2026-10-04T15:51:00+03:00`. Frozen start stays 2026-09-30; live marks refresh from sidecars.
-
-Canonical note: [[01-Plan-70k]]
+Sidecar slot `afternoon_1530` · `2026-10-11T15:50:00+03:00`. Frozen start stays 2026-09-30; live marks refresh from sidecars.
 
 ## Reality check (to 2026-12-31)
 
@@ -110,3 +109,5 @@ Milestones count **deposits + Mirror A equity**. Never count keys-B.
 - Weekly rollup only (not hourly self-improve)
 - Skip paid X when credits near zero
 - One QA gate per vault refresh, not chatter loops
+
+Canonical note: [[01-Plan-70k]]

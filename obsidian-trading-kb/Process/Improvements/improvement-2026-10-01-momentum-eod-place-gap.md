@@ -6,7 +6,7 @@ job: momentum-eod
 run_id: place-qa-eod-20260930-jnj-crwd-rvty
 priority: P0
 created_at: 2026-10-01T00:00:00+03:00
-updated_at: 2026-10-04T19:00:12+03:00
+updated_at: 2026-10-11T18:50:23+03:00
 ledger: mirror-A
 ---
 # Momentum process improvement — 2026-10-01 (IDT)
@@ -66,3 +66,17 @@ Evidence: `_raw/momentum-portfolio.json` asOf `2026-10-04T15:51:00+03:00` (mirro
 **Interpretation (evidence only, no invented fill PnL):** closes **did** happen later — cash rose from ~$549.77 (Oct 1 briefs) to $4,361.46 and the five names are absent from live Mirror A. Ticket stays **OPEN** until place_ack / watchdog / keys-MCP fixes land (P0/P1 in ticket body). Do not invent closed-trade PnL for DE/FTNT/JNJ/AAPL/NDSN here.
 
 Related Job-Runs: Momentum-EOD Oct 1–2 miss-checks under `Job-Runs/Momentum-EOD/` (backfill since 20260928).
+
+## Update · 2026-10-11 weekly rollup (Mirror A live sidecar)
+
+Evidence: `_raw/momentum-portfolio.json` asOf `2026-10-11T15:50:00+03:00` (mirror `11630170`).
+
+| Field | Live |
+|-------|------|
+| Equity | $7,925.62 |
+| Cash | **$2,694.47** (~34.0%) |
+| Open symbols | **P / CRWD / XLK / NTAP / ANET / ZBRA** |
+| Absent vs Oct 4 | **VTRS** (BE stop per daily_brief 2026-10-08); **MRVL** no longer in Oct 11 sidecar |
+
+**Interpretation (evidence only):** book rotated (ANET/ZBRA present; VTRS gone). Ticket stays **OPEN** until place_ack / watchdog / keys-MCP fixes land. No invented closed-trade PnL.
+
