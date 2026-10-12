@@ -17,7 +17,13 @@ Also covers **Classic RSI 1H** packs (ATR SL/TP, confirmed close, long-only) pro
 
 ## Authorization (Ofer 2026-10-11 — FULL AUTO)
 
-For Classic, **order-QA PASS (this gate, including a verified cost/benefit gate) is sufficient authorization** for Trader_Classic to place automatically — buys, sells, trims, and rotations, from the hourly RSI auto or the daily rebalance. **No Ofer or CoS chat authorization is required.** There is **no trade-count limit and no monthly new-name cap**; do not FAIL on either. An explicit Ofer/CoS hold still blocks. Because PASS now triggers a real-money place, PASS only with complete evidence.
+**Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place still OFF until Ofer explicitly accepts QA's residual risks (shared-box verdict forgery, self-reported second-source mark, trader-controlled test mode, editable scores/registry pins) AND out-of-sample edge evidence exists. Until then every Classic place needs QA PASS + explicit Ofer authorization.
+
+**Cost-gate requirement:** order-QA cannot PASS without a verified cost-gate block (from `classic_rsi/cost_gate.py` / `execute_pass.py` output).
+
+**Order-QA field spec (cost-gate contract):** see `order_qa_cost_gate_contract` in `/workspace/classic_rsi/audit/qa-review-classic-full-auto-20261012.json` (`must_be_present`, `recompute`, `also_verify`) — use that as the authoritative field checklist for cost-gate verification until the code gate passes QA.
+
+For Classic, **order-QA PASS (this gate, including a verified cost/benefit gate) is sufficient authorization** for Trader_Classic to place automatically — buys, sells, trims, and rotations, from the hourly RSI auto or the daily rebalance. **No Ofer or CoS chat authorization is required** (only once the code gate passes QA). There is **no trade-count limit and no monthly new-name cap**; do not FAIL on either. An explicit Ofer/CoS hold still blocks. Because PASS now triggers a real-money place, PASS only with complete evidence.
 
 ## When to run
 
@@ -80,12 +86,20 @@ Independently recompute from the prepare snapshot / live quote: spread and fees 
 - Fear / Extreme Fear alone, or daily_brief No Buy that exists only because of Fear (2026-10-05 buy-the-dip mandate)
 - Using **Classic account (OfersClaw5-PRIYN)** / `user-OfersClaw5` as Classic cash/execution/reporting truth (Ofer 2026-10-06)
 - Sub-~$2.5k residual Classic account cash when Ofer explicitly sized the order knowing Classic account cash
-- **No Ofer/CoS chat authorization** on the pack (Classic is full auto since 2026-10-11)
+- **No Ofer/CoS chat authorization** on the pack (Classic is full auto since 2026-10-11) (only once the code gate passes QA)
 - Number of trades today/this month, or number of new names this month (no cap since 2026-10-11)
 
 ## PASS
 
-Only long ×1 buys/sells that match the Classic mandate, clear every hard fail, and have a verified cost/benefit gate. A PASS is the place authorization for Classic. RSI 1H entries must be long-only with ATR SL/TP, confirmed-close thesis, and cited `run_id`.
+Only long ×1 buys/sells that match the Classic mandate, clear every hard fail, and have a verified cost/benefit gate. A PASS is the place authorization for Classic. Order-QA cannot PASS without a verified cost-gate block (from `classic_rsi/cost_gate.py` / `execute_pass.py` output). RSI 1H entries must be long-only with ATR SL/TP, confirmed-close thesis, and cited `run_id`.
+
+## Verdict schema
+
+- QA writes verdicts to `/workspace/classic_rsi/audit/qa/`.
+- Required fields: checker `QA Bot`, skill, checked_at, run_id; for order-QA also pack_sha256, pack_id, symbol, qa_ask, recomputed_cost_gate.
+- The cost gate's expected gain is EV including the stop-loss side, and p comes only from out-of-sample registries (no in-sample or assumed p). A missing edge registry or scores file means SKIP.
+- A prepare that echoes a takeProfit on a rebalance buy (`takeProfitRate` must be null) is NO-GO.
+- Reference `/workspace/classic_rsi/audit/qa-review-classic-full-auto-fix3-20261012.json`.
 
 ## Verdict delivery
 
@@ -94,7 +108,7 @@ Only long ×1 buys/sells that match the Classic mandate, clear every hard fail, 
 3. Tell Ofer in QA Bot chat on FAIL, and on PASS when useful (especially first trade or material size)
 4. Save the verdict file (PASS/FAIL, codes, evidence, recomputed cost_gate numbers, `run_id`) next to the audit trail and reference it in the Job-Runs note
 
-Until PASS, Trader_Classic must not place. On PASS, Trader_Classic places automatically without waiting for Ofer/CoS. QA never places.
+Until PASS, Trader_Classic must not place. On PASS, Trader_Classic places automatically without waiting for Ofer/CoS (only once the code gate passes QA). QA never places.
 
 ## Related: Classic RSI 1H **run** QA
 

@@ -16,7 +16,8 @@ Applies only to the **Classic account (OfersClaw5-PRIYN)** (REAL MONEY). It comp
 **Why this exists (review 2026-10-08):** the account was −26.75% vs SPY +9.6% from 04-30 to 10-07. 121 closes lost −$2,765 fully loaded. Holds under 7 days caused −$1,951 of that (71%); holds of 30 days or more were about flat; the long-held core (SMH, QQQ, XLV) is all positive. Lesson: **fewer, longer, trend-aligned positions at target weights.** With no trade-count cap (2026-10-11), the **cost/benefit gate** below is what stops churn.
 
 ## Standing policy (Ofer 2026-10-11)
-- **FULL AUTO.** Daily rebalance actions (trims, rotations, sells, adds) are placed by Trader_Classic automatically once the pack passes the [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) **and** the cost/benefit gate. No chat authorization from Ofer or CoS is needed. If nothing passes, do nothing (still log the run).
+**Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place still OFF until Ofer explicitly accepts QA's residual risks (shared-box verdict forgery, self-reported second-source mark, trader-controlled test mode, editable scores/registry pins) AND out-of-sample edge evidence exists. Until then every Classic place needs QA PASS + explicit Ofer authorization.
+- **FULL AUTO**. Daily rebalance actions (trims, rotations, sells, adds) are placed by Trader_Classic automatically once the pack passes the [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) **and** the cost/benefit gate. No chat authorization from Ofer or CoS is needed (only once the code gate passes QA). If nothing passes, do nothing (still log the run).
 - **Cadence moved from weekly to DAILY** (weekdays).
 - **No limit** on the number of trades and **no monthly new-name cap** (the old "≤2 new names per month" rule is removed).
 - **Every run and every movement is documented** (see Documentation).
@@ -44,6 +45,9 @@ Kept from the prior playbook, pending Ofer confirmation (2026-10-11): long ×1 o
 3. A holding has a **confirmed daily close below its 50DMA AND negative 3M RS** vs SPY.
 4. A holding has a confirmed daily close below its 200DMA.
 5. A trailing stop is hit: ETFs ~8% below the high since entry; single stocks ~10–12%, or 2.5–3× daily ATR(14), whichever is wider.
+
+## Step 0: Build scores (run FIRST)
+`cd /workspace && python3 -m classic_rsi.scorer` (writes classic_rsi scores-latest.json + .sha256 sidecar; execute_pass fails closed SCORES_UNVERIFIED if missing/stale/mismatched).
 
 ## Step 1: Snapshot (live)
 Portfolio summary on the Classic keys connector gives equity, cash, and positions. Compute % of invested, sleeve %, and cash % of equity. Trading history gives closes since the last run (for the report).
@@ -87,7 +91,7 @@ Applies to every buy, sell, trim, and rotation. For each action compute and reco
 2. Trader_Classic prepares closes and trades on `user-OfersClaw5` (sells sequenced first).
 3. Cost/benefit gate (Step 6) per action; drop failures.
 4. QA Bot runs [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) and must PASS each pack, including the cost-gate numbers.
-5. On PASS, Trader_Classic places automatically, one call per PASSed pack (no Ofer/CoS chat authorization needed since 2026-10-11). Re-check cash ≥ ~$2.5k between sequenced places. An explicit Ofer/CoS hold still blocks.
+5. On PASS, Trader_Classic places automatically, one call per PASSed pack (no Ofer/CoS chat authorization needed since 2026-10-11) (only once the code gate passes QA). Re-check cash ≥ ~$2.5k between sequenced places. An explicit Ofer/CoS hold still blocks.
 6. Fill audit to QA, then report to CoS (and Ofer on fills).
 7. Run the self-improvement loop (KEEP/AVOID).
 

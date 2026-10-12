@@ -1,0 +1,213 @@
+--- a/classic_rsi/execute_pass.py
++++ b/classic_rsi/execute_pass.py
+@@ -52,11 +52,14 @@
+ from .paths import order_verdict_path, paths, run_verdict_path
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v5-fix4"
++VERSION = "execute-pass-v6-fix5"
+ CASH_FLOOR_USD = 2500.0
+ MIN_POSITION_USD = 400.0
+ NAME_CAP = {"etf": 0.30, "stock": 0.15}
+ SLEEVE_CAP = 0.45
++RISK_EXIT_BUFFER_EQUITY_PCT = 0.01  # fix5: sized risk exits overshoot the floor/cap by 1% of equity
++SIZED_RISK_EXITS = ("cash_below_floor", "hard_cap_breach")  # full close only via the <$400 residual rule
++UNIT_STEP = 1e-6
+ DRIFT_ATR_MULT = 0.5
+ UNITS_DP = 6
+ BOOK_MAX_AGE_S = 60
+@@ -650,6 +653,56 @@
+     return ok, d
+ 
+ 
++def _ceil_units(x: float) -> float:
++    return math.ceil(round(x / UNIT_STEP, 3)) * UNIT_STEP if x > 0 else 0.0
++
++
++def _risk_exit_size(reason: str, *, symbol: str, pos: dict, book: dict, cash: Optional[float],
++                    bid: float, close_fee: float, sleeve_map: Optional[dict]) -> dict[str, Any]:
++    """Fix5: minimum units of `pos` that restore the floor / caps, plus a buffer of 1% of equity.
++
++    cash_below_floor: x*bid - close_fee >= 2500 + B - cash.
++    hard_cap_breach : for name and sleeve, on BOTH market value and cost basis,
++                      (X - x*u) <= cap*(T - x*u) - B  =>  x >= (X - cap*T + B) / (u*(1-cap)),
++                      u = per-unit value (pos value/units) or per-unit cost (pos invested/units).
++    Rounded UP to 1e-6 units. If the residual (held - x)*bid < $400, or x >= held, the whole position
++    is closed (unitsToDeduct null). B = RISK_EXIT_BUFFER_EQUITY_PCT * equity.
++    """
++    held = float(pos.get("units") or 0)
++    eq = _f(book.get("equity")) or 0.0
++    B = RISK_EXIT_BUFFER_EQUITY_PCT * eq
++    need: dict[str, float] = {}
++    if reason == "cash_below_floor":
++        need["cash_floor"] = (CASH_FLOOR_USD + B - (cash or 0.0) + close_fee) / bid
++    else:
++        ac = (resolve(symbol) or {}).get("assetClass")
++        cap = NAME_CAP.get(str(ac or ""), 0.0)
++        smap = {**DEFAULT_SLEEVES, **(sleeve_map or {})}
++        sl = smap.get(symbol)
++        per_unit = {"values": (_f(pos.get("value")) or 0.0) / held if held else 0.0,
++                    "cost": (_f(pos.get("invested")) or 0.0) / held if held else 0.0}
++        for basis in ("values", "cost"):
++            T = sum(book[basis].values())
++            u = per_unit[basis]
++            if u <= 0:
++                continue
++            X = book[basis].get(symbol, 0.0)
++            if cap:
++                need[f"name_{basis}"] = (X - cap * T + B) / (u * (1 - cap))
++            if sl:
++                S = sum(v for s_, v in book[basis].items() if smap.get(s_) == sl)
++                need[f"sleeve_{basis}"] = (S - SLEEVE_CAP * T + B) / (u * (1 - SLEEVE_CAP))
++    x = _ceil_units(max([0.0, *need.values()]))
++    residual_usd = max(held - x, 0.0) * bid
++    full = x >= held - 1e-9 or residual_usd < MIN_POSITION_USD
++    units = held if full else x
++    return {"reason": reason, "held_units": held, "buffer_usd": round(B, 2),
++            "required_units_by_constraint": {k: round(v, 6) for k, v in need.items()},
++            "min_units": round(x, 6), "residual_usd": round(residual_usd, 2), "full_close": full,
++            "full_close_reason": ("units >= held" if x >= held - 1e-9 else "residual < $400") if full else None,
++            "units": round(units, 6), "unitsToDeduct": None if full else round(units, 6)}
++
++
+ def _sl_bounds_ok(sl: Optional[float], anchor_ask: float, atr_d: Optional[float], asset_class: Optional[str]) -> dict:
+     res: dict[str, Any] = {"stopLossRate": sl, "anchor_ask": anchor_ask, "daily_atr": atr_d}
+     if sl is None:
+@@ -750,6 +803,15 @@
+                 risk_ok, rd = _verify_risk_exit(c, pack.get("risk_exit_reason"), symbol=sym, pos=pos, book=book,
+                                                 scores=scores, live_bid=lbid, cash=cash, sleeve_map=sleeve_map)
+                 out["risk_exit_check"] = rd
++                reason = pack.get("risk_exit_reason")
++                if risk_ok and reason in SIZED_RISK_EXITS and pos is not None:
++                    sz = _risk_exit_size(reason, symbol=sym, pos=pos, book=book, cash=cash,
++                                         bid=min(x for x in (a_bid, lbid) if x) if (a_bid or lbid) else 0.0,
++                                         close_fee=_f(l.get("close_fee_usd")) or 0.0, sleeve_map=sleeve_map)
++                    out["risk_exit_sizing"] = sz
++                    c.check(f"risk_exit_size{tag}", u is not None and abs(u - sz["units"]) <= UNIT_STEP * 1.5,
++                            {"pack_units": u, "required_units": sz["units"], "unitsToDeduct": sz["unitsToDeduct"]},
++                            "RISK_EXIT_SIZE_MISMATCH")
+             base = {"symbol": sym, "units": u, "spread_usd": l.get("spread_usd"), "close_fee_usd": l.get("close_fee_usd"),
+                     "overnight_usd": l.get("overnight_usd"), "realized_pnl_usd": rp_tax}
+             anchor_legs[i] = {**base, "bid": a_bid, "ask": a_ask}
+--- a/classic_rsi/scorer.py
++++ b/classic_rsi/scorer.py
+@@ -32,8 +32,8 @@
+ Integrity: payload sha256 written to the sidecar /workspace/classic-rebalance/scores-latest.sha256
+   (same dir, stem + ".sha256"; content `<hex>  scores-latest.json`). Both files are
+ written to temp names then os.replace'd (scores first, sidecar second); execute_pass fails closed
+-on missing sidecar, sha mismatch, bad schema, or asOf_bars > 1 trading day behind the last
+-completed session. The sidecar proves integrity since write, NOT authorship (shared box).
++on missing sidecar, sha mismatch, bad schema/units/values, or asOf_bars != the last completed
++session (age 0 trading days; any older file => SCORES_STALE_<n>_TRADING_DAYS). The sidecar proves integrity since write, NOT authorship (shared box).
+ """
+ 
+ from __future__ import annotations
+@@ -56,7 +56,7 @@
+ from .paths import paths
+ 
+ SCHEMA = "classic-rebalance-scores-v1"
+-VERSION = "scorer-v2-fix4"
++VERSION = "scorer-v2-fix5-doc"
+ SCORE_UNITS = "fraction"  # score/rs/ret are fractions: 0.05 = +5 pp vs SPY (fix4)
+ CANDIDATES = ["XLK", "XLV", "XLF", "XLI", "XLE", "XLP", "XLU", "XLB", "XLY", "XLC",
+               "SPY", "RSP", "QQQ", "SMH", "GLD", "IAU", "SLV"]
+--- a/classic_rsi/test_execute_pass.py
++++ b/classic_rsi/test_execute_pass.py
+@@ -399,6 +399,79 @@
+         t("fix3 scores dated today before close (unconfirmed bar) => SCORES_FROM_FUTURE",
+           rr["scores"]["error"] == "SCORES_FROM_FUTURE", rr["scores"])
+         write_scores(root)
++        # ---------- fix5: risk-exit sizing ----------
++        import math as _m
++        EQ, B = 7270.38, 0.01 * 7270.38
++
++        def xlv_exit(units, reason, bid=170.0):
++            p_ = sell_pack(units, kind="sell", pid=1002, iid=XLV, sym="XLV", bid=bid, rp=(bid - 156.44) * units,
++                           risk_exit=True, risk_exit_reason=reason, edge_ref=None)
++            p_["legs"][0]["anchor_ask"] = round(bid + 0.1, 2)  # keep ask within 0.1% of the mark
++            return p_
++
++        def up(x):
++            return _m.ceil(round(x / 1e-6, 3)) * 1e-6
++
++        write_book(root, cash=2300.0)
++        x_cash = up((2500 + B - 2300.0 + 0.75) / 170.0)
++        rr = rb(xlv_exit(4.537045, "cash_below_floor"), live_for(xlv_exit(4.537045, "cash_below_floor"), held=held))
++        t("fix5 cash_below_floor full close when partial suffices => RISK_EXIT_SIZE_MISMATCH",
++          "RISK_EXIT_SIZE_MISMATCH" in rr["blockers"] and abs(rr["risk_exit_sizing"]["units"] - x_cash) < 2e-6, rr.get("risk_exit_sizing"))
++        sp_ = xlv_exit(round(x_cash, 6), "cash_below_floor")
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix5 cash_below_floor min units (cash 2300 -> >= 2500 + 1% equity) => unitsToDeduct partial, no size blocker",
++          "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"] and rr["order_payloads"][0]["unitsToDeduct"] == round(x_cash, 6)
++          and rr["cost_gate"]["verdict"] == "RISK_EXIT", (rr["blockers"], rr.get("risk_exit_sizing")))
++        t("fix5 cash restored: 2300 + x*bid - fee >= 2500 + buffer",
++          2300 + x_cash * 170.0 - 0.75 >= 2500 + B - 1e-6 and 2300 + (x_cash - 2e-6) * 170.0 - 0.75 < 2500 + B)
++        sp_ = xlv_exit(round(x_cash + 0.5, 6), "cash_below_floor")
++        t("fix5 cash_below_floor oversize (+0.5u) => RISK_EXIT_SIZE_MISMATCH",
++          "RISK_EXIT_SIZE_MISMATCH" in rb(sp_, live_for(sp_, held=held))["blockers"])
++        write_book(root, cash=2000.0)
++        rr = rb(xlv_exit(4.537045, "cash_below_floor"), live_for(xlv_exit(4.537045, "cash_below_floor"), held=held))
++        t("fix5 cash 2000: residual < $400 => full close allowed (unitsToDeduct null)",
++          rr["risk_exit_sizing"]["full_close"] and rr["risk_exit_sizing"]["full_close_reason"] == "residual < $400"
++          and rr["order_payloads"][0]["unitsToDeduct"] is None and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"],
++          rr.get("risk_exit_sizing"))
++        write_book(root, value_override={"XLV": 2000.0})
++        vals = {"QQQ": 830.65, "SMH": 778.16, "XLV": 2000.0, "SPY": 705.82, "TMO": 509.15}
++        T, uv = sum(vals.values()), 2000.0 / 4.537045
++        x_cap = up(max((2000 - 0.30 * T + B) / (uv * 0.70), (2509.15 - 0.45 * T + B) / (uv * 0.55)))
++        rr = rb(xlv_exit(4.537045, "hard_cap_breach"), live_for(xlv_exit(4.537045, "hard_cap_breach"), held=held))
++        t("fix5 hard_cap_breach full close when partial suffices => RISK_EXIT_SIZE_MISMATCH",
++          rr["risk_exit_check"]["verified"] and "RISK_EXIT_SIZE_MISMATCH" in rr["blockers"]
++          and abs(rr["risk_exit_sizing"]["units"] - x_cap) < 2e-6, rr.get("risk_exit_sizing"))
++        sp_ = xlv_exit(round(x_cap, 6), "hard_cap_breach")
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix5 hard_cap_breach min units => partial unitsToDeduct, RISK_EXIT",
++          "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"] and rr["order_payloads"][0]["unitsToDeduct"] == round(x_cap, 6)
++          and rr["cost_gate"]["verdict"] == "RISK_EXIT", (rr["blockers"], rr.get("risk_exit_sizing")))
++        after_v = (2000 - x_cap * uv) / (T - x_cap * uv)
++        after_s = (2509.15 - x_cap * uv) / (T - x_cap * uv)
++        t("fix5 after sizing: XLV <= 30% and healthcare sleeve <= 45% (value) with buffer",
++          after_v <= 0.30 and after_s <= 0.45, (after_v, after_s))
++        t("fix5 sizing considers both value and cost basis", set(rr["risk_exit_sizing"]["required_units_by_constraint"]) ==
++          {"name_values", "name_cost", "sleeve_values", "sleeve_cost"}, rr["risk_exit_sizing"]["required_units_by_constraint"])
++        write_book(root, value_override={"XLV": 2000.0}, cost_override={"XLV": 2500.0})
++        rr = rb(xlv_exit(round(x_cap, 6), "hard_cap_breach"), live_for(xlv_exit(round(x_cap, 6), "hard_cap_breach"), held=held))
++        t("fix5 cost-basis breach larger than value breach drives the size (=> value-only size rejected)",
++          "RISK_EXIT_SIZE_MISMATCH" in rr["blockers"] and rr["risk_exit_sizing"]["units"] > x_cap, rr.get("risk_exit_sizing"))
++        write_book(root, value_override={"XLV": 3000.0})
++        rr = rb(xlv_exit(4.537045, "hard_cap_breach"), live_for(xlv_exit(4.537045, "hard_cap_breach"), held=held))
++        t("fix5 hard cap XLV 3000: residual < $400 => full close allowed",
++          rr["risk_exit_sizing"]["full_close"] and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"]
++          and rr["order_payloads"][0]["unitsToDeduct"] is None, rr.get("risk_exit_sizing"))
++        write_book(root)
++        sp_ = sell_pack(0.5, kind="sell", pid=1004, iid=TMO, sym="TMO", bid=469.0, rp=(469.0 - 520.0) * 0.5,
++                        risk_exit=True, risk_exit_reason="stop_hit", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix5 stop_hit: any size allowed (partial), no sizing applied", "risk_exit_sizing" not in rr
++          and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"] and rr["risk_exit_check"]["verified"], rr["blockers"])
++        sp_ = sell_pack(1.0, kind="sell", pid=1004, iid=TMO, sym="TMO", bid=505.0, rp=(505.0 - 520.0),
++                        risk_exit=True, risk_exit_reason="trigger_4_200dma", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix5 trigger_4: full close allowed (unitsToDeduct null), no sizing", "risk_exit_sizing" not in rr
++          and rr["order_payloads"][0]["unitsToDeduct"] is None and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"], rr["blockers"])
+         t("crypto/bare symbol guard on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
+             {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="BTC", instrumentId=100000)]})["blockers"]))
+         t("bad shape => BAD_REBALANCE_PACK", "BAD_REBALANCE_PACK" in rb({"pack_id": "classic-rebalance-20261012-x",
+--- a/classic_rsi/README.md
++++ b/classic_rsi/README.md
+@@ -111,6 +111,15 @@
+ - **Which packs need verified scores (fix4):** buys (ATR SL bounds + edge), non-risk trims/sells/rotations (edge), and risk exits `trigger_3_50dma_neg_rs` / `trigger_4_200dma`. Protective exits `cash_below_floor`, `stop_hit` (position's own `stopLossRate` vs live bid) and `hard_cap_breach` run from the book + live quote and **do not** require scores; the trailing-stop leg of `stop_hit` only counts when scores are verified.
+ - The sidecar proves the file is unchanged since it was written — not who wrote it (shared box).
+ 
++## Risk-exit sizing (fix5)
++- `cash_below_floor` and `hard_cap_breach` sells must use the **minimum** units that fix the breach, plus a buffer `B = 1% of equity` (`RISK_EXIT_BUFFER_EQUITY_PCT`):
++  - cash: `x·bid − close_fee ≥ 2500 + B − cash`;
++  - caps, for the name cap (ETF 30% / stock 15%) **and** the 45% sleeve cap, on **both** market value and cost basis: `x ≥ (X − cap·T + B) / (u·(1 − cap))` with `u` = the position's per-unit value or per-unit cost; the largest requirement wins.
++  - `bid = min(anchor bid, live bid)`; units rounded **up** to 1e-6.
++- If the residual `(held − x)·bid < $400` (or `x ≥ held`), the whole position is closed (`unitsToDeduct: null`). Otherwise `unitsToDeduct = x`.
++- The pack's units must equal the computed size (±1.5e-6) or the pass is NO-GO with `RISK_EXIT_SIZE_MISMATCH`; no silent resizing. Output `risk_exit_sizing` shows the required units per constraint, buffer, residual and `unitsToDeduct`.
++- `stop_hit` and `trigger_3/4` may close any size, including the full position.
++
+ ## takeProfitRate on rebalance buys (fix3)
+ `user-OfersClaw5` `prepare-trade` schema (read-only lookup 2026-10-12): `takeProfitRate` type `["number","null"]`, default `null`, "Optional". Rebalance buys therefore send `takeProfitRate: null` (no fixed TP on core adds — SKILL Step 5; exits via trailing stop). The prepare echo must also be null, otherwise `PREPARE_TP_MISMATCH`.
+ 

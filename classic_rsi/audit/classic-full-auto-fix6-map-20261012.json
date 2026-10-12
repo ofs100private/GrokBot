@@ -1,0 +1,36 @@
+{
+  "kind": "qa-fix-map",
+  "fix": "classic-full-auto-fix6-20261012",
+  "review": "audit/qa-review-classic-full-auto-fix5-20261012.json",
+  "diff": "audit/classic-full-auto-fix6-20261012.diff (vs fix5)",
+  "prepared_or_placed": false,
+  "etoro_calls": "none",
+  "corrections": {
+    "RISK_EXIT_SIZE_TOLERANCE_UNEXECUTABLE": {
+      "fix": "execute_pass._risk_exit_band: GO PASS iff required_now <= pack_units <= 1.02*max(required_at_qa, required_now) (+1e-6). required_now = live min units (live book, min(anchor,live) bid, 1% equity buffer). required_at_qa = leg.risk_exit_required_units (hashed in pack), clamped to 1.05*required_now. <$400 residual full-close rule re-evaluated at GO (full ok if live rule says full or held inside band; partial must leave live residual >= $400). Outside band => RISK_EXIT_SIZE_MISMATCH (kept). Plan output risk_exit_sizing.suggested_pack_units = ceil(1.01*required) and suggested_required_at_qa for planners. Output risk_exit_band.",
+      "tests": ["fix6 QQQ book value +/-0.02% in band", "fix6 QQQ live bid +/-0.02% in band", "fix6 QQQ +3% undersized => mismatch", "fix6 QQQ -3% oversized => mismatch", "fix6 pack +1.9% ok / +3% mismatch", "fix6 forged required_at_qa clamped", "fix6 SMH cash 2499 -> 2498.90 / 2499.10 in band", "fix6 cash 2499 -> 2480 mismatch", "fix6 cash 2490 -> 2499.90 oversized mismatch", "fix6 band residual/full-close unit tests (5)", "fix6 XLV full close re-evaluated at GO with cash +$0.10"]
+    },
+    "RISK_EXIT_POST_TRADE_CAP_CASCADE": {
+      "fix": "execute_pass.post_trade_caps: simulate the book after the sized exit; check every name cap (15% stock / 30% ETF) and 45% sleeve on value AND cost. New breach (<=cap before, >cap after) => RISK_EXIT_POST_TRADE_CAP_CASCADE. Pre-existing breaches made worse reported in worsened_existing (non-blocking). On cascade, _risk_exit_alternatives lists other legs that fix the same breach without cascading (indicative; pack never swapped or resized).",
+      "tests": ["fix6 today's book SMH+QQQ 44.71% invested", "fix6 closing XLV => ~57% cascade", "fix6 small TMO trim => 45.33% cascade", "fix6 TMO cost-basis cap exit cascades", "fix6 value+cost both checked", "fix6 cash 2000/2300 today's book: no non-cascading single leg", "fix6 TMO-400 variant lists SMH/QQQ alternatives", "fix6 SMH cash exit no cascade", "fix6 worsened_existing reported"]
+    },
+    "CAP_DENOMINATOR_INVESTED_NOT_EQUITY_NEEDS_OFER": {
+      "fix": "Single constant CAP_DENOMINATOR = 'invested' + cap_denominator(); all cap math (_caps, _verify_risk_exit, _risk_exit_size, post_trade_caps) routes through it; 'equity' branch implemented but NOT enabled. Decision pending Ofer.",
+      "tests": ["fix6 denominator constant still invested", "fix6 switching to equity changes basis (test-only monkeypatch)"]
+    },
+    "SKILL_MD_SCHEMA_UNDOCUMENTED": {"fix": "not addressed (live skill owned by Chief of Staff); README documents risk_exit_required_units"},
+    "MORNING_REFRESH_ROUTINE_NOT_INSPECTABLE": {"fix": "not addressed (out of code scope)"}
+  },
+  "finding_for_ofer": "On today's book (invested basis) no single-leg cash_below_floor exit avoids a new cap breach: XLV exits push growth_tech >45%; SMH/QQQ exits push TMO >15% value or healthcare >45%. Protective exits on this book would currently NO-GO with RISK_EXIT_POST_TRADE_CAP_CASCADE.",
+  "test_counts": {"test_cost_gate": "51/51", "test_execute_pass": "150/150", "test_scorer": "45/45", "test_instruments": "20/20", "test_universe": "38/38", "total": "304/304"},
+  "sha256": {
+    "execute_pass.py": "c6f3766a84fd7501358b8e1b0b1f5e880769f5f4568f7b99fe332acb55943a62",
+    "test_execute_pass.py": "94260b523c441cce01cd74823bee91167f9318cd759149d354ddc2eb2f9ef47e",
+    "README.md": "55fe1ff74524b3487cd3819eba5d00ddf902cfa02c8a21f8573da84e574e8102",
+    "cost_gate.py": "ec12ecc3ef441f575b0bca0b892d096ca732ba1d8278572b2a63cd76569614c0 (unchanged)",
+    "scorer.py": "806313b94f9619a1b843a06834f401c9c59cbded5589365e1e2f13cd1a5a7bce (unchanged)"
+  },
+  "diff_sha256": "6ba9e405b6ff4b3ac85a1512569cbea9effcd4b8582d5e419efecc2bfb05011d",
+  "prod_scores_unchanged": {"sha256": "d6b10055acec38b262b684954d8fe29c9e2ce969ce4d970f55502020bd515778"},
+  "mirror": "/workspace/GrokBot/classic_rsi identical (diff -rq, excl. __pycache__/audit)"
+}

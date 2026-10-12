@@ -1,0 +1,443 @@
+--- a/classic_rsi/cost_gate.py
++++ b/classic_rsi/cost_gate.py
+@@ -24,7 +24,7 @@
+               The only entry today (1H backtest 12/19, in-sample) is not usable -> SKIP.
+     rebalance_add / trim / sell / rotation: edge_ref = {evidence_id} pointing into the
+               sha-pinned evidence/edge_registry.json (out_of_sample, n >= 30, horizon >= 5 d).
+-              er_pct = intercept_pct + per_score_pct x score, with score/ATR read from the fixed
++              er_pct = intercept_pct + per_score_pct x score (score is a FRACTION, calibration.score_units='fraction'), with score/ATR read from the fixed
+               score file — never typed — and |er| capped at 2 x daily ATR% x sqrt(horizon).
+               add: notional x er; trim/sell: -notional x er_held; rotation (ONE gate):
+               buy_notional x (er_new - er_held). The registry ships with no entries -> SKIP.
+@@ -66,9 +66,10 @@
+ 
+ # Evidence registries (sha pinned; production refuses a modified file).
+ P_REGISTRY_SHA256 = "a48eac6194fb025b57bfd522ddfb42a9b73b1abf3543cb25cee55f7ad6adc0c3"
+-EDGE_REGISTRY_SHA256 = "265d60f587e688ce753a65dd0c169be215cb7e2ec2ed8e0c433a58ff1b0a921e"
++EDGE_REGISTRY_SHA256 = "7ccee3ad8ac1235499c3fbc053526b9baeb9d083fdfdacd29a86358f82a349bf"
+ DEFAULT_P_EVIDENCE_ID = "classic_rsi_1h_bt_20260919"
+ P_MIN_N = 100
++SCORE_UNITS = "fraction"
+ EDGE_MIN_N = 30
+ EDGE_MIN_HORIZON_DAYS = 5
+ EDGE_CAP_ATR_MULT = 2.0
+@@ -192,6 +193,14 @@
+     if ic is None or sl is None:
+         out["skip"].append("EDGE_CALIBRATION_MISSING")
+         return out
++    # fix4: units contract — score is a FRACTION (0.05 = +5 pp RS vs SPY) in both registry and score file;
++    # er_pct = intercept_pct + per_score_pct x score_fraction.
++    if cal.get("score_units") != SCORE_UNITS:
++        out["skip"].append("EDGE_SCORE_UNITS_NOT_FRACTION")
++        return out
++    if scores is not None and scores.get("score_units") != SCORE_UNITS:
++        out["skip"].append("SCORE_FILE_UNITS_NOT_FRACTION")
++        return out
+ 
+     def er_for(sym: str, tag: str) -> Optional[float]:
+         r = score_row(scores, sym)
+--- a/classic_rsi/execute_pass.py
++++ b/classic_rsi/execute_pass.py
+@@ -52,7 +52,7 @@
+ from .paths import order_verdict_path, paths, run_verdict_path
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v4-fix3"
++VERSION = "execute-pass-v5-fix4"
+ CASH_FLOOR_USD = 2500.0
+ MIN_POSITION_USD = 400.0
+ NAME_CAP = {"etf": 0.30, "stock": 0.15}
+@@ -70,7 +70,8 @@
+ RECOMPUTED_FIELDS = ("spread", "fees", "tax_est", "total_cost", "expected_gain", "ratio")
+ REALIZED_TOL_USD = 1.0
+ RECENT_POSITION_H = 24
+-SCORES_MAX_TRADING_DAYS = 1  # enforced in scorer.verify_scores_file (sidecar sha + schema + age)
++BOOK_ONLY_RISK_EXITS = ("cash_below_floor", "stop_hit", "hard_cap_breach")
++SCORES_MAX_TRADING_DAYS = 0  # enforced in scorer.verify_scores_file (sidecar sha + schema + age)
+ SL_ATR_BOUNDS = (1.0, 3.5)
+ TRAIL_BOUNDS = {"etf": (0.075, 0.085), "stock": (0.10, 0.12)}  # fraction below ask (ETF 8% +/-0.5pp)
+ RSI_PACK_ID_RE = re.compile(r"^(classic-rsi-auto-\d{8}-\d{6}-[0-9a-f]{8})#([A-Z][A-Z.]{0,9})$")
+@@ -153,7 +154,7 @@
+ 
+ 
+ def load_scores(now: datetime) -> dict[str, Any]:
+-    """Score file must carry a matching sidecar sha256, valid schema, and be <= 1 trading day old (fix3)."""
++    """Score file: matching sidecar scores-latest.sha256, typed/ranged rows, units fraction, age 0 sessions (fix4)."""
+     from .scorer import verify_scores_file
+     v = verify_scores_file(Path(paths()["scores"]), now)
+     return {k: v.get(k) for k in ("ok", "error", "data", "path", "sidecar", "sha256", "asOf_bars",
+@@ -685,8 +686,15 @@
+     cash = _common_gates(c, hold, book)
+     sc = load_scores(now)
+     out["scores"] = {k: sc.get(k) for k in ("ok", "error", "asOf_bars", "path", "sha256", "age_trading_days")}
+-    c.check("scores_verified", bool(sc.get("ok")), out["scores"], "SCORES_UNVERIFIED")
+-    scores = sc.get("data")
++    # fix4: protective exits that read only the book + live quote (cash_below_floor, stop_hit on the
++    # position's own stopLossRate, hard_cap_breach) do not require verified scores. Everything else
++    # (buys: ATR SL bounds + edge; non-risk sells: edge; trigger_3/4; trailing-stop leg of stop_hit) does.
++    book_only_exit = (kind in ("trim", "sell") and bool(pack.get("risk_exit"))
++                      and pack.get("risk_exit_reason") in BOOK_ONLY_RISK_EXITS)
++    out["scores"]["required"] = not book_only_exit
++    if not book_only_exit:
++        c.check("scores_verified", bool(sc.get("ok")), out["scores"], "SCORES_UNVERIFIED")
++    scores = sc.get("data")  # None unless verified, so the trailing-stop path can never use an unverified file
+     payloads: list[dict] = []
+     echoes: list[dict] = []
+     anchor_legs: dict[int, dict] = {}
+--- a/classic_rsi/scorer.py
++++ b/classic_rsi/scorer.py
+@@ -21,7 +21,16 @@
+ trailing_stops (holdings): {high_since_entry: max raw High since openTime date,
+   threshold: -0.08 ETF | -max(0.10, 2.5*atr14/last_close) stock}  (SKILL drift trigger 5).
+ 
+-Integrity: payload sha256 written to the sidecar `<hex>  scores-latest.json`. Both files are
++Units (fix4): score, rs_*, ret_* are FRACTIONS (0.05 = +5 pp); payload carries score_units="fraction".
++  edge_registry calibration: er_pct = intercept_pct + per_score_pct x score_fraction (per_score_pct = %
++  expected return per 1.0 of score, i.e. per +100 pp RS); entries must declare score_units="fraction".
++
++Freshness (fix4): asOf_bars must EQUAL the last completed US session (age 0). The routine runs at
++  18:06 IDT = 11:06 ET (session open), so the last completed session is the prior trading day and that
++  run passes; after the 16:00 ET close the file goes stale until the scorer is re-run.
++
++Integrity: payload sha256 written to the sidecar /workspace/classic-rebalance/scores-latest.sha256
++  (same dir, stem + ".sha256"; content `<hex>  scores-latest.json`). Both files are
+ written to temp names then os.replace'd (scores first, sidecar second); execute_pass fails closed
+ on missing sidecar, sha mismatch, bad schema, or asOf_bars > 1 trading day behind the last
+ completed session. The sidecar proves integrity since write, NOT authorship (shared box).
+@@ -34,6 +43,7 @@
+ import json
+ import math
+ import os
++import re
+ from datetime import datetime
+ from pathlib import Path
+ from typing import Any, Optional
+@@ -46,7 +56,8 @@
+ from .paths import paths
+ 
+ SCHEMA = "classic-rebalance-scores-v1"
+-VERSION = "scorer-v1-fix3"
++VERSION = "scorer-v2-fix4"
++SCORE_UNITS = "fraction"  # score/rs/ret are fractions: 0.05 = +5 pp vs SPY (fix4)
+ CANDIDATES = ["XLK", "XLV", "XLF", "XLI", "XLE", "XLP", "XLU", "XLB", "XLY", "XLC",
+               "SPY", "RSP", "QQQ", "SMH", "GLD", "IAU", "SLV"]
+ ROW_REQUIRED = ("symbol", "score", "last_close", "atr14", "above_50dma", "above_200dma", "rs_3m", "rs_6m")
+@@ -147,14 +158,14 @@
+             trailing[s] = {"high_since_entry": r["high_since_entry"], "threshold": round(th, 4),
+                            "level": round(r["high_since_entry"] * (1 + th), 4), "since": holds[s]}
+     return {"schema": SCHEMA, "version": VERSION, "asOf_bars": str(asof), "generated_at": now.isoformat(),
+-            "source": source, "score_formula": "0.5*rs_3m + 0.5*rs_6m (fractions vs SPY, Adj Close)",
++            "source": source, "score_formula": "0.5*rs_3m + 0.5*rs_6m (fractions vs SPY, Adj Close)", "score_units": SCORE_UNITS,
+             "book_asOf": book.get("asOf"), "rows": rows, "trailing_stops": trailing, "missing": missing}
+ 
+ 
+ def write_atomic(payload: dict, path: Path) -> str:
+     """Write scores + sidecar via temp files + os.replace. Returns sha256 of the scores bytes."""
+     path.parent.mkdir(parents=True, exist_ok=True)
+-    b = (json.dumps(payload, indent=1, sort_keys=True) + "\n").encode()
++    b = (json.dumps(payload, indent=1, sort_keys=True, allow_nan=False) + "\n").encode()
+     h = sha256_bytes(b)
+     sc = sidecar_path(path)
+     t1, t2 = path.with_name(f".{path.name}.tmp{os.getpid()}"), sc.with_name(f".{sc.name}.tmp{os.getpid()}")
+@@ -168,8 +179,55 @@
+     return h
+ 
+ 
+-def verify_scores_file(path: Path, now: datetime, max_trading_days: int = 1) -> dict[str, Any]:
+-    """Fail-closed check used by execute_pass: sidecar sha, schema, freshness (<= 1 trading day)."""
++SYMBOL_RE = re.compile(r"^[A-Z][A-Z0-9.\-]{0,9}$")
++# (field, required, lo, hi) — finite real numbers only (bool/str/NaN/inf rejected); None allowed only if not required
++NUM_FIELDS = (("score", True, -5.0, 5.0), ("rs_3m", True, -5.0, 5.0), ("rs_6m", True, -5.0, 5.0),
++              ("rs_1m", False, -5.0, 5.0), ("ret_1m", False, -0.99, 10.0), ("ret_3m", False, -0.99, 10.0),
++              ("ret_6m", False, -0.99, 10.0), ("last_close", True, 1e-4, 1e6), ("atr14", True, 1e-6, 1e5),
++              ("dma50", False, 1e-4, 1e6), ("dma200", False, 1e-4, 1e6), ("atr_pct", False, 1e-4, 50.0),
++              ("dd_52w", False, -1.0, 0.0), ("vol_63d", False, 0.0, 10.0), ("high_since_entry", False, 1e-4, 1e6))
++BOOL_FIELDS = (("above_50dma", True), ("above_200dma", True), ("dma50_above_200dma", False), ("trend_ok", False))
++
++
++def _num_ok(v: Any, lo: float, hi: float) -> bool:
++    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and lo <= v <= hi
++
++
++def validate_rows(d: dict) -> Optional[str]:
++    """Return an error detail string, or None if every row / trailing stop is well-typed and in range."""
++    seen: set[str] = set()
++    for i, r in enumerate(d["rows"]):
++        if not isinstance(r, dict):
++            return f"row {i}: not an object"
++        sym = r.get("symbol")
++        if not isinstance(sym, str) or not SYMBOL_RE.match(sym):
++            return f"row {i}: bad symbol {sym!r}"
++        if sym in seen:
++            return f"duplicate symbol {sym}"
++        seen.add(sym)
++        for k, req, lo, hi in NUM_FIELDS:
++            v = r.get(k)
++            if v is None and not req and k not in ROW_REQUIRED:
++                continue
++            if not _num_ok(v, lo, hi):
++                return f"{sym}.{k}={v!r} not a finite number in [{lo}, {hi}]"
++        for k, req in BOOL_FIELDS:
++            v = r.get(k)
++            if (req or v is not None) and not isinstance(v, bool):
++                return f"{sym}.{k}={v!r} not a bool"
++        if r["atr14"] > 0.5 * r["last_close"]:
++            return f"{sym}.atr14 > 50% of last_close"
++    for sym, t in d["trailing_stops"].items():
++        if not isinstance(sym, str) or not SYMBOL_RE.match(sym) or not isinstance(t, dict):
++            return f"trailing_stops: bad entry {sym!r}"
++        if not _num_ok(t.get("high_since_entry"), 1e-4, 1e6) or not _num_ok(t.get("threshold"), -0.5, -0.01):
++            return f"trailing_stops.{sym}: high/threshold out of range"
++    return None
++
++
++def verify_scores_file(path: Path, now: datetime, max_trading_days: int = 0) -> dict[str, Any]:
++    """Fail-closed check used by execute_pass: sidecar sha, schema, typed/ranged rows, unique symbols,
++    score_units == 'fraction', and asOf_bars == last completed US session (age 0, fix4)."""
+     from .market_hours import trading_days_between
+     sc = sidecar_path(path)
+     out: dict[str, Any] = {"ok": False, "path": str(path), "sidecar": str(sc), "data": None}
+@@ -184,7 +242,7 @@
+     if h != want:
+         return {**out, "error": "SCORES_SHA_MISMATCH", "sidecar_sha256": want}
+     try:
+-        d = json.loads(b)
++        d = json.loads(b, parse_constant=lambda c: float('nan'))
+         asof = datetime.fromisoformat(str(d["asOf_bars"])).date()
+     except (ValueError, KeyError, TypeError):
+         return {**out, "error": "SCORES_SCHEMA_INVALID"}
+@@ -193,6 +251,11 @@
+     for r in d["rows"]:
+         if not isinstance(r, dict) or any(k not in r for k in ROW_REQUIRED):
+             return {**out, "error": "SCORES_SCHEMA_INVALID", "row": (r or {}).get("symbol") if isinstance(r, dict) else None}
++    if d.get("score_units") != SCORE_UNITS:
++        return {**out, "error": "SCORES_UNITS_INVALID", "detail": f"score_units={d.get('score_units')!r}, want {SCORE_UNITS!r}"}
++    bad = validate_rows(d)
++    if bad:
++        return {**out, "error": "SCORES_VALUE_INVALID", "detail": bad}
+     last = last_completed_session(now)
+     if last is None:
+         return {**out, "error": "MARKET_CALENDAR_UNKNOWN"}
+--- a/classic_rsi/paths.py
++++ b/classic_rsi/paths.py
+@@ -8,6 +8,8 @@
+   GO locks       /workspace/classic_rsi/audit/placed/
+   live book      /workspace/classic-portfolio-for-app.json   (asOf <= 60 s; cash + positions)
+   score data     /workspace/classic-rebalance/scores-latest.json
++  score sidecar  /workspace/classic-rebalance/scores-latest.sha256  (`<sha256hex>  scores-latest.json`; written
++                 atomically by classic_rsi.scorer; test mode: <dir>/scores.sha256)
+   evidence       /workspace/classic_rsi/evidence/{p_registry,edge_registry}.json (sha pinned)
+ 
+ Test mode (env CLASSIC_EXEC_TEST_ROOT=<dir>): every path above is re-rooted under <dir>, the
+--- a/classic_rsi/testkit.py
++++ b/classic_rsi/testkit.py
+@@ -27,7 +27,7 @@
+ P_TEST = {"id": "classic_rsi_1h_bt_20260919", "wins": 130, "n": 200, "out_of_sample": True,
+           "period": "TEST ONLY", "source": "TEST ONLY fixture"}
+ EDGE_TEST = {"id": "test_rs_oos", "method": "rs_expected_return", "n": 120, "out_of_sample": True,
+-             "horizon_days": 20, "calibration": {"intercept_pct": 0.0, "per_score_pct": 20.0},
++             "horizon_days": 20, "calibration": {"intercept_pct": 0.0, "per_score_pct": 20.0, "score_units": "fraction"},
+              "source": "TEST ONLY fixture"}
+ POS = [("QQQ", 3006, 830.65, 750.0, 677.9, 1.106357, 644.0),
+        ("SMH", 6357, 778.16, 729.27, 564.35, 1.29223, 581.8),
+@@ -92,7 +92,7 @@
+                      "above_200dma": a200, "rs_3m": rs3})
+     for r in rows:
+         r.setdefault("rs_6m", r["rs_3m"])
+-    payload = {"schema": "classic-rebalance-scores-v1", "asOf_bars": asof, "rows": rows,
++    payload = {"schema": "classic-rebalance-scores-v1", "score_units": "fraction", "asOf_bars": asof, "rows": rows,
+                "trailing_stops": {"SMH": {"high_since_entry": 639.47, "threshold": -0.08}}}
+     if not sidecar:
+         (root / "scores.json").write_text(json.dumps(payload))
+--- a/classic_rsi/test_cost_gate.py
++++ b/classic_rsi/test_cost_gate.py
+@@ -119,11 +119,23 @@
+                         symbol="XLE", stage="final", now=NOW)
+         t("add er recomputed from score (0.15 x 20 = 3%)", math.isclose(cg["inputs"]["edge"]["expected_return_pct"], 3.0)
+           and math.isclose(cg["expected_gain"], round(950 * 0.03 * 0.75, 4)) and cg["verdict"] == "PASS", cg["expected_gain"])
+-        write_registries(root, edge_entries=[dict(EDGE_TEST, calibration={"intercept_pct": 0, "per_score_pct": 33333})])
++        write_registries(root, edge_entries=[dict(EDGE_TEST, calibration={"intercept_pct": 0, "per_score_pct": 33333, "score_units": "fraction"})])
+         cg = C.evaluate(kind="rebalance_add", entry=95.0, units=10, edge_ref=REF, scores=scores, symbol="XLE")
+         cap = 2 * (1.9 / 95.0 * 100) * math.sqrt(20)
+         t("QA repro 5000% edge => capped at 2 x ATR% x sqrt(h)", math.isclose(cg["inputs"]["edge"]["expected_return_pct"], cap)
+           and cg["inputs"]["edge"]["new_capped"], cg["inputs"]["edge"].get("expected_return_pct"))
++        write_registries(root, edge_entries=[dict(EDGE_TEST, calibration={"intercept_pct": 0, "per_score_pct": 20})])
++        t("fix4 units: calibration without score_units='fraction' => SKIP", "EDGE_SCORE_UNITS_NOT_FRACTION" in C.evaluate(
++            kind="rebalance_add", entry=95.0, units=10, edge_ref=REF, scores=scores, symbol="XLE")["skip_reasons"])
++        write_registries(root, edge_entries=[dict(EDGE_TEST, calibration={"intercept_pct": 0, "per_score_pct": 0.2, "score_units": "percent"})])
++        t("fix4 units: calibration score_units='percent' => SKIP", "EDGE_SCORE_UNITS_NOT_FRACTION" in C.evaluate(
++            kind="rebalance_add", entry=95.0, units=10, edge_ref=REF, scores=scores, symbol="XLE")["skip_reasons"])
++        write_registries(root)
++        t("fix4 units: score file without score_units='fraction' => SKIP", "SCORE_FILE_UNITS_NOT_FRACTION" in C.evaluate(
++            kind="rebalance_add", entry=95.0, units=10, edge_ref=REF, scores={**scores, "score_units": "pct"},
++            symbol="XLE")["skip_reasons"])
++        t("fix4 units: prod edge registry declares score_units fraction (sha re-pinned)",
++          json.loads((C.Path(C.__file__).parent / "evidence" / "edge_registry.json").read_text()).get("score_units") == "fraction")
+         for bad, code in ((dict(EDGE_TEST, n=1), f"EDGE_EVIDENCE_N_LT_{C.EDGE_MIN_N}"),
+                           (dict(EDGE_TEST, out_of_sample=False), "EDGE_EVIDENCE_NOT_OUT_OF_SAMPLE"),
+                           (dict(EDGE_TEST, horizon_days=1), "EDGE_HORIZON_LT_5D"),
+--- a/classic_rsi/test_execute_pass.py
++++ b/classic_rsi/test_execute_pass.py
+@@ -325,7 +325,12 @@
+           and "SCORES_UNVERIFIED" in rr["blockers"] and rr["scores"]["error"].startswith("SCORES_STALE"), rr["scores"])
+         write_scores(root, asof="2026-10-08")
+         rr = rb(add_pack())
+-        t("fix3 scores 1 trading day behind last session (Thu vs Fri) => accepted", rr["scores"]["ok"], rr["scores"])
++        t("fix4 scores 1 trading day behind last session (Thu vs Fri) => SCORES_STALE_1",
++          rr["scores"]["error"] == "SCORES_STALE_1_TRADING_DAYS" and "SCORES_UNVERIFIED" in rr["blockers"], rr["scores"])
++        write_scores(root, asof="2026-10-09")
++        r_ = X.run_rebalance_checks(pack=add_pack(), live=live_for(add_pack()), now=MON + timedelta(minutes=6), write_lock=False)
++        t("fix4 routine 18:06 IDT Mon (session open) with Fri bars => age 0 accepted",
++          r_["scores"]["ok"] and r_["scores"]["age_trading_days"] == 0, r_["scores"])
+         write_scores(root, asof="2026-10-07")
+         rr = rb(add_pack())
+         t("fix3 scores 2 trading days behind => SCORES_STALE_2", rr["scores"]["error"] == "SCORES_STALE_2_TRADING_DAYS"
+@@ -351,6 +356,44 @@
+         rr = rb(add_pack())
+         t("fix3 scores file missing => SCORES_UNVERIFIED", rr["scores"]["error"] == "SCORES_MISSING"
+           and "SCORES_UNVERIFIED" in rr["blockers"], rr["scores"])
++        # fix4: protective exits from book + live quote work without verified scores
++        sp_ = sell_pack(1.0, kind="sell", pid=1004, iid=TMO, sym="TMO", bid=469.0, risk_exit=True,
++                        risk_exit_reason="stop_hit", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix4 scores missing: stop_hit on position's own SL still verified, no SCORES_UNVERIFIED",
++          rr["risk_exit_check"]["verified"] and "SCORES_UNVERIFIED" not in rr["blockers"]
++          and rr["cost_gate"]["verdict"] == "RISK_EXIT" and rr["scores"]["required"] is False, rr["blockers"])
++        sp_ = sell_pack(1.29223, kind="sell", bid=585.0, risk_exit=True, risk_exit_reason="stop_hit", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix4 scores missing: trailing-only stop (SMH 585 > SL 581.8, < trail 588.3) NOT verified",
++          "RISK_EXIT_NOT_VERIFIED" in rr["blockers"] and rr["risk_exit_check"]["trailing_level"] is None, rr.get("risk_exit_check"))
++        write_book(root, value_override={"SMH": 3000.0})
++        sp_ = sell_pack(1.29223, kind="sell", risk_exit=True, risk_exit_reason="hard_cap_breach", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix4 scores missing: hard_cap_breach from book verified, no SCORES_UNVERIFIED",
++          rr["cost_gate"]["verdict"] == "RISK_EXIT" and "SCORES_UNVERIFIED" not in rr["blockers"], rr["blockers"])
++        write_book(root, cash=2000.0)
++        sp_ = sell_pack(0.5, kind="sell", risk_exit=True, risk_exit_reason="cash_below_floor", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix4 scores missing: cash_below_floor (cash 2000) verified, no SCORES_UNVERIFIED",
++          rr["risk_exit_check"]["verified"] and "SCORES_UNVERIFIED" not in rr["blockers"], rr["blockers"])
++        write_book(root)
++        sp_ = sell_pack(1.0, kind="sell", pid=1004, iid=TMO, sym="TMO", bid=505.0, risk_exit=True,
++                        risk_exit_reason="trigger_4_200dma", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix4 scores missing: trigger_4 still needs scores => SCORES_UNVERIFIED + not verified",
++          "SCORES_UNVERIFIED" in rr["blockers"] and "RISK_EXIT_NOT_VERIFIED" in rr["blockers"], rr["blockers"])
++        sp_ = sell_pack(0.5, kind="sell", risk_exit=True, risk_exit_reason="trigger_3_50dma_neg_rs", edge_ref=None)
++        t("fix4 scores missing: trigger_3 => SCORES_UNVERIFIED", "SCORES_UNVERIFIED" in rb(sp_, live_for(sp_, held=held))["blockers"])
++        t("fix4 scores missing: non-risk trim still needs scores", "SCORES_UNVERIFIED" in rb(sell_pack(0.5), live_for(sell_pack(0.5), held=held))["blockers"])
++        write_scores(root)
++        sp_ = sell_pack(1.29223, kind="sell", bid=585.0, risk_exit=True, risk_exit_reason="stop_hit", edge_ref=None)
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix4 verified scores: trailing stop SMH 585 <= 588.3 verified", rr["risk_exit_check"]["verified"], rr.get("risk_exit_check"))
++        write_scores(root, overrides={"XLE": ("0.15", 95.0, 1.9, True, True, 0.03)})
++        rr = rb(add_pack())
++        t("fix4 string score in file => SCORES_VALUE_INVALID", rr["scores"]["error"] == "SCORES_VALUE_INVALID", rr["scores"])
++        (root / "scores.json").unlink()
+         write_scores(root, asof="2026-10-12")
+         rr = rb(add_pack())
+         t("fix3 scores dated today before close (unconfirmed bar) => SCORES_FROM_FUTURE",
+--- a/classic_rsi/test_scorer.py
++++ b/classic_rsi/test_scorer.py
+@@ -85,6 +85,51 @@
+         t("verify ok at Mon 11:00 ET", v["ok"] and v["age_trading_days"] == 0, v.get("error"))
+         t("verify stale on Wed (2 trading days)", S.verify_scores_file(p, datetime(2026, 10, 14, 18, 0, tzinfo=IDT))["error"]
+           == "SCORES_STALE_2_TRADING_DAYS")
++        t("fix4 payload declares score_units fraction", d["score_units"] == "fraction")
++        t("fix4 routine 18:06 IDT Mon (11:06 ET, session open) with Fri bars => age 0 ok",
++          S.verify_scores_file(p, datetime(2026, 10, 12, 18, 6, tzinfo=IDT))["ok"])
++        t("fix4 Mon after close (23:30 IDT) with Fri bars => SCORES_STALE_1",
++          S.verify_scores_file(p, datetime(2026, 10, 12, 23, 30, tzinfo=IDT))["error"] == "SCORES_STALE_1_TRADING_DAYS")
++        t("fix4 Tue 10:00 ET with Fri bars (missed Mon session) => SCORES_STALE_1",
++          S.verify_scores_file(p, datetime(2026, 10, 13, 17, 0, tzinfo=IDT))["error"] == "SCORES_STALE_1_TRADING_DAYS")
++        def bad_row(mut, name, code="SCORES_VALUE_INVALID", top=None):
++            dd = json.loads(json.dumps(d))
++            if top:
++                top(dd)
++            else:
++                mut(next(r for r in dd["rows"] if r["symbol"] == "XLE"))
++            S.write_atomic(dd, p) if top is None or "nan" not in name else None
++            res = S.verify_scores_file(p, MON)
++            t(name, res["error"] == code, res.get("detail") or res.get("error"))
++        bad_row(lambda r: r.update(score="0.1"), "fix4 string score => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(score=True), "fix4 bool as score => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(score=1e9), "fix4 absurd score 1e9 => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(atr14=-1.0), "fix4 negative atr14 => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(atr14=r["last_close"]), "fix4 atr14 = 100% of price => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(last_close=0), "fix4 last_close 0 => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(above_200dma="false"), "fix4 above_200dma 'false' string => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(rs_3m=None), "fix4 rs_3m null => SCORES_VALUE_INVALID")
++        bad_row(lambda r: r.update(symbol="xle; rm"), "fix4 bad symbol => SCORES_VALUE_INVALID")
++        bad_row(None, "fix4 duplicate symbol rows => SCORES_VALUE_INVALID",
++                top=lambda dd: dd["rows"].append(dict(dd["rows"][0])))
++        bad_row(None, "fix4 trailing threshold +0.5 => SCORES_VALUE_INVALID",
++                top=lambda dd: dd["trailing_stops"]["XLE"].update(threshold=0.5))
++        bad_row(None, "fix4 missing score_units => SCORES_UNITS_INVALID", code="SCORES_UNITS_INVALID",
++                top=lambda dd: dd.pop("score_units"))
++        # NaN written by hand (scorer refuses to serialise NaN)
++        dd = json.loads(json.dumps(d))
++        b = json.dumps(dd, indent=1, sort_keys=True).replace('"score": ' + json.dumps(next(r for r in dd["rows"] if r["symbol"] == "XLE")["score"]), '"score": NaN', 1).encode()
++        p.write_bytes(b)
++        sc.write_text(S.sha256_bytes(b) + "  scores-latest.json\n")
++        res = S.verify_scores_file(p, MON)
++        t("fix4 NaN score (valid sidecar) => SCORES_VALUE_INVALID", res["error"] == "SCORES_VALUE_INVALID", res.get("detail"))
++        try:
++            S.write_atomic(dict(d, rows=[dict(d["rows"][0], score=float("nan"))]), p)
++            t("fix4 scorer refuses to write NaN", False)
++        except ValueError:
++            t("fix4 scorer refuses to write NaN", True)
++        S.write_atomic(d, p)
++        t("fix4 clean file still verifies after validation suite", S.verify_scores_file(p, MON)["ok"])
+         p.write_text(p.read_text().replace('"asOf_bars"', '"asOf_bars" ', 1))
+         t("tamper => SCORES_SHA_MISMATCH", S.verify_scores_file(p, MON)["error"] == "SCORES_SHA_MISMATCH")
+         bad = dict(d, rows=[{"symbol": "X"}])
+--- a/classic_rsi/README.md
++++ b/classic_rsi/README.md
+@@ -97,14 +97,19 @@
+ - Rebalance: `edge_ref {evidence_id}` into `evidence/edge_registry.json` (out-of-sample, n ≥ 30, horizon ≥ 5 d); `er = intercept + slope × score` from the score file, capped at `2 × ATR% × √h`. Registry ships empty → every rebalance add/trim/rotation SKIPs; verified risk exits are RISK_EXIT.
+ - PASS iff `EV_after_tax ≥ 2 × total_cost` and net > 0.
+ 
+-## Rebalance scorer (fix3) — run first in the daily rebalance routine
++## Rebalance scorer (fix3, hardened fix4) — run first in the daily rebalance routine
+ ```bash
+-cd /workspace && python3 -m classic_rsi.scorer        # → classic-rebalance/scores-latest.json + scores-latest.sha256
++cd /workspace && python3 -m classic_rsi.scorer
++# → /workspace/classic-rebalance/scores-latest.json
++# → /workspace/classic-rebalance/scores-latest.sha256   (sidecar: "<sha256hex>  scores-latest.json")
+ ```
+ - Yahoo daily (yfinance, `auto_adjust=False`): returns/RS on Adj Close; DMA/ATR/highs on raw OHLC. Only bars up to the last completed US session.
+-- Rows (holdings from the live book + SKILL Step-2 ETFs; large caps via `--extra`): `last_close, dma50, dma200, above_50dma, above_200dma, dma50_above_200dma, trend_ok, ret_/rs_ 1m/3m/6m, score = 0.5·rs_3m + 0.5·rs_6m (fractions), atr14 (Wilder, price), atr_pct, dd_52w, vol_63d, adv_usd_20d`. `trailing_stops[sym] = {high_since_entry, threshold (ETF −8%, stock −max(10%, 2.5×ATR%)), level}`.
+-- `execute_pass.load_scores` → `scorer.verify_scores_file`: fail closed (`SCORES_UNVERIFIED`) on `SCORES_MISSING`, `SCORES_SIDECAR_MISSING`, `SCORES_SHA_MISMATCH`, `SCORES_SCHEMA_INVALID`, `SCORES_FROM_FUTURE`, `SCORES_STALE_<n>_TRADING_DAYS` (n > 1 vs last completed session). Applies to every rebalance pack, including risk exits.
+-- The sidecar proves the file is unchanged since the scorer wrote it — not who wrote it (shared box).
++- Rows (holdings from the live book + SKILL Step-2 ETFs; large caps via `--extra`): `last_close, dma50, dma200, above_50dma, above_200dma, dma50_above_200dma, trend_ok, ret_/rs_ 1m/3m/6m, score = 0.5·rs_3m + 0.5·rs_6m, atr14 (Wilder, price), atr_pct, dd_52w, vol_63d, adv_usd_20d`. `trailing_stops[sym] = {high_since_entry, threshold (ETF −8%, stock −max(10%, 2.5×ATR%)), level}`.
++- **Units (fix4): FRACTION.** `score`, `rs_*`, `ret_*` are fractions (0.05 = +5 pp vs SPY); the file carries `score_units: "fraction"`. Edge registry: `er_pct = intercept_pct + per_score_pct × score_fraction` (`per_score_pct` = % expected return per 1.0 of score) and every entry's `calibration.score_units` must be `"fraction"`; otherwise `EDGE_SCORE_UNITS_NOT_FRACTION` / `SCORE_FILE_UNITS_NOT_FRACTION` → SKIP.
++- **Verification (`scorer.verify_scores_file`, called by `execute_pass.load_scores`), fail closed:** `SCORES_MISSING`, `SCORES_SIDECAR_MISSING`, `SCORES_SHA_MISMATCH`, `SCORES_SCHEMA_INVALID`, `SCORES_UNITS_INVALID`, `SCORES_VALUE_INVALID` (every numeric field finite, real-typed — not bool/str/NaN/inf — and in range, e.g. |score|,|rs| ≤ 5, 0 < atr14 ≤ 50% of last_close; booleans strictly bool; symbol regex; **no duplicate symbols**; trailing thresholds in [−50%, −1%]), `SCORES_FROM_FUTURE`, `SCORES_STALE_<n>_TRADING_DAYS`.
++- **Freshness (fix4): age 0.** `asOf_bars` must equal the last completed US session. The routine at 18:06 IDT (11:06 ET, session open) scores the prior trading day → age 0, passes. After the 16:00 ET close, or the next morning without a re-run, the file is stale until the scorer runs again.
++- **Which packs need verified scores (fix4):** buys (ATR SL bounds + edge), non-risk trims/sells/rotations (edge), and risk exits `trigger_3_50dma_neg_rs` / `trigger_4_200dma`. Protective exits `cash_below_floor`, `stop_hit` (position's own `stopLossRate` vs live bid) and `hard_cap_breach` run from the book + live quote and **do not** require scores; the trailing-stop leg of `stop_hit` only counts when scores are verified.
++- The sidecar proves the file is unchanged since it was written — not who wrote it (shared box).
+ 
+ ## takeProfitRate on rebalance buys (fix3)
+ `user-OfersClaw5` `prepare-trade` schema (read-only lookup 2026-10-12): `takeProfitRate` type `["number","null"]`, default `null`, "Optional". Rebalance buys therefore send `takeProfitRate: null` (no fixed TP on core adds — SKILL Step 5; exits via trailing stop). The prepare echo must also be null, otherwise `PREPARE_TP_MISMATCH`.
+--- a/classic_rsi/evidence/edge_registry.json
++++ b/classic_rsi/evidence/edge_registry.json
+@@ -1,6 +1,7 @@
+ {
+   "kind": "classic-edge-evidence-registry",
+   "version": 1,
+-  "rules": "A rebalance edge must reference an entry here: method in [rs_expected_return, trend_expected_return], out_of_sample true, n >= 30, horizon_days >= 5. er_pct = intercept_pct + per_score_pct x score (score from the fixed score file), capped at 2 x daily ATR% x sqrt(horizon_days). Entries are added only by a reviewed code change (sha pinned in cost_gate.EDGE_REGISTRY_SHA256).",
+-  "entries": []
++  "rules": "A rebalance edge must reference an entry here: method in [rs_expected_return, trend_expected_return], out_of_sample true, n >= 30, horizon_days >= 5. er_pct = intercept_pct + per_score_pct x score, where score is a FRACTION (0.05 = +5 pp RS vs SPY; score_units 'fraction' in the score file) and each entry's calibration must declare score_units: 'fraction' (per_score_pct = % expected return per 1.0 of score), capped at 2 x daily ATR% x sqrt(horizon_days). Entries are added only by a reviewed code change (sha pinned in cost_gate.EDGE_REGISTRY_SHA256).",
++  "entries": [],
++  "score_units": "fraction"
+ }
+--- a/classic-rebalance/SKILL-draft.md
++++ b/classic-rebalance/SKILL-draft.md
+@@ -48,7 +48,7 @@
+ 5. A trailing stop is hit: ETFs ~8% below the high since entry; single stocks ~10–12%, or 2.5–3× daily ATR(14), whichever is wider.
+ 
+ ## Step 0: Build scores (run FIRST, every daily run)
+-`cd /workspace && python3 -m classic_rsi.scorer` writes `/workspace/classic-rebalance/scores-latest.json` and its sidecar `scores-latest.sha256` (atomic). Yahoo daily bars, confirmed closes only. Step 2, triggers 3–5, edge evidence and ATR SL bounds all read this file; execute_pass fails closed (`SCORES_UNVERIFIED`) if it is missing, sha-mismatched, schema-invalid, or more than 1 trading day behind the last completed session. Never hand-edit it; re-run the scorer.
++`cd /workspace && python3 -m classic_rsi.scorer` writes `/workspace/classic-rebalance/scores-latest.json` and its sidecar `scores-latest.sha256` (atomic). Yahoo daily bars, confirmed closes only. Step 2, triggers 3–5, edge evidence and ATR SL bounds all read this file; execute_pass fails closed (`SCORES_UNVERIFIED`) if it is missing, sha-mismatched, schema/value-invalid, or not from the last completed session (at 18:06 IDT that is the prior trading day). Protective exits (cash floor, position stop, hard cap) do not need it; triggers 3/4, trailing stops, buys and edge-based trades do. Scores are fractions (0.05 = +5 pp). Never hand-edit it; re-run the scorer.
+ 
+ ## Step 1: Snapshot (live)
+ Portfolio summary on the Classic keys connector gives equity, cash, and positions. Compute % of invested, sleeve %, and cash % of equity. Trading history gives closes since the last run (for the report).

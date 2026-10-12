@@ -1,0 +1,132 @@
+{
+  "kind": "qa-review",
+  "review": "classic-full-auto-code-pre-first-auto-place",
+  "account": "OfersClaw5-PRIYN (user-OfersClaw5, read-only; no orders prepared/placed)",
+  "checked_at": "2026-10-12 07:30 IDT",
+  "checker": "QA Bot (independent)",
+  "verdict": "FAIL",
+  "recommendation": "Do NOT auto-place. Keep Classic on QA PASS + explicit Ofer authorization until every hard_fail below is fixed and re-reviewed. The 18:06 IDT daily rebalance must not auto-place either (its trims/rotations/sells/adds have no code gate at all).",
+  "hard_fail_codes": [
+    "COST_GATE_EV_INFLATED",
+    "COST_GATE_NO_QUOTE_STALENESS",
+    "COST_GATE_FINAL_ALLOWS_ASSUMED_INPUTS",
+    "COST_GATE_INPUT_VALIDATION",
+    "COST_GATE_NO_AFTER_TAX_AND_NO_ROTATION_MODEL",
+    "EXEC_VERDICT_KIND_NOT_CHECKED",
+    "EXEC_VERDICT_STALENESS_NOT_CHECKED",
+    "EXEC_NO_PACK_HASH_BINDING",
+    "EXEC_TOCTOU_CASH",
+    "EXEC_NO_IDEMPOTENCY",
+    "EXEC_PLACE_PAYLOAD_NOT_PINNED",
+    "EXEC_NO_STOP_LOSS_CHECK",
+    "EXEC_CASH_FLOOR_FEE_MISMATCH",
+    "EXEC_CAPS_COST_BASIS_MISSING",
+    "REBALANCE_PATH_UNGATED"
+  ],
+  "soft_codes": [
+    "EXEC_NO_RTH_CHECK",
+    "AUTO1H_FORCE_MAKES_PACKS_ELIGIBLE",
+    "ACTIVE_SKILLS_CHANGED_OUTSIDE_DIFF",
+    "TEST_COUNT_111_NOT_110",
+    "TESTS_DO_NOT_COVER_GAPS",
+    "REBALANCE_ROUTINE_CONFIG_NOT_FOUND"
+  ],
+  "evidence": {
+    "file_sha256_prefix": {
+      "cost_gate.py": "769bbe11", "execute_pass.py": "c18e6986", "auto_1h.py": "0e22846b (was 8cb50bc8)",
+      "propose.py": "377eb32a (was f27bb5cf)", "instruments.py": "5ec6670d (unchanged)", "universe.py": "4fc14d89 (unchanged)",
+      "test_cost_gate.py": "5a9f9bf8", "test_execute_pass.py": "119a6d3f"
+    },
+    "diff_integrity": "Diffed baselines /tmp/fa0/auto_1h.py (8cb50bc8) and /tmp/fa0/propose.py (f27bb5cf) against the current files. The +/- lines exactly match classic-full-auto-20261012.diff (auto_1h 47 lines, propose 94 lines). No guard was weakened in instruments.py or universe.py (shas unchanged). /workspace/GrokBot/classic_rsi is byte-identical to /workspace/classic_rsi.",
+    "tests_run": "Ran in the scratch copy /tmp/qa_scratch with screener-venv: test_cost_gate 31/31, test_execute_pass 22/22, test_instruments 20/20, test_universe 38/38 = 111/111 PASS (reported: 110).",
+    "probes": {
+      "T_pack_live_like": "entry/ask 27.05, bid 27.03, 20u, ATR1h 0.5, fees 1+1: gate expected_gain 8.60, total_cost 2.40, ratio 3.58, PASS. The true bracket EV is 20*(0.43*1.00 - 0.57*0.75) = +0.05 USD, so net of costs it is -2.35 USD. The gate passes a negative-EV trade.",
+      "zero_edge_math": "p=0.43=SL/(SL+TP): p*2ATR - (1-p)*1.5ATR = 0.005 ATR, about 0. The code multiplies only the TP leg by p and ignores the SL leg.",
+      "negative_fees": "open/close fee -3 each: total_cost -5.6, execute_pass GO",
+      "zero_cost": "bid==ask, fees 0: ratio inf, GO",
+      "p_hit_5": "p_hit=5 accepted: PASS",
+      "final_no_quote": "stage=final with no bid/ask falls back to an assumed 0.15% spread, still binding=true, PASS",
+      "spread_override": "spread_usd=0.01 overrides live (ask-bid)*units=10.0: PASS",
+      "stale_quote": "No quote timestamp in any input. The SMH 601.72 stale vs 603.28 live case is undetectable.",
+      "sell_arbitrary_gain": "kind=sell expected_gain_usd=1e6 with no method: PASS",
+      "same_file_both_verdicts": "One file {verdict:PASS, run_id, symbol, created:2025-01-01} was passed as both run-QA and order-QA: GO",
+      "double_run": "The same pack and inputs gave GO twice. There is no placed-ledger or lock.",
+      "stale_book_cash": "Cash omitted: execute_pass uses classic-portfolio-for-app.json cash 3671.18 (asOf 05:52 IDT) at a simulated 18:00 and returns GO. asOf is never checked.",
+      "fee_none_cash_floor": "open_fee omitted: cash floor math uses fee 0 and gives cash_after exactly 2500.00 GO. The cost gate assumes a 0.75 open fee, so real cash_after is 2499.25, a floor breach.",
+      "rth": "Mon 03:00 IDT (US closed): GO",
+      "instrument_guard": "OK. T->1030 T.US stock, DIA->3026 DIA.US, CVX->1014 CVX.US, SMH 6357, QQQ 3006, SPY 3000. A pack carrying crypto id 100528 is blocked, and pack instrumentId must equal the resolved id."
+    }
+  },
+  "findings": {
+    "cost_gate": {
+      "COST_GATE_EV_INFLATED": "rsi_buy expected_gain=(TP-entry)*units*0.43 is the probability-weighted upside only. With 0.43 being the zero-edge breakeven of the 1.5/2.0 ATR bracket, the real expectation is ~0, so 'expected_gain >= 2x cost' passes zero/negative-EV trades whenever the ATR is large relative to cost. rebalance_add (notional*ATRd%*sqrt(20)*0.25) is a volatility magnitude, not a directional edge, so it is unfounded and inflated.",
+      "what_2x_means": "Code: PASS iff expected_gain >= 2*total_cost (equivalently net >= total_cost), where total_cost already counts the round trip (one full spread + open fee + close fee + overnight + tax on sells). It is not 2x a one-way cost. The definition is fine. It is the expected_gain input that is wrong.",
+      "spread": "(ask-bid)*units is correct for a round trip vs mid. It falls back to an assumed 0.15% in the final stage. spread_usd overrides a wider live spread. bid==ask is accepted. No staleness check.",
+      "fees": "A $0.75 per-order default is used when getCost gives none. In the final stage it must come from prepare/getCost (no default). FX fee: the account is in USD, so none is expected, but the field is not recorded. Negative fees and overnight are accepted.",
+      "tax": "25% on max(realized,0) for sell/trim only. A buy's expected gain is pre-tax (no x(1-0.25)). A rotation is not modelled as one decision (sell-leg tax + both legs' costs vs the replacement edge). trim/sell gain is caller-supplied and unverified.",
+      "units_rounding": "Units are floored to 6dp (OK). Rounding to 4dp in the block is OK. Negative units are not rejected in evaluate()."
+    },
+    "execute_pass": {
+      "verdict_files": "Re-read from the file path (good), but the path comes from an argument. The 'skill' field (classic-rsi-1h-run-qa vs classic-real-money-order-qa-gate) is not checked, so the same file satisfies both. No age or freshness check. run_id match only; no pack hash.",
+      "run_id_mismatch": "Blocks (good).",
+      "cash_floor": "Auto-shrinks then checks (good), but uses open_fee=0 when the fee is omitted, and cash comes from an argument or a stale snapshot (no TOCTOU re-read).",
+      "caps": "Name 30% ETF / 15% stock and 45% sleeve on market value only (good). Cost basis is not checked (policy requires both). Growth sleeve = QQQ/SMH/XLK/XLC (stricter than SMH+QQQ, OK).",
+      "crypto": "Blocks (good).",
+      "idempotency": "None.",
+      "place_call": "The CLI never places (good). GO emits no exact order payload, so leverage=1, IsBuy=true, instrumentId, units and stopLossRate are composed by the agent, not pinned by code or order-QA.",
+      "stop_loss": "Rebased SL is computed but never validated (present, < bid, > 0, in payload).",
+      "no_trade_count_or_new_name_cap": "Confirmed absent (matches policy).",
+      "qa_never_places": "Confirmed: execute_pass/propose/auto_1h never call eToro."
+    },
+    "diff_other": {
+      "AUTO1H_FORCE_MAKES_PACKS_ELIGIBLE": "allow_new_buys=bool(gates['allow_new_buys']) or force. --force (weekend/RTH/cash gate bypass) now also stamps auto_place_eligible=True. execute_pass still blocks weekends but not RTH.",
+      "ACTIVE_SKILLS_CHANGED_OUTSIDE_DIFF": "/home/box/sand-data/workflows/classic-rebalance/SKILL.md and classic-real-money-order-qa-gate/SKILL.md (mtime 06:22) say 'ACTIVE since 2026-10-12 06:17 IDT'. These edits are not in the diff, and they contradict the diff's draft text ('until verified live, no auto places').",
+      "REBALANCE_PATH_UNGATED": "execute_pass only loads rsi_buy packs from audit/<run_id>.json buy_packs (kind fixed to rsi_buy). Daily rebalance trims/rotations/sells/adds have no code GO/NO-GO; the agent computes their numbers by hand."
+    },
+    "rebalance_routine": "No 18:06 IDT routine config was found on the box (no crontab; no match in /workspace or sand-data). /workspace/classic-rebalance/daily/ exists and is empty (first run not yet executed). Could not verify the routine's prompt or flags."
+  },
+  "required_corrections": [
+    "1. cost_gate rsi_buy: expected_gain = units*[p*(TP-ask) - (1-p)*(ask-SL)], then after-tax: if >0 multiply by (1-0.25). p must come from cited out-of-sample evidence, not the zero-edge value. With p=0.43 the gate must SKIP.",
+    "2. cost_gate rebalance_add: remove the ATR*sqrt(T)*0.25 'edge', or replace it with an evidenced directional edge (e.g. score/RS differential with a backtested hit-rate). Otherwise SKIP.",
+    "3. Rotation: one gate per rotation: total_cost = sell spread+close fee+tax(0.25*max(realized,0)) + buy spread+open fee+close fee; expected_gain = evidenced edge of the replacement over the held name. trim/sell expected_gain must require a method plus inputs QA can recompute.",
+    "4. Final stage fails closed: require bid, ask, quote_ts (age <= 60s) and fee sources == prepare/getCost. Reject bid>=ask with spread 0, assumed_default sources, |ask - independent live mark| > 0.1%, negative fees/overnight/units, p outside (0,1), total_cost <= 0. spread = max(spread_usd, (ask-bid)*units).",
+    "5. execute_pass verdicts: require run-QA skill=='classic-rsi-1h-run-qa' and order-QA skill=='classic-real-money-order-qa-gate', different files, each with checked_at <= 60 min old (order-QA <= 15 min), and order-QA pack_sha256 == sha256(canonical pack + final cost_gate + final_units + ask).",
+    "6. TOCTOU: make --cash mandatory and from a live portfolio read with a timestamp <= 60s. Reject a book snapshot whose asOf is > 15 min old. The agent must re-read cash right before the place, and again between sequenced places.",
+    "7. Cash floor: use the same open fee as the cost gate (if None, use DEFAULT_OPEN_FEE_USD or fail closed). cash_after = cash - units*ask - open_fee >= 2500.",
+    "8. Idempotency: write audit/placed/<sha(pack_id)>.lock before GO is returned. Refuse GO if the lock exists or an open position/order with the same instrumentId opened after the pack's bar_time exists.",
+    "9. GO must emit the exact order payload {instrumentId, isBuy:true, leverage:1, units:final_units, stopLossRate:SL, takeProfitRate:TP}, with SL>0 and SL<bid asserted. Order-QA must compare it to the prepare response. Agent placement must copy it verbatim.",
+    "10. Caps: also check name/sleeve on cost basis (positions[].invested), not only market value.",
+    "11. Add a US RTH check (NYSE session) to execute_pass. Do not let --force set auto_place_eligible.",
+    "12. Route daily rebalance actions through a code gate (execute_pass kind=trim/sell/rebalance_add/rotation), or keep the rebalance on manual authorization.",
+    "13. Add tests for every probe in evidence.probes. Report the exact test count (currently 111)."
+  ],
+  "order_qa_cost_gate_contract": {
+    "must_be_present": [
+      "version", "stage (=='final')", "binding (==true)", "kind", "rule",
+      "inputs.entry (==ask)", "inputs.units", "inputs.notional_usd", "inputs.bid", "inputs.ask", "inputs.quote_ts [ADD]",
+      "inputs.take_profit", "inputs.stop_loss", "inputs.p_hit (+ p_source [ADD])", "inputs.daily_atr", "inputs.hold_days",
+      "inputs.tax_rate", "inputs.realized_pnl_usd", "inputs.sources (spread/open_fee/close_fee must not be 'assumed_default')",
+      "costs.spread", "costs.open_fee", "costs.close_fee", "costs.overnight", "costs.tax_est", "costs.total_cost",
+      "spread", "fees", "overnight", "realized_pnl", "tax_est", "total_cost",
+      "expected_gain", "expected_net_gain", "ratio", "method", "verdict", "assumptions (must be [] for final)",
+      "rebased_levels.entry/take_profit/stop_loss/atr_1h", "legs[] for rotations [ADD]", "pack_sha256 [ADD]"
+    ],
+    "recompute": {
+      "notional": "units * ask",
+      "spread": "max(spread_usd_from_getCost, (ask - bid) * units); quote age <= 60s; ask within 0.1% of independent live mark",
+      "fees": "open_fee + close_fee, both equal to prepare/getCost (no defaults)",
+      "tax_est": "0.25 * max(realized_pnl, 0) per sell leg; summed over rotation sell legs",
+      "total_cost": "spread + open_fee + close_fee + overnight + tax_est  (> 0)",
+      "TP_SL": "TP = ask + tp_mult*ATR1h; SL = ask - sl_mult*ATR1h; require 0 < SL < bid",
+      "expected_gain_current_code": "(TP - ask) * units * p_hit   <- recompute to confirm the number, but do NOT accept it as EV",
+      "expected_gain_required": "EV = units*[p*(TP-ask) - (1-p)*(ask-SL)]; EV_after_tax = EV*(1-0.25) if EV>0",
+      "expected_net_gain": "EV_after_tax - total_cost",
+      "ratio": "EV_after_tax / total_cost",
+      "pass_rule": "ratio >= 2 AND expected_net_gain > 0 AND total_cost > 0 AND 0<p<1 with cited source; else COST_GATE_FAIL (risk exits exempt but numbers required)",
+      "tolerance": "USD +/-0.01, ratio +/-0.001"
+    },
+    "also_verify": "cash_after = live_cash - units*ask - open_fee >= 2500; name/sleeve caps on market value AND cost basis; instrumentId equals resolved US id (not crypto); payload leverage==1, isBuy==true; SL present"
+  },
+  "qa_places": false,
+  "messages_sent": false
+}

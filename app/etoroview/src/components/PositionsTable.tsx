@@ -56,7 +56,9 @@ function PositionRow({ item, isMirror }: PositionRowProps) {
 
       <div className="position-cell position-meta">
         <span className="meta-value direction-tag">{item.direction}</span>
-        <span className="meta-label">{item.units.toFixed(2)} units</span>
+        <span className="meta-label">
+          {Number.isFinite(item.units) ? item.units.toFixed(2) : '—'} units
+        </span>
       </div>
     </div>
   )

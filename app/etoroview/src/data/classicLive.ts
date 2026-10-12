@@ -17,11 +17,24 @@ export interface ClassicAccount {
   cid?: number
 }
 
+/** Which on-disk layout the snapshot was parsed from. */
+export type ClassicSnapshotLayout = 'legacy' | 'flat'
+
+/** Extra top-level metrics only present in the flat layout (all optional). */
+export interface ClassicFlatMetrics {
+  cashPct?: number
+  deploymentPct?: number
+  closedPnl?: number | null
+  symbols?: string[]
+}
+
 export interface ClassicLiveSnapshot {
   asOf: string
   account: ClassicAccount
   clientPortfolio: ClientPortfolio
   source?: unknown
+  layout?: ClassicSnapshotLayout
+  metrics?: ClassicFlatMetrics
 }
 
 export type ClassicLiveLoadState =
@@ -155,8 +168,194 @@ function mapToClientPortfolio(raw: Record<string, unknown>): ClientPortfolio {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Flat layout (daily writers since 2026-09-19):
+//   { mirrorId, username, asOf, equity, cash, invested, openPnl, cashPct,
+//     deploymentPct, symbols[], positions[{ symbol, instrumentId, invested,
+//     units, openRate, positionId, value, pnl, direction, ... }],
+//     pendingOrders[], summary{ availableCash, invested, totalValue, ... } }
+// No `account` object, no `mirrors[]`, positions use camelCase ids + `pnl`.
+// ---------------------------------------------------------------------------
+
+function optNumber(...values: unknown[]): number | undefined {
+  for (const v of values) {
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+  }
+  return undefined
+}
+
+function optString(...values: unknown[]): string | undefined {
+  for (const v of values) {
+    if (typeof v === 'string' && v.trim()) return v
+  }
+  return undefined
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100
+}
+
+function sumField(items: Array<Record<string, unknown>>, pick: (r: Record<string, unknown>) => number | undefined): number | undefined {
+  let total = 0
+  for (const it of items) {
+    const v = pick(it)
+    if (v === undefined) return undefined
+    total += v
+  }
+  return round2(total)
+}
+
+function isFlatLayout(raw: Record<string, unknown>): boolean {
+  if (isRecord(raw.account) || isRecord(raw.clientPortfolio)) return false
+  if (!Array.isArray(raw.positions)) return false
+  const summary = isRecord(raw.summary) ? raw.summary : {}
+  return (
+    optNumber(raw.equity, raw.totalValue, summary.totalValue, summary.equity) !== undefined
+  )
+}
+
+function flatPositionInvested(r: Record<string, unknown>): number | undefined {
+  const direct = optNumber(r.invested, r.amount)
+  if (direct !== undefined) return direct
+  const value = optNumber(r.value)
+  const pnl = optNumber(r.pnl, isRecord(r.unrealizedPnL) ? r.unrealizedPnL.pnL : undefined)
+  return value !== undefined && pnl !== undefined ? round2(value - pnl) : undefined
+}
+
+function flatPositionPnl(r: Record<string, unknown>): number | undefined {
+  const direct = optNumber(r.pnl, isRecord(r.unrealizedPnL) ? r.unrealizedPnL.pnL : undefined)
+  if (direct !== undefined) return direct
+  const value = optNumber(r.value)
+  const invested = optNumber(r.invested, r.amount)
+  return value !== undefined && invested !== undefined ? round2(value - invested) : undefined
+}
+
+function normalizeFlatPosition(raw: unknown, index: number): Position {
+  const ctx = `positions[${index}]`
+  if (!isRecord(raw)) {
+    throw new Error(`${ctx}: expected object`)
+  }
+  const amount = flatPositionInvested(raw)
+  if (amount === undefined) {
+    throw new Error(`${ctx}: missing invested (or value + pnl)`)
+  }
+  const pnl = flatPositionPnl(raw)
+  if (pnl === undefined) {
+    throw new Error(`${ctx}: missing pnl (or value + invested)`)
+  }
+  const symbol = optString(raw.symbol) ?? ''
+  return {
+    // Negative id = synthetic React key only (writer omitted positionId).
+    positionID: optNumber(raw.positionId, raw.positionID) ?? -(index + 1),
+    // 0 = unknown instrument (not displayed by the dashboard).
+    instrumentID: optNumber(raw.instrumentId, raw.instrumentID) ?? 0,
+    instrumentName: optString(raw.instrumentName, raw.name, raw.symbol) ?? '',
+    symbol,
+    amount,
+    // NaN = unknown; UI renders "—" instead of inventing a value.
+    units: optNumber(raw.units) ?? Number.NaN,
+    openRate: optNumber(raw.openRate) ?? Number.NaN,
+    // Flat writers only hold non-leveraged buys; absent direction ⇒ Long.
+    direction: raw.direction === undefined || raw.direction === null ? 'Long' : normalizeDirection(raw.direction),
+    unrealizedPnL: { pnL: pnl },
+    avatarColor: typeof raw.avatarColor === 'string' ? raw.avatarColor : undefined,
+  }
+}
+
+function mapFlatToClientPortfolio(raw: Record<string, unknown>): ClientPortfolio {
+  const summary = isRecord(raw.summary) ? raw.summary : {}
+  const positionsRaw = (Array.isArray(raw.positions) ? raw.positions : []) as unknown[]
+  const positions = positionsRaw.map(normalizeFlatPosition)
+  const posRecords = positionsRaw.filter(isRecord)
+
+  const equity = optNumber(raw.equity, raw.totalValue, summary.totalValue, summary.equity)
+  if (equity === undefined) {
+    throw new Error('classic snapshot (flat): missing equity')
+  }
+  const availableCash = optNumber(raw.cash, raw.availableCash, summary.availableCash, summary.cash)
+  if (availableCash === undefined) {
+    throw new Error('classic snapshot (flat): missing cash')
+  }
+  const totalInvested =
+    optNumber(raw.invested, raw.totalInvested, summary.invested, summary.totalInvested) ??
+    sumField(posRecords, flatPositionInvested) ??
+    0
+  const profitLoss =
+    optNumber(raw.openPnl, raw.unrealizedPnl, raw.profitLoss, summary.unrealizedPnl, summary.profitLoss) ??
+    sumField(posRecords, flatPositionPnl) ??
+    0
+  const profitLossPercent =
+    optNumber(raw.openPnlPct, raw.profitLossPercent, summary.profitLossPercent) ??
+    (totalInvested > 0 ? round2((profitLoss / totalInvested) * 100) : 0)
+
+  const orders = Array.isArray(raw.orders)
+    ? (raw.orders as unknown[])
+    : Array.isArray(raw.pendingOrders)
+      ? (raw.pendingOrders as unknown[])
+      : []
+
+  return {
+    equity,
+    availableCash,
+    totalInvested,
+    profitLoss,
+    profitLossPercent,
+    credit: optNumber(raw.credit, summary.credit) ?? null,
+    positions,
+    mirrors: Array.isArray(raw.mirrors) ? (raw.mirrors as unknown[]).map(normalizeMirror) : [],
+    orders,
+  }
+}
+
+function parseFlatClassicPayload(raw: Record<string, unknown>): ClassicLiveSnapshot {
+  const mirrorId = raw.mirrorId
+  if (typeof mirrorId !== 'number' || mirrorId !== CLASSIC_MIRROR_ID) {
+    throw new Error(
+      `classic snapshot: mirrorId must be ${CLASSIC_MIRROR_ID} (got ${String(mirrorId)})`,
+    )
+  }
+  const username = optString(raw.username, raw.portfolio, raw.agentPortfolio)
+  if (!username) {
+    throw new Error('classic snapshot (flat): missing username')
+  }
+  const asOf = raw.asOf
+  if (typeof asOf !== 'string' || !asOf.trim()) {
+    throw new Error('classic snapshot: missing asOf')
+  }
+
+  const clientPortfolio = mapFlatToClientPortfolio(raw)
+
+  const metrics: ClassicFlatMetrics = {}
+  const cashPct = optNumber(raw.cashPct)
+  if (cashPct !== undefined) metrics.cashPct = cashPct
+  const deploymentPct = optNumber(raw.deploymentPct)
+  if (deploymentPct !== undefined) metrics.deploymentPct = deploymentPct
+  if (raw.closedPnl === null || typeof raw.closedPnl === 'number') {
+    metrics.closedPnl = raw.closedPnl as number | null
+  }
+  if (Array.isArray(raw.symbols)) {
+    metrics.symbols = (raw.symbols as unknown[]).filter((s): s is string => typeof s === 'string')
+  }
+
+  return {
+    asOf,
+    account: {
+      username,
+      mirrorId,
+      mode: typeof raw.mode === 'string' ? raw.mode : 'real',
+      cid: typeof raw.cid === 'number' ? raw.cid : undefined,
+    },
+    clientPortfolio,
+    source: raw.source,
+    layout: 'flat',
+    metrics,
+  }
+}
+
 /**
  * Validate and normalize a Classic live JSON payload.
+ * Accepts the legacy nested layout (`account` + `summary`/`clientPortfolio` +
+ * positions/mirrors) and the flat layout written since 2026-09-19.
  * Rejects pending placeholders and wrong mirrorId. Never invents numbers.
  */
 export function parseClassicLivePayload(raw: unknown): ClassicLiveSnapshot {
@@ -175,6 +374,9 @@ export function parseClassicLivePayload(raw: unknown): ClassicLiveSnapshot {
   }
 
   if (!isRecord(raw.account)) {
+    if (isFlatLayout(raw)) {
+      return parseFlatClassicPayload(raw)
+    }
     throw new Error('classic snapshot: missing account')
   }
 
@@ -207,6 +409,7 @@ export function parseClassicLivePayload(raw: unknown): ClassicLiveSnapshot {
     },
     clientPortfolio,
     source: raw.source,
+    layout: 'legacy',
   }
 }
 

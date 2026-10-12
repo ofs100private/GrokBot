@@ -1,0 +1,78 @@
+{
+ "checker": "QA Bot",
+ "skill": "classic-full-auto-code-review",
+ "review": "fix4",
+ "checked_at": "2026-10-12T16:40:00+03:00",
+ "verdict": "PASS",
+ "hard_fail_codes": [],
+ "warn_codes": [
+  "RISK_EXIT_SIZE_UNBOUNDED",
+  "SKILL_MD_SCHEMA_UNDOCUMENTED",
+  "SCORER_DOCSTRING_STALE_FRESHNESS_LINE"
+ ],
+ "fix3_warns": {
+  "SCORES_ROW_TYPES_UNVALIDATED": "closed (SCORES_VALUE_INVALID: 'false' string, 'abc', NaN, 1e9 rejected)",
+  "SCORES_DUPLICATE_SYMBOL_ROWS_ALLOWED": "closed",
+  "SCORES_STALENESS_ALLOWS_ONE_MISSED_SESSION": "closed (age 0; Thu bars Mon 10:00 => STALE_1; early-close Fri 13:30 => STALE_1)",
+  "RISK_EXIT_BLOCKED_WHEN_SCORES_UNVERIFIED": "closed for cash_below_floor / own-SL stop_hit / hard_cap_breach",
+  "EDGE_SCORE_UNITS_FRACTION_VS_PCT_CALIBRATION": "closed (score_units required in file and edge entries; SCORES_UNITS_INVALID / EDGE_SCORE_UNITS_NOT_FRACTION)",
+  "sidecar_name": "documented in paths.py/scorer.py",
+  "market_hours_note": "map records acf86740; unchanged in fix4"
+ },
+ "integrity": {
+  "shas": {
+   "diff": "0037308e",
+   "map": "cff28c92",
+   "cost_gate": "ec12ecc3",
+   "execute_pass": "49ac5cc7",
+   "scorer": "dbeaef3e",
+   "paths": "1b024e69",
+   "testkit": "74afd859",
+   "market_hours": "acf86740",
+   "edge_registry": "7ccee3ad (pinned, entries [])",
+   "p_registry": "a48eac61",
+   "scores": "d6b10055 + sidecar 2afb2a10"
+  },
+  "mirror": "identical",
+  "diff_vs_fix3": "reproduces exactly for all 8 .py files; paths.py change is docstring only",
+  "cost_gate_sha_change": "edge pin 265d60f5->7ccee3ad, SCORE_UNITS const, docstring, and score_units checks in resolve_edge (add-only SKIP paths); no guard removed",
+  "weakened_guards": "none; scores bypass limited to kind trim/sell + risk_exit + reason in exact-case BOOK_ONLY set, scores data forced None when unverified so trailing leg cannot use it"
+ },
+ "tests": "257/257 (cost_gate 51, execute_pass 103 [102 in QA scratch only: redirected PROD paths], scorer 45, instruments 20, universe 38)",
+ "live_scores": "verify ok, asOf 2026-10-09 = last completed session (goes stale after 16:00 ET / 23:00 IDT today until rescored)",
+ "no_scores_risk_exit_probes": {
+  "cash 3671 (real)": "RISK_EXIT_NOT_VERIFIED",
+  "book cash 2499 forged": "verified (book trust = shared-box residual)",
+  "cash 2000 stale book 61s": "BOOK_NOT_LIVE",
+  "cash negative": "CASH_INSANE",
+  "hard_cap real book (SMH 21.6%, sleeve 44.7%)": "NOT_VERIFIED",
+  "forged cost basis": "verified (residual)",
+  "QQQ breach -> sell SMH": "verified (same sleeve, legitimate)",
+  "QQQ breach -> sell XLV": "NOT_VERIFIED",
+  "own SL: bid 582 > 581.8": "NOT_VERIFIED",
+  "anchor at SL, live bid 603": "NOT_VERIFIED + QUOTE_INVALID",
+  "no mark": "QUOTE_INVALID_OR_STALE",
+  "trailing-only (scores missing)": "NOT_VERIFIED",
+  "reason 'STOP_HIT' case": "scores required + NOT_VERIFIED",
+  "rotation+risk_exit": "BAD_REBALANCE_PACK",
+  "finding": "no sell without a real book/quote trigger; but a just-over-cap or $1-below-floor breach permits a FULL close (size not bounded to the shortfall)"
+ },
+ "scores_attacks": "forged file + recomputed sidecar still ACCEPTED (residual); partial write/sidecar missing/future/stale/2028/units/type/dup all fail closed",
+ "fix2_fix3_adversarial_rerun": "unchanged: demo-forced test mode, prepare account mismatch caught, forged copied verdict + self mark => GO in test mode, drift 0.100% GO / 0.101% ANCHOR_DRIFT, ET lock 07:00 IDT, prod registry tamper caught, prod RSI SKIP",
+ "corrections": [
+  "RISK_EXIT_SIZE_UNBOUNDED: cap risk-exit units to what restores cash>=2500 / name & sleeve caps (+ small buffer, min-position rule), full close only for stop_hit/trigger_3/4",
+  "Document verdict schema in order-QA SKILL.md (not edited by QA)",
+  "scorer.py docstring still says '> 1 trading day' on the integrity line; update to age 0"
+ ],
+ "residual_risks_ofer_must_accept": [
+  "Shared box: verdicts, book, scores (+recomputed sidecar), envelope and code writable; order-QA forgeable by copying trader's anchor numbers",
+  "CHANGED: book-only risk exits (cash/own-stop/hard-cap) now run on the 60s live book alone, so a forged book can trigger a protective sell without scores (same forgery bar)",
+  "Second-source mark self-asserted",
+  "Test-mode env var trader-controlled at GO (demo-forced)",
+  "Registry pins in editable code",
+  "REMOVED: stale scores no longer block protective exits",
+  "NEW operational: score file must be regenerated each session (age 0) or buys/rotations/trigger exits block"
+ ],
+ "verdict_schema_change": "none",
+ "compliance": "prepare-trade/prepare-close not called in any form; no orders, messages, locks or production verdicts; only this file written"
+}

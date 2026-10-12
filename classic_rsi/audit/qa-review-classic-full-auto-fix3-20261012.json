@@ -1,0 +1,55 @@
+{
+ "checker": "QA Bot",
+ "skill": "classic-full-auto-code-review",
+ "review": "fix3",
+ "checked_at": "2026-10-12T11:55:00+03:00",
+ "verdict": "PASS",
+ "hard_fail_codes": [],
+ "warn_codes": [
+  "SKILL_MD_SCHEMA_UNDOCUMENTED",
+  "SCORES_ROW_TYPES_UNVALIDATED",
+  "SCORES_DUPLICATE_SYMBOL_ROWS_ALLOWED",
+  "SCORES_STALENESS_ALLOWS_ONE_MISSED_SESSION",
+  "RISK_EXIT_BLOCKED_WHEN_SCORES_UNVERIFIED",
+  "EDGE_SCORE_UNITS_FRACTION_VS_PCT_CALIBRATION"
+ ],
+ "fix2_warns_closed": {
+  "REBAL_BUY_TAKEPROFIT_NULL_UNVERIFIED_VS_SCHEMA": "closed: prepare-trade schema takeProfitRate type [number,null], optional; _eq(None,None) true, echoed TP vs null => PREPARE_TP_MISMATCH",
+  "PROD_SCORES_FILE_MISSING": "closed: scores-latest.json 6124ad5d + scores-latest.sha256 (2da75c71) verify ok, asOf 2026-10-09, age 0, 18 rows, Yahoo source"
+ },
+ "integrity": {
+  "diff": "064f343f reproduces fix2->live exactly (execute_pass, market_hours [not listed in summary], testkit, test_execute_pass; scorer/test_scorer new); cost_gate/paths/others unchanged; GrokBot mirror identical",
+  "shas": {
+   "cost_gate": "5388390d",
+   "execute_pass": "ea3b7032",
+   "paths": "6cfbeff2",
+   "testkit": "48a71084",
+   "scorer": "be20765b",
+   "scores": "6124ad5d"
+  },
+  "weakened_guards": "none; old 5-calendar-day score age replaced by stricter sidecar+schema+trading-day check"
+ },
+ "tests": "224/224 (cost_gate 47, execute_pass 93 [92 in QA scratch only due to redirected PROD paths], scorer 26, instruments 20, universe 38)",
+ "scores_attacks": {
+  "forged_file_plus_recomputed_sidecar": "ACCEPTED (sidecar proves integrity, not authorship) => residual",
+  "partial_write": "scores replaced w/ old sidecar => SCORES_SHA_MISMATCH; sidecar missing => SCORES_SIDECAR_MISSING",
+  "future": "SCORES_FROM_FUTURE (incl. today's partial bar)",
+  "stale": "Fri bars Tue 16:30 => STALE_2; Thu bars Mon 10:00 and Fri bars Tue 10:00 accepted (age 1 = one missed session)",
+  "holidays": "Thanksgiving/early-close correct; 2026->2027 ok; 2028 MARKET_CALENDAR_UNKNOWN",
+  "schema_tricks": "bad tag rejected; types not checked: score 1e9 accepted (er capped 2xATR%xsqrt(h)), NaN/'abc' -> None -> SKIP, above_200dma 'false' -> trigger not verified (fail closed); duplicate rows first-wins"
+ },
+ "scorer_review": "honest live Yahoo daily (auto_adjust=False), unconfirmed bars dropped (<= last completed session), SPY must be at asof, DMA on raw close, RS on Adj Close vs SPY, score=0.5rs3m+0.5rs6m, Wilder ATR14, trailing high since openTime (ETF -8%, stock max(10%,2.5xATR%)). Spot values sane vs live (QQQ 751.27 vs 753.71 live).",
+ "live_risk_exits_OfersClaw5_read_only": "none valid: cash 3671>=2500; no stops/trails hit (QQQ trail 701.83, SMH 588.31, SPY 717.07, TMO 595.75, XLV 162.47 all below live); all holdings above 50/200DMA => trigger_3/4 false; caps fine",
+ "fix2_adversarial_rerun": "identical results: test mode demo-forced, prepare account echo real => mismatch, forged copy verdict + self mark => GO (test mode), drift 0.100% GO / 0.101% ANCHOR_DRIFT, ET lock rollover 07:00 IDT, prod registry tamper => REGISTRY_SHA_MISMATCH, prod RSI SKIP (p 0.410 n=19)",
+ "residual_risks_ofer_must_accept": [
+  "Shared box: verdicts, book, envelope, code writable; order-QA forgeable by copying trader's anchor numbers",
+  "Second-source mark self-asserted",
+  "Test-mode env var trader-controlled at GO (demo-forced)",
+  "CHANGED: score file now integrity-checked but forgeable with a recomputed sidecar (same bar as verdict forgery)",
+  "Registry pins in editable code",
+  "NEW: stale/missing scores block protective risk-exit sells (eToro SL still active)"
+ ],
+ "verdict_schema_change": "none (run-QA / order-QA unchanged from fix2)",
+ "process_note": "QA mis-issued one CallDynamicTool prepare-trade with no arguments while reading the schema; rejected client-side for missing required args, never sent to eToro, no token",
+ "writes": "only this file"
+}

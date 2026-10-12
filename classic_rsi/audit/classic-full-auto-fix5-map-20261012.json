@@ -1,0 +1,61 @@
+{
+  "kind": "qa-fix-map",
+  "fix": "classic-full-auto-fix5-20261012",
+  "review": "audit/qa-review-classic-full-auto-fix4-20261012.json",
+  "diff": "audit/classic-full-auto-fix5-20261012.diff",
+  "prepared_or_placed": false,
+  "etoro_calls": "none",
+  "corrections": {
+    "RISK_EXIT_SIZE_UNBOUNDED": {
+      "fix": "execute_pass._risk_exit_size: cash_below_floor => x*bid - close_fee >= 2500 + B - cash; hard_cap_breach => name cap (ETF 30%/stock 15%) and 45% sleeve cap on BOTH value and cost basis: x >= (X - cap*T + B)/(u*(1-cap)); B = 1% of equity (RISK_EXIT_BUFFER_EQUITY_PCT); bid = min(anchor, live); ceil to 1e-6; residual (held-x)*bid < $400 or x >= held => full close (unitsToDeduct null), else unitsToDeduct = x. Pack units must equal the size (+/-1.5e-6) else RISK_EXIT_SIZE_MISMATCH (no silent resize). stop_hit / trigger_3 / trigger_4 unsized (full close allowed). Output risk_exit_sizing.",
+      "tests": [
+        "fix5 cash_below_floor full close when partial suffices => RISK_EXIT_SIZE_MISMATCH",
+        "fix5 cash_below_floor min units => partial unitsToDeduct",
+        "fix5 cash restored with buffer (and 1 step less is not)",
+        "fix5 cash_below_floor oversize => mismatch",
+        "fix5 cash 2000 residual < $400 => full close",
+        "fix5 hard_cap full close when partial suffices => mismatch",
+        "fix5 hard_cap min units => partial",
+        "fix5 after sizing name <= 30% and sleeve <= 45%",
+        "fix5 both value and cost constraints evaluated",
+        "fix5 cost-basis breach drives size",
+        "fix5 hard cap residual < $400 => full close",
+        "fix5 stop_hit any size",
+        "fix5 trigger_4 full close"
+      ]
+    },
+    "SCORER_DOCSTRING_STALE_FRESHNESS_LINE": {
+      "fix": "scorer.py docstring now says asOf_bars must equal the last completed session (age 0); VERSION scorer-v2-fix5-doc. Docstring/version only."
+    },
+    "SKILL_MD_SCHEMA_UNDOCUMENTED": {
+      "fix": "not addressed (live skill owned by Chief of Staff)"
+    }
+  },
+  "test_counts": {
+    "test_cost_gate": "51/51",
+    "test_execute_pass": "116/116",
+    "test_scorer": "45/45",
+    "test_instruments": "20/20",
+    "test_universe": "38/38",
+    "total": "270/270"
+  },
+  "sha256": {
+    "execute_pass.py": "eda34a2ef8955f36b46fb9f91fd90ccfbf18e0637bc0f17bfa3d421536a629e4",
+    "scorer.py": "806313b94f9619a1b843a06834f401c9c59cbded5589365e1e2f13cd1a5a7bce",
+    "test_execute_pass.py": "da46a687a1e35ec5a5c2b70254dc4ad59135d9d60f6767ed6a320f505bbad6f0",
+    "README.md": "600f50a0d307eab8a7aae4db936d074a36c63a3c4ce36844bb2480273bc0c951",
+    "cost_gate.py": "ec12ecc3ef441f575b0bca0b892d096ca732ba1d8278572b2a63cd76569614c0",
+    "paths.py": "1b024e69b1011cb897d17f60c1f9c85c9b5ba8d6b020c801be9a2dfa29eb1f45",
+    "testkit.py": "74afd85925d373e8508fcd77f7aca7b9e4a44d7142c12204afa3bd578b797948",
+    "market_hours.py": "acf86740f4521d5cc879e08453e435fdb5ad0d0f9619cef5160d06f9a07442bb",
+    "test_scorer.py": "3262d6b84a26d6ad898fbea033a640d38340a2fb08cc167f9c09c072c7878469",
+    "test_cost_gate.py": "20057f2da6ec7e32c5116099a6b3b7b67fe5e5988a62af77854111f06b59c23c",
+    "evidence/edge_registry.json": "7ccee3ad8ac1235499c3fbc053526b9baeb9d083fdfdacd29a86358f82a349bf",
+    "evidence/p_registry.json": "a48eac6194fb025b57bfd522ddfb42a9b73b1abf3543cb25cee55f7ad6adc0c3"
+  },
+  "prod_scores_unchanged": {
+    "sha256": "d6b10055acec38b262b684954d8fe29c9e2ce969ce4d970f55502020bd515778"
+  },
+  "diff_sha256": "3963a9ea0288f18fbf4826a35a0a4047301da34ad59216a65a93352bccd1ca8e",
+  "mirror": "/workspace/GrokBot/classic_rsi identical (diff -rq, excl. __pycache__/audit)"
+}

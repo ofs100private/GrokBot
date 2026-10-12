@@ -16,7 +16,9 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 
 ## Standing policy — FULL AUTO (Ofer 2026-10-11)
 
-- **Every hourly `classic-rsi-1h-auto` run searches for a new opportunity.** If a valid buy pack exists, passes [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) and [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate), passes the **cost/benefit gate**, and free cash after the buy stays ≥ ~$2,500 (cut size or the number of names rather than breach), **Trader_Classic places it automatically** — no chat authorization from Ofer or CoS.
+**Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place still OFF until Ofer explicitly accepts QA's residual risks (shared-box verdict forgery, self-reported second-source mark, trader-controlled test mode, editable scores/registry pins) AND out-of-sample edge evidence exists. Until then every Classic place needs QA PASS + explicit Ofer authorization.
+
+- **Every hourly `classic-rsi-1h-auto` run searches for a new opportunity.** If a valid buy pack exists, passes [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) and [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate), passes the **cost/benefit gate**, and free cash after the buy stays ≥ ~$2,500 (cut size or the number of names rather than breach), **Trader_Classic places it automatically** — no chat authorization from Ofer or CoS (only once the code gate passes QA).
 - **No opportunity → do nothing** (the run is still logged and run-QA'd).
 - **No limit** on the number of trades; **no monthly new-name cap**.
 - An explicit Ofer/CoS hold still blocks.
@@ -100,7 +102,7 @@ Routine **classic-rsi-1h-auto**: weekdays `CRON_TZ=America/New_York 35 9-15 * * 
 - Soft gates: weekend / outside US RTH / cash floor → `GATED` (buys suppressed). Fear / brief No-Buy-from-Fear is **not** a soft gate.
 - **Every run** → QA Bot [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) citing `run_id` (0 packs and GATED still validated)
 - On run-QA **FAIL** → QA messages Trader_Classic to **rerun** `auto_1h` (max 2/hour) → re-validate new `run_id`
-- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/sell-first check/explicit hold; Fear = dip, not a block; cut size or drop names to keep ~$2.5k cash) → prepare → cost/benefit gate → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → **auto place on PASS** (no Ofer chat auth) → fill audit
+- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/sell-first check/explicit hold; Fear = dip, not a block; cut size or drop names to keep ~$2.5k cash) → prepare → cost/benefit gate → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → **auto place on PASS** (no Ofer chat auth) (only once the code gate passes QA) → fill audit
 - On run-QA **PASS** with 0 packs → do nothing; the run log is the record
 
 ## Automation flow (manual or auto)
@@ -109,7 +111,7 @@ Routine **classic-rsi-1h-auto**: weekdays `CRON_TZ=America/New_York 35 9-15 * * 
 2. Mandate filter — RSI cannot override cash, weekend, or an explicit hold. It **should** be used in Fear.
 3. Sell/rotate check + size so cash-after ≥ ~$2.5k
 4. QA Bot **run QA** with `run_id` (FAIL → Classic rerun → re-QA)
-5. If packs remain after run PASS → prepare → cost/benefit gate → order QA → **auto place after PASS** (no Ofer chat auth; no trade or new-name cap)
+5. If packs remain after run PASS → prepare → cost/benefit gate → order QA → **auto place after PASS** (no Ofer chat auth; no trade or new-name cap) (only once the code gate passes QA)
 6. Post-fill audit
 
 ## Documentation (every run, every movement)

@@ -1,0 +1,236 @@
+--- a/classic_rsi/execute_pass.py
++++ b/classic_rsi/execute_pass.py
+@@ -52,7 +52,7 @@
+ from .paths import order_verdict_path, paths, run_verdict_path
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v8-fix7"
++VERSION = "execute-pass-v9-fix7b"
+ CASH_FLOOR_USD = 2500.0
+ MIN_POSITION_USD = 400.0
+ NAME_CAP = {"etf": 0.30, "stock": 0.15}
+@@ -68,6 +68,7 @@
+ # Market-value basis: book equity; cost basis: sum of cost + cash. "invested" (fix1-fix6 basis) kept
+ # only as a selectable fallback for tests.
+ CAP_DENOMINATOR = "equity"
++EQUITY_RECONCILE_TOL = 0.005  # fix7b: |equity - (holdings value + cash)| <= 0.5% of equity
+ DRIFT_ATR_MULT = 0.5
+ UNITS_DP = 6
+ BOOK_MAX_AGE_S = 60
+@@ -352,6 +353,11 @@
+     cash, eq = book.get("cash"), book.get("equity")
+     c.check("cash_sane", cash is not None and eq is not None and 0 <= cash <= eq,
+             {"cash": cash, "equity": eq}, "CASH_INSANE")
++    hv = sum((book.get("values") or {}).values())
++    gap = None if (cash is None or eq is None) else eq - (hv + cash)
++    c.check("book_equity_reconciled", gap is not None and eq > 0 and abs(gap) <= EQUITY_RECONCILE_TOL * eq,
++            {"equity": eq, "holdings_value": round(hv, 2), "cash": cash, "gap": None if gap is None else round(gap, 2),
++             "tol_usd": None if not eq else round(EQUITY_RECONCILE_TOL * eq, 2)}, "BOOK_EQUITY_NOT_RECONCILED")
+     c.check("book_cost_basis", not book.get("cost_missing"), book.get("cost_missing"), "COST_BASIS_MISSING")
+     return cash
+ 
+--- a/classic_rsi/test_execute_pass.py
++++ b/classic_rsi/test_execute_pass.py
+@@ -748,6 +748,34 @@
+     t("fix7 equity sizing formula: (X - x*u) <= 30%*(E - fee + x*(bid-u)) - 1% buffer",
+       3500.0 - u_ * 3500.0 / pos[2]["units"] <= 0.30 * eq_after - 0.01 * (7251.71 + 3500.0 - 825.49) + 1e-6,
+       (u_, eq_after))
++    # fix7b: equity reconciliation (|equity - (holdings + cash)| <= 0.5% of equity)
++    pos = write_real_book(root)
++    rr, _ = run_exit(pos[3], "cash_below_floor")
++    chk = next(c_ for c_ in rr["checks"] if c_["name"] == "book_equity_reconciled")
++    t("fix7b today's book reconciles (7251.71 vs 7252.34, gap -0.63)", chk["ok"] and chk["detail"]["gap"] == -0.63, chk)
++    d_ = json.loads((root / "book.json").read_text())
++    for eqv, ok_ in ((7252.34 * 1.0049, True), (7252.34 * 1.006, False), (7252.34 * 0.994, False), (7252.34 * 0.9951, True)):
++        d_["equity"] = round(eqv, 2)
++        (root / "book.json").write_text(json.dumps(d_))
++        rr2, _ = run_exit(pos[3], "cash_below_floor")
++        t(f"fix7b equity {eqv / 7252.34 - 1:+.2%} vs holdings+cash => {'ok' if ok_ else 'BOOK_EQUITY_NOT_RECONCILED'}",
++          ("BOOK_EQUITY_NOT_RECONCILED" in rr2["blockers"]) != ok_, rr2["blockers"])
++    d_["equity"] = 9000.0
++    (root / "book.json").write_text(json.dumps(d_))
++    rb_ = X.run_checks(pack_id=PID, bid=27.03, ask=27.05, quote_ts=ts(MON, 5), mark=27.05, units=23.0, open_fee_usd=0.75,
++                       close_fee_usd=0.75, now=MON, write_lock=False)
++    t("fix7b RSI buy path also blocks on unreconciled equity", "BOOK_EQUITY_NOT_RECONCILED" in rb_["blockers"])
++    from . import book_sleeves as BS
++    nb = BS.recompute(json.loads(open(REAL_BOOK).read()))
++    sv = nb["sleeves"]
++    t("fix7b book_sleeves: growth/QQQ/TMO/SPY as % of total equity", sv["denominator"] == "equity" and sv["growthPct"] == 21.93
++      and sv["names"]["TMO"]["pctEquity"] == 7.0 and sv["spyCore"]["pct"] == 9.73, (sv["growthPct"], sv["names"]))
++    t("fix7b book_sleeves: invested-basis numbers only under labelled legacyInvestedBasis",
++      sv["legacyInvestedBasis"]["label"].startswith("LEGACY") and "invested" not in {k for k in sv if k != "legacyInvestedBasis"})
++    ct_ = nb["cashTriggerProposal"]
++    t("fix7b SPY parking cap on equity: $440 within; cap headroom = min(30%*E - SPY MV, 30%*(cost+cash) - SPY cost)",
++      ct_["capCheck"]["proposalWithinCap"] and abs(ct_["capCheck"]["maxNotionalWithinCap"] - round(min(0.3 * 7251.71 - 705.53,
++      0.3 * (3389.05 + 3671.18) - 700.0), 2)) < 0.01 and "legacyInvestedBasis" in ct_, ct_["capCheck"])
+     write_book(root)
+ 
+ 
+--- a/classic_rsi/README.md
++++ b/classic_rsi/README.md
+@@ -136,6 +136,11 @@
+ - Today's book (17:44 IDT, equity $7,251.71, cash $3,671.18): SMH+QQQ 21.93%, QQQ 11.38%, TMO 7.0% of equity; no cap or floor breach, so no protective exit is triggered. With cash at $2,499 / $2,300 / $2,000, every single-leg cash-floor exit (TMO, SPY, QQQ, XLV, SMH) is in band with no cap cascade.
+ - Tests use a frozen copy of that book: `classic_rsi/fixtures/classic-portfolio-20261012-1744.json`.
+ 
++## Fix7b: equity reconciliation + book sleeves on equity
++- Hard check `BOOK_EQUITY_NOT_RECONCILED` (RSI and rebalance): `|equity − (Σ holdings value + cash)| ≤ 0.5%` of equity (`EQUITY_RECONCILE_TOL`). The book's equity is the value-basis cap denominator, so it must agree with its own positions and cash.
++- `python3 -m classic_rsi.book_sleeves [--dry-run]` recomputes `sleeves` (growth/healthcare/broad-core, every name, single-stock and SPY core) and the `cashTriggerProposal` SPY 30% cap check in `/workspace/classic-portfolio-for-app.json` as **% of total equity** (cost basis: position cost + cash), from the file's own numbers (no eToro call; atomic write + timestamped backup). Old invested-basis numbers are kept only under `legacyInvestedBasis` (labelled LEGACY).
++- The book refresh routine (`classic-book-refresh-before-rsi-1h`) is not on the box; it carries `sleeves` forward from the daily-brief generators. It should run `book_sleeves` after each refresh, or a refresh will bring the invested-basis block back.
++
+ ## takeProfitRate on rebalance buys (fix3)
+ `user-OfersClaw5` `prepare-trade` schema (read-only lookup 2026-10-12): `takeProfitRate` type `["number","null"]`, default `null`, "Optional". Rebalance buys therefore send `takeProfitRate: null` (no fixed TP on core adds — SKILL Step 5; exits via trailing stop). The prepare echo must also be null, otherwise `PREPARE_TP_MISMATCH`.
+ 
+--- a/classic_rsi/book_sleeves.py
++++ b/classic_rsi/book_sleeves.py
+@@ -0,0 +1,140 @@
++"""Recompute the sleeve / name percentages and the SPY cash-parking cap check in the Classic book
++(/workspace/classic-portfolio-for-app.json) on TOTAL EQUITY (holdings + cash; Ofer 2026-10-12 17:56 IDT).
++
++Fix7b. Local only: reads the file's own positions/equity/cash, never calls eToro, never places.
++Market value basis: % of book equity. Cost basis: % of (sum of position cost + cash).
++Old invested-basis numbers are kept only under `legacyInvestedBasis` (labelled, informational).
++
++Run: cd /workspace && python3 -m classic_rsi.book_sleeves [--book PATH] [--dry-run]
++"""
++
++from __future__ import annotations
++
++import argparse
++import json
++import os
++import shutil
++import tempfile
++from datetime import datetime
++from pathlib import Path
++from zoneinfo import ZoneInfo
++
++from .execute_pass import DEFAULT_SLEEVES, NAME_CAP, SLEEVE_CAP, CASH_FLOOR_USD
++from .instruments import resolve
++
++BOOK = Path("/workspace/classic-portfolio-for-app.json")
++BASIS = "% of total equity (holdings + cash); cost basis = % of (position cost + cash) — Ofer 2026-10-12 17:56 IDT"
++SPY_CAP = NAME_CAP["etf"]
++IDT = ZoneInfo("Asia/Jerusalem")
++
++
++def r2(x: float) -> float:
++    return round(x + 0.0, 2)
++
++
++def _agg(book: dict) -> tuple[dict, dict]:
++    v: dict = {}
++    c: dict = {}
++    for p in book.get("positions") or []:
++        s = str(p["symbol"]).upper()
++        v[s] = v.get(s, 0.0) + float(p.get("value") or 0.0)
++        c[s] = c.get(s, 0.0) + float(p.get("invested") or 0.0)
++    return v, c
++
++
++def recompute(book: dict) -> dict:
++    """Return a copy of `book` with `sleeves` (+ cashTriggerProposal cap fields) on total equity."""
++    b = json.loads(json.dumps(book))
++    v, c = _agg(b)
++    cash = float(b.get("cash", (b.get("summary") or {}).get("availableCash")))
++    eq = float(b.get("equity"))
++    eq_cost = sum(c.values()) + cash
++    hold = sum(v.values())
++    sl = {s: DEFAULT_SLEEVES.get(s, "unknown") for s in v}
++
++    def spct(vals, den, name):
++        return r2(sum(x for s, x in vals.items() if sl[s] == name) / den * 100)
++
++    growth = sum(x for s, x in v.items() if sl[s] == "growth_tech")
++    names = {}
++    for s in sorted(v):
++        cap = NAME_CAP.get(str((resolve(s) or {}).get("assetClass") or ""))
++        names[s] = {"pctEquity": r2(v[s] / eq * 100), "pctEquityCost": r2(c[s] / eq_cost * 100),
++                    "capPct": None if cap is None else cap * 100,
++                    "headroomUsd": None if cap is None else r2(cap * eq - v[s]),
++                    "headroomCostBasisUsd": None if cap is None else r2(cap * eq_cost - c[s])}
++    sleeves_all = sorted(set(sl.values()))
++    s_out = {
++        "basis": BASIS,
++        "denominator": "equity",
++        "equity": eq, "equityCostBasis": r2(eq_cost), "cash": cash, "holdingsValue": r2(hold),
++        "reconciliation": {"equityMinusHoldingsPlusCash": r2(eq - hold - cash),
++                           "pctOfEquity": r2(abs(eq - hold - cash) / eq * 100), "tolPct": 0.5,
++                           "ok": abs(eq - hold - cash) <= 0.005 * eq},
++        "growthPct": spct(v, eq, "growth_tech"),
++        "growthLabel": f"{spct(v, eq, 'growth_tech')}% of equity (${growth:,.2f}/${eq:,.2f})",
++        "growthLabelBrief": f"{round(growth / eq * 100, 1)}% of equity (${growth:,.2f}/${eq:,.2f})",
++        "healthcarePct": spct(v, eq, "healthcare"), "broadCorePct": spct(v, eq, "broad_core"),
++        "growthCapPct": SLEEVE_CAP * 100, "growthHeadroomUsd": r2(SLEEVE_CAP * eq - growth),
++        "sleevePct": {n: {"pctEquity": spct(v, eq, n), "pctEquityCost": spct(c, eq_cost, n)} for n in sleeves_all},
++        "names": names,
++        "singleStock": {s: names[s]["pctEquity"] for s in names if names[s]["capPct"] == NAME_CAP["stock"] * 100},
++        "spyCore": {"pct": names.get("SPY", {}).get("pctEquity"), "capPct": SPY_CAP * 100,
++                    "headroomUsd": names.get("SPY", {}).get("headroomUsd"),
++                    "headroomCostBasisUsd": names.get("SPY", {}).get("headroomCostBasisUsd")},
++        "legacyInvestedBasis": {
++            "label": "LEGACY — % of invested (holdings only, cash excluded); NOT used for caps since 2026-10-12 17:56 IDT",
++            "invested": r2(hold), "growthPct": r2(growth / hold * 100) if hold else None,
++            "names": {s: r2(v[s] / hold * 100) for s in sorted(v)} if hold else {}},
++        "recomputedAt": datetime.now(IDT).isoformat(timespec="seconds"),
++        "recomputedBy": "classic_rsi.book_sleeves (local, no eToro call)",
++    }
++    s_out["singleStock"]["capPct"] = NAME_CAP["stock"] * 100
++    b["sleeves"] = s_out
++    ct = b.get("cashTriggerProposal")
++    if isinstance(ct, dict) and "SPY" in v:
++        mx = float(ct.get("maxNotional") or 0.0)
++        spy_v, spy_c = v["SPY"], c["SPY"]
++
++        def after(n):
++            return {"notional": n, "spyPctEquity": r2((spy_v + n) / eq * 100),
++                    "spyPctEquityCost": r2((spy_c + n) / eq_cost * 100),
++                    "growthPctEquity": r2(growth / eq * 100), "cash": r2(cash - n),
++                    "cashPctEquity": r2((cash - n) / eq * 100), "cashFloorOk": cash - n >= CASH_FLOOR_USD}
++        legacy = {k: ct.pop(k) for k in ("after", "rejectedSizing", "capCheck") if k in ct}
++        ct["after"] = after(mx)
++        hm, hc = r2(SPY_CAP * eq - spy_v), r2(SPY_CAP * eq_cost - spy_c)
++        ct["capCheck"] = {"spyCapPct": SPY_CAP * 100, "basis": BASIS, "headroomMarketValueUsd": hm,
++                          "headroomCostBasisUsd": hc, "maxNotionalWithinCap": r2(min(hm, hc)),
++                          "proposalWithinCap": mx <= min(hm, hc),
++                          "binding": (f"30% of equity cap allows up to ${min(hm, hc):,.2f}; the ${mx:,.0f} proposal is "
++                                      f"{'within' if mx <= min(hm, hc) else 'ABOVE'} it (cap no longer binding at $440-$500)")}
++        ct["sizing500"] = dict(after(500.0), verdict="within 30% of equity cap" if 500 <= min(hm, hc) else "breaches 30% of equity cap")
++        if legacy:
++            ct["legacyInvestedBasis"] = dict(legacy, label="LEGACY — computed on % of invested (pre 2026-10-12 17:56 IDT); superseded")
++    return b
++
++
++def main(argv=None) -> int:
++    ap = argparse.ArgumentParser()
++    ap.add_argument("--book", default=str(BOOK))
++    ap.add_argument("--dry-run", action="store_true")
++    a = ap.parse_args(argv)
++    p = Path(a.book)
++    new = recompute(json.loads(p.read_text()))
++    if a.dry_run:
++        print(json.dumps({"sleeves": new["sleeves"], "cashTriggerProposal.capCheck": (new.get("cashTriggerProposal") or {}).get("capCheck")}, indent=1))
++        return 0
++    bak = p.with_name(p.name + ".bak-" + datetime.now(IDT).strftime("%Y%m%d-%H%M%S") + "-pre-equity-sleeves")
++    shutil.copy2(p, bak)
++    fd, tmp = tempfile.mkstemp(dir=p.parent, prefix=".book-", suffix=".json")
++    with os.fdopen(fd, "w") as fh:
++        json.dump(new, fh, indent=2, ensure_ascii=False)
++        fh.write("\n")
++    os.replace(tmp, p)
++    print(f"wrote {p} (backup {bak.name}); growth {new['sleeves']['growthPct']}% of equity")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+--- a/classic-rebalance/SKILL-draft.md
++++ b/classic-rebalance/SKILL-draft.md
+@@ -34,7 +34,7 @@
+ | **Monthly**, first full US trading week | Full rebalance: score, set target weights, packs (sells first) → QA → cost gate → auto place (once activation is verified) | Rebalance memo plus packs and run log |
+ | **Ad hoc** | Any drift trigger, or a hard sell rule on a confirmed daily close | Pack for the affected name only → QA → cost gate → auto place (once activation is verified) |
+ 
+-## Targets and caps (kept pending Ofer confirmation)
++## Targets and caps (denominator decided: total equity = holdings + cash — Ofer 2026-10-12 17:56 IDT)
+ - Sleeves: growth/tech · healthcare · industrials/financials · energy/hard assets · broad core (SPY/RSP). Cash is its own sleeve.
+ - Name ≤ 30% of total equity (core ETF) or ≤ 15% (single stock). Sleeve ≤ 45% of total equity. Total equity = holdings + cash (Ofer 2026-10-12 17:56 IDT); checked on market value and on cost basis (cost + cash).
+ - Cash: floor $2,500. If cash is above 50% of equity and passing candidates exist, deploy toward target. If nothing passes, park it in SPY rather than sit idle (only if SPY passes the cost gate).

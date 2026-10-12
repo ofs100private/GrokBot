@@ -5,12 +5,18 @@ On each fire:
   2. Build symbol universe via dynamic screener:
        S&P pool → liquid ADV$ → rising 1H volume (top N) ∪ live Classic book
        (never the old fixed 6-name DEFAULT_SYMBOLS as primary universe)
-  3. propose_from_symbols (confirmed 1H close, ATR SL/TP, audit run_id)
+  3. propose_from_symbols (confirmed 1H close, ATR SL/TP, preliminary cost_gate, audit run_id)
   4. Soft mandate annotations (cash floor / Fear placeholder / weekend)
-  5. Write auto envelope under audit/ + latest-auto.json (includes universe_meta)
-  6. NEVER place — Trader_Classic → QA Bot → place only after PASS
+  5. Stamp auto_place_eligible on each buy pack (no hard flags, instrument guard OK,
+     long-only x1, book not stale, gates allow buys, preliminary cost gate not SKIP)
+  6. Write auto envelope under audit/ + latest-auto.json (includes universe_meta)
+  7. This SCRIPT never places (do_not_place=True / place=False). FULL AUTO (Ofer 2026-10-11/12):
+     run-QA PASS → Trader_Classic prepares → execute_pass (final cost gate with live
+     spread/fee, cash floor auto-shrink, caps, drift) → order-QA PASS → Trader_Classic places
+     via user-OfersClaw5 — no chat authorization, no trade-count or monthly new-name cap.
 
-Does not touch Momentum. Does not bypass Fear/cash/weekend gates.
+Mandate locks unchanged: x1 long only, no crypto, cash floor ~$2.5k, 30% ETF / 15% stock /
+45% sleeve caps, stops, sell-before-buy. Does not touch Momentum.
 """
 
 from __future__ import annotations
@@ -24,7 +30,7 @@ from zoneinfo import ZoneInfo
 
 from .audit import DEFAULT_AUDIT_DIR, append_audit, new_run_id
 from .instruments import guard_symbol, map_meta
-from .propose import propose_from_symbols
+from .propose import AUTO_PLACE_DOC, propose_from_symbols, stamp_auto_place
 from .universe import build_screened_universe
 
 IDT = ZoneInfo("Asia/Jerusalem")
@@ -261,6 +267,24 @@ def run_auto_1h(
     flags: list[str] = ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else []
     for f in sorted({d.get("flag") for d in instrument_dropped if d.get("flag")}):
         flags.append(f)
+    # FULL AUTO eligibility (envelope context). Soft flags never block; hard flags do.
+    buy_packs = [
+        stamp_auto_place(p, hard_flags=flags, book_stale=book_stale is not None,
+                         allow_new_buys=bool(gates.get("allow_new_buys")) and not force)  # --force never makes packs auto-eligible
+        for p in buy_packs
+    ]
+    if propose_payload is not None:
+        if status == "GATED":
+            propose_payload["gated_buy_packs_suppressed"] = [
+                {**p, "auto_place_eligible": False,
+                 "auto_place_blockers": sorted(set((p.get("auto_place_blockers") or []) + ["MANDATE_GATED"]))}
+                for p in propose_payload.get("gated_buy_packs_suppressed") or []
+            ]
+        else:
+            propose_payload["buy_packs"] = buy_packs
+        propose_payload["auto_place_stamp"] = "re-stamped by auto_1h with envelope context"
+    auto_place_eligible_count = sum(1 for p in buy_packs if p.get("auto_place_eligible"))
+
     instrument_guard = {
         "map": map_meta(),
         "rule": "drop pack if no instrumentId, crypto asset class/exchange, or not a US stock/ETF",
@@ -301,8 +325,12 @@ def run_auto_1h(
         "long_only": True,
         "qa_gate": QA_GATE,
         "run_qa_gate": RUN_QA_GATE,
+        # do_not_place / place: THIS SCRIPT never places (run-QA RSI_PLACE_FROM_AUTO convention).
+        # Placement is Trader_Classic via MCP after run-QA + order-QA PASS + execute_pass GO.
         "do_not_place": True,
         "place": False,
+        "auto_place_doc": AUTO_PLACE_DOC,
+        "auto_place_eligible_count": auto_place_eligible_count,
         "symbols": universe,
         "universe_meta": universe_meta,
         "book_symbols": book_syms,
@@ -326,7 +354,10 @@ def run_auto_1h(
             ),
             "cite": f"run_id={rid}"
             + (f" propose_run_id={(propose_payload or {}).get('run_id')}" if propose_payload else ""),
-            "never": ["shorts from Sell tags", "bypass QA", "Momentum", "place from this script"],
+            "full_auto": ("auto_place_eligible packs: prepare → execute_pass GO → order-QA PASS → "
+                          "Trader_Classic places via user-OfersClaw5 (no chat auth)"),
+            "never": ["shorts from Sell tags", "bypass QA", "Momentum", "place from this script",
+                      "place without final cost gate / execute_pass GO"],
         },
     }
 
@@ -345,6 +376,7 @@ def run_auto_1h(
                 "flags": flags,
                 "soft_flags": soft_flags,
                 "universe_skipped_count": universe_scan["skipped_count"],
+                "auto_place_eligible_count": auto_place_eligible_count,
                 "note": note,
                 "instrument_map_sha256": instrument_guard["map"].get("sha256"),
             },
@@ -391,7 +423,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             f"gates={env['mandate_gates']['blocks'] or 'clear'} "
             f"flags={env['flags'] or 'none'} soft_flags={env['soft_flags'] or 'none'} "
             f"skipped={env['universe']['skipped_count']} "
-            f"instrument_dropped={env['instrument_guard']['dropped_count']} do_not_place=True"
+            f"instrument_dropped={env['instrument_guard']['dropped_count']} "
+            f"auto_place_eligible={env['auto_place_eligible_count']} do_not_place=True"
         )
     return 0
 

@@ -1,0 +1,50 @@
+{
+  "kind": "qa-fix-map",
+  "fix": "classic-full-auto-fix7-20261012",
+  "decision": "Ofer 2026-10-12 17:56 IDT: Classic caps measured against TOTAL EQUITY (holdings + cash)",
+  "diff": "audit/classic-full-auto-fix7-20261012.diff (vs fix6; also covers classic-rebalance SKILL-draft.md/body.md and the new test fixture)",
+  "prepared_or_placed": false,
+  "etoro_calls": "none",
+  "changes": {
+    "execute_pass.py": "CAP_DENOMINATOR='equity'; cap_denominator(vals, cash, equity): value basis = book equity, cost basis = cost + cash; _basis_equity helper; _caps/_verify_risk_exit/_risk_exit_size/post_trade_caps all via cap_denominator. Equity-mode sell math: E_after = E - close_fee + x*(bid - u); size x >= (X - cap*(E - fee) + B)/(u + cap*(bid - u)). post_trade_caps reports denominator_usd before/after. VERSION execute-pass-v8-fix7.",
+    "test_execute_pass.py": "fix5/fix6 blocks pinned to legacy 'invested' basis (math still covered); new fix7 block on frozen today's book (33 tests); FIX7_MATRIX of single-leg exits.",
+    "fixtures/classic-portfolio-20261012-1744.json": "frozen copy of /workspace/classic-portfolio-for-app.json asOf 17:44 IDT (equity 7251.71, cash 3671.18)",
+    "README.md": "fix7 section",
+    "classic-rebalance/SKILL-draft.md, body.md": "triggers/caps text now 'of total equity (holdings + cash)'; backups *.bak-20261012-pre-fix7"
+  },
+  "consumers_checked": {
+    "execute_pass.py": "only module with cap arithmetic -> equity",
+    "cost_gate.py": "no cap math (unchanged)",
+    "scorer.py": "no cap math (unchanged)",
+    "propose.py": "text mentions of caps only, no denominator (unchanged)",
+    "auto_1h.py": "text mentions only (unchanged)",
+    "classic-rebalance scripts (analyze/followup/screen/fetch/gain_daily)": "no cap math; 'invested' there = trade cost basis, not caps",
+    "classic-rebalance SKILL-draft.md/body.md": "updated to equity"
+  },
+  "todays_book": {
+    "asOf": "2026-10-12T17:44:24+03:00",
+    "equity": 7251.71, "cash": 3671.18,
+    "pct_of_equity_value": {"growth_tech(SMH+QQQ)": 21.93, "QQQ": 11.38, "TMO": 7.0},
+    "as_is": "no cap or cash-floor breach -> every single-leg cash_below_floor / hard_cap_breach exit is NO-GO RISK_EXIT_NOT_VERIFIED (correct: nothing to exit)",
+    "scenarios_cash_lowered": {
+      "2499": "TMO/SPY/QQQ/XLV/SMH partial exits all in band, no cascade -> ready (only ORDER_QA_PENDING)",
+      "2300": "all 5 ready (TMO full close via <$400 residual)",
+      "2000": "all 5 ready (all full closes); XLV reaches GO with order-QA PASS in test mode",
+      "fix6_invested_comparison": "on invested basis the same XLV/SMH/QQQ/TMO exits cascaded (growth ~57% / TMO >15%)"
+    },
+    "hard_cap_scenario": "QQQ 3500 (35.6% of equity) -> verified, sized on equity, QQQ <=30% after, no cascade"
+  },
+  "test_counts": {"test_cost_gate": "51/51", "test_execute_pass": "183/183", "test_scorer": "45/45", "test_instruments": "20/20", "test_universe": "38/38", "total": "337/337"},
+  "sha256": {
+    "execute_pass.py": "1275b6cf22d1682009401fc7cb1412f85c834d81281e792ee3ef1d0c731648eb",
+    "test_execute_pass.py": "f0b2b8bc447be6324f70f8ed1ae325e55eb1807e8ab34d5efc81be601b78bdcf",
+    "README.md": "e08c3351f272e7ca2ad6bc942857def62d42118098f4527a964594ef9e898a28",
+    "fixtures/classic-portfolio-20261012-1744.json": "b2e604b9aa6691e53e56f9b4ec59a3acf70aa4ab778ff4b9b1ae5460567b6121",
+    "classic-rebalance/SKILL-draft.md": "58a04cd55de481a8a13f5ec9024c2f4dd257dbec9919202b87831946bdd4734b",
+    "classic-rebalance/body.md": "8b487cc8c2d32630ee8a6c9b3f86c3927d91fa4a4092f43a4f77a6362acbd9c9",
+    "cost_gate.py": "ec12ecc3... (unchanged)", "scorer.py": "806313b9... (unchanged)"
+  },
+  "diff_sha256": "3f3fdeb3016552a1e2039bc37a0c43e06629310d5fd50e31ee4ddff32d786aaf",
+  "prod_scores_unchanged": {"sha256": "d6b10055acec38b262b684954d8fe29c9e2ce969ce4d970f55502020bd515778"},
+  "mirror": "/workspace/GrokBot/classic_rsi identical (diff -rq excl. __pycache__/audit; audit fix7 files copied too)"
+}

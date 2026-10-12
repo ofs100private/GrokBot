@@ -1,0 +1,57 @@
+{
+ "checker": "QA Bot",
+ "skill": "classic-full-auto-code-review",
+ "review": "fix7",
+ "checked_at": "2026-10-12T19:45:00+03:00",
+ "verdict": "SUPERSEDED",
+ "condition": "QA re-run of the 337 tests (box load avg ~140 stalled the scratch run at test_cost_gate); flips to PASS on 337/337 with no new failures, else FAIL",
+ "hard_fail_codes": [],
+ "warn_codes": [
+  "TESTS_NOT_RERUN_BY_QA_BOX_OVERLOAD",
+  "BOOK_EQUITY_NOT_RECONCILED",
+  "BOOK_PRODUCER_SLEEVES_STILL_INVESTED_BASIS",
+  "SKILL_TARGETS_HEADER_STILL_PENDING_CONFIRMATION",
+  "SKILL_MD_SCHEMA_UNDOCUMENTED"
+ ],
+ "integrity": {
+  "execute_pass": "1275b6cf22d1 (re-verified after interruption, unchanged)",
+  "cost_gate": "ec12ecc3 unchanged",
+  "scorer": "806313b9 unchanged",
+  "test_execute_pass": "f0b2b8bc447b",
+  "diff": "3f3fdeb3 read in full (execute_pass, test_execute_pass, README, fixture, SKILL-draft.md, body.md)",
+  "mirror": "not re-verified post-interruption (box overload); pre-interruption cmp showed only execute_pass changed vs fix6 among .py checked",
+  "map/fixture shas": "not re-verified (overload)"
+ },
+ "equity_consistency": {
+  "execute_pass": "all cap math via cap_denominator(): _caps buy sizing, _verify_risk_exit, _risk_exit_size, post_trade_caps",
+  "cost_gate/scorer/propose/auto_1h": "no cap arithmetic (grep)",
+  "docs": "SKILL-draft.md + body.md triggers/targets now 'of total equity' on value and cost(+cash)",
+  "switch": "module constant CAP_DENOMINATOR='equity'; no env/CLI/pack path (only TEST_ENV for paths); tests mutate it in-process for legacy invested coverage only"
+ },
+ "formula_review": {
+  "buy": "denominator unchanged on buy (cash->position) => max = cap*E - X: correct (fee ignored, conservative-neutral)",
+  "sell_equity_after": "E - fee + x*(bid - u_mark): correct; equity shrinks only by fee + bid/mark gap",
+  "cost_basis_denominator": "sum(cost)+cash; after sell = C - x*u_cost + cash + x*bid - fee (moves by realized PnL - fee): sane and consistent between _risk_exit_size and post_trade_caps",
+  "sizing": "x >= (X - cap*(T - fee) + B)/(u + cap*(bid - u)); denominator positive for bid>0; matches post-trade simulation",
+  "band/cascade": "unchanged from fix6 (passed)",
+  "today": "SMH+QQQ ~21.9% of equity, TMO ~7% => no breach, protective exits correctly NOT_VERIFIED; fix6 all-NO-GO cascade issue resolved by Ofer's denominator choice"
+ },
+ "findings": {
+  "BOOK_EQUITY_NOT_RECONCILED": "values-basis denominator is book['equity'] taken as-is; only cash<=equity checked. Require |equity - (sum(values)+cash)| <= 0.5% (fixture: 7251.71 vs 7252.34 ok)",
+  "BOOK_PRODUCER_SLEEVES_STILL_INVESTED_BASIS": "classic-portfolio-for-app.json producer still emits sleeves 'basis: % of invested market value' (growth 44.41%, TMO 14.17%) and cashTriggerProposal capped SPY on invested cost; brief/app will contradict execute_pass",
+  "SKILL_TARGETS_HEADER": "section still titled 'kept pending Ofer confirmation' though denominator now decided"
+ },
+ "adversarial_rerun": "NOT completed post-fix7 (overload). Fix7 touches no verdict/lock/quote/test-mode/scores code paths (diff reviewed), so prior results (fix6) expected unchanged; to be confirmed with the test re-run",
+ "corrections": [
+  "Reconcile book equity vs holdings+cash",
+  "Switch book producer/brief sleeve % to total equity",
+  "Retitle SKILL caps section",
+  "Document verdict schema in order-QA SKILL.md"
+ ],
+ "residual_risk_change": "Caps loosened by Ofer's choice: with ~50% cash, SMH+QQQ may grow to 45% of equity (~$3.26k vs ~$1.6k on invested). Forgeable book now also sets the cap denominator (equity field) - same forgery bar. Others unchanged.",
+ "verdict_schema_change": "none",
+ "compliance": "no prepare-* calls; no orders/messages/locks/production verdicts; only this file written",
+ "superseded_by": "qa-review-classic-full-auto-fix7b-20261012.json",
+ "superseded_at": "2026-10-12T20:30:00+03:00",
+ "final_note": "Fix7 (1275b6cf22d1) replaced by Fix7b before the conditional test run could execute on it; fix7 code review found no hard fails; tests/adversarial completed on fix7b (346/346) instead."
+}

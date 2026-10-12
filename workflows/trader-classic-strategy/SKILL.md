@@ -21,9 +21,11 @@ Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PR
 
 ## Standing policy — FULL AUTO (Ofer 2026-10-11)
 
-- **Look for a new opportunity every run** (hourly `classic-rsi-1h-auto`, plus the daily rebalance check). If a valid pack exists, it passes run-QA ([Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa)) and order-QA ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate)), passes the **cost/benefit gate**, and cash after stays ≥ ~$2,500, then **Trader_Classic places automatically — no chat authorization from Ofer or CoS.**
+**Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place still OFF until Ofer explicitly accepts QA's residual risks (shared-box verdict forgery, self-reported second-source mark, trader-controlled test mode, editable scores/registry pins) AND out-of-sample edge evidence exists. Until then every Classic place needs QA PASS + explicit Ofer authorization.
+
+- **Look for a new opportunity every run** (hourly `classic-rsi-1h-auto`, plus the daily rebalance check). If a valid pack exists, it passes run-QA ([Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa)) and order-QA ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate)), passes the **cost/benefit gate**, and cash after stays ≥ ~$2,500, then **Trader_Classic places automatically — no chat authorization from Ofer or CoS** (only once the code gate passes QA).
 - **No opportunity → do nothing** (log the run).
-- **Rebalance is DAILY** (weekdays), not weekly — see [Classic rebalance](sand-workflow:classic-rebalance). Daily trims/rotations/sells/adds are also full auto after QA PASS + cost gate.
+- **Rebalance is DAILY** (weekdays), not weekly — see [Classic rebalance](sand-workflow:classic-rebalance). Daily trims/rotations/sells/adds are also full auto after QA PASS + cost gate (only once the code gate passes QA).
 - **No limit** on the number of trades and **no monthly new-name cap**.
 - **Every run and every movement is documented** (see Documentation).
 
@@ -33,7 +35,7 @@ Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PR
 - Prefer large liquid US companies / sector ETFs, then commodities
 - Prefer leaving cash uninvested; never all-in; cash floor ~$2,500
 - Name caps 30% ETF / 15% single stock; sleeve cap 45%; stops per [Classic rebalance](sand-workflow:classic-rebalance)
-- REAL only; QA PASS + cost gate → auto place → fill audit → CoS
+- REAL only; QA PASS + cost gate → auto place (only once the code gate passes QA) → fill audit → CoS
 - No place under an explicit Ofer/CoS HOLD; QA PASS is mandatory before every place
 - Weekend: no new size unless Ofer overrides
 
@@ -101,7 +103,7 @@ Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. 
 9. prepare on **Classic account** (`user-OfersClaw5`) — fees + tax haircut
 10. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
 11. **Cost/benefit gate** (above) — skip if net expected gain is not clearly positive
-12. Order-QA PASS → **auto place** (no Ofer chat auth) → fill audit → CoS
+12. Order-QA PASS → **auto place** (no Ofer chat auth) (only once the code gate passes QA) → fill audit → CoS
 
 ## After every fill / skip / QA FAIL
 

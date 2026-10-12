@@ -1,0 +1,56 @@
+{
+ "checker": "QA Bot",
+ "skill": "classic-full-auto-code-review",
+ "review": "fix6",
+ "checked_at": "2026-10-12T17:45:00+03:00",
+ "verdict": "PASS",
+ "hard_fail_codes": [],
+ "ofer_decisions_required": [
+  "FLOOR_EXIT_BLOCKED_BY_CAP_CASCADE",
+  "CAP_EXIT_BLOCKED_BY_OTHER_NEAR_CAP_NAME",
+  "CAP_DENOMINATOR (invested vs equity)"
+ ],
+ "warn_codes": [
+  "SKILL_MD_SCHEMA_UNDOCUMENTED",
+  "MORNING_REFRESH_ROUTINE_NOT_INSPECTABLE"
+ ],
+ "integrity": {
+  "diff": "6ba9e405 reproduces fix5->live exactly (execute_pass, test_execute_pass, README)",
+  "map": "4add37ab",
+  "execute_pass": "c6f3766a84fd",
+  "test_execute_pass": "94260b52",
+  "cost_gate": "ec12ecc3 unchanged",
+  "scorer": "806313b9 unchanged",
+  "mirror": "identical",
+  "weakened_guards": "none (only the exact-size check replaced by the band; CAP_DENOMINATOR='invested' reproduces fix5 math)"
+ },
+ "tests": "304/304 (51+150+45+20+38; 149/150 in QA scratch only due to redirected PROD paths)",
+ "fix5_hard_fail": "RISK_EXIT_SIZE_TOLERANCE_UNEXECUTABLE closed: band [required_now, 1.02*max(qa,now)]; planned 1.01x pack survives bid -0.5%/+0.5%/+1.5% drift",
+ "band_edges": {
+  "0.9999x": "NO-GO",
+  "1.00x": "GO",
+  "1.02x": "GO",
+  "1.0201x": "NO-GO",
+  "forged required_at_qa=10x": "clamped: 1.07x GO, 1.0711x NO-GO => max oversize 7.1% even if forged",
+  "full close": "allowed only if live rule says full or held <= upper; partial must leave >= $400 live"
+ },
+ "cascade_probes_today_book_invested_basis": {
+  "context": "SMH+QQQ 44.71% value (cap 45); TMO 14.75% cost (cap 15)",
+  "cash 2499 any single leg": "all NO-GO (TMO cost >15% or growth_tech >45%), alternatives []",
+  "cash 1500 any leg (full closes)": "all NO-GO",
+  "QQQ-heavy group breach: sell QQQ": "NO-GO (TMO cost 16.42% new breach)",
+  "sell SMH": "NO-GO",
+  "stop_hit / trigger_3/4": "not subject to post_trade_caps or sizing (no regression; tests pass)",
+  "both bases": "checked for every name and group; worsened pre-existing breaches only reported"
+ },
+ "assessment": "Confirmed trader claim: on today's book every single-leg cash-floor or hard-cap exit is NO-GO, so a genuine cash-floor breach cannot be cured automatically and a group-cap breach can be blocked by an unrelated name 0.25pp under its cap. Fail-closed and not a market-loss emergency (eToro position SLs + stop_hit still work; cash only falls via buys, which are floor-gated), so not a hard fail, but the precedence is a policy decision for Ofer: suggested rule = floor exits may create a cap breach (cap then exits on its own pass), and cap exits may proceed when the total cap excess decreases.",
+ "adversarial_rerun": "unchanged (demo-forced test mode, account echo mismatch caught, forged copied verdict + self mark => GO in test mode, drift 0.100% GO / 0.101% DRIFT, prod registry tamper caught, scores attacks fail closed except recomputed sidecar)",
+ "morning_refresh": "Tue-Sat 07:17 IDT (00:17/01:17 ET) timing valid; silent with alert after 2 consecutive failures => one missed refresh blocks buys/rotations/trigger exits for that day without alert (acceptable, fail closed). Routine definition not inspected by QA.",
+ "corrections": [
+  "Ofer: decide floor-vs-cap precedence and cap denominator; implement as a single switch with tests",
+  "Document verdict schema in order-QA SKILL.md"
+ ],
+ "residual_risks": "unchanged from fix4/fix5; plus: under current precedence, cash-floor and cap exits can be indefinitely blocked by near-cap buckets",
+ "verdict_schema_change": "none",
+ "compliance": "no prepare-* calls; no orders/messages/locks/production verdicts; only this file written"
+}

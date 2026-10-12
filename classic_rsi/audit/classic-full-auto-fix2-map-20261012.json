@@ -1,0 +1,174 @@
+{
+  "kind": "qa-fix-map",
+  "review": "audit/qa-review-classic-full-auto-fix1-20261012.json",
+  "fix": "classic-full-auto-fix2-20261012",
+  "diff": "audit/classic-full-auto-fix2-20261012.diff",
+  "no_etoro_calls_except": "read-only GetDynamicTools schema lookup of user-OfersClaw5 prepare-trade/prepare-close/place-trade",
+  "prepared_or_placed": false,
+  "hard_fails": {
+    "VERDICT_FORGEABLE (A)": {
+      "fix": "verdicts read only from fixed audit/qa/ (qa-verdict-run-<run_id>.json, qa-verdict-order-<sha16>.json); checker=='QA Bot'; recomputed_cost_gate {spread,fees,tax_est,total_cost,expected_gain,ratio} must match the anchor gate within 0.01; audit dir/book/lock dir/scores fixed in paths.py; test override only via CLASSIC_EXEC_TEST_ROOT (logged test_mode, account forced 'demo'); residual shared-box write risk documented",
+      "tests": [
+        "A: production paths fixed",
+        "A: verdict file names fixed",
+        "A/E: no audit_dir/book/verdict-path/cash overrides",
+        "A/E: CLI rejects --audit-dir",
+        "A: QA repro self-written verdict",
+        "A: verdict without recomputed_cost_gate",
+        "A: recomputed numbers off by 0.02",
+        "A/K: verdict qa_ask != anchor",
+        "A: forged run-QA (checker)"
+      ]
+    },
+    "P_SOURCE_UNVALIDATED (B)": {
+      "fix": "typed p removed; p = Wilson lower of wins/n from sha-pinned evidence/p_registry.json; requires out_of_sample and n>=100",
+      "tests": [
+        "prod p = Wilson lower 0.4104; not usable",
+        "QA repro p=0.99 source '.': typed p rejected",
+        "tampered p registry (sha mismatch) => INVALID",
+        "p evidence n=99 => SKIP"
+      ]
+    },
+    "EDGE_EVIDENCE_UNVALIDATED (C)": {
+      "fix": "edge_ref {evidence_id} into sha-pinned evidence/edge_registry.json (oos, n>=30, horizon>=5d); er recomputed from score file calibration; capped 2xATR%xsqrt(h); typed er ignored",
+      "tests": [
+        "prod edge registry empty => SKIP; typed er ignored",
+        "QA repro 5000% edge => capped",
+        "QA repro fabricated edge => SKIP (n/oos/horizon/method)",
+        "C: typed 40%/1d n=1 edge => SKIP",
+        "add er recomputed from score"
+      ]
+    },
+    "INDEPENDENT_MARK_OPTIONAL (D)": {
+      "fix": "second-source mark mandatory at final stage (RSI --mark, rebalance live leg independent_mark), within 0.1% of ask",
+      "tests": [
+        "mark mandatory at final",
+        "QA repro stale SMH 601.72 w/o mark",
+        "D: no second-source mark => NO-GO",
+        "D: mark 0.2% away"
+      ]
+    },
+    "LOCK_BYPASS (E)": {
+      "fix": "pack_id regexes; lock key sha(rsi, run_id, symbol, instrumentId) / sha(rebal, kind, sorted legs, ET date) + per-leg (instrumentId, side, ET date) locks under fixed audit/placed",
+      "tests": [
+        "E: QA repro pack_id variants => BAD_PACK_ID",
+        "E: second run => ALREADY_GO_LOCKED",
+        "E/F: QA repro renamed pack_id same XLE add => locked",
+        "E: free-text rebalance pack_id => BAD_PACK_ID"
+      ]
+    },
+    "REBALANCE_DUPLICATE_AND_STALE_BOOK (F)": {
+      "fix": "book asOf <=60s for all paths; same-day same-side leg lock; position on instrument opened <24h blocks",
+      "tests": [
+        "F: book 61s old",
+        "F: rebalance book 61s old",
+        "F: XLE position opened < 24h",
+        "F: same-instrument position opened < 24h"
+      ]
+    },
+    "RISK_EXIT_UNVERIFIED (G)": {
+      "fix": "risk exits recomputed: hard_cap_breach from book %, cash_below_floor from book cash, stop_hit from live bid vs book SL / score-file trailing level, trigger_3/4 from score file; unverified => INVALID",
+      "tests": [
+        "G: QA repro self-declared hard_cap_breach",
+        "G: hard_cap_breach verified",
+        "G: stop_hit verified",
+        "G: stop_hit not hit",
+        "G: trigger_4 verified",
+        "G: trigger_4 on SMH",
+        "G: cash_below_floor"
+      ]
+    },
+    "REALIZED_PNL_UNVERIFIED (H)": {
+      "fix": "realized recomputed (bid-openRate)xunits from book; |declared-recomputed|>$1 => NO-GO; tax on max",
+      "tests": [
+        "H: QA repro realized -100",
+        "H: within $1 => tax uses max"
+      ]
+    },
+    "PAYLOAD_SCHEMA_MISMATCH_MCP (I)": {
+      "fix": "payloads match user-OfersClaw5 prepare-trade/prepare-close schemas (looked up read-only); --prepare-response verified (verdict ready, account, instrumentId, direction buy, leverage 1, mkt, units, SL/TP, quote); static echo in pack_sha256; tokens dropped",
+      "tests": [
+        "I: MCP-native buy payload",
+        "I: prepare mismatch (units/direction/leverage/SL/instrument/verdict/orderType)",
+        "I: partial close payload",
+        "prepare token never stored",
+        "I: rebalance prepare units mismatch"
+      ]
+    },
+    "SL_NOT_ATR_BOUNDED (J)": {
+      "fix": "rebalance buy SL: ask-3.5xATRd <= SL <= ask-1xATRd (ATR from score file) or ETF 8% / stock 10-12% trailing; within prepare stop bounds when given",
+      "tests": [
+        "J: QA repro SL 0.01",
+        "J: SL inside band ok",
+        "J: ETF 8% trailing ok",
+        "J: SL too tight",
+        "J: SL outside prepare stop bounds"
+      ]
+    }
+  },
+  "soft": {
+    "QA_WINDOW_60S_DEADLOCK (K)": {
+      "fix": "order-QA binds pack, units, payload, fees, prepare echo and anchor (qa_ask); GO needs a fresh prepare quote <=60s within 0.1% of qa_ask and a recomputed live gate PASS",
+      "tests": [
+        "K: GO 14 min after QA with a fresh prepare",
+        "K: live cost gate recomputed",
+        "K: fresh ask > 0.1% from qa_ask"
+      ]
+    },
+    "CASH_AND_QUOTE_SELF_ASSERTED": {
+      "fix": "cash taken from the <=60s book (no --cash), 0<=cash<=equity; ask/quote time from the prepare response; second-source mark mandatory. Still self-asserted: book file contents, score file, mark value, bid",
+      "tests": [
+        "QA repro cash 99999 > equity => CASH_INSANE",
+        "I: typed --ask must equal prepare ask"
+      ]
+    },
+    "ORDER_QA_SKILL_SCHEMA_UNDOCUMENTED / EV_TEXT_OUTDATED": {
+      "fix": "schema documented in README + execute_pass docstring; skill files not edited (owned by Chief of Staff)",
+      "tests": []
+    },
+    "RSI_PATH_EFFECTIVELY_DISABLED": {
+      "fix": "still disabled by design until an out-of-sample n>=100 p entry is added by a reviewed change",
+      "tests": [
+        "production pack => SKIP, not eligible"
+      ]
+    },
+    "REBALANCE_ROUTINE_CONFIG_NOT_FOUND": {
+      "fix": "out of code scope; scores-latest.json must be written by the routine",
+      "tests": []
+    },
+    "L tests": {
+      "fix": "tests for every adv.py repro and QA list item (adv.py itself imports removed fix1 helpers)",
+      "tests": []
+    }
+  },
+  "fixed_paths": {
+    "qa_dir": "/workspace/classic_rsi/audit/qa/",
+    "run_verdict": "qa-verdict-run-<auto_run_id>.json",
+    "order_verdict": "qa-verdict-order-<pack_sha256[:16]>.json",
+    "locks": "/workspace/classic_rsi/audit/placed/",
+    "book": "/workspace/classic-portfolio-for-app.json",
+    "scores": "/workspace/classic-rebalance/scores-latest.json",
+    "evidence": "/workspace/classic_rsi/evidence/"
+  },
+  "test_counts": {
+    "test_universe": "38/38",
+    "test_instruments": "20/20",
+    "test_cost_gate": "47/47",
+    "test_execute_pass": "85/85",
+    "total": "190/190"
+  },
+  "sha256": {
+    "cost_gate.py": "5388390d1c88fac5b96e266fbc591c1b2d5c53721af42dd91272db8d7a14ce63",
+    "execute_pass.py": "bc3db6cf6928f43260e41069b465c92c86fbb4a1e17cb4a06968c60741711072",
+    "paths.py": "6cfbeff22926ea7531a991a6f332e73ed5bd7d02bb0f544b567a5ac8aefb886c",
+    "testkit.py": "686ea8943004e7ed933cdc3689ed9fe8d5fa4b3302edc192103afa3414b93912",
+    "market_hours.py": "72455ac6b34afdfc53af6d0ded6b3e46e8f910aab6b91f280ffb95c57e647a71",
+    "propose.py": "1ee6550721a1ec99cd5335e9794aa71812c2fef57c630d7e85ca97a3f1a3fed2",
+    "auto_1h.py": "04456136833888eec62f53a7471ab4eaaaf06d003ef0aed48bb4fcecd0184b40",
+    "README.md": "ea961a9539d934521c013cba102622ef7ef8419a4b80f2e87c6f1652aa421561",
+    "test_cost_gate.py": "0e56df3dfdfc8a65cbc21e83256813fca85e8519864f17ae2269915fdba74d8d",
+    "test_execute_pass.py": "05d6f6db1a38314117e95641f9f01c71dfd99f52bac2a578b64abfa5989e5ecd",
+    "evidence/p_registry.json": "a48eac6194fb025b57bfd522ddfb42a9b73b1abf3543cb25cee55f7ad6adc0c3",
+    "evidence/edge_registry.json": "265d60f587e688ce753a65dd0c169be215cb7e2ec2ed8e0c433a58ff1b0a921e"
+  }
+}

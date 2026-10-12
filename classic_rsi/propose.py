@@ -1,10 +1,14 @@
 """Propose Classic RSI candidate BUY packs + RISK_OFF notes (never shorts).
 
-Trader_Classic flow:
-  1. propose.propose_from_symbols([...])  → packs / risk_off
-  2. Hand BUY packs to classic-real-money-order-qa-gate (QA Bot)
-  3. Place ONLY after QA PASS + mandate gates (Fear, cash ≥~$2.5k, weekend, ×1, no crypto)
-  4. This module never places and never SendToUser
+Trader_Classic flow (FULL AUTO, Ofer 2026-10-11/12):
+  1. propose.propose_from_symbols([...])  → packs / risk_off, each pack with a PRELIMINARY
+     cost_gate block and auto_place_eligible (+ blockers)
+  2. run-QA PASS (classic-rsi-1h-run-qa) → Trader_Classic prepares on user-OfersClaw5 →
+     execute_pass (final cost gate with live spread/fee, cash floor, caps, drift) →
+     order-QA PASS (classic-real-money-order-qa-gate) → Trader_Classic places via the MCP
+     (no chat authorization; no trade-count / new-name cap). Mandate locks unchanged:
+     ×1 long only, no crypto, cash ≥ ~$2.5k, 30% ETF / 15% stock / 45% sleeve caps.
+  3. This module itself never places (do_not_place=True) and never SendToUser
 """
 
 from __future__ import annotations
@@ -22,6 +26,7 @@ from .backtest import DEFAULT_SYMBOLS, fetch_1h, _normalize_ohlc
 from .levels import LevelsConfig, atr, atr_long_levels, levels_to_dict
 from .audit import append_audit, attach_run_id_to_packs, new_run_id
 from .instruments import guard_items, guard_symbol, load_map, map_meta
+from .cost_gate import VERDICT_PASS, VERDICT_SKIP, preliminary_for_pack
 from .signals import RSILevels, StrongCandleConfig, compute_signals, long_only_remap
 
 IDT = ZoneInfo("Asia/Jerusalem")
@@ -173,15 +178,74 @@ def _buy_pack(
             "cash floor ≥ ~$2.5k after add",
             "weekend: no new opens unless Ofer overrides",
             "Fear / regime gates unchanged — still apply",
-            "QA PASS required before place",
+            "run-QA PASS + order-QA PASS + final cost gate (execute_pass GO) required before place",
+            "caps 30% ETF / 15% stock / 45% sleeve; sell-before-buy",
         ],
-        "fee_estimate": None,  # fill via getCost / prepare before QA
+        "fee_estimate": None,  # set below from the preliminary cost gate; final via prepare/getCost
         "overnight_financing_estimate": None,
         "prepared_order": None,
         "status": "PROPOSE_ONLY",
+        # do_not_place=True: THIS SCRIPT never places. Placement is done by Trader_Classic via the
+        # MCP after run-QA + order-QA PASS and the final cost gate (see auto_place_eligible).
         "do_not_place": True,
     }
+    cg = preliminary_for_pack(pack)
+    pack["cost_gate"] = cg
+    pack["fee_estimate"] = {"open_fee": cg.get("costs", {}).get("open_fee"),
+                            "close_fee": cg.get("costs", {}).get("close_fee"),
+                            "spread": cg.get("spread"), "stage": "preliminary",
+                            "final": "recompute from prepare/getCost (execute_pass)"}
+    pack["overnight_financing_estimate"] = {"usd": cg.get("overnight"), "stage": "preliminary"}
+    if cg.get("verdict") != VERDICT_PASS:
+        pack["status"] = cg.get("verdict") or VERDICT_SKIP
     return pack
+
+
+AUTO_PLACE_DOC = (
+    "auto_place_eligible=True means the pack may proceed on the FULL AUTO path "
+    "(prepare → execute_pass final gate → order-QA PASS → Trader_Classic places via MCP). "
+    "True only if: no hard flags, instrument guard OK (resolved US stock/ETF id), long-only x1 buy, "
+    "book snapshot not stale, soft mandate gates allow new buys (a --force run is never eligible), "
+    "and the preliminary cost gate verdict is PASS (not COST_GATE_SKIP / COST_GATE_INVALID). It is NOT a place instruction; do_not_place=True still means this "
+    "script never places. run-QA PASS is still required first."
+)
+
+
+def auto_place_eligibility(
+    pack: dict[str, Any],
+    *,
+    hard_flags: Optional[list[str]] = None,
+    book_stale: bool = False,
+    allow_new_buys: bool = True,
+) -> tuple[bool, list[str]]:
+    """Return (eligible, blockers) for one buy pack (see AUTO_PLACE_DOC)."""
+    blockers: list[str] = []
+    if hard_flags:
+        blockers.append("HARD_FLAGS:" + ",".join(hard_flags))
+    if book_stale:
+        blockers.append("BOOK_SNAPSHOT_STALE")
+    if not allow_new_buys:
+        blockers.append("MANDATE_GATED")
+    inst = pack.get("instrument") or {}
+    g = guard_symbol(inst.get("symbol") or "")
+    if not g["ok"] or inst.get("instrumentId") is None or int(inst.get("instrumentId")) != int(g["instrumentId"] or -1):
+        blockers.append("INSTRUMENT_GUARD")
+    if pack.get("side") != "buy" or pack.get("action") != "CANDIDATE_LONG" or pack.get("leverage") != 1:
+        blockers.append("NOT_LONG_X1")
+    cg = pack.get("cost_gate") or {}
+    if not cg:
+        blockers.append("COST_GATE_MISSING")
+    elif cg.get("verdict") != VERDICT_PASS:
+        blockers.append(str(cg.get("verdict") or VERDICT_SKIP))
+    return (not blockers), blockers
+
+
+def stamp_auto_place(pack: dict[str, Any], **kw: Any) -> dict[str, Any]:
+    ok, why = auto_place_eligibility(pack, **kw)
+    out = dict(pack)
+    out["auto_place_eligible"] = ok
+    out["auto_place_blockers"] = why
+    return out
 
 
 def _instrument_block(symbol: str) -> dict[str, Any]:
@@ -272,6 +336,10 @@ def propose_from_symbols(
     risk_off, dropped_ro = guard_items(risk_off, "risk_off", imap)
     instrument_dropped = dropped_buys + dropped_ro
     instrument_flags = sorted({d["flag"] for d in instrument_dropped if d.get("flag")})
+    # Pack-level eligibility (auto_1h re-stamps with envelope context: stale book, gates, flags)
+    buy_packs = [stamp_auto_place(p) for p in buy_packs]
+    cost_gate_skips = [p["instrument"]["symbol"] for p in buy_packs
+                       if (p.get("cost_gate") or {}).get("verdict") != VERDICT_PASS]
 
     now = datetime.now(IDT).strftime("%Y-%m-%d %H:%M:%S IDT")
     rid = new_run_id("propose")
@@ -296,10 +364,11 @@ def propose_from_symbols(
         "symbols": list(symbols),
         "invocation": {
             "next": [
-                "Attach fee_estimate + overnight_financing_estimate via prepare/getCost",
-                "Set size respecting cash floor ≥~$2.5k and sleeve caps",
-                "Submit each buy_pack to QA Bot (classic-real-money-order-qa-gate) citing run_id",
-                "Place only after QA PASS + mandate gates clear",
+                "run-QA PASS on the run_id first (classic-rsi-1h-run-qa)",
+                "Only auto_place_eligible packs proceed; prepare on user-OfersClaw5",
+                "execute_pass: final cost gate (live spread/fee), cash floor ≥~$2.5k (auto-shrink), caps, drift ≤0.5×ATR",
+                "Submit to QA Bot (classic-real-money-order-qa-gate) citing run_id + final cost_gate",
+                "On order-QA PASS + execute_pass GO, Trader_Classic places via MCP (FULL AUTO, no chat auth)",
             ],
             "never": [
                 "Do not short from RISK_OFF / Sell triangles",
@@ -310,6 +379,9 @@ def propose_from_symbols(
         },
         "buy_packs": buy_packs,
         "risk_off": risk_off,
+        "auto_place_doc": AUTO_PLACE_DOC,
+        "auto_place_eligible_count": sum(1 for p in buy_packs if p.get("auto_place_eligible")),
+        "cost_gate_skips": cost_gate_skips,
         "instrument_map": map_meta(),
         "instrument_flags": instrument_flags,
         "instrument_dropped": instrument_dropped,

@@ -1,0 +1,588 @@
+--- a/classic_rsi/execute_pass.py
++++ b/classic_rsi/execute_pass.py
+@@ -52,7 +52,7 @@
+ from .paths import order_verdict_path, paths, run_verdict_path
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v3-fix2"
++VERSION = "execute-pass-v4-fix3"
+ CASH_FLOOR_USD = 2500.0
+ MIN_POSITION_USD = 400.0
+ NAME_CAP = {"etf": 0.30, "stock": 0.15}
+@@ -70,7 +70,7 @@
+ RECOMPUTED_FIELDS = ("spread", "fees", "tax_est", "total_cost", "expected_gain", "ratio")
+ REALIZED_TOL_USD = 1.0
+ RECENT_POSITION_H = 24
+-SCORES_MAX_AGE_DAYS = 5
++SCORES_MAX_TRADING_DAYS = 1  # enforced in scorer.verify_scores_file (sidecar sha + schema + age)
+ SL_ATR_BOUNDS = (1.0, 3.5)
+ TRAIL_BOUNDS = {"etf": (0.075, 0.085), "stock": (0.10, 0.12)}  # fraction below ask (ETF 8% +/-0.5pp)
+ RSI_PACK_ID_RE = re.compile(r"^(classic-rsi-auto-\d{8}-\d{6}-[0-9a-f]{8})#([A-Z][A-Z.]{0,9})$")
+@@ -153,18 +153,11 @@
+ 
+ 
+ def load_scores(now: datetime) -> dict[str, Any]:
+-    sp = Path(paths()["scores"])
+-    if not sp.exists():
+-        return {"ok": False, "error": f"score file missing: {sp}", "data": None}
+-    d = json.loads(sp.read_text())
+-    try:
+-        asof = date.fromisoformat(str(d.get("asOf_bars")))
+-    except ValueError:
+-        return {"ok": False, "error": "asOf_bars missing", "data": None}
+-    age = (now.astimezone(ET).date() - asof).days
+-    ok = 0 <= age <= SCORES_MAX_AGE_DAYS
+-    return {"ok": ok, "error": None if ok else f"score file stale ({age}d)", "data": d if ok else None,
+-            "asOf_bars": str(asof), "path": str(sp)}
++    """Score file must carry a matching sidecar sha256, valid schema, and be <= 1 trading day old (fix3)."""
++    from .scorer import verify_scores_file
++    v = verify_scores_file(Path(paths()["scores"]), now)
++    return {k: v.get(k) for k in ("ok", "error", "data", "path", "sidecar", "sha256", "asOf_bars",
++                                  "last_completed_session", "age_trading_days")}
+ 
+ 
+ # ---------------------------------------------------------------- prepare responses
+@@ -691,7 +684,8 @@
+     book = load_book(now)
+     cash = _common_gates(c, hold, book)
+     sc = load_scores(now)
+-    out["scores"] = {k: sc.get(k) for k in ("ok", "error", "asOf_bars", "path")}
++    out["scores"] = {k: sc.get(k) for k in ("ok", "error", "asOf_bars", "path", "sha256", "age_trading_days")}
++    c.check("scores_verified", bool(sc.get("ok")), out["scores"], "SCORES_UNVERIFIED")
+     scores = sc.get("data")
+     payloads: list[dict] = []
+     echoes: list[dict] = []
+--- a/classic_rsi/market_hours.py
++++ b/classic_rsi/market_hours.py
+@@ -6,7 +6,7 @@
+ 
+ from __future__ import annotations
+ 
+-from datetime import date, datetime, time
++from datetime import date, datetime, time, timedelta
+ from typing import Optional
+ from zoneinfo import ZoneInfo
+ 
+@@ -39,3 +39,37 @@
+     if not (OPEN <= et.time() < close):
+         return {**base, "open": False, "reason": "OUTSIDE_RTH", "close": close.strftime("%H:%M")}
+     return {**base, "open": True, "reason": None, "close": close.strftime("%H:%M")}
++
++
++# ---------------------------------------------------------------- trading-day helpers (fix3)
++def is_trading_day(d: date) -> bool:
++    """Weekday, known calendar year, not a US market holiday."""
++    return d.year in KNOWN_YEARS and d.weekday() < 5 and d not in HOLIDAYS
++
++
++def last_completed_session(now: datetime) -> Optional[date]:
++    """ET date of the most recent session whose regular close has passed (None if calendar unknown)."""
++    et = now.astimezone(ET)
++    d = et.date()
++    close = EARLY_CLOSE if d in EARLY_CLOSES else CLOSE
++    if not (is_trading_day(d) and et.time() >= close):
++        d -= timedelta(days=1)
++    for _ in range(15):
++        if d.year not in KNOWN_YEARS:
++            return None
++        if is_trading_day(d):
++            return d
++        d -= timedelta(days=1)
++    return None
++
++
++def trading_days_between(older: date, newer: date) -> int:
++    """Number of trading days after `older` up to and including `newer` (0 if same day; <0 if older > newer)."""
++    if older > newer:
++        return -1
++    n, d = 0, older
++    while d < newer:
++        d += timedelta(days=1)
++        if is_trading_day(d):
++            n += 1
++    return n
+--- a/classic_rsi/testkit.py
++++ b/classic_rsi/testkit.py
+@@ -85,13 +85,20 @@
+                                                 "summary": {"availableCash": cash}, "positions": pos}))
+ 
+ 
+-def write_scores(root: Path, asof="2026-10-09", overrides=None):
++def write_scores(root: Path, asof="2026-10-09", overrides=None, sidecar=True):
+     rows = []
+     for s, (sc, last, atr, a50, a200, rs3) in {**SCORES, **(overrides or {})}.items():
+         rows.append({"symbol": s, "score": sc, "last_close": last, "atr14": atr, "above_50dma": a50,
+                      "above_200dma": a200, "rs_3m": rs3})
+-    (root / "scores.json").write_text(json.dumps({"asOf_bars": asof, "rows": rows,
+-                                                  "trailing_stops": {"SMH": {"high_since_entry": 639.47, "threshold": -0.08}}}))
++    for r in rows:
++        r.setdefault("rs_6m", r["rs_3m"])
++    payload = {"schema": "classic-rebalance-scores-v1", "asOf_bars": asof, "rows": rows,
++               "trailing_stops": {"SMH": {"high_since_entry": 639.47, "threshold": -0.08}}}
++    if not sidecar:
++        (root / "scores.json").write_text(json.dumps(payload))
++        return None
++    from .scorer import write_atomic
++    return write_atomic(payload, root / "scores.json")
+ 
+ 
+ def write_envelope(root: Path, packs, run_id=RID):
+--- a/classic_rsi/test_execute_pass.py
++++ b/classic_rsi/test_execute_pass.py
+@@ -220,6 +220,13 @@
+         write_order_qa(r)
+         g = rb(p, write_lock=True)
+         t("rebalance GO with QA verdict at fixed path", g["decision"] == "GO", g["blockers"])
++        t("fix3 TP: rebalance buy sends takeProfitRate null (schema: number|null, Optional) and reaches GO",
++          "takeProfitRate" in g["order_payloads"][0] and g["order_payloads"][0]["takeProfitRate"] is None
++          and g["decision"] == "GO", g["order_payloads"])
++        lv = live_for(p)
++        lv["legs"][0]["prepare_response"]["takeProfitRate"] = 142.5
++        t("fix3 TP: payload TP null but prepare echoes a TP => NO-GO",
++          rb(p, lv)["decision"] != "GO" and any(x.startswith("PREPARE") for x in rb(p, lv)["blockers"]), rb(p, lv)["blockers"])
+         p2 = add_pack(pid="classic-rebalance-20261012-xle-add-b")
+         t("E/F: QA repro renamed pack_id same XLE add => locked", {"ALREADY_GO_LOCKED", "SAME_DAY_LEG_LOCKED"} & set(rb(p2)["blockers"]))
+         for f in (root / "audit" / "placed").glob("*.lock"):
+@@ -313,7 +320,41 @@
+           abs(rr["cost_gate"]["inputs"]["edge"]["expected_return_pct"] - 3.0) < 1e-9
+           and abs(rr["cost_gate"]["inputs"]["edge"]["held_expected_return_pct"] + 1.0) < 1e-9)
+         write_scores(root, asof="2026-09-30")
+-        t("stale score file => edge SKIP", "COST_GATE_SKIP" in rb(add_pack())["blockers"])
++        rr = rb(add_pack())
++        t("stale score file => edge SKIP + SCORES_UNVERIFIED", "COST_GATE_SKIP" in rr["blockers"]
++          and "SCORES_UNVERIFIED" in rr["blockers"] and rr["scores"]["error"].startswith("SCORES_STALE"), rr["scores"])
++        write_scores(root, asof="2026-10-08")
++        rr = rb(add_pack())
++        t("fix3 scores 1 trading day behind last session (Thu vs Fri) => accepted", rr["scores"]["ok"], rr["scores"])
++        write_scores(root, asof="2026-10-07")
++        rr = rb(add_pack())
++        t("fix3 scores 2 trading days behind => SCORES_STALE_2", rr["scores"]["error"] == "SCORES_STALE_2_TRADING_DAYS"
++          and "SCORES_UNVERIFIED" in rr["blockers"], rr["scores"])
++        write_scores(root, sidecar=False)
++        (root / "scores.sha256").unlink(missing_ok=True)
++        rr = rb(add_pack())
++        t("fix3 scores sidecar missing => SCORES_UNVERIFIED", rr["scores"]["error"] == "SCORES_SIDECAR_MISSING"
++          and "SCORES_UNVERIFIED" in rr["blockers"], rr["scores"])
++        write_scores(root)
++        sp_ = sell_pack(1.0, kind="sell", pid=1004, iid=TMO, sym="TMO", bid=505.0, risk_exit=True,
++                        risk_exit_reason="trigger_4_200dma", edge_ref=None)
++        d_ = json.loads((root / "scores.json").read_text())
++        for r_ in d_["rows"]:
++            if r_["symbol"] == "TMO":
++                r_["above_200dma"] = True
++        (root / "scores.json").write_text(json.dumps(d_))
++        rr = rb(sp_, live_for(sp_, held=held))
++        t("fix3 hand-edited score file (sha mismatch) => SCORES_SHA_MISMATCH, risk exit not verified",
++          rr["scores"]["error"] == "SCORES_SHA_MISMATCH" and "SCORES_UNVERIFIED" in rr["blockers"]
++          and rr["decision"] != "GO", rr["scores"])
++        (root / "scores.json").unlink()
++        rr = rb(add_pack())
++        t("fix3 scores file missing => SCORES_UNVERIFIED", rr["scores"]["error"] == "SCORES_MISSING"
++          and "SCORES_UNVERIFIED" in rr["blockers"], rr["scores"])
++        write_scores(root, asof="2026-10-12")
++        rr = rb(add_pack())
++        t("fix3 scores dated today before close (unconfirmed bar) => SCORES_FROM_FUTURE",
++          rr["scores"]["error"] == "SCORES_FROM_FUTURE", rr["scores"])
+         write_scores(root)
+         t("crypto/bare symbol guard on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
+             {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="BTC", instrumentId=100000)]})["blockers"]))
+--- a/classic_rsi/README.md
++++ b/classic_rsi/README.md
+@@ -97,6 +97,18 @@
+ - Rebalance: `edge_ref {evidence_id}` into `evidence/edge_registry.json` (out-of-sample, n ≥ 30, horizon ≥ 5 d); `er = intercept + slope × score` from the score file, capped at `2 × ATR% × √h`. Registry ships empty → every rebalance add/trim/rotation SKIPs; verified risk exits are RISK_EXIT.
+ - PASS iff `EV_after_tax ≥ 2 × total_cost` and net > 0.
+ 
++## Rebalance scorer (fix3) — run first in the daily rebalance routine
++```bash
++cd /workspace && python3 -m classic_rsi.scorer        # → classic-rebalance/scores-latest.json + scores-latest.sha256
++```
++- Yahoo daily (yfinance, `auto_adjust=False`): returns/RS on Adj Close; DMA/ATR/highs on raw OHLC. Only bars up to the last completed US session.
++- Rows (holdings from the live book + SKILL Step-2 ETFs; large caps via `--extra`): `last_close, dma50, dma200, above_50dma, above_200dma, dma50_above_200dma, trend_ok, ret_/rs_ 1m/3m/6m, score = 0.5·rs_3m + 0.5·rs_6m (fractions), atr14 (Wilder, price), atr_pct, dd_52w, vol_63d, adv_usd_20d`. `trailing_stops[sym] = {high_since_entry, threshold (ETF −8%, stock −max(10%, 2.5×ATR%)), level}`.
++- `execute_pass.load_scores` → `scorer.verify_scores_file`: fail closed (`SCORES_UNVERIFIED`) on `SCORES_MISSING`, `SCORES_SIDECAR_MISSING`, `SCORES_SHA_MISMATCH`, `SCORES_SCHEMA_INVALID`, `SCORES_FROM_FUTURE`, `SCORES_STALE_<n>_TRADING_DAYS` (n > 1 vs last completed session). Applies to every rebalance pack, including risk exits.
++- The sidecar proves the file is unchanged since the scorer wrote it — not who wrote it (shared box).
++
++## takeProfitRate on rebalance buys (fix3)
++`user-OfersClaw5` `prepare-trade` schema (read-only lookup 2026-10-12): `takeProfitRate` type `["number","null"]`, default `null`, "Optional". Rebalance buys therefore send `takeProfitRate: null` (no fixed TP on core adds — SKILL Step 5; exits via trailing stop). The prepare echo must also be null, otherwise `PREPARE_TP_MISMATCH`.
++
+ ## Backtest (1H)
+ 
+ ```bash
+--- /dev/null
++++ b/classic_rsi/scorer.py
+@@ -0,0 +1,249 @@
++"""Classic rebalance scorer (fix3) — builds scores-latest.json + sidecar scores-latest.sha256.
++
++Run FIRST in the daily rebalance routine (before propose / execute_pass):
++    cd /workspace && python3 -m classic_rsi.scorer            # production paths
++    CLASSIC_EXEC_TEST_ROOT=<dir> python3 -m classic_rsi.scorer --offline-csv <dir>   # tests
++
++Data: Yahoo daily bars via yfinance (same source as universe.py), period 2y, auto_adjust=False.
++  * Returns / RS use Adj Close (dividend-adjusted); DMA, ATR, last_close, highs use raw OHLC
++    (same price terms as eToro rates / stopLossRate).
++  * Only CONFIRMED daily bars: bars dated after the last completed US session are dropped.
++Universe: holdings from the live book + SKILL Step-2 ETF candidates (CANDIDATES). Liquid large
++  caps (ADV >= $100M) are NOT auto-included yet; pass --extra SYM ... to add names.
++
++Per row (fractions, not %):
++  symbol, role (holding|candidate), instrumentId, assetClass, last_close, dma50, dma200,
++  above_50dma, above_200dma, dma50_above_200dma, trend_ok, ret_1m/3m/6m (21/63/126d),
++  rs_1m/rs_3m/rs_6m (= ret - SPY ret), score = 0.5*rs_3m + 0.5*rs_6m, atr14 (Wilder, price),
++  atr_pct (= atr14/last_close*100), dd_52w, vol_63d (annualised), adv_usd_20d, bars.
++  Consumers: cost_gate.resolve_edge (score, atr14, last_close), execute_pass trigger_3
++  (above_50dma, rs_3m), trigger_4 (above_200dma), SL bounds (atr14).
++trailing_stops (holdings): {high_since_entry: max raw High since openTime date,
++  threshold: -0.08 ETF | -max(0.10, 2.5*atr14/last_close) stock}  (SKILL drift trigger 5).
++
++Integrity: payload sha256 written to the sidecar `<hex>  scores-latest.json`. Both files are
++written to temp names then os.replace'd (scores first, sidecar second); execute_pass fails closed
++on missing sidecar, sha mismatch, bad schema, or asOf_bars > 1 trading day behind the last
++completed session. The sidecar proves integrity since write, NOT authorship (shared box).
++"""
++
++from __future__ import annotations
++
++import argparse
++import hashlib
++import json
++import math
++import os
++from datetime import datetime
++from pathlib import Path
++from typing import Any, Optional
++
++import pandas as pd
++
++from .instruments import resolve
++from .universe import is_crypto_ticker as is_crypto
++from .market_hours import ET, last_completed_session
++from .paths import paths
++
++SCHEMA = "classic-rebalance-scores-v1"
++VERSION = "scorer-v1-fix3"
++CANDIDATES = ["XLK", "XLV", "XLF", "XLI", "XLE", "XLP", "XLU", "XLB", "XLY", "XLC",
++              "SPY", "RSP", "QQQ", "SMH", "GLD", "IAU", "SLV"]
++ROW_REQUIRED = ("symbol", "score", "last_close", "atr14", "above_50dma", "above_200dma", "rs_3m", "rs_6m")
++MIN_BARS = 200
++
++
++def sha256_bytes(b: bytes) -> str:
++    return hashlib.sha256(b).hexdigest()
++
++
++def sidecar_path(p: Path) -> Path:
++    return p.with_name(p.stem + ".sha256")
++
++
++def _wilder_atr(df: pd.DataFrame, n: int = 14) -> float:
++    pc = df["close"].shift(1)
++    tr = pd.concat([df["high"] - df["low"], (df["high"] - pc).abs(), (df["low"] - pc).abs()], axis=1).max(axis=1)
++    return float(tr.ewm(alpha=1 / n, adjust=False, min_periods=n).mean().iloc[-1])
++
++
++def _ret(s: pd.Series, n: int) -> Optional[float]:
++    return float(s.iloc[-1] / s.iloc[-1 - n] - 1) if len(s) > n else None
++
++
++def _r(x: Optional[float], d: int = 6) -> Optional[float]:
++    return None if x is None or (isinstance(x, float) and math.isnan(x)) else round(float(x), d)
++
++
++def normalize_frame(df: pd.DataFrame, asof) -> pd.DataFrame:
++    df = df.copy()
++    df.columns = [str(c).lower().replace(" ", "_") for c in df.columns]
++    if "adj_close" not in df.columns:
++        df["adj_close"] = df["close"]
++    df = df.dropna(subset=["open", "high", "low", "close", "adj_close"])
++    idx = pd.to_datetime(df.index)
++    df.index = idx.tz_convert(ET).tz_localize(None) if idx.tz is not None else idx
++    return df[df.index.date <= asof]
++
++
++def score_symbol(df: pd.DataFrame, spy: pd.DataFrame, *, open_date=None) -> dict[str, Any]:
++    c, a = df["close"], df["adj_close"]
++    sa = spy["adj_close"]
++    last = float(c.iloc[-1])
++    d50, d200 = float(c.rolling(50).mean().iloc[-1]), float(c.rolling(200).mean().iloc[-1])
++    rets = {k: _ret(a, n) for k, n in (("1m", 21), ("3m", 63), ("6m", 126))}
++    spr = {k: _ret(sa, n) for k, n in (("1m", 21), ("3m", 63), ("6m", 126))}
++    rs = {k: (rets[k] - spr[k]) if rets[k] is not None and spr[k] is not None else None for k in rets}
++    atr = _wilder_atr(df)
++    row = {"last_close": _r(last, 4), "bar_date": str(df.index[-1].date()), "bars": len(df),
++           "dma50": _r(d50, 4), "dma200": _r(d200, 4), "above_50dma": last > d50, "above_200dma": last > d200,
++           "dma50_above_200dma": d50 > d200, "trend_ok": last > d50 and last > d200 and d50 > d200,
++           **{f"ret_{k}": _r(v) for k, v in rets.items()}, **{f"rs_{k}": _r(v) for k, v in rs.items()},
++           "score": _r(0.5 * rs["3m"] + 0.5 * rs["6m"]) if rs["3m"] is not None and rs["6m"] is not None else None,
++           "atr14": _r(atr, 4), "atr_pct": _r(atr / last * 100, 4),
++           "dd_52w": _r(last / float(c.iloc[-252:].max()) - 1),
++           "vol_63d": _r(float(a.pct_change().iloc[-63:].std() * math.sqrt(252))),
++           "adv_usd_20d": _r(float((c * df["volume"]).iloc[-20:].mean()), 0) if "volume" in df else None}
++    if open_date is not None:
++        since = df[df.index.date >= open_date]
++        row["high_since_entry"] = _r(float(since["high"].max()), 4) if len(since) else None
++    return row
++
++
++def build_scores(frames: dict[str, pd.DataFrame], book: dict, now: datetime, *, extra=(), source: str) -> dict:
++    asof = last_completed_session(now)
++    if asof is None:
++        raise SystemExit("market calendar unknown")
++    holds = {}
++    for p in book.get("positions") or []:
++        s = str(p.get("symbol", "")).upper()
++        if s:
++            od = str(p.get("openTime") or "")[:10]
++            holds[s] = min(holds.get(s) or od, od) if od else holds.get(s)
++    syms = list(dict.fromkeys([*holds, *CANDIDATES, *[e.upper() for e in extra]]))
++    fr = {s: normalize_frame(frames[s], asof) for s in syms if s in frames and frames[s] is not None}
++    if "SPY" not in fr or len(fr["SPY"]) < MIN_BARS or fr["SPY"].index[-1].date() != asof:
++        raise SystemExit(f"SPY daily bars missing or not at last completed session {asof}")
++    rows, missing, trailing = [], [], {}
++    for s in syms:
++        if is_crypto(s):
++            missing.append({"symbol": s, "reason": "crypto excluded"})
++            continue
++        df = fr.get(s)
++        if df is None or len(df) < MIN_BARS:
++            missing.append({"symbol": s, "reason": f"bars<{MIN_BARS}"})
++            continue
++        if df.index[-1].date() != asof:
++            missing.append({"symbol": s, "reason": f"last bar {df.index[-1].date()} != {asof}"})
++            continue
++        inst = resolve(s) or {}
++        od = datetime.fromisoformat(holds[s]).date() if holds.get(s) else None
++        r = {"symbol": s, "role": "holding" if s in holds else "candidate",
++             "instrumentId": inst.get("instrumentId"), "assetClass": inst.get("assetClass"),
++             **score_symbol(df, fr["SPY"], open_date=od)}
++        rows.append(r)
++        if s in holds and r.get("high_since_entry"):
++            th = -0.08 if inst.get("assetClass") == "etf" else -max(0.10, 2.5 * r["atr14"] / r["last_close"])
++            trailing[s] = {"high_since_entry": r["high_since_entry"], "threshold": round(th, 4),
++                           "level": round(r["high_since_entry"] * (1 + th), 4), "since": holds[s]}
++    return {"schema": SCHEMA, "version": VERSION, "asOf_bars": str(asof), "generated_at": now.isoformat(),
++            "source": source, "score_formula": "0.5*rs_3m + 0.5*rs_6m (fractions vs SPY, Adj Close)",
++            "book_asOf": book.get("asOf"), "rows": rows, "trailing_stops": trailing, "missing": missing}
++
++
++def write_atomic(payload: dict, path: Path) -> str:
++    """Write scores + sidecar via temp files + os.replace. Returns sha256 of the scores bytes."""
++    path.parent.mkdir(parents=True, exist_ok=True)
++    b = (json.dumps(payload, indent=1, sort_keys=True) + "\n").encode()
++    h = sha256_bytes(b)
++    sc = sidecar_path(path)
++    t1, t2 = path.with_name(f".{path.name}.tmp{os.getpid()}"), sc.with_name(f".{sc.name}.tmp{os.getpid()}")
++    t1.write_bytes(b)
++    t2.write_text(f"{h}  {path.name}\n")
++    for t in (t1, t2):
++        with open(t, "rb") as f:
++            os.fsync(f.fileno())
++    os.replace(t1, path)
++    os.replace(t2, sc)
++    return h
++
++
++def verify_scores_file(path: Path, now: datetime, max_trading_days: int = 1) -> dict[str, Any]:
++    """Fail-closed check used by execute_pass: sidecar sha, schema, freshness (<= 1 trading day)."""
++    from .market_hours import trading_days_between
++    sc = sidecar_path(path)
++    out: dict[str, Any] = {"ok": False, "path": str(path), "sidecar": str(sc), "data": None}
++    if not path.exists():
++        return {**out, "error": "SCORES_MISSING"}
++    if not sc.exists():
++        return {**out, "error": "SCORES_SIDECAR_MISSING"}
++    b = path.read_bytes()
++    h = sha256_bytes(b)
++    want = (sc.read_text().split() or [""])[0].lower()
++    out["sha256"] = h
++    if h != want:
++        return {**out, "error": "SCORES_SHA_MISMATCH", "sidecar_sha256": want}
++    try:
++        d = json.loads(b)
++        asof = datetime.fromisoformat(str(d["asOf_bars"])).date()
++    except (ValueError, KeyError, TypeError):
++        return {**out, "error": "SCORES_SCHEMA_INVALID"}
++    if d.get("schema") != SCHEMA or not isinstance(d.get("rows"), list) or not isinstance(d.get("trailing_stops"), dict):
++        return {**out, "error": "SCORES_SCHEMA_INVALID"}
++    for r in d["rows"]:
++        if not isinstance(r, dict) or any(k not in r for k in ROW_REQUIRED):
++            return {**out, "error": "SCORES_SCHEMA_INVALID", "row": (r or {}).get("symbol") if isinstance(r, dict) else None}
++    last = last_completed_session(now)
++    if last is None:
++        return {**out, "error": "MARKET_CALENDAR_UNKNOWN"}
++    age = trading_days_between(asof, last)
++    out.update(asOf_bars=str(asof), last_completed_session=str(last), age_trading_days=age)
++    if age < 0:
++        return {**out, "error": "SCORES_FROM_FUTURE"}
++    if age > max_trading_days:
++        return {**out, "error": f"SCORES_STALE_{age}_TRADING_DAYS"}
++    return {**out, "ok": True, "error": None, "data": d}
++
++
++def fetch_yahoo(symbols: list[str]) -> dict[str, pd.DataFrame]:
++    import yfinance as yf
++    raw = yf.download(symbols, period="2y", interval="1d", group_by="ticker", threads=True,
++                      progress=False, auto_adjust=False)
++    out = {}
++    for s in symbols:
++        try:
++            df = raw[s] if isinstance(raw.columns, pd.MultiIndex) else raw
++            out[s] = df.dropna(how="all")
++        except KeyError:
++            out[s] = None
++    return out
++
++
++def main(argv=None) -> int:
++    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
++    ap.add_argument("--extra", nargs="*", default=[])
++    ap.add_argument("--offline-csv", help="dir of <SYM>.csv daily frames (tests only; requires test mode)")
++    a = ap.parse_args(argv)
++    P = paths()
++    now = datetime.now(ET)
++    book = json.loads(Path(P["book"]).read_text())
++    syms = list(dict.fromkeys([*(str(p.get("symbol", "")).upper() for p in book.get("positions") or []),
++                               *CANDIDATES, *[e.upper() for e in a.extra]]))
++    if a.offline_csv:
++        if not P["test_mode"]:
++            raise SystemExit("--offline-csv is test-mode only")
++        frames = {s: pd.read_csv(Path(a.offline_csv) / f"{s}.csv", index_col=0, parse_dates=True)
++                  for s in syms if (Path(a.offline_csv) / f"{s}.csv").exists()}
++        src = "offline csv (test)"
++    else:
++        frames = fetch_yahoo(syms)
++        src = "Yahoo Finance daily (yfinance, auto_adjust=False; returns on Adj Close)"
++    payload = build_scores(frames, book, now, extra=a.extra, source=src)
++    h = write_atomic(payload, Path(P["scores"]))
++    print(json.dumps({"path": str(P["scores"]), "sha256": h, "asOf_bars": payload["asOf_bars"],
++                      "rows": len(payload["rows"]), "missing": payload["missing"], "test_mode": P["test_mode"]}))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+--- /dev/null
++++ b/classic_rsi/test_scorer.py
+@@ -0,0 +1,112 @@
++"""Tests for scorer.py (fix3): synthetic daily frames, no network."""
++
++from __future__ import annotations
++
++import json
++import tempfile
++from datetime import datetime
++from pathlib import Path
++from zoneinfo import ZoneInfo
++
++import numpy as np
++import pandas as pd
++
++from . import scorer as S
++from .market_hours import last_completed_session, trading_days_between
++
++IDT = ZoneInfo("Asia/Jerusalem")
++MON = datetime(2026, 10, 12, 18, 0, tzinfo=IDT)   # 11:00 ET Monday -> last completed session Fri 10-09
++
++
++def frame(drift: float, start=100.0, end="2026-10-12", n=300, seed=0):
++    idx = pd.bdate_range(end=end, periods=n)
++    rng = np.random.default_rng(seed)
++    c = start * np.cumprod(1 + drift + rng.normal(0, 0.005, n))
++    return pd.DataFrame({"Open": c, "High": c * 1.01, "Low": c * 0.99, "Close": c, "Adj Close": c,
++                         "Volume": 1e6}, index=idx)
++
++
++def run():
++    out = []
++
++    def t(name, ok, detail=""):
++        out.append((name, bool(ok), detail))
++
++    t("calendar: last completed session at Mon 11:00 ET = Fri 10-09", str(last_completed_session(MON)) == "2026-10-09")
++    t("calendar: after Mon close => Mon", str(last_completed_session(datetime(2026, 10, 12, 23, 30, tzinfo=IDT))) == "2026-10-12")
++    t("calendar: Thu->Fri = 1 trading day, Thu->Mon = 2", trading_days_between(pd.Timestamp("2026-10-08").date(),
++      pd.Timestamp("2026-10-09").date()) == 1 and trading_days_between(pd.Timestamp("2026-10-08").date(),
++      pd.Timestamp("2026-10-12").date()) == 2)
++    frames = {s: frame(0.0005, seed=i) for i, s in enumerate(S.CANDIDATES)}
++    frames["SPY"] = frame(0.0005, seed=99)
++    frames["XLE"] = frame(0.002, seed=5)          # strong uptrend
++    frames["TMO"] = frame(-0.002, seed=7)         # downtrend holding (stock)
++    book = {"asOf": MON.isoformat(), "positions": [
++        {"symbol": "TMO", "openTime": "2026-08-01T15:00:00"}, {"symbol": "XLE", "openTime": "2026-09-01T15:00:00"}]}
++    d = S.build_scores(frames, book, MON, source="synthetic")
++    rows = {r["symbol"]: r for r in d["rows"]}
++    t("asOf_bars = last completed session (today's unconfirmed bar dropped)", d["asOf_bars"] == "2026-10-09"
++      and rows["SPY"]["bar_date"] == "2026-10-09", d["asOf_bars"])
++    t("required fields present on every row", all(all(k in r for k in S.ROW_REQUIRED) for r in d["rows"]))
++    t("extra fields: dma50/200, trend_ok, rs_1m, atr_pct, dd_52w, vol_63d",
++      all(k in rows["XLE"] for k in ("dma50", "dma200", "trend_ok", "rs_1m", "atr_pct", "dd_52w", "vol_63d", "adv_usd_20d")))
++    t("SPY RS = 0 by construction", abs(rows["SPY"]["rs_3m"]) < 1e-9 and abs(rows["SPY"]["score"]) < 1e-9)
++    t("score = 0.5*rs_3m + 0.5*rs_6m", abs(rows["XLE"]["score"] - 0.5 * (rows["XLE"]["rs_3m"] + rows["XLE"]["rs_6m"])) < 1e-6)
++    t("uptrend XLE: above 50/200DMA, trend_ok, positive score", rows["XLE"]["trend_ok"] and rows["XLE"]["score"] > 0)
++    t("downtrend TMO: below 50/200DMA, rs_3m<0 (feeds trigger 3/4)",
++      rows["TMO"]["above_50dma"] is False and rows["TMO"]["above_200dma"] is False and rows["TMO"]["rs_3m"] < 0)
++    t("roles: TMO holding, GLD candidate", rows["TMO"]["role"] == "holding" and rows["GLD"]["role"] == "candidate")
++    t("atr14 ~ 2% of price for 1%-range bars", 1.5 < rows["XLE"]["atr_pct"] < 2.6, rows["XLE"]["atr_pct"])
++    ts_ = d["trailing_stops"]
++    t("trailing stop ETF XLE threshold -8%", ts_["XLE"]["threshold"] == -0.08)
++    t("trailing stop stock TMO threshold -max(10%, 2.5xATR%)", abs(ts_["TMO"]["threshold"]
++      + max(0.10, 2.5 * rows["TMO"]["atr14"] / rows["TMO"]["last_close"])) < 1e-4)
++    since = frames["TMO"].loc["2026-08-01":"2026-10-09", "High"].max()
++    t("high_since_entry = max High since openTime", abs(ts_["TMO"]["high_since_entry"] - since) < 1e-3)
++    fr2 = dict(frames)
++    fr2["XLB"] = frame(0.0, n=150)
++    fr2["XLU"] = frame(0.0, end="2026-10-07")
++    d2 = S.build_scores(fr2, book, MON, source="synthetic")
++    miss = {m["symbol"]: m["reason"] for m in d2["missing"]}
++    t("short history / stale last bar => listed missing, no row", "XLB" in miss and "XLU" in miss
++      and not any(r["symbol"] in ("XLB", "XLU") for r in d2["rows"]), miss)
++    try:
++        S.build_scores({k: v for k, v in frames.items() if k != "SPY"}, book, MON, source="x")
++        t("no SPY => abort", False)
++    except SystemExit:
++        t("no SPY => abort", True)
++    with tempfile.TemporaryDirectory() as td:
++        p = Path(td) / "scores-latest.json"
++        h = S.write_atomic(d, p)
++        sc = Path(td) / "scores-latest.sha256"
++        t("sidecar named scores-latest.sha256 with sha of bytes", sc.read_text().split()[0] == h == S.sha256_bytes(p.read_bytes()))
++        t("no temp files left", sorted(x.name for x in Path(td).iterdir()) == ["scores-latest.json", "scores-latest.sha256"])
++        v = S.verify_scores_file(p, MON)
++        t("verify ok at Mon 11:00 ET", v["ok"] and v["age_trading_days"] == 0, v.get("error"))
++        t("verify stale on Wed (2 trading days)", S.verify_scores_file(p, datetime(2026, 10, 14, 18, 0, tzinfo=IDT))["error"]
++          == "SCORES_STALE_2_TRADING_DAYS")
++        p.write_text(p.read_text().replace('"asOf_bars"', '"asOf_bars" ', 1))
++        t("tamper => SCORES_SHA_MISMATCH", S.verify_scores_file(p, MON)["error"] == "SCORES_SHA_MISMATCH")
++        bad = dict(d, rows=[{"symbol": "X"}])
++        S.write_atomic(bad, p)
++        t("missing row fields => SCORES_SCHEMA_INVALID", S.verify_scores_file(p, MON)["error"] == "SCORES_SCHEMA_INVALID")
++        S.write_atomic(dict(d, schema="other"), p)
++        t("wrong schema => SCORES_SCHEMA_INVALID", S.verify_scores_file(p, MON)["error"] == "SCORES_SCHEMA_INVALID")
++        sc.unlink()
++        t("no sidecar => SCORES_SIDECAR_MISSING", S.verify_scores_file(p, MON)["error"] == "SCORES_SIDECAR_MISSING")
++        p.unlink()
++        t("no file => SCORES_MISSING", S.verify_scores_file(p, MON)["error"] == "SCORES_MISSING")
++    return out
++
++
++def main() -> int:
++    res = run()
++    for name, ok, detail in res:
++        print(f"{'PASS' if ok else 'FAIL'}  {name}" + (f"  [{detail}]" if not ok and detail != "" else ""))
++    n_fail = sum(1 for _, ok, _ in res if not ok)
++    print(f"{len(res) - n_fail}/{len(res)} passed")
++    return 1 if n_fail else 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+--- a/classic-rebalance/SKILL-draft.md
++++ b/classic-rebalance/SKILL-draft.md
+@@ -47,6 +47,9 @@
+ 4. A holding has a confirmed daily close below its 200DMA.
+ 5. A trailing stop is hit: ETFs ~8% below the high since entry; single stocks ~10–12%, or 2.5–3× daily ATR(14), whichever is wider.
+ 
++## Step 0: Build scores (run FIRST, every daily run)
++`cd /workspace && python3 -m classic_rsi.scorer` writes `/workspace/classic-rebalance/scores-latest.json` and its sidecar `scores-latest.sha256` (atomic). Yahoo daily bars, confirmed closes only. Step 2, triggers 3–5, edge evidence and ATR SL bounds all read this file; execute_pass fails closed (`SCORES_UNVERIFIED`) if it is missing, sha-mismatched, schema-invalid, or more than 1 trading day behind the last completed session. Never hand-edit it; re-run the scorer.
++
+ ## Step 1: Snapshot (live)
+ Portfolio summary on the Classic keys connector gives equity, cash, and positions. Compute % of invested, sleeve %, and cash % of equity. Trading history gives closes since the last run (for the report).
+ 

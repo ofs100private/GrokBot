@@ -1,0 +1,108 @@
+{
+  "kind": "qa-review",
+  "review": "classic-full-auto-fix1 (re-review of qa-review-classic-full-auto-20261012.json)",
+  "checked_at": "2026-10-12T07:55:00+03:00",
+  "checker": "QA Bot (independent)",
+  "verdict": "FAIL",
+  "recommendation": "Still NO auto-place. The fix1 code is much stronger: EV, quote freshness, fees, caps, RTH and the verdict skill/age/sha checks are real. But a self-written PASS file gets GO, the lock can be bypassed, risk exits and the realized-P&L/tax inputs are self-declared, and the payload shape does not match the MCP. Keep QA PASS + explicit Ofer authorization.",
+  "inputs_verified": {
+    "fix_map_sha": "376c58be", "diff_sha": "805c026e",
+    "shas": {"cost_gate.py": "4b3f5452", "execute_pass.py": "73cffd8d", "market_hours.py": "72455ac6", "propose.py": "1ee65507",
+             "auto_1h.py": "04456136", "instruments.py": "5ec6670d (unchanged)", "universe.py": "4fc14d89 (unchanged)",
+             "test_cost_gate.py": "6c67e908", "test_execute_pass.py": "4ac0effe"},
+    "grokbot_mirror": "All *.py in /workspace/GrokBot/classic_rsi are byte-identical",
+    "diff_integrity": "Diffed the pre-fix baselines in /tmp/fix1 (cost_gate 769bbe11, execute_pass c18e6986, propose 377eb32a, auto_1h 0e22846b) against the current files. The +/- lines are identical to the fix1 diff (601/655/16/2 lines). No guard was weakened. propose now requires a preliminary PASS for eligibility (stricter). auto_1h now has 'and not force' (fixed).",
+    "tests": "Fresh scratch copy /tmp/qa_scratch2 with DEFAULT_AUDIT_DIR redirected: cost_gate 52/52, execute_pass 50/50, instruments 20/20, universe 38/38 = 160/160 PASS. The claim is confirmed. No lock was written under /workspace/classic_rsi/audit/placed."
+  },
+  "hard_fail_codes": [
+    "VERDICT_FORGEABLE",
+    "P_SOURCE_UNVALIDATED",
+    "EDGE_EVIDENCE_UNVALIDATED",
+    "INDEPENDENT_MARK_OPTIONAL",
+    "LOCK_BYPASS",
+    "REBALANCE_DUPLICATE_AND_STALE_BOOK",
+    "RISK_EXIT_UNVERIFIED",
+    "REALIZED_PNL_UNVERIFIED",
+    "PAYLOAD_SCHEMA_MISMATCH_MCP",
+    "SL_NOT_ATR_BOUNDED"
+  ],
+  "soft_codes": [
+    "QA_WINDOW_60S_DEADLOCK",
+    "CASH_AND_QUOTE_SELF_ASSERTED",
+    "ORDER_QA_SKILL_SCHEMA_UNDOCUMENTED",
+    "ORDER_QA_SKILL_EV_TEXT_OUTDATED",
+    "RSI_PATH_EFFECTIVELY_DISABLED (info, conservative)",
+    "REBALANCE_ROUTINE_CONFIG_NOT_FOUND"
+  ],
+  "corrections_status": {
+    "1_rsi_ev": "PARTIAL. The formula EV=units*[p(TP-ask)-(1-p)(ask-SL)], x0.75 if >0, is correct. Default p=0.4104 (Wilson lower bound of 12/19) is below break-even 0.4286, so it SKIPs. The old T repro now SKIPs. BUT any p in (0,1) with any non-empty p_source is accepted: p=0.99 with source '.' gives PASS ratio 6.14.",
+    "2_rebalance_add_edge": "PARTIAL. The ATR*sqrt(T) magnitude was removed and an edge dict is required. BUT evidence is only 'non-empty source and n>=1', and expected_return_pct is unbounded: 40%/1d 'trust me' n=1 gives PASS ratio 77; 5000% gives PASS.",
+    "3_rotation_and_sell_gain": "PARTIAL. Rotation is one gate. Verified: sell leg 11.05 (spread 0.30 + close 0.75 + tax 10.00 on realized 40) + buy leg 2.10 = 13.15. EV = 5400*(12-2)% = 54.0, after tax 40.5, ratio 3.08, sells first. Typed USD gains were removed. BUT realized_pnl_usd is caller-supplied and not recomputed from the book: -100 gives tax 0 and PASS.",
+    "4_final_fail_closed": "PARTIAL. Final now requires a quote_ts that is tz-aware and <=60s old (naive rejected; future >5s rejected), bid<ask, getCost fees and no assumptions. Negative inputs, p outside (0,1) and total<=0 give INVALID. spread=max(). BUT independent_mark is optional, so the stale SMH 601.72 quote with a fresh ts passes.",
+    "5_verdict_binding": "FIXED in code (skill exact, checked_at tz-aware, age 60/15 min, different files, symbol/pack_id, pack_sha256). The 2025 reuse repro is NO-GO. Undermined by VERDICT_FORGEABLE.",
+    "6_toctou_cash": "PARTIAL. --cash and --cash-ts (<=60s) are mandatory and the book asOf must be <=15 min. Both values are self-asserted (cash 99999 is accepted), and a 15-min book can miss a fill made minutes earlier.",
+    "7_cash_floor_fee": "FIXED. The open fee is required and the same value feeds the floor and the gate. The repro gives cash_after 2500.00 including the fee.",
+    "8_idempotency": "FAIL. See LOCK_BYPASS and REBALANCE_DUPLICATE_AND_STALE_BOOK.",
+    "9_payload_and_sl": "PARTIAL. Payloads are emitted and sha-bound. Buy SL is checked 0<SL<bid. Sell = positionId + unitsToDeduct (null for a full close), units <= held is enforced (1.5 of 1.0 is NO-GO), and a str positionId is NO-GO. BUT the keys do not match the MCP schema (see PAYLOAD_SCHEMA_MISMATCH_MCP). Rebalance SL=0.01 gets GO.",
+    "10_caps_cost_basis": "FIXED (name/sleeve shrink on market value and cost basis; missing cost basis gives COST_BASIS_MISSING).",
+    "11_rth_and_force": "FIXED. NYSE 09:30-16:00 ET via zoneinfo; DST transitions correct (IL ends 10-25, US ends 11-01, US starts 03-08 before IL). 2026-27 holidays and early closes match the NYSE calendar (Good Friday 04-03-2026/03-26-2027, Jul-3-2026, Jun-18-2027, Dec-24-2027). Columbus Day is open. 2028 fails closed. 18:06 IDT is in session. --force can no longer set eligibility.",
+    "12_rebalance_gated": "PARTIAL. The --rebalance-pack path has guards, quotes, caps, cash, RTH, the cost gate, the order-QA sha and a lock. BUT risk_exit is self-declared and realized P&L is unverified.",
+    "13_tests": "Count confirmed at 160. None of the probes below are covered by the tests."
+  },
+  "adversarial_repros": {
+    "forged_self_written_order_qa": "The trader writes {verdict:PASS, skill:classic-real-money-order-qa-gate, checked_at:now, run_id, symbol, pack_sha256 (copied from its own NO-GO output), checker:'Trader_Classic (self)'} plus p=0.99 with source 'x': GO, ratio 8.45. execute_pass cannot tell who wrote the file.",
+    "p_unbounded_junk_source": "p=0.99, p_source='.': PASS ratio 6.14",
+    "edge_fabricated": "rebalance_add XLE, edge 40% over 1 day, source 'trust me', n=1: cost gate PASS ratio 77.1 (only ORDER_QA_PENDING remains). 5000%: PASS.",
+    "lock_bypass": "After the first GO on '<run>#T': '<run>#t', '<run># T', ' <run>#T' and '<run>#T ' all GO again (the lock is sha256 of the raw string, while the symbol is upper/stripped). A different --audit-dir with a copied envelope gives a fresh GO. Rebalance pack_id is free text: 'rb-xle-A' then 'rb-xle-B' (same XLE add, SL 0.01) both GO.",
+    "duplicate_open_check": "RSI only, and only against the <=15-min book. Rebalance passes instrument_ids=[], so it has no duplicate check. Caps are computed on the pre-fill book, so a repeated add is not seen.",
+    "quote_ts": "'...T18:00:00' (naive) rejected; 'Z' and '-04:00' forms correct; a local time mislabeled '+00:00' is rejected (-10800s); +4s future OK, +6s rejected. The ts itself is self-asserted; stale prices with a fresh ts pass unless --mark is given.",
+    "market_hours": "16:29 IDT closed / 16:30 open / 22:59 open / 23:00 closed on 10-12. 10-26 15:35 IST open (09:35 ET). 11-02 16:35 IST open / 15:35 closed. 03-23 15:35 IST open. Thanksgiving, Jul-3, Good Friday closed; 11-27 13:30 ET closed (early close); naive and 2028 fail closed.",
+    "sell_payload": "Partial 0.5 gives {positionId:1001, instrumentId:6357, isBuy:false, unitsToDeduct:0.5}. Full 1.0 gives unitsToDeduct:null. 1.5 (more than held), wrong positionId, str id, 0 and negative units all NO-GO. No short possible through this path. A self-declared risk_exit 'hard_cap_breach' full SMH sell with no edge gives RISK_EXIT/eligible, although SMH is 21.6% of invested (no breach).",
+    "rotation": "One combined gate with tax included (numbers in 3_rotation_and_sell_gain). Payload order: sell, then buy. Buy sizing does not credit sell proceeds (conservative).",
+    "earlier_repros": "Same file for both verdicts: NO-GO. 2025 file: NO-GO. Double run: NO-GO (identical pack_id only). Stale book cash: CASH_NOT_LIVE/BOOK_STALE. Fee-None floor: OPEN_FEE_REQUIRED. 03:00 IDT: closed. Negative fees: NO-GO. bid==ask: INVALID. Zero cost: INVALID. p=5: INVALID. Old T pack: SKIP.",
+    "scripts": "/tmp/qa_scratch2/adv.py (copied to /tmp/adv.py), results in /tmp/adv_results.json"
+  },
+  "findings_detail": {
+    "PAYLOAD_SCHEMA_MISMATCH_MCP": "user-OfersClaw5 prepare-trade takes {account:'real', direction:'buy'|'sellShort', instrumentId, units|amount, leverage, stopLossRate, takeProfitRate, orderType}. There is no isBuy, so the agent must translate isBuy:true to direction, which reintroduces the risk 'copy verbatim' was meant to remove. prepare-close takes {account:'real', positionId(int), unitsToDeduct|null}, so instrumentId and isBuy are extra fields. execute_pass never sees the prepare-trade/prepare-close confirmation, so it cannot confirm that what the token will place equals the pinned payload.",
+    "QA_WINDOW_60S_DEADLOCK": "pack_sha256 includes quote_ts and the quote must be <=60s old at GO. Order-QA must therefore review and write its verdict within the same 60 seconds, which is not realistic. This pushes the flow toward self-written verdicts.",
+    "RSI_PATH_EFFECTIVELY_DISABLED": "Production propose has no way to supply a cited p. Every RSI pack's preliminary verdict is COST_GATE_SKIP, so auto_place_eligible=False, so execute_pass returns NOT_AUTO_PLACE_ELIGIBLE even if --p-hit is given. This is conservative and acceptable. Only the rebalance path can GO today."
+  },
+  "required_corrections": [
+    "A. VERDICT_FORGEABLE: execute_pass must only accept verdicts from a fixed QA directory (/workspace/classic_rsi/audit/qa/), named qa-verdict-{run|order}-<pack_sha256[:16]>.json, with checker=='QA Bot'. The order-QA verdict must embed recomputed_cost_gate {spread, fees, tax_est, total_cost, expected_gain, ratio} and execute_pass must match its own block within +/-0.01. Hard-code --audit-dir/--book in production (test override only via an env var that execute_pass logs). Residual risk: on a shared box any agent can still write files, so Ofer must explicitly accept this or keep manual authorization.",
+    "B. P_SOURCE_UNVALIDATED: replace the free-text p_source with a registry file (classic_rsi/evidence/p_registry.json, sha-pinned in code) holding {id, wins, n, out_of_sample:true, period}. p_used = Wilson lower 95% bound computed from wins/n, never the typed p. Require n>=100.",
+    "C. EDGE_EVIDENCE_UNVALIDATED: the edge must reference an evidence registry entry (sha-pinned) with n>=30 and out-of-sample results. Cap expected_return_pct at registry hit-rate x average move, or at most 2x daily ATR% x sqrt(horizon). Reject horizon_days<5 for rebalance. Recompute er_new/er_held from the score data (classic-rebalance RS table) instead of accepting typed values.",
+    "D. INDEPENDENT_MARK_OPTIONAL: make --mark (and leg 'independent_mark') mandatory at the final stage, from a second source (eToro live rates read vs prepare quote, or Yahoo), with |ask-mark|/mark <= 0.1%.",
+    "E. LOCK_BYPASS: lock key = sha256(canonical(run_id, symbol.upper().strip(), instrumentId)) for RSI. For rebalance: (kind, sorted legs' instrumentId+side, ET trading date). Keep the lock under a fixed path independent of --audit-dir. Normalize/validate pack_id with a regex (^classic-rsi-auto-\\d{8}-\\d{6}-[0-9a-f]{8}#[A-Z.]+$ / ^classic-rebalance-\\d{8}-[a-z0-9-]+$).",
+    "F. REBALANCE_DUPLICATE_AND_STALE_BOOK: for every buy leg, block if a GO lock exists for the same instrumentId+side in the same ET trading day, or a position on that instrumentId was opened <24h ago. Require a book asOf <=60s (same read as the cash) for caps and duplicate checks.",
+    "G. RISK_EXIT_UNVERIFIED: verify each reason from data. hard_cap_breach: recompute name/sleeve % from the book > hard cap. cash_below_floor: live cash < 2500. stop_hit: bid <= the position's stopLossRate or trailing level from the book. trigger_3/4: require the daily-close/50DMA/200DMA/RS evidence block with its source and recompute. Otherwise NO-GO.",
+    "H. REALIZED_PNL_UNVERIFIED: recompute realized = (bid - openRate) x units (or (value - invested) x units/held_units) from the book position. Use max(supplied, recomputed) for tax; mismatch > $1 gives NO-GO.",
+    "I. PAYLOAD_SCHEMA_MISMATCH_MCP: emit MCP-native payloads. Buy: {account:'real', direction:'buy', instrumentId, units, leverage:1, orderType:'mkt', stopLossRate, takeProfitRate}. Close: {account:'real', positionId:int, unitsToDeduct:number|null}. Add an input --prepare-response (the JSON confirmation from prepare-trade/prepare-close) and assert it echoes instrumentId, direction 'buy', leverage 1, units (+/-1e-6), SL/TP and the quote used. Include it in pack_sha256.",
+    "J. SL_NOT_ATR_BOUNDED: for rebalance buys, require daily_atr and enforce ask - 3.5xATRd <= SL <= ask - 1.0xATRd (or the ETF 8% / stock 10-12% trailing rule). The SL must also be <= the prepare-trade max stop bounds.",
+    "K. QA_WINDOW_60S_DEADLOCK: bind order-QA to {pack, units, payload, cost_gate inputs except the live quote, qa_ask}. At GO, require a fresh quote <=60s with |ask - qa_ask|/qa_ask <= 0.1%, and recompute the cost gate (must still PASS).",
+    "L. Tests: add a test for every repro in adversarial_repros."
+  ],
+  "verdict_file_schema_execute_pass_expects": {
+    "common": {
+      "verdict": "string; 'PASS' (case-insensitive). Anything else gives NOT_PASS",
+      "skill": "exact string: 'classic-rsi-1h-run-qa' (run-QA) or 'classic-real-money-order-qa-gate' (order-QA)",
+      "checked_at": "ISO-8601 WITH offset, e.g. '2026-10-12T17:58:00+03:00' or '2026-10-12T14:58:00Z'. Naive values and suffixes like '17:58 IDT' are rejected. Age <= 3600s (run-QA) / <= 900s (order-QA) at execute time. A value more than 60s in the future is rejected.",
+      "extra_fields": "ignored by code (keep codes, evidence, recomputed numbers per the skill)"
+    },
+    "run_qa_rsi": {"required": ["verdict", "skill", "checked_at", "run_id or propose_run_id"],
+                   "match": "run_id/propose_run_id must equal one of: auto run_id from pack_id, envelope run_id, propose_run_id, pack.run_id"},
+    "order_qa_rsi": {"required": ["verdict", "skill", "checked_at", "run_id or propose_run_id", "symbol", "pack_sha256"],
+                     "match": "symbol upper == pack symbol (e.g. 'T'); pack_sha256 == the 64-hex pack_sha256 execute_pass prints for the IDENTICAL inputs (same pack, final units, bid, ask, quote_ts string, payload); the file path must differ from the run-QA file. pack_id is NOT checked on the RSI path."},
+    "order_qa_rebalance": {"required": ["verdict", "skill", "checked_at", "pack_id", "pack_sha256"],
+                           "match": "pack_id exact string equality with pack.pack_id; pack_sha256 == sha256(canonical {pack_id, pack, order_payloads}). run_id/symbol are not checked."},
+    "how_qa_reproduces_sha": "Run execute_pass in a scratch copy with the same inputs and no order-QA file. It returns NO-GO/ORDER_QA_PENDING with pack_sha256 and writes no lock (locks are written only on GO). Use --audit-dir pointing to a scratch copy containing the envelope, and --no-write.",
+    "existing_files_note": "Older run-QA verdicts (before 2026-10-09 22:44) lack skill/checked_at and would now be rejected; qa-verdict-classic-rsi-auto-20261009-224445-207217a0.json has both."
+  },
+  "order_qa_skill_documentation": {
+    "path": "/home/box/agent-data/workflows/classic-real-money-order-qa-gate/SKILL.md (sha a02f8b00…, identical to /home/box/sand-data copy; mtime 07:18)",
+    "documents_schema": false,
+    "detail": "It says 'Save the verdict file (PASS/FAIL, codes, evidence, recomputed cost_gate numbers, run_id)'. It does NOT mention skill, checked_at (tz-aware), symbol, pack_id, pack_sha256, the 15-min age or the separate-file rule. Its cost text ('TP − live entry, ATR-based move') predates fix1's EV/edge method. Activation line: 'code gate FAILING QA … NO auto places until QA Bot re-reviews' — consistent with this FAIL. Not edited (per instructions)."
+  },
+  "rebalance_routine": "Still no 18:06 IDT routine config on the box; /workspace/classic-rebalance/daily/ has no run logs yet.",
+  "qa_places": false,
+  "messages_sent": false
+}

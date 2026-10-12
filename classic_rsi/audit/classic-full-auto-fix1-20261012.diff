@@ -1,0 +1,2235 @@
+--- a/classic_rsi/cost_gate.py
++++ b/classic_rsi/cost_gate.py
+@@ -1,37 +1,41 @@
+ """Cost/benefit gate for Classic (OfersClaw5-PRIYN) — mandatory before every place.
+ 
+-Rule (Ofer 2026-10-11, skills classic-rebalance / trader-classic-strategy):
+-    eligible  iff  expected_gain >= 2 x total_cost
+-    (equivalently expected_net_gain = expected_gain - total_cost >= total_cost > 0)
+-    otherwise verdict COST_GATE_SKIP.
+-    Hard risk exits (stop hit, trigger 3/4, hard cap breach, cash below floor) are never
+-    skipped: verdict RISK_EXIT, numbers still recorded.
+-
+-Round-trip cost (USD)
+-    spread     = (ask - bid) x units          # buy at ask, exit at bid: one full spread vs mid
+-                 (no live quote: notional x DEFAULT_SPREAD_PCT, marked assumed)
+-    open_fee   = from prepare/getCost, else DEFAULT_OPEN_FEE_USD   (buys only)
+-    close_fee  = from prepare/getCost, else DEFAULT_CLOSE_FEE_USD
+-    overnight  = financing for the planned hold; 0 for x1 long real stock/ETF unless prepare says otherwise
+-    tax_est    = TAX_RATE x max(realized_pnl, 0)   (sells/trims of winners only)
+-    total_cost = spread + open_fee + close_fee + overnight + tax_est
+-
+-Expected gain (USD) — method is always recorded; never invented
+-    rsi_buy        : (TP - entry) x units x P_HIT_RSI
+-                     P_HIT_RSI = 0.43 = SL/(SL+TP) for the 1.5/2.0 ATR bracket, i.e. the
+-                     zero-edge hit probability. The 1H backtest (backtest-summary-1h.json)
+-                     pooled 12/19 = 0.63, but n=19 is too small; 0.43 is ~ its lower 95% bound.
+-    rebalance_add  : entry x units x (ATR_d% x sqrt(hold_days)) x MOVE_HAIRCUT
+-                     daily ATR(14) as % of price, hold default 20 trading days,
+-                     MOVE_HAIRCUT 0.25 (expected directional edge = 1/4 of the 1-sigma move).
+-    trim / sell    : caller supplies expected_gain_usd + method (replacement edge or risk
+-                     removed); missing => COST_GATE_SKIP (cannot be justified).
+-
+-Stages
+-    preliminary : computed in-script (propose/auto_1h) with no live eToro access — assumed
+-                  spread/fees/notional; marked preliminary.
+-    final       : recomputed at prepare time from the live prepare/getCost values via
+-                  ``final_gate_from_prepare`` (used by execute_pass). Only FINAL is binding.
++v2 (2026-10-12, QA fix1 for qa-review-classic-full-auto-20261012.json).
++
++Rule (Ofer 2026-10-11):  PASS iff  total_cost > 0  AND  EV_after_tax >= 2 x total_cost
++                          AND  expected_net_gain = EV_after_tax - total_cost > 0
++Anything else is COST_GATE_SKIP (no edge / not enough edge) or COST_GATE_INVALID (bad or
++missing inputs; fail closed). Hard risk exits are RISK_EXIT: never skipped, numbers recorded.
++
++Round-trip cost (USD), all >= 0 (negative inputs are rejected)
++    spread     = max(spread_usd, (ask - bid) x units)     one full spread vs mid
++    open_fee   = prepare/getCost (buy legs)  — final stage: REQUIRED, no default
++    close_fee  = prepare/getCost             — final stage: REQUIRED, no default
++    overnight  = prepare/getCost (0 for x1 long real stock/ETF)
++    tax_est    = TAX_RATE x max(realized_pnl, 0) on every SELL leg
++    total_cost = spread + open_fee + close_fee + overnight + tax_est   (must be > 0)
++Preliminary stage only (no live eToro access in-script): spread 0.15% of notional and
++$0.75 per order (real Classic fills 2026-10-07 ADBE/GS/CAT $500 each, keys) — marked
++assumed; never binding.
++
++Expected gain = directional EV, after tax
++    rsi_buy:  EV = units x [p x (TP - ask) - (1 - p) x (ask - SL)]
++              EV_after_tax = EV x (1 - TAX_RATE) if EV > 0 else EV
++              p must carry a cited source. Default P_EVIDENCE = classic_rsi 1H backtest
++              (backtest-summary-1h.json): 12 wins / 19 trades = 0.632, Wilson 95% lower
++              bound 0.410 -> the conservative bound is used unless overridden with a cited p.
++              p <= the bracket break-even (ask-SL)/(TP-SL) (= 0.4286 for 1.5/2.0 ATR) -> SKIP.
++    rebalance_add / trim / sell / rotation: a directional edge dict is REQUIRED
++              edge = {method in EDGE_METHODS, expected_return_pct, horizon_days,
++                      evidence: {source, n}}  (rotation: held_expected_return_pct too)
++              add:      EV = notional x er / 100
++              trim/sell EV = -notional x er_held / 100   (loss avoided by selling)
++              rotation  EV = buy_notional x (er_new - er_held) / 100   — ONE combined gate
++              no edge / no evidence -> SKIP. Typed USD gains are not accepted.
++
++Final stage (binding) fails closed unless: bid < ask both > 0, quote_ts present and
++<= QUOTE_MAX_AGE_S old, open/close fees supplied (sources prepare/getCost), no assumptions,
++optional independent mark within MARK_TOL of ask.
+ 
+ This module never calls eToro and never places.
+ """
+@@ -39,29 +43,47 @@
+ from __future__ import annotations
+ 
+ import math
++from datetime import datetime, timezone
+ from typing import Any, Optional
+ 
+-VERSION = "classic-cost-gate-v1-20261012"
+-RULE = "expected_gain >= 2 x total_cost"
++VERSION = "classic-cost-gate-v2-20261012-fix1"
++RULE = "total_cost > 0 and EV_after_tax >= 2 x total_cost and EV_after_tax - total_cost > 0"
+ MULTIPLIER = 2.0
+ 
+-TAX_RATE = 0.25  # conservative: Israeli capital-gains rate 25% on realized gains
+-DEFAULT_SPREAD_PCT = 0.0015  # 0.15% of notional when no live bid/ask (conservative for liquid US names)
+-# Per-order fee assumption when prepare/getCost gives none: $0.75, as charged on real Classic
+-# fills 2026-10-07 (ADBE, GS, CAT at $500 each, keys/API orders).
++TAX_RATE = 0.25  # conservative: Israeli capital-gains rate 25%
++DEFAULT_SPREAD_PCT = 0.0015  # PRELIMINARY ONLY
+ DEFAULT_FEE_SOURCE = "real Classic fills 2026-10-07 (ADBE/GS/CAT $500 each) charged $0.75 per order on keys"
+-DEFAULT_OPEN_FEE_USD = 0.75
+-DEFAULT_CLOSE_FEE_USD = 0.75
+-DEFAULT_OVERNIGHT_USD = 0.0  # x1 long real stock/ETF: no overnight financing
+-DEFAULT_NOTIONAL_USD = 500.0  # preliminary sizing when the pack has no size (>= $400 min position)
+-P_HIT_RSI = 0.43
++DEFAULT_OPEN_FEE_USD = 0.75  # PRELIMINARY ONLY
++DEFAULT_CLOSE_FEE_USD = 0.75  # PRELIMINARY ONLY
++DEFAULT_OVERNIGHT_USD = 0.0
++DEFAULT_NOTIONAL_USD = 500.0
+ DEFAULT_HOLD_DAYS = 20
+-MOVE_HAIRCUT = 0.25
++QUOTE_MAX_AGE_S = 60
++MARK_TOL = 0.001  # 0.1%
++
++# p for RSI 1H bracket trades — documented parameter with its evidence.
++P_EVIDENCE: dict[str, Any] = {
++    "source": "classic_rsi/backtest-summary-1h.json (sha256 8d398bf0..., asOf 2026-09-19 10:44 IDT; "
++              "1H confirmed bars, 60d, AAPL MSFT QQQ SMH XLV JNJ; SL 1.5xATR / TP 2.0xATR)",
++    "wins": 12,
++    "n": 19,
++    "point": 12 / 19,
++    "lower_95_wilson": 0.4104,
++    "used": "lower_95_wilson",
++    "caveat": "in-sample, n=19; not out-of-sample evidence. Lower bound used; it is below the "
++              "1.5/2.0 bracket break-even 0.4286, so RSI packs SKIP until better evidence exists.",
++}
++P_HIT_DEFAULT = P_EVIDENCE["lower_95_wilson"]
++P_SOURCE_DEFAULT = f"{P_EVIDENCE['source']} — Wilson 95% lower bound of {P_EVIDENCE['wins']}/{P_EVIDENCE['n']}"
++EDGE_METHODS = ("rs_expected_return", "trend_expected_return")
+ 
+ VERDICT_PASS = "PASS"
+ VERDICT_SKIP = "COST_GATE_SKIP"
++VERDICT_INVALID = "COST_GATE_INVALID"
+ VERDICT_RISK_EXIT = "RISK_EXIT"
+ KINDS = ("rsi_buy", "rebalance_add", "trim", "sell")
++RISK_EXIT_REASONS = ("stop_hit", "trigger_3_50dma_neg_rs", "trigger_4_200dma", "hard_cap_breach",
++                     "cash_below_floor")
+ 
+ 
+ def _f(x: Any) -> Optional[float]:
+@@ -76,6 +98,150 @@
+     return None if x is None else round(float(x), n)
+ 
+ 
++def _parse_ts(ts: Any) -> Optional[datetime]:
++    if ts is None:
++        return None
++    if isinstance(ts, datetime):
++        d = ts
++    else:
++        try:
++            d = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
++        except ValueError:
++            return None
++    return d if d.tzinfo else None  # naive timestamps are rejected (ambiguous zone)
++
++
++def quote_errors(*, bid: Any, ask: Any, quote_ts: Any, now: Optional[datetime] = None,
++                 independent_mark: Any = None, max_age_s: float = QUOTE_MAX_AGE_S) -> list[str]:
++    """Final-stage live-quote checks. Empty list = OK."""
++    errs: list[str] = []
++    b, a = _f(bid), _f(ask)
++    if b is None or a is None:
++        errs.append("QUOTE_MISSING")
++        return errs
++    if b <= 0 or a <= 0 or b >= a:
++        errs.append("QUOTE_BID_GE_ASK_OR_NONPOSITIVE")
++    t = _parse_ts(quote_ts)
++    now = now or datetime.now(timezone.utc)
++    if t is None:
++        errs.append("QUOTE_TS_MISSING")
++    else:
++        age = (now - t).total_seconds()
++        if age > max_age_s or age < -5:
++            errs.append(f"QUOTE_STALE(age={age:.0f}s>{max_age_s:.0f}s)")
++    m = _f(independent_mark)
++    if m is not None and a and abs(a - m) / m > MARK_TOL:
++        errs.append("ASK_VS_MARK_GT_0.1PCT")
++    return errs
++
++
++def edge_errors(edge: Any, *, rotation: bool = False) -> list[str]:
++    if not isinstance(edge, dict):
++        return ["EDGE_MISSING"]
++    errs = []
++    if edge.get("method") not in EDGE_METHODS:
++        errs.append(f"EDGE_METHOD_NOT_IN_{'/'.join(EDGE_METHODS)}")
++    if _f(edge.get("expected_return_pct")) is None:
++        errs.append("EDGE_EXPECTED_RETURN_MISSING")
++    if rotation and _f(edge.get("held_expected_return_pct")) is None:
++        errs.append("EDGE_HELD_EXPECTED_RETURN_MISSING")
++    if _f(edge.get("horizon_days")) is None or _f(edge.get("horizon_days")) <= 0:
++        errs.append("EDGE_HORIZON_MISSING")
++    ev = edge.get("evidence") or {}
++    if not (isinstance(ev, dict) and str(ev.get("source") or "").strip() and (_f(ev.get("n")) or 0) >= 1):
++        errs.append("EDGE_NO_CITED_EVIDENCE")
++    return errs
++
++
++def _leg_costs(*, side: str, units: float, price: float, bid, ask, spread_usd, open_fee_usd, close_fee_usd,
++               overnight_usd, realized_pnl_usd, tax_rate, final: bool, errors: list, assumptions: list,
++               src: dict, tag: str = "") -> dict[str, float]:
++    """Cost of one leg. side='buy' (round trip: open+close+spread) or 'sell' (close + spread + tax)."""
++    k = (lambda s: f"{tag}{s}")
++    for nm, v in (("spread_usd", spread_usd), ("open_fee", open_fee_usd), ("close_fee", close_fee_usd),
++                  ("overnight", overnight_usd)):
++        if v is not None and (_f(v) is None or _f(v) < 0):
++            errors.append(f"NEGATIVE_OR_BAD_{k(nm).upper()}")
++    b, a = _f(bid), _f(ask)
++    live = ((a - b) * units) if (b is not None and a is not None and a > b > 0) else None
++    su = _f(spread_usd)
++    if su is not None and su >= 0 and live is not None:
++        spread = max(su, live)
++        src[k("spread")] = "max(getCost spread_usd, live (ask-bid) x units)"
++    elif live is not None:
++        spread = live
++        src[k("spread")] = "live bid/ask"
++    elif su is not None and su >= 0:
++        spread = su
++        src[k("spread")] = "prepare/getCost"
++        if final:
++            errors.append(f"{k('QUOTE').upper()}_MISSING")
++    else:
++        spread = units * price * DEFAULT_SPREAD_PCT
++        src[k("spread")] = "assumed_default"
++        assumptions.append(f"{tag}spread assumed {DEFAULT_SPREAD_PCT * 100:.2f}% of notional")
++
++    def fee(v, default, name):
++        fv = _f(v)
++        if fv is not None and fv >= 0:
++            src[k(name)] = "prepare/getCost"
++            return fv
++        if fv is None and v is None:
++            if final:
++                errors.append(f"{k(name).upper()}_REQUIRED_AT_FINAL")
++            src[k(name)] = "assumed_default"
++            assumptions.append(f"{tag}{name} assumed ${default:.2f} ({DEFAULT_FEE_SOURCE})")
++            return default
++        return 0.0  # negative: already an error
++
++    of = fee(open_fee_usd, DEFAULT_OPEN_FEE_USD, "open_fee") if side == "buy" else 0.0
++    cf = fee(close_fee_usd, DEFAULT_CLOSE_FEE_USD, "close_fee")
++    on = _f(overnight_usd)
++    if on is None or on < 0:
++        on = DEFAULT_OVERNIGHT_USD
++        src.setdefault(k("overnight"), "x1 long real stock: 0")
++    rp = _f(realized_pnl_usd) if side == "sell" else None
++    if side == "sell" and rp is None:
++        errors.append(f"{k('REALIZED_PNL').upper()}_REQUIRED_FOR_SELL")
++    tax = tax_rate * max(rp or 0.0, 0.0) if side == "sell" else 0.0
++    return {"spread": spread, "open_fee": of, "close_fee": cf, "overnight": on, "tax_est": tax,
++            "realized_pnl": rp, "total_cost": spread + of + cf + on + tax}
++
++
++def _verdict(eg_after: Optional[float], total: float, errors: list, risk_exit: bool) -> tuple[str, Any, Any]:
++    net = None if eg_after is None else eg_after - total
++    ratio = None if (eg_after is None or total <= 0) else eg_after / total
++    if total <= 0 and not risk_exit:
++        errors.append("TOTAL_COST_NOT_POSITIVE")
++    if errors:
++        return VERDICT_INVALID, net, ratio
++    if risk_exit:
++        return VERDICT_RISK_EXIT, net, ratio
++    if eg_after is not None and ratio is not None and eg_after >= MULTIPLIER * total and net > 0:
++        return VERDICT_PASS, net, ratio
++    return VERDICT_SKIP, net, ratio
++
++
++def _block(*, stage, kind, inputs, costs, eg_raw, eg_after, net, ratio, method, verdict, assumptions, errors,
++           skip_reasons, legs=None):
++    b = {
++        "version": VERSION, "stage": stage, "binding": stage == "final" and verdict != VERDICT_INVALID,
++        "kind": kind, "rule": RULE, "inputs": inputs,
++        "costs": {kk: _r(costs[kk]) for kk in ("spread", "open_fee", "close_fee", "overnight", "tax_est",
++                                                 "total_cost")},
++        "spread": _r(costs["spread"]), "fees": _r(costs["open_fee"] + costs["close_fee"]),
++        "overnight": _r(costs["overnight"]), "realized_pnl": costs.get("realized_pnl"),
++        "tax_est": _r(costs["tax_est"]), "total_cost": _r(costs["total_cost"]),
++        "expected_gain_pre_tax": _r(eg_raw), "expected_gain": _r(eg_after),
++        "expected_net_gain": _r(net), "ratio": _r(ratio, 3),
++        "method": method, "verdict": verdict, "assumptions": assumptions, "errors": errors,
++        "skip_reasons": skip_reasons,
++    }
++    if legs is not None:
++        b["legs"] = legs
++    return b
++
++
+ def evaluate(
+     *,
+     kind: str,
+@@ -84,6 +250,8 @@
+     notional_usd: Optional[float] = None,
+     bid: Optional[float] = None,
+     ask: Optional[float] = None,
++    quote_ts: Any = None,
++    independent_mark: Optional[float] = None,
+     spread_usd: Optional[float] = None,
+     open_fee_usd: Optional[float] = None,
+     close_fee_usd: Optional[float] = None,
+@@ -91,196 +259,215 @@
+     take_profit: Optional[float] = None,
+     stop_loss: Optional[float] = None,
+     p_hit: Optional[float] = None,
++    p_source: Optional[str] = None,
++    edge: Optional[dict] = None,
+     daily_atr: Optional[float] = None,
+     hold_days: Optional[float] = None,
+     realized_pnl_usd: Optional[float] = None,
+-    expected_gain_usd: Optional[float] = None,
+-    expected_gain_method: Optional[str] = None,
+     risk_exit: bool = False,
++    risk_exit_reason: Optional[str] = None,
+     tax_rate: float = TAX_RATE,
+     stage: str = "preliminary",
+-    sources: Optional[dict[str, str]] = None,
++    now: Optional[datetime] = None,
+ ) -> dict[str, Any]:
+-    """Compute the cost_gate block. Pure function; logs every input and number."""
++    """Compute the cost_gate block for one single-leg action. Pure; logs every number."""
+     if kind not in KINDS:
+-        raise ValueError(f"kind must be one of {KINDS}")
+-    src = dict(sources or {})
++        raise ValueError(f"kind must be one of {KINDS} (rotation: evaluate_rotation)")
++    final = stage == "final"
++    errors: list[str] = []
++    skip: list[str] = []
+     assumptions: list[str] = []
+-    entry_f = _f(entry)
+-    if entry_f is None or entry_f <= 0:
+-        raise ValueError("entry must be a positive price")
+-
+-    u = _f(units)
+-    notional = _f(notional_usd)
+-    if u is None and notional is None:
+-        notional = DEFAULT_NOTIONAL_USD
++    src: dict[str, str] = {}
++    e = _f(entry)
++    if e is None or e <= 0:
++        errors.append("ENTRY_NOT_POSITIVE")
++        e = 1.0
++    u, n = _f(units), _f(notional_usd)
++    if (units is not None and (u is None or u <= 0)) or (notional_usd is not None and (n is None or n <= 0)):
++        errors.append("UNITS_OR_NOTIONAL_NOT_POSITIVE")
++        u = u if (u and u > 0) else None
++        n = n if (n and n > 0) else None
++    if u is None and n is None:
++        if final:
++            errors.append("UNITS_REQUIRED_AT_FINAL")
++        n = DEFAULT_NOTIONAL_USD
+         assumptions.append(f"notional assumed ${DEFAULT_NOTIONAL_USD:.0f} (pack unsized)")
+-        src.setdefault("notional", "assumed_default")
++        src["notional"] = "assumed_default"
+     if u is None:
+-        u = notional / entry_f
+-    notional = u * entry_f
+-    is_buy = kind in ("rsi_buy", "rebalance_add")
+-
+-    # --- costs ---
+-    b, a = _f(bid), _f(ask)
+-    if spread_usd is not None and _f(spread_usd) is not None:
+-        spread = abs(float(spread_usd))
+-        src.setdefault("spread", "prepare/getCost")
+-    elif b is not None and a is not None and a >= b > 0:
+-        spread = (a - b) * u
+-        src.setdefault("spread", "live bid/ask")
+-    else:
+-        spread = notional * DEFAULT_SPREAD_PCT
+-        assumptions.append(f"spread assumed {DEFAULT_SPREAD_PCT * 100:.2f}% of notional (no live quote)")
+-        src.setdefault("spread", "assumed_default")
+-    if is_buy:
+-        of = _f(open_fee_usd)
+-        if of is None:
+-            of = DEFAULT_OPEN_FEE_USD
+-            assumptions.append(f"open fee assumed ${DEFAULT_OPEN_FEE_USD:.2f} ({DEFAULT_FEE_SOURCE})")
+-            src.setdefault("open_fee", "assumed_default")
+-        else:
+-            src.setdefault("open_fee", "prepare/getCost")
+-    else:
+-        of = 0.0
+-    cf = _f(close_fee_usd)
+-    if cf is None:
+-        cf = DEFAULT_CLOSE_FEE_USD
+-        assumptions.append(f"close fee assumed ${DEFAULT_CLOSE_FEE_USD:.2f} ({DEFAULT_FEE_SOURCE})")
+-        src.setdefault("close_fee", "assumed_default")
+-    else:
+-        src.setdefault("close_fee", "prepare/getCost")
+-    on = _f(overnight_usd)
+-    if on is None:
+-        on = DEFAULT_OVERNIGHT_USD
+-        assumptions.append("overnight 0 (x1 long real stock/ETF)")
+-        src.setdefault("overnight", "assumed_default")
+-    rp = _f(realized_pnl_usd) if not is_buy else None
+-    tax = tax_rate * max(rp or 0.0, 0.0) if not is_buy else 0.0
+-    total = spread + of + cf + on + tax
+-
+-    # --- expected gain ---
+-    eg: Optional[float] = None
+-    method = expected_gain_method
+-    hd = _f(hold_days)
++        u = n / e
++    notional = u * e
++    if final:
++        errors += quote_errors(bid=bid, ask=ask, quote_ts=quote_ts, now=now, independent_mark=independent_mark)
++    elif bid is not None and ask is not None and (_f(bid) or 0) >= (_f(ask) or 0):
++        errors.append("QUOTE_BID_GE_ASK_OR_NONPOSITIVE")
++    if not (0.0 <= tax_rate < 1.0):
++        errors.append("TAX_RATE_OUT_OF_RANGE")
++    side = "buy" if kind in ("rsi_buy", "rebalance_add") else "sell"
++    costs = _leg_costs(side=side, units=u, price=e, bid=bid, ask=ask, spread_usd=spread_usd,
++                       open_fee_usd=open_fee_usd, close_fee_usd=close_fee_usd, overnight_usd=overnight_usd,
++                       realized_pnl_usd=realized_pnl_usd, tax_rate=tax_rate, final=final and not risk_exit,
++                       errors=errors, assumptions=assumptions, src=src)
++    if final and assumptions and not risk_exit:
++        errors.append("ASSUMED_INPUTS_AT_FINAL")
++
++    eg_raw: Optional[float] = None
++    p_used = None
++    breakeven = None
++    if risk_exit and risk_exit_reason not in RISK_EXIT_REASONS:
++        errors.append(f"RISK_EXIT_REASON_NOT_IN_{'/'.join(RISK_EXIT_REASONS)}")
+     if kind == "rsi_buy":
+-        tp = _f(take_profit)
+-        p = _f(p_hit) if p_hit is not None else P_HIT_RSI
+-        if tp is not None and tp > entry_f:
+-            eg = (tp - entry_f) * u * p
+-            method = method or (f"rsi_tp: (TP-entry) x units x p_hit; p_hit={p:.2f} "
+-                                f"(zero-edge SL/(SL+TP) for 1.5/2.0 ATR bracket)")
++        tp, sl = _f(take_profit), _f(stop_loss)
++        if p_hit is not None:
++            p_used = _f(p_hit)
++            psrc = (p_source or "").strip() or None
++        else:
++            p_used, psrc = P_HIT_DEFAULT, P_SOURCE_DEFAULT
++        if p_used is None or not (0.0 < p_used < 1.0):
++            errors.append("P_OUT_OF_RANGE_0_1")
++        if tp is None or sl is None or not (sl < e < tp) or sl <= 0:
++            errors.append("TP_SL_INVALID(need 0<SL<entry<TP)")
++            method = "rsi_ev: TP/SL invalid"
+         else:
+-            method = "rsi_tp: TP missing or <= entry"
+-    elif kind == "rebalance_add":
+-        atr_d = _f(daily_atr)
+-        hd = hd or float(DEFAULT_HOLD_DAYS)
+-        if atr_d is not None and atr_d > 0:
+-            move_pct = (atr_d / entry_f) * math.sqrt(hd)
+-            eg = notional * move_pct * MOVE_HAIRCUT
+-            method = method or (f"atr_hold: notional x (ATRd%={atr_d / entry_f * 100:.3f}% x sqrt({hd:g}d)) "
+-                                f"x haircut {MOVE_HAIRCUT}")
++            breakeven = (e - sl) / (tp - sl)
++            pp = p_used if p_used is not None else 0.0
++            eg_raw = u * (pp * (tp - e) - (1 - pp) * (e - sl))
++            method = (f"rsi_ev: units x [p x (TP-ask) - (1-p) x (ask-SL)]; p={pp:.4f} ({psrc or 'NO SOURCE'}); "
++                      f"break-even p={breakeven:.4f}; x(1-{tax_rate}) if >0")
++            if not psrc:
++                skip.append("P_NO_CITED_EVIDENCE")
++            if p_used is not None and p_used <= breakeven + 1e-9:
++                skip.append("P_AT_OR_BELOW_BREAKEVEN")
++        p_src_out = psrc
++    else:
++        p_src_out = None
++        errs = edge_errors(edge)
++        if errs:
++            skip += errs
++            method = f"{kind}: directional edge required ({', '.join(errs)})"
+         else:
+-            method = "atr_hold: daily ATR missing"
++            er = float(edge["expected_return_pct"]) / 100.0
++            eg_raw = notional * er if side == "buy" else -notional * er
++            method = (f"{kind}: {edge['method']} er={edge['expected_return_pct']}% over {edge['horizon_days']}d "
++                      f"({edge['evidence'].get('source')}, n={edge['evidence'].get('n')}); "
++                      f"EV={'notional x er' if side == 'buy' else '-notional x er_held (loss avoided)'}; x(1-tax) if >0")
++    eg_after = None if eg_raw is None else (eg_raw * (1 - tax_rate) if eg_raw > 0 else eg_raw)
++    if skip and not risk_exit:
++        verdict, net, ratio = _verdict(eg_after, costs["total_cost"], errors, False)
++        if verdict == VERDICT_PASS:
++            verdict = VERDICT_SKIP
+     else:
+-        eg = _f(expected_gain_usd)
+-        if eg is None:
+-            method = method or "trim/sell: expected_gain_usd not supplied"
+-        elif not method:
+-            method = "trim/sell: caller-supplied (method not stated)"
++        verdict, net, ratio = _verdict(eg_after, costs["total_cost"], errors, risk_exit)
++    inputs = {
++        "entry": _r(e), "units": _r(u, 6), "notional_usd": _r(notional, 2), "bid": _f(bid), "ask": _f(ask),
++        "quote_ts": None if quote_ts is None else str(quote_ts), "independent_mark": _f(independent_mark),
++        "take_profit": _f(take_profit), "stop_loss": _f(stop_loss),
++        "p_hit": _r(p_used), "p_source": p_src_out, "p_breakeven": _r(breakeven),
++        "edge": edge, "daily_atr": _f(daily_atr), "hold_days": _f(hold_days), "tax_rate": tax_rate,
++        "realized_pnl_usd": costs.get("realized_pnl"), "risk_exit": bool(risk_exit),
++        "risk_exit_reason": risk_exit_reason, "sources": src,
++    }
++    return _block(stage=stage, kind=kind, inputs=inputs, costs=costs, eg_raw=eg_raw, eg_after=eg_after,
++                  net=net, ratio=ratio, method=method, verdict=verdict, assumptions=assumptions,
++                  errors=errors, skip_reasons=skip)
+ 
+-    net = None if eg is None else eg - total
+-    ratio = None if eg is None else (eg / total if total > 0 else float("inf"))
+-    if risk_exit:
+-        verdict = VERDICT_RISK_EXIT
+-    elif eg is not None and eg >= MULTIPLIER * total and net is not None and net > 0:
+-        verdict = VERDICT_PASS
++
++def evaluate_rotation(*, sell: dict[str, Any], buy: dict[str, Any], edge: dict[str, Any],
++                      tax_rate: float = TAX_RATE, stage: str = "final",
++                      now: Optional[datetime] = None) -> dict[str, Any]:
++    """ONE combined gate for a rotation (sell held name -> buy replacement).
++
++    sell/buy: {symbol, units, bid, ask, quote_ts, spread_usd, open_fee_usd (buy), close_fee_usd,
++               realized_pnl_usd (sell)}. edge: expected_return_pct (replacement),
++               held_expected_return_pct, horizon_days, method, evidence{source,n}.
++    total_cost = sell(spread + close fee + tax on realized) + buy(spread + open + close fee)
++    EV = buy_notional x (er_new - er_held)/100, x(1-tax) if > 0.
++    """
++    final = stage == "final"
++    errors: list[str] = []
++    skip: list[str] = []
++    assumptions: list[str] = []
++    src: dict[str, str] = {}
++    legs = []
++    tot = {"spread": 0.0, "open_fee": 0.0, "close_fee": 0.0, "overnight": 0.0, "tax_est": 0.0,
++           "total_cost": 0.0, "realized_pnl": None}
++    notional_buy = None
++    for side, leg in (("sell", sell), ("buy", buy)):
++        u = _f(leg.get("units"))
++        px = _f(leg.get("bid" if side == "sell" else "ask"))
++        if u is None or u <= 0 or px is None or px <= 0:
++            errors.append(f"{side.upper()}_LEG_UNITS_OR_PRICE_INVALID")
++            u, px = (u if u and u > 0 else 1.0), (px if px and px > 0 else 1.0)
++        if final:
++            errors += [f"{side.upper()}_{x}" for x in quote_errors(bid=leg.get("bid"), ask=leg.get("ask"),
++                                                                    quote_ts=leg.get("quote_ts"), now=now)]
++        c = _leg_costs(side=side, units=u, price=px, bid=leg.get("bid"), ask=leg.get("ask"),
++                       spread_usd=leg.get("spread_usd"), open_fee_usd=leg.get("open_fee_usd"),
++                       close_fee_usd=leg.get("close_fee_usd"), overnight_usd=leg.get("overnight_usd"),
++                       realized_pnl_usd=leg.get("realized_pnl_usd"), tax_rate=tax_rate, final=final,
++                       errors=errors, assumptions=assumptions, src=src, tag=f"{side}_")
++        legs.append({"side": side, "symbol": leg.get("symbol"), "units": _r(u, 6), "price": px,
++                     "notional_usd": _r(u * px, 2), **{kk: _r(v) for kk, v in c.items() if kk != "realized_pnl"},
++                     "realized_pnl": c.get("realized_pnl")})
++        for kk in ("spread", "open_fee", "close_fee", "overnight", "tax_est", "total_cost"):
++            tot[kk] += c[kk]
++        if side == "sell":
++            tot["realized_pnl"] = c.get("realized_pnl")
++        else:
++            notional_buy = u * px
++    if final and assumptions:
++        errors.append("ASSUMED_INPUTS_AT_FINAL")
++    errs = edge_errors(edge, rotation=True)
++    eg_raw = None
++    if errs:
++        skip += errs
++        method = f"rotation: directional edge required ({', '.join(errs)})"
+     else:
++        d = (float(edge["expected_return_pct"]) - float(edge["held_expected_return_pct"])) / 100.0
++        eg_raw = (notional_buy or 0.0) * d
++        method = (f"rotation: {edge['method']} buy_notional x (er_new {edge['expected_return_pct']}% - er_held "
++                  f"{edge['held_expected_return_pct']}%) over {edge['horizon_days']}d "
++                  f"({edge['evidence'].get('source')}, n={edge['evidence'].get('n')}); x(1-tax) if >0")
++    eg_after = None if eg_raw is None else (eg_raw * (1 - tax_rate) if eg_raw > 0 else eg_raw)
++    verdict, net, ratio = _verdict(eg_after, tot["total_cost"], errors, False)
++    if skip and verdict == VERDICT_PASS:
+         verdict = VERDICT_SKIP
+-
+-    return {
+-        "version": VERSION,
+-        "stage": stage,
+-        "binding": stage == "final",
+-        "kind": kind,
+-        "rule": RULE,
+-        "inputs": {
+-            "entry": _r(entry_f), "units": _r(u, 6), "notional_usd": _r(notional, 2),
+-            "bid": b, "ask": a, "take_profit": _f(take_profit), "stop_loss": _f(stop_loss),
+-            "p_hit": (_f(p_hit) if p_hit is not None else (P_HIT_RSI if kind == "rsi_buy" else None)),
+-            "daily_atr": _f(daily_atr), "hold_days": hd, "tax_rate": tax_rate,
+-            "realized_pnl_usd": rp, "risk_exit": bool(risk_exit),
+-            "sources": src,
+-        },
+-        "costs": {"spread": _r(spread, 4), "open_fee": _r(of, 4), "close_fee": _r(cf, 4),
+-                  "overnight": _r(on, 4), "tax_est": _r(tax, 4), "total_cost": _r(total, 4)},
+-        # flat fields required by order-QA
+-        "spread": _r(spread, 4),
+-        "fees": _r(of + cf, 4),
+-        "overnight": _r(on, 4),
+-        "realized_pnl": rp,
+-        "tax_est": _r(tax, 4),
+-        "total_cost": _r(total, 4),
+-        "expected_gain": _r(eg, 4),
+-        "expected_net_gain": _r(net, 4),
+-        "ratio": (None if ratio is None else (_r(ratio, 3) if math.isfinite(ratio) else "inf")),
+-        "method": method,
+-        "verdict": verdict,
+-        "assumptions": assumptions,
+-    }
++    inputs = {"edge": edge, "tax_rate": tax_rate, "sources": src, "sell": sell, "buy": buy}
++    return _block(stage=stage, kind="rotation", inputs=inputs, costs=tot, eg_raw=eg_raw, eg_after=eg_after,
++                  net=net, ratio=ratio, method=method, verdict=verdict, assumptions=assumptions,
++                  errors=errors, skip_reasons=skip, legs=legs)
+ 
+ 
+ def preliminary_for_pack(pack: dict[str, Any], *, notional_usd: Optional[float] = None) -> dict[str, Any]:
+-    """Preliminary gate for an RSI buy pack (no live eToro data in-script)."""
++    """Preliminary (non-binding) gate for an RSI buy pack — assumed spread/fees, default cited p."""
+     lv = pack.get("levels") or {}
+     sz = (pack.get("sizing") or {}).get("suggested_notional_usd")
+     n = notional_usd if notional_usd is not None else _f(sz)
+-    try:
+-        cg = evaluate(kind="rsi_buy", entry=lv.get("entry"), notional_usd=n,
+-                      take_profit=lv.get("take_profit"), stop_loss=lv.get("stop_loss"),
+-                      stage="preliminary")
+-    except ValueError as exc:
+-        return {"version": VERSION, "stage": "preliminary", "binding": False, "kind": "rsi_buy",
+-                "rule": RULE, "verdict": VERDICT_SKIP, "method": f"error: {exc}",
+-                "total_cost": None, "expected_gain": None, "ratio": None, "assumptions": []}
+-    cg["note"] = ("PRELIMINARY: assumed spread/fees (no live eToro access in-script). "
+-                  "Binding gate is recomputed at prepare time with live spread + fees "
+-                  "(cost_gate.final_gate_from_prepare / execute_pass).")
++    cg = evaluate(kind="rsi_buy", entry=lv.get("entry"), notional_usd=n, take_profit=lv.get("take_profit"),
++                  stop_loss=lv.get("stop_loss"), stage="preliminary")
++    cg["note"] = ("PRELIMINARY: assumed spread/fees (no live eToro access in-script). Binding gate is "
++                  "recomputed at prepare time from the live quote + getCost fees (execute_pass).")
+     return cg
+ 
+ 
+-def final_gate_from_prepare(
+-    pack: dict[str, Any],
+-    *,
+-    bid: float,
+-    ask: float,
+-    units: float,
+-    open_fee_usd: Optional[float] = None,
+-    close_fee_usd: Optional[float] = None,
+-    overnight_usd: Optional[float] = None,
+-    spread_usd: Optional[float] = None,
+-    kind: str = "rsi_buy",
+-    daily_atr: Optional[float] = None,
+-    hold_days: Optional[float] = None,
+-    rebase_on_ask: bool = True,
+-) -> dict[str, Any]:
+-    """Binding gate at prepare time using the live prepare/getCost values.
+-
+-    RSI packs: SL/TP re-based on the live ask (entry = ask) with the pack's ATR multiples,
+-    as required by the classic-rebalance skill (Step 5).
+-    """
++def rebase_levels(pack: dict[str, Any], ask: float) -> dict[str, Any]:
+     lv = pack.get("levels") or {}
+-    entry = float(ask)
+-    tp = _f(lv.get("take_profit"))
+-    sl = _f(lv.get("stop_loss"))
+     atr1h = _f(lv.get("atr"))
+-    if rebase_on_ask and atr1h:
+-        tp = entry + float(lv.get("tp_mult", 2.0)) * atr1h
+-        sl = entry - float(lv.get("sl_mult", 1.5)) * atr1h
+-    cg = evaluate(kind=kind, entry=entry, units=units, bid=bid, ask=ask, spread_usd=spread_usd,
+-                  open_fee_usd=open_fee_usd, close_fee_usd=close_fee_usd, overnight_usd=overnight_usd,
+-                  take_profit=tp, stop_loss=sl, daily_atr=daily_atr, hold_days=hold_days,
+-                  stage="final")
+-    cg["rebased_levels"] = {"entry": _r(entry), "take_profit": _r(tp), "stop_loss": _r(sl),
+-                            "atr_1h": atr1h, "rebased_on": "live ask" if rebase_on_ask else "signal close"}
++    if not atr1h or atr1h <= 0:
++        return {"entry": _r(ask), "take_profit": None, "stop_loss": None, "atr_1h": atr1h, "rebased_on": "live ask"}
++    return {"entry": _r(ask), "take_profit": _r(ask + float(lv.get("tp_mult", 2.0)) * atr1h),
++            "stop_loss": _r(ask - float(lv.get("sl_mult", 1.5)) * atr1h), "atr_1h": atr1h, "rebased_on": "live ask"}
++
++
++def final_gate_from_prepare(pack: dict[str, Any], *, bid: float, ask: float, units: float, quote_ts: Any,
++                            open_fee_usd: Optional[float], close_fee_usd: Optional[float],
++                            overnight_usd: Optional[float] = None, spread_usd: Optional[float] = None,
++                            independent_mark: Optional[float] = None, p_hit: Optional[float] = None,
++                            p_source: Optional[str] = None, now: Optional[datetime] = None) -> dict[str, Any]:
++    """Binding RSI gate at prepare time: SL/TP re-based on the live ask with the pack's ATR multiples."""
++    rl = rebase_levels(pack, float(ask))
++    cg = evaluate(kind="rsi_buy", entry=float(ask), units=units, bid=bid, ask=ask, quote_ts=quote_ts,
++                  independent_mark=independent_mark, spread_usd=spread_usd, open_fee_usd=open_fee_usd,
++                  close_fee_usd=close_fee_usd, overnight_usd=overnight_usd, take_profit=rl["take_profit"],
++                  stop_loss=rl["stop_loss"], p_hit=p_hit, p_source=p_source, stage="final", now=now)
++    cg["rebased_levels"] = rl
+     return cg
+--- a/classic_rsi/execute_pass.py
++++ b/classic_rsi/execute_pass.py
+@@ -1,45 +1,57 @@
+-"""Final pre-place checks for a QA-PASSed Classic RSI buy pack (FULL AUTO path).
++"""Final pre-place GO/NO-GO for Classic FULL AUTO (RSI buy packs AND rebalance actions).
+ 
+-Usage (from /workspace):
+-  ./screener-venv/bin/python -m classic_rsi.execute_pass \
+-      --pack-id <run_id>#<SYMBOL> --run-qa-verdict <qa-verdict.json> \
+-      --bid 56.10 --ask 56.14 --units 8.9 --open-fee 1 --close-fee 1 \
+-      --cash 3671.18 [--order-qa-verdict <order-qa.json>] [--book /workspace/classic-portfolio-for-app.json]
+-
+-Inputs are the LIVE values from the user-OfersClaw5 prepare/getCost response and the live
+-book. This CLI NEVER calls eToro and NEVER places: it prints GO / NO-GO plus an audit JSON.
+-Trader_Classic places through the MCP only on GO (which requires run-QA PASS, order-QA PASS
+-and every check below).
+-
+-Checks
+-  1. pack exists in the cited audit run, auto_place_eligible=True
+-  2. run-QA verdict PASS for the same run_id
+-  3. instrument guard (resolved US stock/ETF id, not crypto), long-only x1 buy
+-  4. drift: |live ask - signal entry| <= 0.5 x ATR(1H)
+-  5. cash after (units x ask + open fee) >= CASH_FLOOR_USD — auto-shrinks units if needed
+-  6. caps after the buy: name <= 30% (ETF) / 15% (stock) of invested; sleeve <= 45% —
+-     auto-shrinks units to fit; NO-GO if the shrunk position is < MIN_POSITION_USD
+-  7. final cost gate with live spread + fees on the final units (expected_gain >= 2 x total_cost)
+-  8. order-QA verdict PASS for the same run_id + symbol (else NO-GO ORDER_QA_PENDING, with
+-     ready_for_order_qa=True when 1-7 pass so the final cost_gate can be handed to QA)
+-  9. no weekend opens (IDT Sat/Sun) unless --allow-weekend (explicit Ofer override only)
+-An explicit Ofer/CoS HOLD must still be checked by the agent (--hold makes it NO-GO).
++v2 (2026-10-12, QA fix1). NEVER calls eToro, NEVER places. Trader_Classic places through the
++user-OfersClaw5 MCP only on GO, copying `order_payloads` VERBATIM (one call per payload, sells first).
++
++RSI pack:
++  ./screener-venv/bin/python -m classic_rsi.execute_pass --pack-id '<auto_run_id>#SYM' \
++      --run-qa-verdict runqa.json [--order-qa-verdict orderqa.json] \
++      --bid B --ask A --quote-ts 2026-10-12T17:00:05+03:00 --units U --open-fee F1 --close-fee F2 \
++      --cash C --cash-ts 2026-10-12T17:00:03+03:00 [--mark M] [--sleeve NAME]
++Rebalance action (rebalance_add / trim / sell / rotation):
++  ./screener-venv/bin/python -m classic_rsi.execute_pass --rebalance-pack pack.json \
++      [--order-qa-verdict orderqa.json] --cash C --cash-ts TS
++  pack.json = {pack_id, kind, edge{method, expected_return_pct, [held_expected_return_pct], horizon_days,
++               evidence{source,n}}, risk_exit?, risk_exit_reason?, legs:[{side buy|sell, symbol,
++               instrumentId, units, bid, ask, quote_ts, spread_usd, open_fee_usd (buy), close_fee_usd,
++               stop_loss (buy), take_profit? (buy), positionId + realized_pnl_usd (sell)}]}
++
++Checks (any failure = NO-GO, fail closed):
++  - US regular session open (NYSE hours/holidays; weekend included) and no explicit --hold
++  - run-QA (RSI only): skill == classic-rsi-1h-run-qa, verdict PASS, checked_at <= 60 min, run_id match
++  - order-QA: skill == classic-real-money-order-qa-gate, verdict PASS, checked_at <= 15 min, different
++    file from run-QA, pack_id/symbol match, pack_sha256 == the sha this run computes
++    (sha256 of canonical {pack_id, pack, final units, quotes, order_payloads})
++  - instrument guard per leg (resolved US stock/ETF id, not crypto); RSI pack auto_place_eligible
++  - drift |ask - signal entry| <= 0.5 x ATR(1H) (RSI)
++  - live cash: --cash + --cash-ts <= 60 s old; book snapshot asOf <= 15 min old
++  - cash_after = cash - units x ask - open_fee >= 2500 (same open fee as the cost gate; required);
++    units auto-shrink to fit; sell proceeds are NOT credited (re-run after the sell fills)
++  - caps on market value AND cost basis: name 30% ETF / 15% stock, sleeve 45% (auto-shrink buys)
++  - min buy $400; final cost gate PASS (or RISK_EXIT for risk-exit sells) with live quote <= 60 s
++  - order payload pinned: buy {instrumentId, isBuy:true, leverage:1, units, stopLossRate,
++    takeProfitRate} with 0 < SL < bid; sell {positionId, instrumentId, isBuy:false, unitsToDeduct}
++  - idempotency: audit/placed/<sha(pack_id)>.lock created atomically on GO; existing lock or an open
++    position on the same instrument opened after the pack's bar time -> NO-GO
+ """
+ 
+ from __future__ import annotations
+ 
+ import argparse
++import hashlib
+ import json
+ import math
++import os
+ import sys
+-from datetime import datetime
++from datetime import datetime, timezone
+ from pathlib import Path
+ from typing import Any, Optional
+ from zoneinfo import ZoneInfo
+ 
++from . import cost_gate as CG
+ from .audit import DEFAULT_AUDIT_DIR
+-from .cost_gate import VERDICT_PASS, final_gate_from_prepare
+ from .instruments import guard_symbol, resolve
++from .market_hours import us_session
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+ CASH_FLOOR_USD = 2500.0
+@@ -48,7 +60,14 @@
+ SLEEVE_CAP = 0.45
+ DRIFT_ATR_MULT = 0.5
+ UNITS_DP = 6
++CASH_MAX_AGE_S = 60
++BOOK_MAX_AGE_S = 15 * 60
++RUN_QA_MAX_AGE_S = 60 * 60
++ORDER_QA_MAX_AGE_S = 15 * 60
++RUN_QA_SKILL = "classic-rsi-1h-run-qa"
++ORDER_QA_SKILL = "classic-real-money-order-qa-gate"
+ PORTFOLIO_SNAPSHOT = Path("/workspace/classic-portfolio-for-app.json")
++REBALANCE_KINDS = ("rebalance_add", "trim", "sell", "rotation")
+ 
+ DEFAULT_SLEEVES = {
+     "QQQ": "growth_tech", "SMH": "growth_tech", "XLK": "growth_tech", "XLC": "growth_tech",
+@@ -67,6 +86,19 @@
+     return math.floor(max(x, 0.0) * q) / q
+ 
+ 
++def _f(x: Any) -> Optional[float]:
++    return CG._f(x)
++
++
++def _age_s(ts: Any, now: datetime) -> Optional[float]:
++    t = CG._parse_ts(ts)
++    return None if t is None else (now - t).total_seconds()
++
++
++def canonical_sha(obj: Any) -> str:
++    return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
++
++
+ def parse_pack_id(pack_id: str) -> tuple[str, str]:
+     if "#" not in pack_id:
+         raise ValueError("pack id must be <run_id>#<SYMBOL>")
+@@ -75,7 +107,6 @@
+ 
+ 
+ def load_pack(run_id: str, symbol: str, audit_dir: Path = DEFAULT_AUDIT_DIR) -> tuple[Optional[dict], dict]:
+-    """Find the buy pack for symbol in audit/<run_id>.json (auto envelope or propose payload)."""
+     path = Path(audit_dir) / f"{run_id}.json"
+     ctx: dict[str, Any] = {"audit_path": str(path)}
+     if not path.exists():
+@@ -85,7 +116,6 @@
+     body = rec.get("payload") or rec
+     ctx["envelope_run_id"] = rec.get("run_id")
+     ctx["propose_run_id"] = body.get("propose_run_id") or (body.get("run_id") if rec.get("kind") == "propose" else None)
+-    ctx["flags"] = body.get("flags") or []
+     for p in body.get("buy_packs") or []:
+         if ((p.get("instrument") or {}).get("symbol") or "").upper() == symbol:
+             return p, ctx
+@@ -93,7 +123,9 @@
+     return None, ctx
+ 
+ 
+-def _verdict_ok(path: Optional[str], run_ids: set[str], symbol: Optional[str] = None) -> tuple[bool, str]:
++def check_verdict(path: Optional[str], *, skill: str, max_age_s: float, now: datetime,
++                  run_ids: Optional[set] = None, pack_id: Optional[str] = None, symbol: Optional[str] = None,
++                  pack_sha256: Optional[str] = None) -> tuple[bool, str]:
+     if not path:
+         return False, "verdict file not supplied"
+     p = Path(path)
+@@ -105,211 +137,384 @@
+         return False, f"verdict unreadable: {exc}"
+     if str(v.get("verdict", "")).upper() != "PASS":
+         return False, f"verdict is {v.get('verdict')!r}, not PASS"
+-    cited = {str(v.get(k)) for k in ("run_id", "propose_run_id") if v.get(k)}
+-    if not cited & {r for r in run_ids if r}:
+-        return False, f"verdict run_id {sorted(cited)} does not match {sorted(r for r in run_ids if r)}"
+-    if symbol is not None:
+-        vs = str(v.get("symbol") or (v.get("pack") or {}).get("symbol") or "").upper()
+-        if vs and vs != symbol:
+-            return False, f"verdict symbol {vs} != {symbol}"
+-        if not vs:
+-            return False, "order-QA verdict does not name the symbol"
++    if v.get("skill") != skill:
++        return False, f"skill {v.get('skill')!r} != {skill!r}"
++    age = _age_s(v.get("checked_at"), now)
++    if age is None:
++        return False, "checked_at missing or not tz-aware ISO"
++    if age > max_age_s or age < -60:
++        return False, f"verdict age {age:.0f}s > {max_age_s:.0f}s"
++    if run_ids is not None:
++        cited = {str(v.get(k)) for k in ("run_id", "propose_run_id") if v.get(k)}
++        if not cited & {r for r in run_ids if r}:
++            return False, f"verdict run_id {sorted(cited)} does not match {sorted(r for r in run_ids if r)}"
++    if pack_id is not None and v.get("pack_id") != pack_id:
++        return False, f"verdict pack_id {v.get('pack_id')!r} != {pack_id!r}"
++    if symbol is not None and str(v.get("symbol") or "").upper() != symbol:
++        return False, f"verdict symbol {v.get('symbol')!r} != {symbol}"
++    if pack_sha256 is not None and v.get("pack_sha256") != pack_sha256:
++        return False, "pack_sha256 mismatch (pack, size, quote or payload changed since order-QA)"
+     return True, "PASS"
+ 
+ 
+-def book_exposure(book_path: Optional[Path]) -> dict[str, Any]:
++def load_book(book_path: Optional[Path], now: datetime) -> dict[str, Any]:
+     if not book_path or not Path(book_path).exists():
+         return {"ok": False, "error": f"book snapshot missing: {book_path}"}
+     d = json.loads(Path(book_path).read_text())
++    age = _age_s(d.get("asOf"), now)
+     vals: dict[str, float] = {}
++    cost: dict[str, float] = {}
++    positions = []
++    cost_missing = []
+     for p in d.get("positions") or []:
+-        vals[str(p.get("symbol")).upper()] = vals.get(str(p.get("symbol")).upper(), 0.0) + float(p.get("value") or 0.0)
+-    cash = (d.get("summary") or {}).get("availableCash", d.get("availableCash"))
+-    return {"ok": True, "values": vals, "invested_value": sum(vals.values()),
+-            "cash": float(cash) if cash is not None else None, "asOf": d.get("asOf")}
+-
+-
+-def run_checks(
+-    *,
+-    pack_id: str,
+-    bid: float,
+-    ask: float,
+-    units: Optional[float] = None,
+-    amount_usd: Optional[float] = None,
+-    open_fee_usd: Optional[float] = None,
+-    close_fee_usd: Optional[float] = None,
+-    overnight_usd: Optional[float] = None,
+-    spread_usd: Optional[float] = None,
+-    cash_usd: Optional[float] = None,
+-    run_qa_verdict: Optional[str] = None,
+-    order_qa_verdict: Optional[str] = None,
+-    book_path: Optional[Path] = PORTFOLIO_SNAPSHOT,
+-    sleeve: Optional[str] = None,
+-    sleeve_map: Optional[dict[str, str]] = None,
+-    audit_dir: Path = DEFAULT_AUDIT_DIR,
+-    now: Optional[datetime] = None,
+-    allow_weekend: bool = False,
+-    hold: bool = False,
+-) -> dict[str, Any]:
+-    checks: list[dict[str, Any]] = []
+-    blockers: list[str] = []
++        s = str(p.get("symbol")).upper()
++        vals[s] = vals.get(s, 0.0) + float(p.get("value") or 0.0)
++        if p.get("invested") is None:
++            cost_missing.append(s)
++        cost[s] = cost.get(s, 0.0) + float(p.get("invested") or 0.0)
++        positions.append(p)
++    return {"ok": True, "values": vals, "cost": cost, "positions": positions, "asOf": d.get("asOf"),
++            "age_s": age, "cost_missing": cost_missing}
++
++
++def _open_time_utc(s: Any) -> Optional[datetime]:
++    if not s:
++        return None
++    try:
++        t = datetime.fromisoformat(str(s).replace("Z", "+00:00").replace(" ", "T"))
++    except ValueError:
++        return None
++    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
++
+ 
+-    def check(name: str, ok: bool, detail: Any = None, code: Optional[str] = None) -> bool:
+-        checks.append({"name": name, "ok": bool(ok), "detail": detail})
++def lock_path(pack_id: str, audit_dir: Path) -> Path:
++    return Path(audit_dir) / "placed" / f"{hashlib.sha256(pack_id.encode()).hexdigest()[:32]}.lock"
++
++
++class _Ctx:
++    def __init__(self, now: datetime):
++        self.now = now
++        self.checks: list[dict] = []
++        self.blockers: list[str] = []
++
++    def check(self, name: str, ok: bool, detail: Any = None, code: Optional[str] = None) -> bool:
++        self.checks.append({"name": name, "ok": bool(ok), "detail": detail})
+         if not ok:
+-            blockers.append(code or name.upper())
+-        return ok
++            self.blockers.append(code or name.upper())
++        return bool(ok)
+ 
+-    now = now or datetime.now(IDT)
+-    run_id, symbol = parse_pack_id(pack_id)
+-    out: dict[str, Any] = {
+-        "kind": "execute_pass", "asOfIDT": now.strftime("%Y-%m-%d %H:%M:%S IDT"),
+-        "pack_id": pack_id, "run_id": run_id, "symbol": symbol,
+-        "never_calls_etoro": True, "places": False,
+-        "inputs": {"bid": bid, "ask": ask, "units": units, "amount_usd": amount_usd,
+-                   "open_fee_usd": open_fee_usd, "close_fee_usd": close_fee_usd,
+-                   "overnight_usd": overnight_usd, "spread_usd": spread_usd, "cash_usd": cash_usd,
+-                   "run_qa_verdict": run_qa_verdict, "order_qa_verdict": order_qa_verdict,
+-                   "book_path": str(book_path) if book_path else None, "sleeve": sleeve,
+-                   "allow_weekend": allow_weekend, "hold": hold},
+-    }
+-    pack, ctx = load_pack(run_id, symbol, audit_dir)
+-    out["pack_context"] = ctx
+-    if not check("pack_found", pack is not None, ctx.get("error"), "PACK_NOT_FOUND"):
+-        return _finish(out, checks, blockers, None)
+-    inst = pack.get("instrument") or {}
+-    out["instrumentId"] = inst.get("instrumentId")
+-    out["etoroSymbol"] = inst.get("etoroSymbol")
+-    run_ids = {run_id, ctx.get("envelope_run_id"), ctx.get("propose_run_id"), pack.get("run_id")}
+ 
+-    check("auto_place_eligible", pack.get("auto_place_eligible") is True,
+-          pack.get("auto_place_blockers"), "NOT_AUTO_PLACE_ELIGIBLE")
+-    ok, why = _verdict_ok(run_qa_verdict, run_ids)
+-    check("run_qa_pass", ok, why, "RUN_QA_NOT_PASS")
+-    check("no_hold", not hold, "explicit Ofer/CoS hold" if hold else None, "HOLD")
+-    is_weekend = now.weekday() >= 5
+-    check("no_weekend_open", (not is_weekend) or allow_weekend,
+-          f"weekday={now.strftime('%a')}", "WEEKEND")
++def _common_gates(c: _Ctx, hold: bool, cash_usd, cash_ts, book: dict) -> Optional[float]:
++    s = us_session(c.now)
++    c.check("us_regular_session", s["open"], s, s.get("reason") or "MARKET_CLOSED")
++    c.check("no_hold", not hold, "explicit Ofer/CoS hold" if hold else None, "HOLD")
++    age = _age_s(cash_ts, c.now)
++    cash = _f(cash_usd)
++    c.check("cash_live", cash is not None and age is not None and -5 <= age <= CASH_MAX_AGE_S,
++            {"cash": cash, "cash_ts": cash_ts, "age_s": age, "max_s": CASH_MAX_AGE_S}, "CASH_NOT_LIVE")
++    if c.check("book_loaded", book.get("ok"), book.get("error"), "BOOK_MISSING"):
++        a = book.get("age_s")
++        c.check("book_fresh", a is not None and a <= BOOK_MAX_AGE_S,
++                {"asOf": book.get("asOf"), "age_s": a, "max_s": BOOK_MAX_AGE_S}, "BOOK_STALE")
++        c.check("book_cost_basis", not book.get("cost_missing"), book.get("cost_missing"), "COST_BASIS_MISSING")
++    return cash
+ 
++
++def _guard_leg(c: _Ctx, symbol: str, instrument_id: Any, tag: str) -> Optional[dict]:
+     g = guard_symbol(symbol)
+-    check("instrument_guard", g["ok"] and inst.get("instrumentId") is not None
+-          and int(inst["instrumentId"]) == int(g["instrumentId"] or -1),
+-          {"flag": g["flag"], "reason": g["reason"], "resolved": g["instrumentId"],
+-           "pack": inst.get("instrumentId")}, g["flag"] or "INSTRUMENT_GUARD")
+-    check("long_only_x1", pack.get("side") == "buy" and pack.get("action") == "CANDIDATE_LONG"
+-          and pack.get("leverage") == 1, {"side": pack.get("side"), "leverage": pack.get("leverage")},
+-          "NOT_LONG_X1")
++    ok = g["ok"] and instrument_id is not None and int(instrument_id) == int(g["instrumentId"] or -1)
++    c.check(f"instrument_guard{tag}", ok, {"symbol": symbol, "flag": g["flag"], "resolved": g["instrumentId"],
++                                           "given": instrument_id}, g["flag"] or "INSTRUMENT_GUARD")
++    return resolve(symbol) if ok else None
+ 
+-    lv = pack.get("levels") or {}
+-    entry, atr1h = lv.get("entry"), lv.get("atr")
+-    try:
+-        drift = abs(float(ask) - float(entry))
+-        lim = DRIFT_ATR_MULT * float(atr1h)
+-        check("drift_le_half_atr", drift <= lim,
+-              {"ask": ask, "signal_entry": entry, "drift": round(drift, 4), "limit": round(lim, 4)}, "DRIFT")
+-    except (TypeError, ValueError):
+-        check("drift_le_half_atr", False, "entry/atr missing", "DRIFT")
+ 
+-    if not check("quote_sane", bid is not None and ask is not None and 0 < float(bid) <= float(ask),
+-                 {"bid": bid, "ask": ask}, "BAD_QUOTE"):
+-        return _finish(out, checks, blockers, pack)
+-    ask_f = float(ask)
+-    req_units = float(units) if units is not None else (float(amount_usd) / ask_f if amount_usd else None)
+-    if not check("size_given", req_units is not None and req_units > 0, req_units, "NO_SIZE"):
+-        return _finish(out, checks, blockers, pack)
++def _size_buy(c: _Ctx, *, symbol: str, asset_class: Optional[str], req_units: float, ask: float,
++              open_fee: Optional[float], cash: Optional[float], book: dict, sleeve: Optional[str],
++              sleeve_map: Optional[dict], tag: str = "") -> tuple[float, dict]:
+     fu = _floor_units(req_units)
+-    shrink: list[dict[str, Any]] = []
+-    of = float(open_fee_usd or 0.0)
+-
+-    book = book_exposure(book_path)
+-    cash = float(cash_usd) if cash_usd is not None else book.get("cash")
+-    if not check("cash_known", cash is not None, cash, "CASH_UNKNOWN"):
+-        return _finish(out, checks, blockers, pack)
+-    max_cash_units = _floor_units((cash - CASH_FLOOR_USD - of) / ask_f)
+-    if fu > max_cash_units:
+-        shrink.append({"reason": "cash_floor", "from_units": fu, "to_units": max_cash_units})
+-        fu = max_cash_units
+-
+-    # caps
+-    asset_class = (resolve(symbol) or {}).get("assetClass") or inst.get("assetClass")
+-    if check("book_loaded", book.get("ok"), book.get("error"), "BOOK_MISSING"):
+-        vals = dict(book["values"])
+-        inv = float(book["invested_value"])
+-        cap = NAME_CAP.get(str(asset_class or ""), None)
+-        if check("asset_class_known", cap is not None, asset_class, "ASSET_CLASS_UNKNOWN"):
+-            cur = vals.get(symbol, 0.0)
+-            # (cur + x) <= cap * (inv + x)  ->  x <= (cap*inv - cur) / (1 - cap)
+-            max_name_usd = (cap * inv - cur) / (1 - cap)
+-            max_name_units = _floor_units(max_name_usd / ask_f)
+-            if fu > max_name_units:
+-                shrink.append({"reason": f"name_cap_{int(cap * 100)}pct", "from_units": fu, "to_units": max_name_units})
+-                fu = max_name_units
++    shrink: list[dict] = []
++    info: dict[str, Any] = {}
++    if not c.check(f"open_fee_given{tag}", open_fee is not None and open_fee >= 0, open_fee, "OPEN_FEE_REQUIRED"):
++        return 0.0, info
++    if cash is not None:
++        mx = _floor_units((cash - CASH_FLOOR_USD - open_fee) / ask)
++        if fu > mx:
++            shrink.append({"reason": "cash_floor", "from_units": fu, "to_units": mx})
++            fu = mx
++    if book.get("ok"):
++        cap = NAME_CAP.get(str(asset_class or ""))
+         smap = {**DEFAULT_SLEEVES, **(sleeve_map or {})}
+         if sleeve:
+             smap[symbol] = sleeve
+-        unknown = sorted(s for s in set(vals) | {symbol} if s not in smap)
+-        if check("sleeves_known", not unknown, {"unknown": unknown}, "SLEEVE_UNKNOWN"):
+-            sl = smap[symbol]
+-            sleeve_cur = sum(v for s, v in vals.items() if smap.get(s) == sl)
+-            max_sleeve_usd = (SLEEVE_CAP * inv - sleeve_cur) / (1 - SLEEVE_CAP)
+-            max_sleeve_units = _floor_units(max_sleeve_usd / ask_f)
+-            if fu > max_sleeve_units:
+-                shrink.append({"reason": "sleeve_cap_45pct", "from_units": fu, "to_units": max_sleeve_units})
+-                fu = max_sleeve_units
+-            notional = fu * ask_f
+-            inv_after = inv + notional
+-            out["caps_after"] = {
+-                "name_pct": round((vals.get(symbol, 0.0) + notional) / inv_after * 100, 2) if inv_after else None,
+-                "name_cap_pct": (cap or 0) * 100,
+-                "sleeve": sl,
+-                "sleeve_pct": round((sleeve_cur + notional) / inv_after * 100, 2) if inv_after else None,
+-                "sleeve_cap_pct": SLEEVE_CAP * 100,
+-                "invested_value_after": round(inv_after, 2),
+-            }
+-    final_notional = fu * ask_f
+-    cash_after = cash - final_notional - of
+-    check("cash_after_ge_floor", cash_after >= CASH_FLOOR_USD - 1e-9,
+-          {"cash": cash, "cash_after": round(cash_after, 2), "floor": CASH_FLOOR_USD}, "CASH_FLOOR")
+-    check("min_position", final_notional >= MIN_POSITION_USD,
+-          {"notional": round(final_notional, 2), "min": MIN_POSITION_USD}, "BELOW_MIN_POSITION")
+-    out["sizing"] = {"requested_units": round(req_units, UNITS_DP), "final_units": fu,
+-                     "final_notional_usd": round(final_notional, 2), "shrunk": bool(shrink),
+-                     "shrink_steps": shrink, "cash_after_usd": round(cash_after, 2)}
++        if c.check(f"asset_class_known{tag}", cap is not None, asset_class, "ASSET_CLASS_UNKNOWN"):
++            unknown = sorted(s for s in set(book["values"]) | {symbol} if s not in smap)
++            sleeves_ok = c.check(f"sleeves_known{tag}", not unknown, {"unknown": unknown}, "SLEEVE_UNKNOWN")
++            for basis in ("values", "cost"):
++                vals = book[basis]
++                inv = sum(vals.values())
++                cur = vals.get(symbol, 0.0)
++                mx = _floor_units(((cap * inv - cur) / (1 - cap)) / ask)
++                if fu > mx:
++                    shrink.append({"reason": f"name_cap_{int(cap * 100)}pct_{basis}", "from_units": fu, "to_units": mx})
++                    fu = mx
++                if sleeves_ok:
++                    sl = smap[symbol]
++                    scur = sum(v for s, v in vals.items() if smap.get(s) == sl)
++                    mx = _floor_units(((SLEEVE_CAP * inv - scur) / (1 - SLEEVE_CAP)) / ask)
++                    if fu > mx:
++                        shrink.append({"reason": f"sleeve_cap_45pct_{basis}", "from_units": fu, "to_units": mx})
++                        fu = mx
++            notional = fu * ask
++            caps = {}
++            for basis in ("values", "cost"):
++                vals = book[basis]
++                inv_after = sum(vals.values()) + notional
++                caps[basis] = {"name_pct": round((vals.get(symbol, 0.0) + notional) / inv_after * 100, 2) if inv_after else None}
++                if sleeves_ok:
++                    sl = smap[symbol]
++                    caps[basis]["sleeve"] = sl
++                    caps[basis]["sleeve_pct"] = round((sum(v for s, v in vals.items() if smap.get(s) == sl) + notional)
++                                                      / inv_after * 100, 2) if inv_after else None
++            info["caps_after"] = {"market_value": caps["values"], "cost_basis": caps["cost"],
++                                  "name_cap_pct": cap * 100, "sleeve_cap_pct": SLEEVE_CAP * 100}
++    notional = fu * ask
++    cash_after = None if cash is None else cash - notional - open_fee
++    c.check(f"cash_after_ge_floor{tag}", cash_after is not None and cash_after >= CASH_FLOOR_USD,
++            {"cash": cash, "notional": round(notional, 4), "open_fee": open_fee,
++             "cash_after": None if cash_after is None else round(cash_after, 4), "floor": CASH_FLOOR_USD}, "CASH_FLOOR")
++    c.check(f"min_position{tag}", notional >= MIN_POSITION_USD,
++            {"notional": round(notional, 2), "min": MIN_POSITION_USD}, "BELOW_MIN_POSITION")
++    info["sizing"] = {"requested_units": round(req_units, UNITS_DP), "final_units": fu,
++                      "final_notional_usd": round(notional, 2), "shrunk": bool(shrink), "shrink_steps": shrink,
++                      "cash_after_usd": None if cash_after is None else round(cash_after, 2)}
++    return fu, info
++
++
++def _buy_payload(c: _Ctx, instrument_id: int, units: float, bid: float, sl: Any, tp: Any, tag: str = "") -> dict:
++    slf, tpf = _f(sl), _f(tp)
++    c.check(f"stop_loss_valid{tag}", slf is not None and 0 < slf < bid,
++            {"stopLossRate": slf, "bid": bid}, "STOP_LOSS_INVALID")
++    if tpf is not None:
++        c.check(f"take_profit_valid{tag}", tpf > bid, {"takeProfitRate": tpf}, "TAKE_PROFIT_INVALID")
++    return {"instrumentId": int(instrument_id), "isBuy": True, "leverage": 1, "units": units,
++            "stopLossRate": slf, "takeProfitRate": tpf}
++
++
++def _idempotency(c: _Ctx, pack_id: str, audit_dir: Path, book: dict, instrument_ids: list, since: Optional[datetime]):
++    lp = lock_path(pack_id, audit_dir)
++    c.check("not_already_go", not lp.exists(), {"lock": str(lp)}, "ALREADY_GO_LOCKED")
++    if since is not None and book.get("ok"):
++        dup = [p.get("positionId") for p in book["positions"]
++               if p.get("instrumentId") in instrument_ids and (_open_time_utc(p.get("openTime")) or since) > since]
++        c.check("no_duplicate_open", not dup, {"positions_opened_after_signal": dup}, "DUPLICATE_OPEN_POSITION")
++    return lp
++
++
++def _finish(out: dict, c: _Ctx, lp: Optional[Path], write_lock: bool) -> dict:
++    out["checks"] = c.checks
++    out["blockers"] = c.blockers
++    out.setdefault("ready_for_order_qa", False)
++    go = not c.blockers
++    if go and lp is not None and write_lock:
++        lp.parent.mkdir(parents=True, exist_ok=True)
++        try:
++            fd = os.open(str(lp), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
++            with os.fdopen(fd, "w") as fh:
++                json.dump({"pack_id": out.get("pack_id"), "pack_sha256": out.get("pack_sha256"),
++                           "go_at": c.now.isoformat()}, fh)
++            out["lock"] = str(lp)
++        except FileExistsError:
++            c.check("not_already_go", False, {"lock": str(lp), "race": True}, "ALREADY_GO_LOCKED")
++            go = False
++    out["decision"] = "GO" if go else "NO-GO"
++    out["note"] = ("GO = Trader_Classic places order_payloads VERBATIM via user-OfersClaw5 (sells first, one "
++                   "call each), re-reading cash (<=60s) between sequenced places. This CLI never places."
++                   if go else "NO-GO = do not place. Log the skip with the numbers.")
++    return out
++
+ 
++def run_checks(*, pack_id: str, bid: float, ask: float, quote_ts: Any = None, units: Optional[float] = None,
++               amount_usd: Optional[float] = None, open_fee_usd: Optional[float] = None,
++               close_fee_usd: Optional[float] = None, overnight_usd: Optional[float] = None,
++               spread_usd: Optional[float] = None, independent_mark: Optional[float] = None,
++               cash_usd: Optional[float] = None, cash_ts: Any = None, run_qa_verdict: Optional[str] = None,
++               order_qa_verdict: Optional[str] = None, book_path: Optional[Path] = PORTFOLIO_SNAPSHOT,
++               sleeve: Optional[str] = None, sleeve_map: Optional[dict] = None,
++               audit_dir: Path = DEFAULT_AUDIT_DIR, now: Optional[datetime] = None, hold: bool = False,
++               p_hit: Optional[float] = None, p_source: Optional[str] = None,
++               write_lock: bool = True) -> dict[str, Any]:
++    """RSI buy pack final checks."""
++    now = now or datetime.now(IDT)
++    c = _Ctx(now)
++    run_id, symbol = parse_pack_id(pack_id)
++    out: dict[str, Any] = {"kind": "execute_pass", "action_kind": "rsi_buy", "version": "execute-pass-v2-fix1",
++                           "asOfIDT": now.astimezone(IDT).strftime("%Y-%m-%d %H:%M:%S IDT"), "pack_id": pack_id,
++                           "run_id": run_id, "symbol": symbol, "never_calls_etoro": True, "places": False,
++                           "inputs": {"bid": bid, "ask": ask, "quote_ts": quote_ts, "units": units,
++                                      "amount_usd": amount_usd, "open_fee_usd": open_fee_usd,
++                                      "close_fee_usd": close_fee_usd, "overnight_usd": overnight_usd,
++                                      "spread_usd": spread_usd, "independent_mark": independent_mark,
++                                      "cash_usd": cash_usd, "cash_ts": cash_ts, "run_qa_verdict": run_qa_verdict,
++                                      "order_qa_verdict": order_qa_verdict, "sleeve": sleeve, "hold": hold}}
++    pack, ctx = load_pack(run_id, symbol, audit_dir)
++    out["pack_context"] = ctx
++    if not c.check("pack_found", pack is not None, ctx.get("error"), "PACK_NOT_FOUND"):
++        return _finish(out, c, None, False)
++    inst = pack.get("instrument") or {}
++    out["instrumentId"], out["etoroSymbol"] = inst.get("instrumentId"), inst.get("etoroSymbol")
++    run_ids = {run_id, ctx.get("envelope_run_id"), ctx.get("propose_run_id"), pack.get("run_id")}
++    book = load_book(book_path, now)
++    cash = _common_gates(c, hold, cash_usd, cash_ts, book)
++    c.check("auto_place_eligible", pack.get("auto_place_eligible") is True, pack.get("auto_place_blockers"),
++            "NOT_AUTO_PLACE_ELIGIBLE")
++    ok, why = check_verdict(run_qa_verdict, skill=RUN_QA_SKILL, max_age_s=RUN_QA_MAX_AGE_S, now=now, run_ids=run_ids)
++    c.check("run_qa_pass", ok, why, "RUN_QA_NOT_PASS")
++    res = _guard_leg(c, symbol, inst.get("instrumentId"), "")
++    c.check("long_only_x1", pack.get("side") == "buy" and pack.get("action") == "CANDIDATE_LONG"
++            and pack.get("leverage") == 1, {"side": pack.get("side"), "leverage": pack.get("leverage")}, "NOT_LONG_X1")
++    lv = pack.get("levels") or {}
++    try:
++        drift, lim = abs(float(ask) - float(lv.get("entry"))), DRIFT_ATR_MULT * float(lv.get("atr"))
++        c.check("drift_le_half_atr", drift <= lim, {"drift": round(drift, 4), "limit": round(lim, 4)}, "DRIFT")
++    except (TypeError, ValueError):
++        c.check("drift_le_half_atr", False, "entry/atr missing", "DRIFT")
++    qe = CG.quote_errors(bid=bid, ask=ask, quote_ts=quote_ts, now=now, independent_mark=independent_mark)
++    if not c.check("quote_live", not qe, qe, "QUOTE_INVALID_OR_STALE"):
++        return _finish(out, c, None, False)
++    ask_f, bid_f = float(ask), float(bid)
++    req = _f(units) if units is not None else (_f(amount_usd) / ask_f if _f(amount_usd) else None)
++    if not c.check("size_given", req is not None and req > 0, req, "NO_SIZE"):
++        return _finish(out, c, None, False)
++    fu, info = _size_buy(c, symbol=symbol, asset_class=(res or {}).get("assetClass") or inst.get("assetClass"),
++                         req_units=req, ask=ask_f, open_fee=_f(open_fee_usd), cash=cash, book=book, sleeve=sleeve,
++                         sleeve_map=sleeve_map)
++    out.update(info)
+     cg = None
+     if fu > 0:
+-        cg = final_gate_from_prepare(pack, bid=float(bid), ask=ask_f, units=fu, open_fee_usd=open_fee_usd,
+-                                     close_fee_usd=close_fee_usd, overnight_usd=overnight_usd,
+-                                     spread_usd=spread_usd)
++        cg = CG.final_gate_from_prepare(pack, bid=bid_f, ask=ask_f, units=fu, quote_ts=quote_ts,
++                                        open_fee_usd=open_fee_usd, close_fee_usd=close_fee_usd,
++                                        overnight_usd=overnight_usd, spread_usd=spread_usd,
++                                        independent_mark=independent_mark, p_hit=p_hit, p_source=p_source, now=now)
+         out["cost_gate"] = cg
+         out["rebased_levels"] = cg.get("rebased_levels")
+-    check("final_cost_gate", cg is not None and cg.get("verdict") == VERDICT_PASS,
+-          None if cg is None else {"ratio": cg.get("ratio"), "expected_gain": cg.get("expected_gain"),
+-                                   "total_cost": cg.get("total_cost"), "verdict": cg.get("verdict")},
+-          "COST_GATE_SKIP")
+-
+-    pre_ok = not blockers
+-    ok, why = _verdict_ok(order_qa_verdict, run_ids, symbol)
+-    check("order_qa_pass", ok, why, "ORDER_QA_PENDING" if not order_qa_verdict else "ORDER_QA_NOT_PASS")
++    c.check("final_cost_gate", cg is not None and cg.get("verdict") == CG.VERDICT_PASS,
++            None if cg is None else {k: cg.get(k) for k in ("verdict", "ratio", "expected_gain", "total_cost",
++                                                            "errors", "skip_reasons")},
++            (cg or {}).get("verdict") or "COST_GATE_SKIP")
++    rl = (cg or {}).get("rebased_levels") or {}
++    payload = _buy_payload(c, inst.get("instrumentId") or 0, fu, bid_f, rl.get("stop_loss"), rl.get("take_profit"))
++    out["order_payloads"] = [payload]
++    out["pack_sha256"] = canonical_sha({"pack_id": pack_id, "pack": pack, "final_units": fu, "bid": bid_f,
++                                        "ask": ask_f, "quote_ts": str(quote_ts), "order_payloads": [payload]})
++    since = _open_time_utc(pack.get("bar_time"))
++    lp = _idempotency(c, pack_id, audit_dir, book, [inst.get("instrumentId")], since)
++    pre_ok = not c.blockers
++    ok, why = check_verdict(order_qa_verdict, skill=ORDER_QA_SKILL, max_age_s=ORDER_QA_MAX_AGE_S, now=now,
++                            run_ids=run_ids, symbol=symbol, pack_sha256=out["pack_sha256"])
++    if ok and run_qa_verdict and order_qa_verdict and Path(run_qa_verdict).resolve() == Path(order_qa_verdict).resolve():
++        ok, why = False, "run-QA and order-QA must be different files"
++    c.check("order_qa_pass", ok, why, "ORDER_QA_PENDING" if not order_qa_verdict else "ORDER_QA_NOT_PASS")
+     out["ready_for_order_qa"] = pre_ok
+-    return _finish(out, checks, blockers, pack)
++    return _finish(out, c, lp, write_lock)
+ 
+ 
+-def _finish(out: dict[str, Any], checks: list, blockers: list, pack: Optional[dict]) -> dict[str, Any]:
+-    out["checks"] = checks
+-    out["blockers"] = blockers
+-    out.setdefault("ready_for_order_qa", False)
+-    out["decision"] = "GO" if not blockers else "NO-GO"
+-    out["note"] = ("GO = Trader_Classic may place this pack via user-OfersClaw5 (one call, final_units, "
+-                   "rebased SL/TP). This CLI never places." if not blockers else
+-                   "NO-GO = do not place. Blockers listed; log the skip with numbers.")
+-    return out
++def run_rebalance_checks(*, pack: dict[str, Any], cash_usd: Optional[float] = None, cash_ts: Any = None,
++                         order_qa_verdict: Optional[str] = None, book_path: Optional[Path] = PORTFOLIO_SNAPSHOT,
++                         sleeve_map: Optional[dict] = None, audit_dir: Path = DEFAULT_AUDIT_DIR,
++                         now: Optional[datetime] = None, hold: bool = False, write_lock: bool = True) -> dict:
++    """Rebalance action final checks: rebalance_add / trim / sell / rotation (one combined gate)."""
++    now = now or datetime.now(IDT)
++    c = _Ctx(now)
++    kind = pack.get("kind")
++    pack_id = str(pack.get("pack_id") or "")
++    out: dict[str, Any] = {"kind": "execute_pass", "action_kind": kind, "version": "execute-pass-v2-fix1",
++                           "asOfIDT": now.astimezone(IDT).strftime("%Y-%m-%d %H:%M:%S IDT"), "pack_id": pack_id,
++                           "never_calls_etoro": True, "places": False,
++                           "inputs": {"cash_usd": cash_usd, "cash_ts": cash_ts, "order_qa_verdict": order_qa_verdict,
++                                      "hold": hold}}
++    legs = pack.get("legs") or []
++    sells = [l for l in legs if l.get("side") == "sell"]
++    buys = [l for l in legs if l.get("side") == "buy"]
++    shape = {"rebalance_add": (0, 1), "trim": (1, 0), "sell": (1, 0), "rotation": (1, 1)}.get(kind)
++    if not c.check("pack_shape", bool(pack_id) and shape is not None and (len(sells), len(buys)) == shape,
++                   {"kind": kind, "sells": len(sells), "buys": len(buys), "expected": shape}, "BAD_REBALANCE_PACK"):
++        return _finish(out, c, None, False)
++    book = load_book(book_path, now)
++    cash = _common_gates(c, hold, cash_usd, cash_ts, book)
++    payloads: list[dict] = []
++    for i, l in enumerate(sells):
++        tag = f"_sell{i}"
++        sym = str(l.get("symbol") or "").upper()
++        _guard_leg(c, sym, l.get("instrumentId"), tag)
++        qe = CG.quote_errors(bid=l.get("bid"), ask=l.get("ask"), quote_ts=l.get("quote_ts"), now=now)
++        c.check(f"quote_live{tag}", not qe, qe, "QUOTE_INVALID_OR_STALE")
++        pos = [p for p in book.get("positions") or [] if p.get("positionId") == l.get("positionId")
++               and p.get("instrumentId") == l.get("instrumentId")]
++        u = _f(l.get("units"))
++        pu = _f(pos[0].get("units")) if pos else None
++        c.check(f"position_held{tag}", bool(pos) and u is not None and u > 0 and pu is not None and u <= pu + 1e-9,
++                {"positionId": l.get("positionId"), "units": u, "held_units": pu}, "POSITION_NOT_HELD")
++        full = pu is not None and u is not None and abs(u - pu) < 1e-9
++        payloads.append({"positionId": l.get("positionId"), "instrumentId": l.get("instrumentId"), "isBuy": False,
++                         "unitsToDeduct": None if full else u})
++    sized_buy = None
++    for i, l in enumerate(buys):
++        tag = f"_buy{i}"
++        sym = str(l.get("symbol") or "").upper()
++        res = _guard_leg(c, sym, l.get("instrumentId"), tag)
++        qe = CG.quote_errors(bid=l.get("bid"), ask=l.get("ask"), quote_ts=l.get("quote_ts"), now=now)
++        if not c.check(f"quote_live{tag}", not qe, qe, "QUOTE_INVALID_OR_STALE"):
++            continue
++        ask_f, bid_f = float(l["ask"]), float(l["bid"])
++        fu, info = _size_buy(c, symbol=sym, asset_class=(res or {}).get("assetClass"), req_units=_f(l.get("units")) or 0,
++                             ask=ask_f, open_fee=_f(l.get("open_fee_usd")), cash=cash, book=book,
++                             sleeve=l.get("sleeve"), sleeve_map=sleeve_map, tag=tag)
++        out.update(info)
++        sized_buy = dict(l, units=fu)
++        payloads.append(_buy_payload(c, l.get("instrumentId") or 0, fu, bid_f, l.get("stop_loss"),
++                                     l.get("take_profit"), tag))
++    # cost gate — one per action (rotation combined)
++    cg = None
++    try:
++        if kind == "rotation" and sized_buy is not None and sized_buy["units"] > 0:
++            cg = CG.evaluate_rotation(sell=sells[0], buy=sized_buy, edge=pack.get("edge"), stage="final", now=now)
++        elif kind == "rebalance_add" and sized_buy is not None and sized_buy["units"] > 0:
++            cg = CG.evaluate(kind="rebalance_add", entry=float(sized_buy["ask"]), units=sized_buy["units"],
++                             bid=sized_buy.get("bid"), ask=sized_buy.get("ask"), quote_ts=sized_buy.get("quote_ts"),
++                             spread_usd=sized_buy.get("spread_usd"), open_fee_usd=sized_buy.get("open_fee_usd"),
++                             close_fee_usd=sized_buy.get("close_fee_usd"), edge=pack.get("edge"),
++                             stop_loss=sized_buy.get("stop_loss"), stage="final", now=now)
++        elif kind in ("trim", "sell") and sells:
++            s = sells[0]
++            cg = CG.evaluate(kind=kind, entry=float(s.get("bid") or 0) or 1.0, units=s.get("units"),
++                             bid=s.get("bid"), ask=s.get("ask"), quote_ts=s.get("quote_ts"),
++                             spread_usd=s.get("spread_usd"), close_fee_usd=s.get("close_fee_usd"),
++                             realized_pnl_usd=s.get("realized_pnl_usd"), edge=pack.get("edge"),
++                             risk_exit=bool(pack.get("risk_exit")), risk_exit_reason=pack.get("risk_exit_reason"),
++                             stage="final", now=now)
++    except (TypeError, ValueError) as exc:
++        cg = {"verdict": CG.VERDICT_INVALID, "errors": [str(exc)]}
++    out["cost_gate"] = cg
++    okv = (CG.VERDICT_PASS, CG.VERDICT_RISK_EXIT) if kind in ("trim", "sell") else (CG.VERDICT_PASS,)
++    c.check("final_cost_gate", cg is not None and cg.get("verdict") in okv,
++            None if cg is None else {k: cg.get(k) for k in ("verdict", "ratio", "expected_gain", "total_cost",
++                                                            "errors", "skip_reasons")},
++            (cg or {}).get("verdict") or "COST_GATE_SKIP")
++    out["order_payloads"] = payloads
++    out["pack_sha256"] = canonical_sha({"pack_id": pack_id, "pack": pack, "order_payloads": payloads})
++    lp = _idempotency(c, pack_id, audit_dir, book, [], None)
++    pre_ok = not c.blockers
++    ok, why = check_verdict(order_qa_verdict, skill=ORDER_QA_SKILL, max_age_s=ORDER_QA_MAX_AGE_S, now=now,
++                            pack_id=pack_id, pack_sha256=out["pack_sha256"])
++    c.check("order_qa_pass", ok, why, "ORDER_QA_PENDING" if not order_qa_verdict else "ORDER_QA_NOT_PASS")
++    out["ready_for_order_qa"] = pre_ok
++    return _finish(out, c, lp, write_lock)
+ 
+ 
+ def write_audit(result: dict[str, Any], audit_dir: Path = DEFAULT_AUDIT_DIR) -> Path:
+     ts = datetime.now(IDT).strftime("%Y%m%d-%H%M%S")
+-    sym = result.get("symbol") or "NA"
+-    path = Path(audit_dir) / f"execute-pass-{result.get('run_id')}-{sym}-{ts}.json"
++    pid = str(result.get("pack_id") or "NA").replace("#", "-").replace("/", "_")
++    path = Path(audit_dir) / f"execute-pass-{pid}-{ts}.json"
+     path.parent.mkdir(parents=True, exist_ok=True)
+     path.write_text(json.dumps(result, indent=2, default=str) + "\n")
+     return path
+@@ -317,33 +522,47 @@
+ 
+ def main(argv: Optional[list[str]] = None) -> int:
+     p = argparse.ArgumentParser(description="Classic final pre-place checks (GO/NO-GO). Never calls eToro.")
+-    p.add_argument("--pack-id", required=True, help="<run_id>#<SYMBOL>")
+-    p.add_argument("--run-qa-verdict", required=True)
++    m = p.add_mutually_exclusive_group(required=True)
++    m.add_argument("--pack-id", help="<run_id>#<SYMBOL> (RSI buy pack)")
++    m.add_argument("--rebalance-pack", help="JSON rebalance action pack")
++    p.add_argument("--run-qa-verdict", default=None)
+     p.add_argument("--order-qa-verdict", default=None)
+-    p.add_argument("--bid", type=float, required=True)
+-    p.add_argument("--ask", type=float, required=True)
+-    g = p.add_mutually_exclusive_group(required=True)
+-    g.add_argument("--units", type=float)
+-    g.add_argument("--amount", type=float, help="USD notional")
++    p.add_argument("--bid", type=float)
++    p.add_argument("--ask", type=float)
++    p.add_argument("--quote-ts")
++    p.add_argument("--mark", type=float, default=None, help="independent live mark (ask must be within 0.1%%)")
++    p.add_argument("--units", type=float)
++    p.add_argument("--amount", type=float, help="USD notional")
+     p.add_argument("--open-fee", type=float, default=None)
+     p.add_argument("--close-fee", type=float, default=None)
+     p.add_argument("--overnight", type=float, default=None)
+     p.add_argument("--spread-usd", type=float, default=None)
+-    p.add_argument("--cash", type=float, default=None, help="live available cash (default: book snapshot)")
++    p.add_argument("--p-hit", type=float, default=None)
++    p.add_argument("--p-source", default=None)
++    p.add_argument("--cash", type=float, required=True, help="LIVE available cash")
++    p.add_argument("--cash-ts", required=True, help="tz-aware ISO time of the live cash read (<=60s)")
+     p.add_argument("--book", default=str(PORTFOLIO_SNAPSHOT))
+     p.add_argument("--sleeve", default=None)
+     p.add_argument("--sleeve-map", default=None, help="JSON file {symbol: sleeve}")
+     p.add_argument("--audit-dir", default=str(DEFAULT_AUDIT_DIR))
+-    p.add_argument("--allow-weekend", action="store_true")
+     p.add_argument("--hold", action="store_true")
+-    p.add_argument("--no-write", action="store_true")
++    p.add_argument("--no-write", action="store_true", help="skip the audit JSON (the GO lock is still written)")
+     a = p.parse_args(argv)
+     smap = json.loads(Path(a.sleeve_map).read_text()) if a.sleeve_map else None
+-    res = run_checks(pack_id=a.pack_id, bid=a.bid, ask=a.ask, units=a.units, amount_usd=a.amount,
+-                     open_fee_usd=a.open_fee, close_fee_usd=a.close_fee, overnight_usd=a.overnight,
+-                     spread_usd=a.spread_usd, cash_usd=a.cash, run_qa_verdict=a.run_qa_verdict,
+-                     order_qa_verdict=a.order_qa_verdict, book_path=Path(a.book), sleeve=a.sleeve,
+-                     sleeve_map=smap, audit_dir=Path(a.audit_dir), allow_weekend=a.allow_weekend, hold=a.hold)
++    if a.rebalance_pack:
++        res = run_rebalance_checks(pack=json.loads(Path(a.rebalance_pack).read_text()), cash_usd=a.cash,
++                                   cash_ts=a.cash_ts, order_qa_verdict=a.order_qa_verdict, book_path=Path(a.book),
++                                   sleeve_map=smap, audit_dir=Path(a.audit_dir), hold=a.hold)
++    else:
++        if a.units is None and a.amount is None:
++            p.error("--units or --amount required for an RSI pack")
++        res = run_checks(pack_id=a.pack_id, bid=a.bid, ask=a.ask, quote_ts=a.quote_ts, units=a.units,
++                         amount_usd=a.amount, open_fee_usd=a.open_fee, close_fee_usd=a.close_fee,
++                         overnight_usd=a.overnight, spread_usd=a.spread_usd, independent_mark=a.mark,
++                         cash_usd=a.cash, cash_ts=a.cash_ts, run_qa_verdict=a.run_qa_verdict,
++                         order_qa_verdict=a.order_qa_verdict, book_path=Path(a.book), sleeve=a.sleeve,
++                         sleeve_map=smap, audit_dir=Path(a.audit_dir), hold=a.hold, p_hit=a.p_hit,
++                         p_source=a.p_source)
+     if not a.no_write:
+         res["audit_path"] = str(write_audit(res, Path(a.audit_dir)))
+     print(json.dumps(res, indent=2, default=str))
+--- a/classic_rsi/propose.py
++++ b/classic_rsi/propose.py
+@@ -26,7 +26,7 @@
+ from .levels import LevelsConfig, atr, atr_long_levels, levels_to_dict
+ from .audit import append_audit, attach_run_id_to_packs, new_run_id
+ from .instruments import guard_items, guard_symbol, load_map, map_meta
+-from .cost_gate import VERDICT_SKIP, preliminary_for_pack
++from .cost_gate import VERDICT_PASS, VERDICT_SKIP, preliminary_for_pack
+ from .signals import RSILevels, StrongCandleConfig, compute_signals, long_only_remap
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+@@ -196,8 +196,8 @@
+                             "spread": cg.get("spread"), "stage": "preliminary",
+                             "final": "recompute from prepare/getCost (execute_pass)"}
+     pack["overnight_financing_estimate"] = {"usd": cg.get("overnight"), "stage": "preliminary"}
+-    if cg.get("verdict") == VERDICT_SKIP:
+-        pack["status"] = VERDICT_SKIP
++    if cg.get("verdict") != VERDICT_PASS:
++        pack["status"] = cg.get("verdict") or VERDICT_SKIP
+     return pack
+ 
+ 
+@@ -205,8 +205,8 @@
+     "auto_place_eligible=True means the pack may proceed on the FULL AUTO path "
+     "(prepare → execute_pass final gate → order-QA PASS → Trader_Classic places via MCP). "
+     "True only if: no hard flags, instrument guard OK (resolved US stock/ETF id), long-only x1 buy, "
+-    "book snapshot not stale, soft mandate gates allow new buys, and the preliminary cost gate "
+-    "is not COST_GATE_SKIP. It is NOT a place instruction; do_not_place=True still means this "
++    "book snapshot not stale, soft mandate gates allow new buys (a --force run is never eligible), "
++    "and the preliminary cost gate verdict is PASS (not COST_GATE_SKIP / COST_GATE_INVALID). It is NOT a place instruction; do_not_place=True still means this "
+     "script never places. run-QA PASS is still required first."
+ )
+ 
+@@ -235,8 +235,8 @@
+     cg = pack.get("cost_gate") or {}
+     if not cg:
+         blockers.append("COST_GATE_MISSING")
+-    elif cg.get("verdict") == VERDICT_SKIP:
+-        blockers.append(VERDICT_SKIP)
++    elif cg.get("verdict") != VERDICT_PASS:
++        blockers.append(str(cg.get("verdict") or VERDICT_SKIP))
+     return (not blockers), blockers
+ 
+ 
+@@ -339,7 +339,7 @@
+     # Pack-level eligibility (auto_1h re-stamps with envelope context: stale book, gates, flags)
+     buy_packs = [stamp_auto_place(p) for p in buy_packs]
+     cost_gate_skips = [p["instrument"]["symbol"] for p in buy_packs
+-                       if (p.get("cost_gate") or {}).get("verdict") == VERDICT_SKIP]
++                       if (p.get("cost_gate") or {}).get("verdict") != VERDICT_PASS]
+ 
+     now = datetime.now(IDT).strftime("%Y-%m-%d %H:%M:%S IDT")
+     rid = new_run_id("propose")
+--- a/classic_rsi/auto_1h.py
++++ b/classic_rsi/auto_1h.py
+@@ -270,7 +270,7 @@
+     # FULL AUTO eligibility (envelope context). Soft flags never block; hard flags do.
+     buy_packs = [
+         stamp_auto_place(p, hard_flags=flags, book_stale=book_stale is not None,
+-                         allow_new_buys=bool(gates.get("allow_new_buys")) or force)
++                         allow_new_buys=bool(gates.get("allow_new_buys")) and not force)  # --force never makes packs auto-eligible
+         for p in buy_packs
+     ]
+     if propose_payload is not None:
+--- a/classic_rsi/README.md
++++ b/classic_rsi/README.md
+@@ -27,7 +27,8 @@
+   backtest.py  # 1H Yahoo backtest smoke
+   propose.py   # candidate BUY packs + RISK_OFF notes + preliminary cost_gate + auto_place_eligible
+   cost_gate.py # round-trip cost vs expected gain (expected_gain >= 2 x total_cost)
+-  execute_pass.py # final pre-place GO/NO-GO from live prepare values (never calls eToro)
++  execute_pass.py # final pre-place GO/NO-GO (RSI + rebalance) from live prepare values (never calls eToro)
++  market_hours.py # NYSE regular-session / holiday check
+   instruments.py  # fail-closed instrument guard (etoro_instrument_map.json)
+   universe.py  # S&P → liquid ADV$ → rising 1H volume screener
+   auto_1h.py   # 1H session auto runner (propose → audit; never place)
+@@ -64,22 +65,27 @@
+    ```bash
+    ./screener-venv/bin/python -m classic_rsi.execute_pass --pack-id '<auto_run_id>#SYM' \
+      --run-qa-verdict runqa.json [--order-qa-verdict orderqa.json] \
+-     --bid B --ask A --units U --open-fee F1 --close-fee F2 [--cash C] [--sleeve NAME]
++     --bid B --ask A --quote-ts <ISO+tz> --units U --open-fee F1 --close-fee F2 \
++     --cash C --cash-ts <ISO+tz> [--mark M] [--sleeve NAME] [--p-hit P --p-source "<citation>"]
++   # rebalance actions (rebalance_add / trim / sell / rotation):
++   ./screener-venv/bin/python -m classic_rsi.execute_pass --rebalance-pack pack.json \
++     [--order-qa-verdict orderqa.json] --cash C --cash-ts <ISO+tz>
+    ```
+-   Checks: cash-after ≥ $2.5k floor (auto-shrinks units), 30%/15% name caps and 45% sleeve cap (auto-shrink), min $400, drift ≤ 0.5×ATR(1H), **final cost gate** with live spread/fees, SL/TP re-based on the live ask. Writes `audit/execute-pass-*.json`. Exit 0 = GO, 2 = NO-GO. Without an order-QA PASS file it returns `NO-GO / ORDER_QA_PENDING` with `ready_for_order_qa=true`.
+-5. Submit the pack + execute_pass audit to **QA Bot** (**classic-real-money-order-qa-gate**); re-run execute_pass with the order-QA PASS file → **GO**.
+-6. Trader_Classic places via MCP (`user-OfersClaw5`) — no chat authorization needed under FULL AUTO. RISK_OFF notes never become short orders.
+-
+-### Cost gate (`cost_gate.py`)
+-
+-- `total_cost = spread + open_fee (buys) + close_fee + overnight + tax_est`
+-  - spread = (ask − bid) × units (live) — else notional × 0.15% (assumed); fees from prepare/getCost — else $0.75 + $0.75 (assumed; real Classic fills 2026-10-07 ADBE/GS/CAT $500 each were charged $0.75 per order on keys); overnight 0 for ×1 long real stock; `tax_est = 25% × max(realized_pnl, 0)` on sells/trims (Israeli capital-gains rate, conservative).
+-- `expected_gain`:
+-  - RSI pack: (TP − entry) × units × **0.43** (= SL/(SL+TP) zero-edge breakeven for 1.5/2.0 ATR; backtest 12/19 = 0.63 is too small an n to use).
+-  - Rebalance add: notional × (ATR_daily/price) × √hold_days (20) × 0.25 haircut.
+-  - Trim/sell: caller-supplied with a method string, else SKIP; hard risk exits → `RISK_EXIT` (recorded, never skipped).
+-- Verdict **PASS** iff `expected_gain ≥ 2 × total_cost` (and net > 0), else **COST_GATE_SKIP**. Every number is logged in the `cost_gate` block (inputs, costs, expected gain, ratio, method, verdict, assumptions). Pack blocks are `stage=preliminary` (non-binding); `final_gate_from_prepare` / execute_pass produce the binding `stage=final` block.
+-- `do_not_place=True` keeps meaning “this script never places”; `auto_place_eligible` is the separate FULL AUTO eligibility flag.
++   Fail-closed checks: US regular session (NYSE hours + 2026–27 holidays); run-QA verdict `skill=classic-rsi-1h-run-qa`, `checked_at` ≤ 60 min, run_id match; order-QA `skill=classic-real-money-order-qa-gate`, ≤ 15 min, different file, `pack_sha256` equal to the sha this run prints; live quote ≤ 60 s, bid < ask; live cash ≤ 60 s, book asOf ≤ 15 min; `cash − units×ask − open_fee ≥ 2500` (getCost open fee required; units auto-shrink); name 30%/15% and sleeve 45% caps on market value **and** cost basis; min $400; drift ≤ 0.5×ATR(1H); final cost gate PASS (risk-exit sells: RISK_EXIT); 0 < SL < bid; idempotency lock `audit/placed/<sha(pack_id)>.lock` and no same-instrument position opened after the signal. Exit 0 = GO, 2 = NO-GO. Without order-QA → `NO-GO / ORDER_QA_PENDING` + `ready_for_order_qa=true` + `pack_sha256`.
++5. QA Bot (**classic-real-money-order-qa-gate**) reviews the execute_pass audit and writes a verdict with `skill`, `checked_at`, `pack_id`/`symbol`, `run_id` and the `pack_sha256`; re-run execute_pass with the **same** inputs (quote still ≤ 60 s) → **GO**. If the quote expired or size changed, the sha changes → new order-QA.
++6. On GO, Trader_Classic copies `order_payloads` **verbatim** to the MCP (`user-OfersClaw5`): buys `{instrumentId, isBuy:true, leverage:1, units, stopLossRate, takeProfitRate}`, sells `{positionId, instrumentId, isBuy:false, unitsToDeduct}` — sells first, re-reading cash between sequenced places. No chat authorization under FULL AUTO. RISK_OFF notes never become short orders.
++
++### Cost gate (`cost_gate.py`, v2 fix1)
++
++- `total_cost = spread + open_fee (buy legs) + close_fee + overnight + tax_est`, all ≥ 0, total > 0.
++  - spread = `max(spread_usd, (ask − bid) × units)`; final stage needs bid < ask and `quote_ts` ≤ 60 s (optional independent mark within 0.1%).
++  - fees from prepare/getCost — **required at the final stage** (no defaults). Preliminary only: 0.15% spread and $0.75 per order (real Classic fills 2026-10-07 ADBE/GS/CAT $500 each, keys).
++  - `tax_est = 25% × max(realized_pnl, 0)` on every sell leg (Israeli capital-gains rate).
++- Expected gain = directional EV, after tax (`× 0.75` when positive):
++  - RSI: `EV = units × [p(TP − ask) − (1 − p)(ask − SL)]`. `p` needs a cited source. Default = classic_rsi 1H backtest 12/19 = 0.632, **Wilson 95% lower bound 0.410** (in-sample, n=19). Break-even for the 1.5/2.0 ATR bracket is 0.4286, so with the default p every RSI pack is `COST_GATE_SKIP` until better (cited) evidence is supplied via `--p-hit/--p-source`.
++  - Rebalance add / trim / sell / rotation: an `edge` dict is required — `method ∈ {rs_expected_return, trend_expected_return}`, `expected_return_pct`, `horizon_days`, `evidence{source, n}` (rotation also `held_expected_return_pct`). Add: notional × er; trim/sell: −notional × er_held; rotation (one combined gate, `legs[]`): buy_notional × (er_new − er_held). No edge → SKIP. Typed USD gains are not accepted.
++- Verdict **PASS** iff `EV_after_tax ≥ 2 × total_cost` and net > 0; **COST_GATE_SKIP** otherwise; **COST_GATE_INVALID** on bad/missing inputs (negative fees/units, p ∉ (0,1), bid ≥ ask, stale/missing quote, assumed inputs at final, total ≤ 0); **RISK_EXIT** for listed hard risk exits (numbers still recorded).
++- `do_not_place=True` keeps meaning “this script never places”; `auto_place_eligible` requires a preliminary PASS, and a `--force` auto run is never eligible.
+ 
+ ## Backtest (1H)
+ 
+--- a/classic_rsi/test_cost_gate.py
++++ b/classic_rsi/test_cost_gate.py
+@@ -1,11 +1,15 @@
+-"""Offline tests for cost_gate + auto_place_eligible stamping (no network, no audit writes).
++"""Offline tests for cost_gate v2 (fix1) + auto_place_eligible stamping. No network, no audit writes.
+ 
+ Run: cd /workspace && ./screener-venv/bin/python -m classic_rsi.test_cost_gate
+ """
+ 
+ from __future__ import annotations
+ 
++import json
+ import math
++from datetime import datetime, timedelta
++from pathlib import Path
++from zoneinfo import ZoneInfo
+ 
+ import pandas as pd
+ 
+@@ -14,12 +18,32 @@
+ from .propose import _buy_pack, auto_place_eligibility, stamp_auto_place
+ from .signals import RAW_BUY_80
+ 
++IDT = ZoneInfo("Asia/Jerusalem")
++NOW = datetime(2026, 10, 12, 18, 0, tzinfo=IDT)
++QTS = (NOW - timedelta(seconds=10)).isoformat()
++EVID = "test evidence: hypothetical out-of-sample study, n=200"
++EDGE = {"method": "rs_expected_return", "expected_return_pct": 3.0, "horizon_days": 20,
++        "evidence": {"source": "test: RS-decile forward-return study", "n": 120}}
+ 
+-def make_pack(symbol="SPY", entry=700.0, atr=3.0, notional=None):
++
++def make_pack(symbol="SPY", entry=700.0, atr=3.0, notional=None, p_override=None):
+     row = pd.Series({"raw_signal": RAW_BUY_80, "strength_tag": "EXTREME_80", "zone": "OVER_SOLD",
+                      "rsi": 18.0, "close": entry})
+-    return _buy_pack(symbol=symbol, bar_time="2026-10-09 13:30:00+00:00", row=row,
+-                     levels=atr_long_levels(entry, atr), suggested_notional_usd=notional)
++    p = _buy_pack(symbol=symbol, bar_time="2026-10-09 13:30:00+00:00", row=row,
++                  levels=atr_long_levels(entry, atr), suggested_notional_usd=notional)
++    if p_override is not None:  # test-only: simulate a cited p so the pack can be eligible
++        lv = p["levels"]
++        p["cost_gate"] = C.evaluate(kind="rsi_buy", entry=lv["entry"], notional_usd=notional or 500,
++                                    take_profit=lv["take_profit"], stop_loss=lv["stop_loss"],
++                                    p_hit=p_override, p_source=EVID)
++    return p
++
++
++def final(**kw):
++    base = dict(kind="rsi_buy", entry=27.05, units=20, bid=27.03, ask=27.05, quote_ts=QTS, open_fee_usd=1.0,
++                close_fee_usd=1.0, take_profit=28.05, stop_loss=26.30, stage="final", now=NOW)
++    base.update(kw)
++    return C.evaluate(**base)
+ 
+ 
+ def run():
+@@ -28,77 +52,144 @@
+     def t(name, cond, detail=""):
+         out.append((name, bool(cond), detail))
+ 
+-    # --- formula: rsi_buy with live quote ---
+-    cg = C.evaluate(kind="rsi_buy", entry=100.0, units=10, bid=99.95, ask=100.0, open_fee_usd=1,
+-                    close_fee_usd=1, take_profit=104.0, stop_loss=97.0, stage="final")
+-    t("spread = (ask-bid) x units", math.isclose(cg["spread"], 0.5), cg["spread"])
+-    t("total = spread+open+close+overnight", math.isclose(cg["total_cost"], 2.5), cg["total_cost"])
+-    t("expected = (TP-entry) x units x 0.43", math.isclose(cg["expected_gain"], 4 * 10 * 0.43), cg["expected_gain"])
+-    t("ratio 6.88 >= 2 => PASS", cg["verdict"] == "PASS" and math.isclose(cg["ratio"], 6.88), cg["ratio"])
+-    t("final stage is binding", cg["binding"] is True and cg["stage"] == "final")
+-    t("flat QA fields present", all(k in cg for k in ("spread", "fees", "overnight", "realized_pnl", "tax_est",
+-                                                       "total_cost", "expected_gain", "expected_net_gain",
+-                                                       "ratio", "method", "verdict")))
+-    # 2x boundary: exactly 2x passes, just under is skipped
+-    cg = C.evaluate(kind="rsi_buy", entry=100, units=1, spread_usd=0, open_fee_usd=1, close_fee_usd=1,
+-                    take_profit=110, p_hit=0.4)  # 4.0 vs 2.0 -> exactly 2x
+-    t("exactly 2x => PASS", cg["verdict"] == "PASS" and math.isclose(cg["ratio"], 2.0), cg["ratio"])
+-    cg = C.evaluate(kind="rsi_buy", entry=100, units=1, spread_usd=0, open_fee_usd=1, close_fee_usd=1,
+-                    take_profit=109.9, p_hit=0.4)
+-    t("1.98x => COST_GATE_SKIP", cg["verdict"] == "COST_GATE_SKIP", cg["ratio"])
+-    # preliminary defaults
+-    cg = C.evaluate(kind="rsi_buy", entry=50, take_profit=51, stop_loss=49.25)
+-    t("unsized prelim uses $500 + assumed spread/fees", math.isclose(cg["inputs"]["notional_usd"], 500)
+-      and cg["inputs"]["sources"]["spread"] == "assumed_default"
+-      and math.isclose(cg["total_cost"], 500 * 0.0015 + 1.5), cg["total_cost"])
+-    t("default fees $0.75 each, source cited", C.DEFAULT_OPEN_FEE_USD == 0.75 and C.DEFAULT_CLOSE_FEE_USD == 0.75
+-      and any("0.75" in a and "2026-10-07" in a for a in cg["assumptions"]), cg["assumptions"])
+-    t("prelim not binding", cg["binding"] is False and cg["assumptions"])
+-    # rebalance add (ATR hold)
+-    cg = C.evaluate(kind="rebalance_add", entry=700, notional_usd=700, daily_atr=7.0, hold_days=20,
+-                    bid=699.9, ask=700.0, open_fee_usd=1, close_fee_usd=1)
+-    exp = 700 * (0.01 * math.sqrt(20)) * 0.25
+-    t("rebalance_add expected = notional x ATRd% x sqrt(hold) x 0.25", math.isclose(cg["expected_gain"], round(exp, 4)),
+-      cg["expected_gain"])
+-    t("rebalance_add verdict", cg["verdict"] == ("PASS" if exp >= 2 * cg["total_cost"] else "COST_GATE_SKIP"))
+-    # trim with realized gain -> tax 25%
+-    cg = C.evaluate(kind="trim", entry=600, units=1, bid=599.8, ask=600, close_fee_usd=1, realized_pnl_usd=40,
+-                    expected_gain_usd=30, expected_gain_method="risk removed: cap breach 51%->30%")
+-    t("trim: no open fee, tax = 25% x realized", cg["costs"]["open_fee"] == 0 and math.isclose(cg["tax_est"], 10.0))
+-    t("trim: total = spread+close+tax", math.isclose(cg["total_cost"], 0.2 + 1 + 10), cg["total_cost"])
+-    t("trim 30 vs 11.2 => PASS", cg["verdict"] == "PASS")
+-    cg = C.evaluate(kind="trim", entry=600, units=1, realized_pnl_usd=-20, close_fee_usd=1, spread_usd=0.2)
+-    t("trim without expected gain => SKIP; loss => no tax", cg["verdict"] == "COST_GATE_SKIP" and cg["tax_est"] == 0)
+-    cg = C.evaluate(kind="sell", entry=600, units=1, realized_pnl_usd=100, close_fee_usd=1, risk_exit=True)
+-    t("risk exit recorded, not skipped", cg["verdict"] == "RISK_EXIT" and math.isclose(cg["tax_est"], 25.0))
++    # --- p evidence (documented parameter) ---
++    bt = json.loads((Path(__file__).parent / "backtest-summary-1h.json").read_text())["aggregate"]
++    n, k, z = bt["n_trades"], bt["wins"], 1.96
++    ph = k / n
++    wl = (ph + z * z / (2 * n) - z * math.sqrt(ph * (1 - ph) / n + z * z / (4 * n * n))) / (1 + z * z / n)
++    t("P_EVIDENCE matches backtest file (12/19, Wilson95 lower)", (C.P_EVIDENCE["wins"], C.P_EVIDENCE["n"]) == (k, n)
++      and abs(C.P_EVIDENCE["lower_95_wilson"] - wl) < 1e-4 and C.P_HIT_DEFAULT == C.P_EVIDENCE["lower_95_wilson"], wl)
++
++    # --- COST_GATE_EV_INFLATED: QA repro T-like pack ---
++    cg = final()
++    t("T-like pack: pre-tax EV = 20*(p*1.00 - (1-p)*0.75) with default p", math.isclose(
++        cg["expected_gain_pre_tax"], round(20 * (C.P_HIT_DEFAULT * 1.0 - (1 - C.P_HIT_DEFAULT) * 0.75), 4)),
++      cg["expected_gain_pre_tax"])
++    t("T-like pack default p => COST_GATE_SKIP (p below break-even)", cg["verdict"] == "COST_GATE_SKIP"
++      and "P_AT_OR_BELOW_BREAKEVEN" in cg["skip_reasons"], cg["skip_reasons"])
++    cg = final(p_hit=0.43, p_source=EVID)
++    t("QA probe: p=0.43 => EV ~ +0.05 and SKIP", math.isclose(cg["expected_gain_pre_tax"], 0.05, abs_tol=0.01)
++      and cg["verdict"] == "COST_GATE_SKIP", cg["expected_gain_pre_tax"])
++    cg = final(p_hit=0.6)
++    t("p without cited source => SKIP", cg["verdict"] == "COST_GATE_SKIP" and "P_NO_CITED_EVIDENCE" in cg["skip_reasons"])
++    cg = final(p_hit=0.7, p_source=EVID, units=40, open_fee_usd=0.75, close_fee_usd=0.75)
++    ev = 40 * (0.7 * 1.0 - 0.3 * 0.75)
++    t("positive EV taxed x0.75", math.isclose(cg["expected_gain_pre_tax"], round(ev, 4))
++      and math.isclose(cg["expected_gain"], round(ev * 0.75, 4)), cg["expected_gain"])
++    t("ratio = EV_after_tax / total_cost; PASS at >= 2", cg["verdict"] == "PASS" and math.isclose(
++        cg["ratio"], round(ev * 0.75 / (0.8 + 1.5), 3)), cg["ratio"])
++    t("final block: binding, assumptions [], p_source + quote_ts recorded", cg["binding"] and cg["assumptions"] == []
++      and cg["inputs"]["p_source"] == EVID and cg["inputs"]["quote_ts"] == QTS)
++    t("negative EV not taxed, SKIP", final(p_hit=0.3, p_source=EVID)["expected_gain"] < 0
++      and final(p_hit=0.3, p_source=EVID)["verdict"] == "COST_GATE_SKIP")
++
++    # --- COST_GATE_INPUT_VALIDATION ---
++    t("negative fees => INVALID", final(open_fee_usd=-3, close_fee_usd=-3, p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    t("bid==ask => INVALID", final(bid=27.05, p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    cg = C.evaluate(kind="rsi_buy", entry=27.05, units=20, bid=27.05, ask=27.05, spread_usd=0, open_fee_usd=0,
++                    close_fee_usd=0, take_profit=28.05, stop_loss=26.3, p_hit=0.7, p_source=EVID)
++    t("zero total cost => INVALID (no inf ratio)", cg["verdict"] == "COST_GATE_INVALID"
++      and "TOTAL_COST_NOT_POSITIVE" in cg["errors"], cg["errors"])
++    t("p_hit=5 => INVALID", final(p_hit=5, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    t("p_hit=0 => INVALID", final(p_hit=0, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    t("negative units => INVALID", final(units=-5, p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    t("SL >= entry => INVALID", final(stop_loss=27.1, p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++
++    # --- COST_GATE_NO_QUOTE_STALENESS / FINAL_ALLOWS_ASSUMED_INPUTS ---
++    t("final with no bid/ask => INVALID", final(bid=None, ask=None, p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    cg = final(quote_ts=(NOW - timedelta(seconds=61)).isoformat(), p_hit=0.7, p_source=EVID)
++    t("quote 61s old => INVALID", cg["verdict"] == "COST_GATE_INVALID" and any("QUOTE_STALE" in e for e in cg["errors"]))
++    t("quote_ts missing => INVALID", final(quote_ts=None, p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    t("naive quote_ts => INVALID", final(quote_ts="2026-10-12T17:59:55", p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    cg = final(open_fee_usd=None, p_hit=0.7, p_source=EVID)
++    t("final with no getCost open fee => INVALID", cg["verdict"] == "COST_GATE_INVALID"
++      and "OPEN_FEE_REQUIRED_AT_FINAL" in cg["errors"], cg["errors"])
++    t("ask vs independent mark > 0.1% => INVALID",
++      final(independent_mark=26.9, p_hit=0.7, p_source=EVID)["verdict"] == "COST_GATE_INVALID")
++    cg = final(spread_usd=0.01, bid=26.55, ask=27.05, p_hit=0.7, p_source=EVID)
++    t("spread = max(spread_usd 0.01, live (ask-bid)*units 10.0)", math.isclose(cg["spread"], 10.0), cg["spread"])
++    cg = final(spread_usd=5.0, p_hit=0.7, p_source=EVID)
++    t("getCost spread wider than live is kept", math.isclose(cg["spread"], 5.0))
++
++    # --- rebalance / trim / sell / rotation: directional edge with evidence ---
++    cg = C.evaluate(kind="rebalance_add", entry=95.0, units=6.315789, bid=94.98, ask=95.0, quote_ts=QTS,
++                    open_fee_usd=0.75, close_fee_usd=0.75, daily_atr=1.9, stage="final", now=NOW)
++    t("rebalance_add without edge => SKIP (ATR magnitude no longer counts)", cg["verdict"] == "COST_GATE_SKIP"
++      and cg["expected_gain"] is None and "EDGE_MISSING" in cg["skip_reasons"])
++    bad = dict(EDGE, evidence={"source": "", "n": 0})
++    t("edge without cited evidence => SKIP", "EDGE_NO_CITED_EVIDENCE" in C.evaluate(
++        kind="rebalance_add", entry=95.0, units=6.3, edge=bad)["skip_reasons"])
++    t("edge method outside list => SKIP", C.evaluate(kind="rebalance_add", entry=95.0, units=6.3,
++                                                     edge=dict(EDGE, method="atr_hold"))["verdict"] == "COST_GATE_SKIP")
++    cg = C.evaluate(kind="rebalance_add", entry=95.0, units=10, bid=94.98, ask=95.0, quote_ts=QTS,
++                    open_fee_usd=0.75, close_fee_usd=0.75, edge=EDGE, stage="final", now=NOW)
++    t("rebalance_add EV = notional x er, after tax", math.isclose(cg["expected_gain"], round(950 * 0.03 * 0.75, 4))
++      and cg["verdict"] == "PASS", cg["expected_gain"])
++    try:
++        C.evaluate(kind="sell", entry=600, units=1, expected_gain_usd=1e6)
++        typed = True
++    except TypeError:
++        typed = False
++    t("typed expected_gain_usd rejected (QA probe sell 1e6)", not typed)
++    cg = C.evaluate(kind="sell", entry=600, units=1, bid=599.8, ask=600, quote_ts=QTS, close_fee_usd=0.75,
++                    realized_pnl_usd=40, stage="final", now=NOW)
++    t("sell without edge => SKIP", cg["verdict"] == "COST_GATE_SKIP")
++    held = dict(EDGE, method="trend_expected_return", expected_return_pct=-4.0)
++    cg = C.evaluate(kind="trim", entry=599.8, units=1, bid=599.8, ask=600, quote_ts=QTS, close_fee_usd=0.75,
++                    realized_pnl_usd=40, edge=held, stage="final", now=NOW)
++    t("trim: no open fee; tax 25% of realized on sell leg", cg["costs"]["open_fee"] == 0 and math.isclose(cg["tax_est"], 10.0))
++    t("trim EV = -notional x er_held, after tax", math.isclose(cg["expected_gain"], round(599.8 * 0.04 * 0.75, 4))
++      and cg["verdict"] == "COST_GATE_SKIP", (cg["expected_gain"], cg["total_cost"]))
++    cg = C.evaluate(kind="sell", entry=599.8, units=1, bid=599.8, ask=600, quote_ts=QTS, close_fee_usd=0.75,
++                    realized_pnl_usd=None, edge=held, stage="final", now=NOW)
++    t("sell leg without realized_pnl => INVALID", cg["verdict"] == "COST_GATE_INVALID")
++    cg = C.evaluate(kind="sell", entry=600, units=1, realized_pnl_usd=100, close_fee_usd=0.75, risk_exit=True,
++                    risk_exit_reason="stop_hit")
++    t("risk exit recorded, not skipped; tax recorded", cg["verdict"] == "RISK_EXIT" and math.isclose(cg["tax_est"], 25.0))
++    t("risk exit with unknown reason => INVALID", C.evaluate(kind="sell", entry=600, units=1, realized_pnl_usd=0,
++      risk_exit=True, risk_exit_reason="felt like it")["verdict"] == "COST_GATE_INVALID")
++    sell = {"symbol": "XLV", "units": 5, "bid": 150.0, "ask": 150.05, "quote_ts": QTS, "close_fee_usd": 0.75,
++            "realized_pnl_usd": 40.0}
++    buy = {"symbol": "XLE", "units": 8, "bid": 94.98, "ask": 95.0, "quote_ts": QTS, "open_fee_usd": 0.75,
++           "close_fee_usd": 0.75}
++    redge = dict(EDGE, expected_return_pct=6.0, held_expected_return_pct=1.0)
++    cg = C.evaluate_rotation(sell=sell, buy=buy, edge=redge, now=NOW)
++    tc = 5 * 0.05 + 0.75 + 10.0 + 8 * 0.02 + 0.75 + 0.75
++    t("rotation: one gate, costs = both legs + sell tax", math.isclose(cg["total_cost"], round(tc, 4))
++      and len(cg["legs"]) == 2, cg["total_cost"])
++    t("rotation EV = buy_notional x (er_new - er_held), after tax",
++      math.isclose(cg["expected_gain"], round(760 * 0.05 * 0.75, 4)) and cg["verdict"] == "PASS", cg["ratio"])
++    t("rotation without held er => SKIP", C.evaluate_rotation(sell=sell, buy=buy, edge=EDGE, now=NOW)["verdict"]
++      == "COST_GATE_SKIP")
+ 
+-    # --- propose integration ---
++    # --- preliminary + propose integration ---
+     p = make_pack("SPY", entry=700.0, atr=3.0)
+     cgp = p["cost_gate"]
+-    t("pack carries preliminary cost_gate", cgp["stage"] == "preliminary" and cgp["kind"] == "rsi_buy"
+-      and "PRELIMINARY" in cgp["note"])
+-    t("fee_estimate no longer None", isinstance(p["fee_estimate"], dict) and p["fee_estimate"]["stage"] == "preliminary")
+-    # SPY: TP dist 6.0, units 500/700, exp=6*0.714*0.43=1.84; cost 0.75+1.5 = 2.25 -> SKIP (ratio 0.82)
+-    t("small-ATR SPY pack prelim COST_GATE_SKIP", cgp["verdict"] == "COST_GATE_SKIP" and p["status"] == "COST_GATE_SKIP",
+-      f"{cgp['expected_gain']} vs {cgp['total_cost']}")
++    t("pack carries preliminary cost_gate with default cited p", cgp["stage"] == "preliminary"
++      and cgp["binding"] is False and "backtest-summary-1h.json" in cgp["inputs"]["p_source"])
++    t("preliminary assumes $0.75 fees, cites 2026-10-07", any("0.75" in a and "2026-10-07" in a for a in cgp["assumptions"]))
++    t("default-p pack => SKIP, not eligible", p["status"] == "COST_GATE_SKIP"
++      and not auto_place_eligibility(p)[0])
+     t("do_not_place still True", p["do_not_place"] is True)
+-    ok, why = auto_place_eligibility(p)
+-    t("SKIP pack not eligible", not ok and "COST_GATE_SKIP" in why, why)
+-    big = make_pack("T", entry=27.0, atr=0.5, notional=1000)  # TP dist 1.0 x 37.04u x .43 = 15.9 vs 1.5+1.5=3.0
+-    t("T pack prelim PASS (resolves T.US 1030)", big["cost_gate"]["verdict"] == "PASS"
+-      and big["instrument"]["instrumentId"] == 1030, big["cost_gate"]["ratio"])
++    big = make_pack("T", entry=27.0, atr=0.5, notional=1000, p_override=0.6)
++    t("cited-p T pack prelim PASS (T.US 1030)", big["cost_gate"]["verdict"] == "PASS"
++      and big["instrument"]["instrumentId"] == 1030, big["cost_gate"].get("ratio"))
+     s = stamp_auto_place(big)
+     t("eligible when clean", s["auto_place_eligible"] is True and s["auto_place_blockers"] == [], s["auto_place_blockers"])
+-    s = stamp_auto_place(big, hard_flags=["INSTRUMENT_CRYPTO"])
+-    t("hard flag blocks", s["auto_place_eligible"] is False and s["auto_place_blockers"][0].startswith("HARD_FLAGS"))
++    t("hard flag blocks", stamp_auto_place(big, hard_flags=["INSTRUMENT_CRYPTO"])["auto_place_eligible"] is False)
+     t("stale book blocks", stamp_auto_place(big, book_stale=True)["auto_place_eligible"] is False)
+     t("mandate gate blocks", stamp_auto_place(big, allow_new_buys=False)["auto_place_eligible"] is False)
+-    bad = dict(big, leverage=2)
+-    t("non-x1 blocks", "NOT_LONG_X1" in stamp_auto_place(bad)["auto_place_blockers"])
++    t("non-x1 blocks", "NOT_LONG_X1" in stamp_auto_place(dict(big, leverage=2))["auto_place_blockers"])
+     crypto = dict(big, instrument={**big["instrument"], "instrumentId": 100528})
+-    t("crypto id blocks (instrument guard)", "INSTRUMENT_GUARD" in stamp_auto_place(crypto)["auto_place_blockers"])
+-    nocg = {k: v for k, v in big.items() if k != "cost_gate"}
++    t("crypto id blocks", "INSTRUMENT_GUARD" in stamp_auto_place(crypto)["auto_place_blockers"])
++    nocg = {kk: v for kk, v in big.items() if kk != "cost_gate"}
+     t("missing cost_gate blocks", "COST_GATE_MISSING" in stamp_auto_place(nocg)["auto_place_blockers"])
++    inv = dict(big, cost_gate=dict(big["cost_gate"], verdict="COST_GATE_INVALID"))
++    t("INVALID gate blocks", "COST_GATE_INVALID" in stamp_auto_place(inv)["auto_place_blockers"])
++    src = (Path(__file__).parent / "auto_1h.py").read_text()
++    t("AUTO1H_FORCE: --force never sets auto eligibility",
++      'allow_new_buys=bool(gates.get("allow_new_buys")) and not force' in src
++      and 'or force)' not in src.split("stamp_auto_place(p,")[1][:200])
+     return out
+ 
+ 
+--- a/classic_rsi/test_execute_pass.py
++++ b/classic_rsi/test_execute_pass.py
+@@ -1,4 +1,4 @@
+-"""Offline tests for execute_pass (GO/NO-GO). Temp audit dir + temp book; never calls eToro.
++"""Offline tests for execute_pass v2 (fix1). Temp audit dir + temp book; never calls eToro.
+ 
+ Run: cd /workspace && ./screener-venv/bin/python -m classic_rsi.test_execute_pass
+ """
+@@ -7,44 +7,65 @@
+ 
+ import json
+ import tempfile
+-from datetime import datetime
++from datetime import datetime, timedelta
+ from pathlib import Path
+ from zoneinfo import ZoneInfo
+ 
+ from . import execute_pass as X
++from .market_hours import us_session
+ from .propose import stamp_auto_place
+-from .test_cost_gate import make_pack
++from .test_cost_gate import EVID, make_pack
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-MON = datetime(2026, 10, 12, 18, 0, tzinfo=IDT)
+-SAT = datetime(2026, 10, 10, 18, 0, tzinfo=IDT)
+-RID = "classic-rsi-auto-20261012-180000-testtest"
+-PRID = "classic-rsi-propose-20261012-180005-testtest"
++MON = datetime(2026, 10, 12, 18, 0, tzinfo=IDT)  # 11:00 ET, regular session
++RID = "classic-rsi-auto-20261012-175000-testtest"
++PRID = "classic-rsi-propose-20261012-175005-testtest"
+ 
+ 
+-def _setup(tmp: Path, packs, cash=3671.18):
+-    rec = {"run_id": RID, "kind": "auto",
+-           "payload": {"run_id": RID, "propose_run_id": PRID, "flags": [],
+-                       "buy_packs": [dict(stamp_auto_place(p), run_id=PRID) for p in packs]}}
++def ts(now, s):
++    return (now - timedelta(seconds=s)).isoformat()
++
++
++POS = [("QQQ", 3006, 830.65, 750.0), ("SMH", 6357, 778.16, 700.0), ("XLV", 3018, 774.44, 760.0),
++       ("SPY", 3000, 705.82, 690.0), ("TMO", 1592, 509.15, 520.0)]
++
++
++def book(tmp: Path, now=MON, age_s=60, extra=None, cost_override=None):
++    pos = [{"symbol": s, "instrumentId": i, "value": v, "invested": (cost_override or {}).get(s, c), "units": 1.0,
++            "positionId": 1000 + n, "openTime": "2026-07-27T17:45:47.613"} for n, (s, i, v, c) in enumerate(POS)]
++    pos += extra or []
++    (tmp / "book.json").write_text(json.dumps({"asOf": ts(now, age_s), "positions": pos}))
++    return tmp / "book.json"
++
++
++def setup(tmp: Path, packs):
++    rec = {"run_id": RID, "kind": "auto", "payload": {"run_id": RID, "propose_run_id": PRID, "flags": [],
++           "buy_packs": [dict(stamp_auto_place(p), run_id=PRID) for p in packs]}}
+     (tmp / f"{RID}.json").write_text(json.dumps(rec))
+-    book = {"asOf": "2026-10-12T17:55:00+03:00", "summary": {"availableCash": cash},
+-            "positions": [{"symbol": "QQQ", "value": 830.65}, {"symbol": "SMH", "value": 778.16},
+-                          {"symbol": "XLV", "value": 774.44}, {"symbol": "SPY", "value": 705.82},
+-                          {"symbol": "TMO", "value": 509.15}]}
+-    (tmp / "book.json").write_text(json.dumps(book))
+-    (tmp / "runqa.json").write_text(json.dumps({"verdict": "PASS", "run_id": RID, "propose_run_id": PRID}))
+-    (tmp / "orderqa.json").write_text(json.dumps({"verdict": "PASS", "run_id": PRID, "symbol": "T"}))
+-    (tmp / "runqa-fail.json").write_text(json.dumps({"verdict": "FAIL", "run_id": RID}))
++    book(tmp)
++    verdict(tmp / "runqa.json", skill=X.RUN_QA_SKILL, run_id=RID, propose_run_id=PRID)
+ 
+ 
+-def _run(tmp, **kw):
+-    base = dict(pack_id=f"{RID}#T", bid=27.03, ask=27.05, units=20.0, open_fee_usd=1.0, close_fee_usd=1.0,
+-                run_qa_verdict=str(tmp / "runqa.json"), order_qa_verdict=str(tmp / "orderqa.json"),
+-                book_path=tmp / "book.json", audit_dir=tmp, now=MON)
++def verdict(path: Path, *, age_s=60, now=MON, **kw):
++    path.write_text(json.dumps({"verdict": "PASS", "checked_at": ts(now, age_s), **kw}))
++    return str(path)
++
++
++def rsi(tmp, now=MON, **kw):
++    base = dict(pack_id=f"{RID}#T", bid=27.03, ask=27.05, quote_ts=ts(now, 5), units=23.0, open_fee_usd=0.75,
++                close_fee_usd=0.75, cash_usd=3671.18, cash_ts=ts(now, 5), run_qa_verdict=str(tmp / "runqa.json"),
++                order_qa_verdict=None, book_path=tmp / "book.json", audit_dir=tmp, now=now,
++                p_hit=0.6, p_source=EVID)
+     base.update(kw)
+     return X.run_checks(**base)
+ 
+ 
++def oqa(tmp, r, name="orderqa.json", **kw):
++    f = dict(skill=X.ORDER_QA_SKILL, run_id=PRID, symbol=r["symbol"], pack_sha256=r["pack_sha256"])
++    f.update(kw)
++    return verdict(tmp / name, **f)
++
++
+ def run():
+     out = []
+ 
+@@ -53,76 +74,200 @@
+ 
+     with tempfile.TemporaryDirectory() as d:
+         tmp = Path(d)
+-        tpack = make_pack("T", entry=27.0, atr=0.5, notional=1000)
+-        spy_small = make_pack("SPY", entry=700.0, atr=3.0)
+-        _setup(tmp, [tpack, spy_small])
+-
+-        r = _run(tmp)
+-        t("clean pack => GO", r["decision"] == "GO" and r["blockers"] == [], r["blockers"])
+-        t("GO carries final binding cost_gate", r["cost_gate"]["stage"] == "final" and r["cost_gate"]["verdict"] == "PASS")
+-        t("SL/TP rebased on live ask", abs(r["rebased_levels"]["take_profit"] - (27.05 + 1.0)) < 1e-6
+-          and abs(r["rebased_levels"]["stop_loss"] - (27.05 - 0.75)) < 1e-6, r["rebased_levels"])
+-        t("never calls eToro / never places", r["never_calls_etoro"] is True and r["places"] is False)
+-        t("instrumentId/etoroSymbol echoed", r["instrumentId"] == 1030 and r["etoroSymbol"] == "T.US")
+-
+-        r = _run(tmp, order_qa_verdict=None)
+-        t("no order-QA => NO-GO ORDER_QA_PENDING but ready_for_order_qa", r["decision"] == "NO-GO"
+-          and r["blockers"] == ["ORDER_QA_PENDING"] and r["ready_for_order_qa"] is True, r["blockers"])
+-        r = _run(tmp, run_qa_verdict=str(tmp / "runqa-fail.json"))
+-        t("run-QA FAIL => NO-GO", "RUN_QA_NOT_PASS" in r["blockers"])
+-        r = _run(tmp, run_qa_verdict=str(tmp / "missing.json"))
+-        t("run-QA missing => NO-GO", "RUN_QA_NOT_PASS" in r["blockers"])
+-
+-        # cash floor auto-shrink: cash 3000 -> max units (3000-2500-1)/27.05 = 18.447...
+-        r = _run(tmp, cash_usd=3000.0)
+-        t("cash floor auto-shrinks units", r["sizing"]["shrunk"] and r["sizing"]["final_units"] < 20
+-          and r["sizing"]["cash_after_usd"] >= 2500 and r["decision"] == "GO", r["sizing"])
+-        r = _run(tmp, cash_usd=2800.0)
+-        t("shrunk below $400 min => NO-GO", "BELOW_MIN_POSITION" in r["blockers"], r["sizing"])
+-
+-        # name cap: stock 15% of invested (3598 + x): max x = (0.15*3598.22 - 0)/0.85 = 634.98
+-        r = _run(tmp, units=40.0, cash_usd=6000.0)
+-        t("stock name cap 15% auto-shrinks", any(s["reason"].startswith("name_cap_15") for s in r["sizing"]["shrink_steps"])
+-          and r["caps_after"]["name_pct"] <= 15.0 + 1e-6, r.get("caps_after"))
+-        # drift > 0.5 x ATR (0.25)
+-        r = _run(tmp, bid=27.28, ask=27.30)
+-        t("drift > 0.5xATR => NO-GO", "DRIFT" in r["blockers"], r["blockers"])
+-        # live costs kill the edge -> final cost gate SKIP
+-        r = _run(tmp, units=15.0, open_fee_usd=5.0, close_fee_usd=5.0)
+-        t("live fees => final COST_GATE_SKIP => NO-GO", "COST_GATE_SKIP" in r["blockers"], r["cost_gate"]["ratio"])
+-        # ineligible (preliminary SKIP) pack
+-        r = _run(tmp, pack_id=f"{RID}#SPY", bid=699.9, ask=700.0, units=1.0)
+-        t("prelim-SKIP pack => NOT_AUTO_PLACE_ELIGIBLE", "NOT_AUTO_PLACE_ELIGIBLE" in r["blockers"])
+-        r = _run(tmp, pack_id=f"{RID}#ZZZZ")
++        T = make_pack("T", entry=27.0, atr=0.5, notional=1000, p_override=0.6)
++        setup(tmp, [T, make_pack("SPY", entry=700.0, atr=3.0)])
++
++        r = rsi(tmp)
++        t("pre-QA: NO-GO ORDER_QA_PENDING, ready_for_order_qa", r["blockers"] == ["ORDER_QA_PENDING"]
++          and r["ready_for_order_qa"], r["blockers"])
++        pay = r["order_payloads"][0]
++        t("EXEC_PLACE_PAYLOAD_NOT_PINNED: exact payload keys/values", set(pay) == {"instrumentId", "isBuy", "leverage",
++          "units", "stopLossRate", "takeProfitRate"} and pay["instrumentId"] == 1030 and pay["isBuy"] is True
++          and pay["leverage"] == 1 and pay["units"] == r["sizing"]["final_units"], pay)
++        t("EXEC_NO_STOP_LOSS_CHECK: 0 < SL < bid, SL/TP rebased on ask", 0 < pay["stopLossRate"] < 27.03
++          and abs(pay["stopLossRate"] - 26.30) < 1e-6 and abs(pay["takeProfitRate"] - 28.05) < 1e-6, pay)
++        t("final cost gate PASS with cited p", r["cost_gate"]["verdict"] == "PASS" and r["cost_gate"]["binding"])
++        r2 = rsi(tmp, order_qa_verdict=oqa(tmp, r))
++        t("GO with matching order-QA (pack sha, skill, age)", r2["decision"] == "GO", r2["blockers"])
++        t("GO writes idempotency lock", Path(r2.get("lock", "/nonexistent")).exists())
++        r3 = rsi(tmp, order_qa_verdict=oqa(tmp, r))
++        t("EXEC_NO_IDEMPOTENCY: second identical run => ALREADY_GO_LOCKED", "ALREADY_GO_LOCKED" in r3["blockers"])
++        X.lock_path(f"{RID}#T", tmp).unlink()
++
++        # verdict binding
++        both = verdict(tmp / "both.json", skill=X.RUN_QA_SKILL, run_id=PRID, symbol="T",
++                       pack_sha256=r["pack_sha256"])
++        r = rsi(tmp, run_qa_verdict=both, order_qa_verdict=both, write_lock=False)
++        t("EXEC_VERDICT_KIND: same run-QA file as order-QA => NO-GO", "ORDER_QA_NOT_PASS" in r["blockers"], r["blockers"])
++        old = tmp / "old2025.json"
++        old.write_text(json.dumps({"verdict": "PASS", "run_id": PRID, "symbol": "T", "created": "2025-01-01",
++                                   "checked_at": "2025-01-01T10:00:00+02:00", "skill": X.RUN_QA_SKILL}))
++        r = rsi(tmp, run_qa_verdict=str(old), order_qa_verdict=str(old), write_lock=False)
++        t("QA repro: 2025 PASS file reused for both => NO-GO", "RUN_QA_NOT_PASS" in r["blockers"]
++          and "ORDER_QA_NOT_PASS" in r["blockers"], r["blockers"])
++        r = rsi(tmp, run_qa_verdict=verdict(tmp / "rq61.json", age_s=61 * 60, skill=X.RUN_QA_SKILL, run_id=RID),
++                write_lock=False)
++        t("EXEC_VERDICT_STALENESS: run-QA 61 min old => NO-GO", "RUN_QA_NOT_PASS" in r["blockers"])
++        r = rsi(tmp, write_lock=False)
++        r = rsi(tmp, order_qa_verdict=oqa(tmp, r, "oq16.json", age_s=16 * 60), write_lock=False)
++        t("EXEC_VERDICT_STALENESS: order-QA 16 min old => NO-GO", "ORDER_QA_NOT_PASS" in r["blockers"])
++        r = rsi(tmp, write_lock=False)
++        r = rsi(tmp, order_qa_verdict=oqa(tmp, r, "oqm.json", skill="classic-rsi-1h-run-qa"), write_lock=False)
++        t("order-QA with wrong skill => NO-GO", "ORDER_QA_NOT_PASS" in r["blockers"])
++        r = rsi(tmp, write_lock=False)
++        q = oqa(tmp, r, "oqsha.json")
++        r = rsi(tmp, order_qa_verdict=q, units=22.0, write_lock=False)
++        t("EXEC_NO_PACK_HASH_BINDING: size changed after order-QA => NO-GO", "ORDER_QA_NOT_PASS" in r["blockers"]
++          and "pack_sha256" in [c for c in r["checks"] if c["name"] == "order_qa_pass"][0]["detail"])
++        r = rsi(tmp, run_qa_verdict=verdict(tmp / "rqf.json", skill=X.RUN_QA_SKILL, run_id="other-run"),
++                write_lock=False)
++        t("run-QA for another run => NO-GO", "RUN_QA_NOT_PASS" in r["blockers"])
++
++        # cash / book TOCTOU + floor
++        r = rsi(tmp, cash_usd=None, cash_ts=None, write_lock=False)
++        t("EXEC_TOCTOU_CASH: no live cash => CASH_NOT_LIVE", "CASH_NOT_LIVE" in r["blockers"])
++        r = rsi(tmp, cash_ts=ts(MON, 120), write_lock=False)
++        t("cash read 120s old => CASH_NOT_LIVE", "CASH_NOT_LIVE" in r["blockers"])
++        book(tmp, age_s=16 * 60)
++        r = rsi(tmp, write_lock=False)
++        t("book snapshot asOf 16 min old => BOOK_STALE", "BOOK_STALE" in r["blockers"])
++        book(tmp)
++        r = rsi(tmp, open_fee_usd=None, write_lock=False)
++        t("EXEC_CASH_FLOOR_FEE_MISMATCH: open fee omitted => NO-GO", "OPEN_FEE_REQUIRED" in r["blockers"])
++        # QA repro: cash such that cash - units*ask == 2500 exactly; with 0.75 fee it would be 2499.25
++        cash = 2500 + 18.0 * 27.05
++        r = rsi(tmp, units=18.0, cash_usd=cash, write_lock=False)
++        t("QA repro 2499.25: units shrink so cash_after >= 2500 after the fee", r["sizing"]["cash_after_usd"] >= 2500
++          and r["sizing"]["final_units"] < 18.0 and any(s["reason"] == "cash_floor" for s in r["sizing"]["shrink_steps"]),
++          r["sizing"])
++        r = rsi(tmp, units=15.0, cash_usd=2800.0, write_lock=False)
++        t("shrunk below $400 => NO-GO", "BELOW_MIN_POSITION" in r["blockers"])
++        # caps
++        r = rsi(tmp, units=40.0, cash_usd=6000.0, write_lock=False)
++        cb = r["caps_after"]
++        t("name cap 15% on market value", cb["market_value"]["name_pct"] <= 15.0 + 1e-6, cb)
++        t("EXEC_CAPS_COST_BASIS: name cap also on cost basis", cb["cost_basis"]["name_pct"] <= 15.0 + 1e-6
++          and any(s["reason"].endswith("_cost") for s in r["sizing"]["shrink_steps"]), r["sizing"]["shrink_steps"])
++        book(tmp, cost_override={"QQQ": 2000.0, "SMH": 1500.0})
++        Q = make_pack("QQQ", entry=750.0, atr=6.0, notional=1500, p_override=0.6)
++        setup(tmp, [T, Q])
++        book(tmp, cost_override={"QQQ": 2000.0, "SMH": 1500.0})
++        r = rsi(tmp, pack_id=f"{RID}#QQQ", bid=749.9, ask=750.0, units=1.0, cash_usd=9000.0, write_lock=False)
++        t("sleeve cap 45% binds on cost basis (growth heavy at cost)", "BELOW_MIN_POSITION" in r["blockers"]
++          or any(s["reason"] == "sleeve_cap_45pct_cost" for s in r["sizing"]["shrink_steps"]), r.get("sizing"))
++        book(tmp)
++
++        # RTH / guards
++        mon3 = datetime(2026, 10, 12, 3, 0, tzinfo=IDT)
++        r = rsi(tmp, now=mon3, quote_ts=ts(mon3, 5), cash_ts=ts(mon3, 5), write_lock=False)
++        t("QA repro Mon 03:00 IDT (Sun 20:00 ET) => NO-GO market closed", r["decision"] == "NO-GO"
++          and ({"OUTSIDE_RTH", "WEEKEND"} & set(r["blockers"])), r["blockers"])
++        tue3 = datetime(2026, 10, 13, 3, 0, tzinfo=IDT)
++        t("Tue 03:00 IDT (Mon 20:00 ET) => OUTSIDE_RTH", us_session(tue3)["reason"] == "OUTSIDE_RTH")
++        sat = datetime(2026, 10, 10, 18, 0, tzinfo=IDT)
++        t("weekend => WEEKEND", "WEEKEND" in rsi(tmp, now=sat, quote_ts=ts(sat, 5), cash_ts=ts(sat, 5),
++                                                write_lock=False)["blockers"])
++        thx = datetime(2026, 11, 26, 18, 0, tzinfo=IDT)
++        t("NYSE holiday (Thanksgiving 2026) => US_HOLIDAY", us_session(thx)["reason"] == "US_HOLIDAY")
++        t("early close 2026-11-27 13:30 ET => closed", us_session(datetime(2026, 11, 27, 13, 30,
++                                                                         tzinfo=ZoneInfo("America/New_York")))["open"] is False)
++        t("calendar unknown year fails closed", us_session(datetime(2030, 1, 7, 18, 0, tzinfo=IDT))["open"] is False)
++        r = rsi(tmp, quote_ts=ts(MON, 90), write_lock=False)
++        t("stale quote (90s) => NO-GO", "QUOTE_INVALID_OR_STALE" in r["blockers"])
++        r = rsi(tmp, bid=27.05, write_lock=False)
++        t("bid >= ask => NO-GO", "QUOTE_INVALID_OR_STALE" in r["blockers"])
++        r = rsi(tmp, open_fee_usd=-3, close_fee_usd=-3, write_lock=False)
++        t("QA probe negative fees => NO-GO", r["decision"] == "NO-GO" and ("OPEN_FEE_REQUIRED" in r["blockers"]
++                                                                       or "COST_GATE_INVALID" in r["blockers"]))
++        r = rsi(tmp, p_hit=None, p_source=None, write_lock=False)
++        t("default p (backtest lower bound) => COST_GATE_SKIP", "COST_GATE_SKIP" in r["blockers"])
++        r = rsi(tmp, bid=27.28, ask=27.30, write_lock=False)
++        t("drift > 0.5xATR => DRIFT", "DRIFT" in r["blockers"])
++        r = rsi(tmp, pack_id=f"{RID}#ZZZZ", write_lock=False)
+         t("unknown pack => PACK_NOT_FOUND", r["blockers"] == ["PACK_NOT_FOUND"])
+-        r = _run(tmp, now=SAT)
+-        t("weekend => NO-GO", "WEEKEND" in r["blockers"])
+-        r = _run(tmp, hold=True)
+-        t("explicit hold => NO-GO", "HOLD" in r["blockers"])
+-        (tmp / "orderqa-other.json").write_text(json.dumps({"verdict": "PASS", "run_id": PRID, "symbol": "VZ"}))
+-        r = _run(tmp, order_qa_verdict=str(tmp / "orderqa-other.json"))
+-        t("order-QA for another symbol => NO-GO", "ORDER_QA_NOT_PASS" in r["blockers"])
+-        # unknown sleeve for a new symbol
+-        vz = make_pack("DAL", entry=60.0, atr=1.0, notional=1000)
+-        _setup(tmp, [vz])
+-        (tmp / "orderqa.json").write_text(json.dumps({"verdict": "PASS", "run_id": PRID, "symbol": "DAL"}))
+-        r = _run(tmp, pack_id=f"{RID}#DAL", bid=59.98, ask=60.0, units=10.0)
+-        t("unknown sleeve => NO-GO SLEEVE_UNKNOWN", "SLEEVE_UNKNOWN" in r["blockers"], r["blockers"])
+-        r = _run(tmp, pack_id=f"{RID}#DAL", bid=59.98, ask=60.0, units=10.0, sleeve="industrials_financials")
+-        t("sleeve supplied => GO", r["decision"] == "GO", r["blockers"])
+-        # sleeve cap 45%: growth_tech QQQ+SMH = 1608.81 of 3598.22
+-        qq = make_pack("QQQ", entry=750.0, atr=6.0, notional=1500)
+-        _setup(tmp, [qq], cash=9000)
+-        (tmp / "orderqa.json").write_text(json.dumps({"verdict": "PASS", "run_id": PRID, "symbol": "QQQ"}))
+-        r = _run(tmp, pack_id=f"{RID}#QQQ", bid=749.9, ask=750.0, units=2.0)
+-        t("sleeve cap 45% shrinks growth add", any(s["reason"] == "sleeve_cap_45pct" for s in r["sizing"]["shrink_steps"])
+-          and r["caps_after"]["sleeve_pct"] <= 45.0 + 1e-6, r.get("caps_after"))
+-        # CLI writes audit only to the given dir, exit code 2 on NO-GO
+-        rc = X.main(["--pack-id", f"{RID}#QQQ", "--run-qa-verdict", str(tmp / "runqa.json"), "--bid", "749.9",
+-                     "--ask", "750", "--units", "2", "--book", str(tmp / "book.json"), "--audit-dir", str(tmp),
+-                     "--cash", "9000"])
+-        files = list(tmp.glob("execute-pass-*.json"))
+-        t("CLI writes audit JSON to --audit-dir, NO-GO exit 2", rc == 2 and len(files) == 1)
++        r = rsi(tmp, hold=True, write_lock=False)
++        t("explicit hold => HOLD", "HOLD" in r["blockers"])
++        dup = [{"symbol": "T", "instrumentId": 1030, "value": 100.0, "invested": 100.0, "units": 3.0,
++                "positionId": 77, "openTime": "2026-10-12T14:00:00"}]
++        book(tmp, extra=dup)
++        r = rsi(tmp, write_lock=False)
++        t("open position on same instrument after signal => DUPLICATE_OPEN_POSITION",
++          "DUPLICATE_OPEN_POSITION" in r["blockers"])
++        book(tmp)
++        W = make_pack("T", entry=27.0, atr=20.0, notional=1000, p_override=0.6)
++        setup(tmp, [W])
++        r = rsi(tmp, bid=27.03, ask=27.05, write_lock=False)
++        t("SL <= 0 => STOP_LOSS_INVALID", "STOP_LOSS_INVALID" in r["blockers"], r["blockers"])
++
++        # --- rebalance path (REBALANCE_PATH_UNGATED) ---
++        setup(tmp, [T])
++        xle = {"pack_id": "rebal-20261012-XLE-add", "kind": "rebalance_add",
++               "legs": [{"side": "buy", "symbol": "XLE", "instrumentId": 3020, "units": 6.315789, "bid": 94.98,
++                         "ask": 95.0, "quote_ts": ts(MON, 5), "open_fee_usd": 0.75, "close_fee_usd": 0.75,
++                         "stop_loss": 87.4}]}
++        from .instruments import resolve
++        xle["legs"][0]["instrumentId"] = (resolve("XLE") or {}).get("instrumentId")
++
++        def rb(pack, **kw):
++            base = dict(pack=pack, cash_usd=3671.18, cash_ts=ts(MON, 5), book_path=tmp / "book.json",
++                        audit_dir=tmp, now=MON, write_lock=False)
++            base.update(kw)
++            return X.run_rebalance_checks(**base)
++
++        r = rb(xle)
++        t("XLE $600 add without evidenced edge => COST_GATE_SKIP NO-GO", "COST_GATE_SKIP" in r["blockers"]
++          and r["cost_gate"]["expected_gain"] is None, r["blockers"])
++        xe = dict(xle, edge={"method": "rs_expected_return", "expected_return_pct": 3.0, "horizon_days": 20,
++                             "evidence": {"source": "test RS study", "n": 120}})
++        r = rb(xe)
++        t("add with cited edge: pre-QA ready, payload pinned with SL", r["blockers"] == ["ORDER_QA_PENDING"]
++          and r["order_payloads"][0]["isBuy"] is True and r["order_payloads"][0]["leverage"] == 1
++          and r["order_payloads"][0]["stopLossRate"] == 87.4, r["blockers"])
++        r2 = rb(xe, order_qa_verdict=verdict(tmp / "oqx.json", skill=X.ORDER_QA_SKILL, pack_id=xe["pack_id"],
++                                             pack_sha256=r["pack_sha256"]), write_lock=True)
++        t("rebalance add GO via order-QA sha", r2["decision"] == "GO", r2["blockers"])
++        t("rebalance idempotency lock", "ALREADY_GO_LOCKED" in rb(xe, order_qa_verdict=str(tmp / "oqx.json"))["blockers"])
++        nosl = json.loads(json.dumps(xe)); nosl["pack_id"] += "-nosl"; nosl["legs"][0]["stop_loss"] = None
++        t("rebalance add without SL => STOP_LOSS_INVALID", "STOP_LOSS_INVALID" in rb(nosl)["blockers"])
++        sell = {"pack_id": "rebal-20261012-TMO-stop", "kind": "sell", "risk_exit": True, "risk_exit_reason": "stop_hit",
++                "legs": [{"side": "sell", "symbol": "TMO", "instrumentId": 1592, "positionId": 1004, "units": 1.0,
++                          "bid": 509.0, "ask": 509.3, "quote_ts": ts(MON, 5), "close_fee_usd": 0.75,
++                          "realized_pnl_usd": -10.85}]}
++        r = rb(sell)
++        t("risk-exit sell: RISK_EXIT gate, close payload isBuy:false full close", r["blockers"] == ["ORDER_QA_PENDING"]
++          and r["cost_gate"]["verdict"] == "RISK_EXIT" and r["order_payloads"][0] == {
++              "positionId": 1004, "instrumentId": 1592, "isBuy": False, "unitsToDeduct": None}, r["blockers"])
++        trim = json.loads(json.dumps(sell)); trim.update(kind="trim", risk_exit=False, pack_id="rebal-trim")
++        trim["legs"][0]["units"] = 0.4
++        r = rb(trim)
++        t("trim without edge => COST_GATE_SKIP; partial unitsToDeduct", "COST_GATE_SKIP" in r["blockers"]
++          and r["order_payloads"][0]["unitsToDeduct"] == 0.4)
++        bad = json.loads(json.dumps(sell)); bad["pack_id"] = "rebal-bad"; bad["legs"][0]["positionId"] = 999
++        t("sell of a position not held => POSITION_NOT_HELD", "POSITION_NOT_HELD" in rb(bad)["blockers"])
++        rot = {"pack_id": "rebal-rot-XLV-XLE", "kind": "rotation",
++               "edge": {"method": "rs_expected_return", "expected_return_pct": 6.0, "held_expected_return_pct": 1.0,
++                        "horizon_days": 20, "evidence": {"source": "test RS study", "n": 120}},
++               "legs": [{"side": "sell", "symbol": "XLV", "instrumentId": 3018, "positionId": 1002, "units": 1.0,
++                         "bid": 150.0, "ask": 150.05, "quote_ts": ts(MON, 5), "close_fee_usd": 0.75,
++                         "realized_pnl_usd": 14.4},
++                        dict(xle["legs"][0])]}
++        rot["legs"][1]["stop_loss"] = 87.4
++        r = rb(rot)
++        t("rotation: one combined gate (legs[]), sell payload first", r["cost_gate"]["kind"] == "rotation"
++          and len(r["cost_gate"]["legs"]) == 2 and r["order_payloads"][0]["isBuy"] is False
++          and r["order_payloads"][1]["isBuy"] is True, (r["blockers"], r["cost_gate"].get("verdict")))
++        t("rebalance crypto/bare symbol guard", any(b.startswith("INSTRUMENT") for b in rb(
++            {"pack_id": "rebal-btc", "kind": "rebalance_add", "edge": xe["edge"],
++             "legs": [dict(xle["legs"][0], symbol="BTC", instrumentId=100000)]})["blockers"]))
++        t("bad rebalance shape => NO-GO", rb({"pack_id": "x", "kind": "rotation", "legs": []})["blockers"]
++          == ["BAD_REBALANCE_PACK"])
++
++        # CLI
++        rc = X.main(["--pack-id", f"{RID}#T", "--run-qa-verdict", str(tmp / "runqa.json"), "--bid", "27.03",
++                     "--ask", "27.05", "--quote-ts", ts(datetime.now(IDT), 1), "--units", "20", "--open-fee", "0.75",
++                     "--close-fee", "0.75", "--cash", "3671.18", "--cash-ts", ts(datetime.now(IDT), 1),
++                     "--book", str(tmp / "book.json"), "--audit-dir", str(tmp)])
++        t("CLI writes audit to --audit-dir, NO-GO exit 2", rc == 2 and len(list(tmp.glob("execute-pass-*.json"))) == 1)
+     return out
+ 
+ 
+--- /dev/null
++++ b/classic_rsi/market_hours.py
+@@ -0,0 +1,41 @@
++"""US regular-session check (NYSE 09:30-16:00 America/New_York, Mon-Fri, minus holidays).
++
++Holiday / early-close tables cover 2026-2027 (NYSE published calendar). Outside those years the
++check fails closed (MARKET_CALENDAR_UNKNOWN) so it cannot silently pass.
++"""
++
++from __future__ import annotations
++
++from datetime import date, datetime, time
++from typing import Optional
++from zoneinfo import ZoneInfo
++
++ET = ZoneInfo("America/New_York")
++OPEN, CLOSE, EARLY_CLOSE = time(9, 30), time(16, 0), time(13, 0)
++KNOWN_YEARS = (2026, 2027)
++HOLIDAYS = {
++    date(2026, 1, 1), date(2026, 1, 19), date(2026, 2, 16), date(2026, 4, 3), date(2026, 5, 25),
++    date(2026, 6, 19), date(2026, 7, 3), date(2026, 9, 7), date(2026, 11, 26), date(2026, 12, 25),
++    date(2027, 1, 1), date(2027, 1, 18), date(2027, 2, 15), date(2027, 3, 26), date(2027, 5, 31),
++    date(2027, 6, 18), date(2027, 7, 5), date(2027, 9, 6), date(2027, 11, 25), date(2027, 12, 24),
++}
++EARLY_CLOSES = {date(2026, 11, 27), date(2026, 12, 24), date(2027, 11, 26)}
++
++
++def us_session(now: Optional[datetime] = None) -> dict:
++    now = now or datetime.now(ET)
++    if now.tzinfo is None:
++        return {"open": False, "reason": "NAIVE_TIMESTAMP"}
++    et = now.astimezone(ET)
++    d = et.date()
++    base = {"et": et.strftime("%Y-%m-%d %H:%M %Z")}
++    if d.year not in KNOWN_YEARS:
++        return {**base, "open": False, "reason": "MARKET_CALENDAR_UNKNOWN"}
++    if et.weekday() >= 5:
++        return {**base, "open": False, "reason": "WEEKEND"}
++    if d in HOLIDAYS:
++        return {**base, "open": False, "reason": "US_HOLIDAY"}
++    close = EARLY_CLOSE if d in EARLY_CLOSES else CLOSE
++    if not (OPEN <= et.time() < close):
++        return {**base, "open": False, "reason": "OUTSIDE_RTH", "close": close.strftime("%H:%M")}
++    return {**base, "open": True, "reason": None, "close": close.strftime("%H:%M")}

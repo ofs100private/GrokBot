@@ -1,0 +1,83 @@
+{
+ "checker": "QA Bot",
+ "skill": "classic-full-auto-code-review",
+ "review": "fix2",
+ "checked_at": "2026-10-12T07:40:00+03:00",
+ "verdict": "PASS",
+ "hard_fail_codes": [],
+ "warn_codes": [
+  "SKILL_MD_SCHEMA_UNDOCUMENTED",
+  "REBAL_BUY_TAKEPROFIT_NULL_UNVERIFIED_VS_SCHEMA",
+  "PROD_SCORES_FILE_MISSING"
+ ],
+ "files_verified": {
+  "cost_gate.py": "5388390d",
+  "execute_pass.py": "bc3db6cf",
+  "paths.py": "6cfbeff2",
+  "testkit.py": "686ea894",
+  "p_registry.json": "a48eac61 (pinned)",
+  "edge_registry.json": "265d60f5 (pinned)",
+  "diff": "45089f34 reproduces fix1->fix2 exactly; other modules unchanged; mirror identical"
+ },
+ "tests": {
+  "test_cost_gate": "47/47",
+  "test_execute_pass": "85/85 (84/85 in QA scratch only because QA redirected PROD paths)",
+  "test_instruments": "20/20",
+  "test_universe": "38/38",
+  "total": "190/190"
+ },
+ "corrections_A_L": "all closed: fixed verdict paths+QA Bot checker+pack_sha256+qa_ask+recomputed gate; p and edge only from sha-pinned registries (prod: RSI SKIP p=0.410 n=19 not OOS; edges empty => SKIP); mark mandatory; regex pack ids + content-keyed locks under fixed dir, no --audit-dir; rebalance no auto-shrink, content locks, 60s book; risk exits recomputed; realized PnL recomputed +/-$1, tax=max; MCP-native payloads; SL ATR/trail bounded",
+ "adversarial": {
+  "test_mode_leak": "payloads forced account=demo, test_mode in binding sha; prepare echo account=real vs demo => PREPARE_MISMATCH. Env var CLASSIC_EXEC_TEST_ROOT is trader-controlled at GO; a real place under it needs hand-editing account => same bar as forgery",
+  "registry_edit_prod": "REGISTRY_SHA_MISMATCH (detected); test mode accepts tampered registry (p=0.98)",
+  "score_file": "NOT pinned; trader-writable; drives trigger_3/4, trailing stop_hit, ATR SL bounds and edge er. Prod file currently absent => those fail closed",
+  "forgery_bar": "order-QA built purely from trader's own anchor numbers + self-asserted mark (=ask) => GO in test mode",
+  "anchor_drift": "0.100% GO, 0.101%/0.11% ANCHOR_DRIFT",
+  "et_lock_boundary": "rolls at ET midnight = 07:00 IDT, outside RTH; no same-session split",
+  "risk_exit_live_OfersClaw5_read_only": "cash 3671>=2500 none; stop_hit none (QQQ 753.71>644, SMH 601.72>581.8 and >trail 588.3, XLV 170.79>148.62, SPY 780.67>719.19, TMO 657.32>591.22); caps MV: SMH+QQQ 22.2%<=45, core max 11.5%<=30, TMO 7.0%<=15 => no hard_cap; trigger_3/4 unverifiable (no scores) => fail closed. No valid risk exit today: correct",
+  "payload_shapes": "buy {account,direction:buy,instrumentId,units,leverage:1,orderType:mkt,stopLossRate,takeProfitRate} and close {account,positionId:int,unitsToDeduct|null} match prepare-trade/prepare-close schemas; prepare never called"
+ },
+ "residual_risks_ofer_must_accept": [
+  "Shared-box: Trader can write verdict files, scores, book, envelope and even code; checker='QA Bot' is a string. Forgery needs only a copy of the trader's own anchor numbers",
+  "Second-source mark is self-asserted",
+  "Test-mode env var is trader-controlled at GO (demo-forced; real requires deliberate edit)",
+  "Score file unpinned (risk-exit/SL/edge inputs)",
+  "Registry pins live in editable code; detection relies on QA sha re-review"
+ ],
+ "final_verdict_file_schema": {
+  "run_qa": {
+   "path": "/workspace/classic_rsi/audit/qa/qa-verdict-run-<auto_run_id>.json",
+   "fields": {
+    "verdict": "PASS",
+    "checker": "QA Bot",
+    "skill": "classic-rsi-1h-run-qa",
+    "checked_at": "tz-aware ISO, <=3600s old, <=60s future",
+    "run_id": "<auto_run_id>"
+   }
+  },
+  "order_qa": {
+   "path": "/workspace/classic_rsi/audit/qa/qa-verdict-order-<pack_sha256[:16]>.json",
+   "fields": {
+    "verdict": "PASS",
+    "checker": "QA Bot",
+    "skill": "classic-real-money-order-qa-gate",
+    "checked_at": "tz-aware, <=900s",
+    "pack_sha256": "full",
+    "pack_id": "str",
+    "run_id": "propose run_id",
+    "symbol": "str",
+    "qa_ask": "RSI: exact anchor ask",
+    "recomputed_cost_gate": {
+     "spread": 0,
+     "fees": 0,
+     "tax_est": 0,
+     "total_cost": 0,
+     "expected_gain": 0,
+     "ratio": 0,
+     "_tol": "+/-0.01 vs anchor gate"
+    }
+   }
+  }
+ },
+ "writes": "only this file; no production locks/verdicts; no orders/prepares/messages"
+}

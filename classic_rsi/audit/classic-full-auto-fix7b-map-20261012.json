@@ -1,0 +1,28 @@
+{
+  "kind": "qa-fix-map",
+  "fix": "classic-full-auto-fix7b-20261012",
+  "review": "audit/qa-review-classic-full-auto-fix7-20261012.json (PASS_CONDITIONAL)",
+  "diff": "audit/classic-full-auto-fix7b-20261012.diff (vs fix7)",
+  "prepared_or_placed": false,
+  "etoro_calls": "none",
+  "corrections": {
+    "BOOK_EQUITY_NOT_RECONCILED": {"fix": "execute_pass._common_gates hard check: |equity - (sum holdings value + cash)| <= 0.5% of equity (EQUITY_RECONCILE_TOL); applies to RSI and rebalance. VERSION execute-pass-v9-fix7b.", "tests": ["today's book gap -0.63 ok", "+0.49% ok", "+0.6% blocked", "-0.6% blocked", "-0.49% ok", "RSI buy path blocked"]},
+    "BOOK_PRODUCER_SLEEVES_STILL_INVESTED_BASIS": {"fix": "new classic_rsi/book_sleeves.py recomputes sleeves/names/singleStock/spyCore and cashTriggerProposal SPY 30% cap as % of total equity (cost basis = cost + cash); invested-basis only under labelled legacyInvestedBasis. Applied locally to /workspace/classic-portfolio-for-app.json (backup .bak-20261012-201936-pre-equity-sleeves). Producer: refresh routine classic-book-refresh-before-rsi-1h is not on the box; the sleeves block originated in daily-brief generators (daily-brief-*/build/gen_*.py, one-off per run) and is carried forward. Routine must call book_sleeves after each refresh.", "tests": ["book_sleeves equity percentages", "legacy fields labelled", "SPY cap headroom on equity"]},
+    "SKILL_TARGETS_HEADER_STILL_PENDING_CONFIRMATION": {"fix": "SKILL-draft.md section retitled 'Targets and caps (denominator decided: total equity = holdings + cash — Ofer 2026-10-12 17:56 IDT)'"},
+    "TESTS_NOT_RERUN_BY_QA_BOX_OVERLOAD": {"fix": "full suite re-run at load ~9: 346/346"},
+    "SKILL_MD_SCHEMA_UNDOCUMENTED": {"fix": "not addressed (order-QA skill owned by Chief of Staff)"}
+  },
+  "book_now": {"equity": 7250.59, "cash": 3671.18, "holdings": 3579.41, "gap": 0.0, "growthPctEquity": 21.93, "TMOPctEquity": 6.98, "SPYPctEquity": 9.73, "spyCapHeadroom": {"mv": 1469.38, "cost": 1418.07}, "spy440ProposalWithinCap": true, "spy500": "within cap"},
+  "test_counts": {"test_cost_gate": "51/51", "test_execute_pass": "192/192", "test_scorer": "45/45", "test_instruments": "20/20", "test_universe": "38/38", "total": "346/346"},
+  "sha256": {
+    "execute_pass.py": "14d0eefe26481fc624b9f96ae249b26296613d08ed39c019728bcbb2982f811b",
+    "test_execute_pass.py": "009515220ab943afecf1d0c6ab0a708c474b5ffad51063e1584e95e0b21a4195",
+    "README.md": "0da0ab868ba2475b861afbce8be6cbc490cb1707113c0d8a23499f50bfa684ef",
+    "book_sleeves.py": "51dbdb6f314a9f9d9cfc001f7f7098a5104e6ad5c936339be3c698a2ce7d74c5",
+    "classic-rebalance/SKILL-draft.md": "2dbe93816b1620a1d8d9a6adb349ddfade4e4af7265b4cd19033bee718ae1b89",
+    "classic-portfolio-for-app.json (after recompute)": "00ec55f88f71b1024baade6c38766a4b65b6f92f55bb87edb7bcd65796cdf304",
+    "cost_gate.py": "ec12ecc3 (unchanged)", "scorer.py": "806313b9 (unchanged)"
+  },
+  "diff_sha256": "b4cbf2d11db7a38fe0c46457c781723a3ca22e71ec1e5b2d2d340a18ee6d70a8",
+  "mirror": "/workspace/GrokBot/classic_rsi identical (diff -rq excl. __pycache__/audit)"
+}

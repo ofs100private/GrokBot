@@ -1,0 +1,61 @@
+{
+ "checker": "QA Bot",
+ "skill": "classic-full-auto-code-review",
+ "review": "fix5",
+ "checked_at": "2026-10-12T17:35:00+03:00",
+ "verdict": "FAIL",
+ "hard_fail_codes": [
+  "RISK_EXIT_SIZE_TOLERANCE_UNEXECUTABLE"
+ ],
+ "warn_codes": [
+  "RISK_EXIT_POST_TRADE_CAP_CASCADE",
+  "CAP_DENOMINATOR_INVESTED_NOT_EQUITY_NEEDS_OFER",
+  "SKILL_MD_SCHEMA_UNDOCUMENTED",
+  "MORNING_REFRESH_ROUTINE_NOT_INSPECTABLE"
+ ],
+ "integrity": {
+  "shas": {
+   "diff": "3963a9ea",
+   "map": "d3cfabc8",
+   "execute_pass": "eda34a2e",
+   "scorer": "806313b9",
+   "cost_gate": "ec12ecc3 (unchanged)",
+   "others": "unchanged vs fix4"
+  },
+  "mirror": "identical",
+  "diff_vs_fix4": "reproduces exactly (execute_pass, scorer docstring/version, test_execute_pass)",
+  "weakened_guards": "none"
+ },
+ "tests": "270/270 (cost_gate 51, execute_pass 116 [115 in QA scratch: redirected PROD paths], scorer 45, instruments 20, universe 38)",
+ "fix4_warns": {
+  "RISK_EXIT_SIZE_UNBOUNDED": "math correct but see hard fail",
+  "SCORER_DOCSTRING_STALE_FRESHNESS_LINE": "closed",
+  "SKILL_MD_SCHEMA_UNDOCUMENTED": "open"
+ },
+ "hard_fail_detail": {
+  "RISK_EXIT_SIZE_TOLERANCE_UNEXECUTABLE": "GO requires |pack_units - units recomputed from the live book/bid| <= 1.5e-6 units, but pack units are frozen by pack_sha256/order-QA. A 0.02% move in one holding changes the required QQQ hard-cap units 0.494554->0.494676 (+1.2e-4); cash $2499->$2498.90 changes SMH units 0.122537->0.122703. With a <=60s book and up to 15 min between QA and GO, sized cash_below_floor/hard_cap_breach exits will almost always end RISK_EXIT_SIZE_MISMATCH, i.e. the protective exits Fix4 enabled are effectively blocked (fail-closed but defeats intent). No test moves book/bid between plan and GO."
+ },
+ "sizing_probes_live_like_book": {
+  "cash 2499 sell SMH": "0.122535u $73.73, cash->2572.73 (floor+1% eq buffer $72.73) OK",
+  "cash 2000 XLV": "residual $202 <400 => full close OK",
+  "cash 1000 TMO": "full close, cash still 1507 (other legs needed) OK",
+  "hard cap QQQ-heavy sleeve, sell QQQ": "0.494554u, sleeve->42.91% OK",
+  "same breach, sell SMH": "full close (residual $196) - trader picks the leg; both valid",
+  "cost-basis-only breach TMO": "cost basis drives size => full close OK",
+  "tiny TMO name breach": "0.3773u $439.53, name->12.95% OK",
+  "rounding": "ceil to 1e-6 at min(anchor,live bid) - conservative; eToro unit precision/min close unknown => prepare-close would reject (fail closed)"
+ },
+ "cascade_finding": "caps use sum of positions (cash excluded); live book SMH+QQQ = 44.71% of invested. Any sized exit of a non-sleeve name (e.g. cash 2000 -> close XLV) pushes SMH+QQQ to 57% (TMO tiny trim -> 45.33%), creating a new verified hard_cap_breach and a forced-sell chain with tax. Sizing checks only constraints of the sold symbol.",
+ "morning_refresh": "07:17 IDT Tue-Sat = 00:17 ET (01:17 ET after Israel DST ends 2026-10-25, before US 2026-11-01): after prior session close (23:00 IDT) so asOf = last completed session, valid until the next 16:00 ET close; Monday-holiday handled (asOf = Friday, SPY bar must match). Lock-date roll at 07:00 IDT is irrelevant (scorer writes no locks). Routine definition not inspectable from box; yfinance final-bar availability at 00:17 ET assumed (scorer fails closed if SPY bar missing).",
+ "adversarial_rerun": "unchanged from fix4 (demo-forced test mode, account echo mismatch caught, forged copied verdict + self mark => GO in test mode, drift 0.100% GO / 0.101% DRIFT, prod registry tamper caught, prod RSI SKIP, scores attacks fail closed except forged file + recomputed sidecar)",
+ "corrections": [
+  "Make size check one-sided with a band: GO if required_now <= pack_units <= max(required_at_anchor, required_now) * 1.02 (or + 0.5% equity), full-close rule re-evaluated at GO; add tests that move book/bid between plan and GO",
+  "Post-trade cap check across ALL names/sleeves (value+cost) after the sized sale; block or pick the leg that does not create a new breach",
+  "Ofer to confirm cap denominator (invested positions vs equity incl. cash); current book is 0.3pp from the SMH+QQQ cap on invested",
+  "Document verdict schema in order-QA SKILL.md"
+ ],
+ "correction_to_prior_QA": "Fix2 report stated caps on equity (SMH+QQQ 22.2%); code measures on invested positions (44.7%). Fix2-4 verdicts' cap figures should be read on invested basis.",
+ "residual_risks": "unchanged from fix4",
+ "verdict_schema_change": "none",
+ "compliance": "no prepare-* calls in any form; no orders/messages/locks/production verdicts; only this file written"
+}

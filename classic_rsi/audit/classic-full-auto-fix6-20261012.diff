@@ -1,0 +1,453 @@
+--- a/classic_rsi/execute_pass.py
++++ b/classic_rsi/execute_pass.py
+@@ -52,7 +52,7 @@
+ from .paths import order_verdict_path, paths, run_verdict_path
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v6-fix5"
++VERSION = "execute-pass-v7-fix6"
+ CASH_FLOOR_USD = 2500.0
+ MIN_POSITION_USD = 400.0
+ NAME_CAP = {"etf": 0.30, "stock": 0.15}
+@@ -60,6 +60,13 @@
+ RISK_EXIT_BUFFER_EQUITY_PCT = 0.01  # fix5: sized risk exits overshoot the floor/cap by 1% of equity
+ SIZED_RISK_EXITS = ("cash_below_floor", "hard_cap_breach")  # full close only via the <$400 residual rule
+ UNIT_STEP = 1e-6
++# fix6: GO accepts pack units in [required_now, RISK_EXIT_SIZE_BAND * max(required_at_qa, required_now)]
++RISK_EXIT_SIZE_BAND = 1.02
++RISK_EXIT_PLAN_HEADROOM = 1.01  # planners size packs at ceil(1.01 * required) so small adverse drift stays >= required_now
++RISK_EXIT_QA_REQ_MAX_RATIO = 1.05  # a pack-declared required_at_qa above 1.05x required_now is clamped
++# fix6: cap denominator. "invested" = sum of positions (cash excluded), the basis used since fix1.
++# Ofer decision pending on switching to "equity" (positions + cash); change ONLY this constant.
++CAP_DENOMINATOR = "invested"
+ DRIFT_ATR_MULT = 0.5
+ UNITS_DP = 6
+ BOOK_MAX_AGE_S = 60
+@@ -92,6 +99,16 @@
+ }
+ 
+ 
++def cap_denominator(vals: dict[str, float], cash: Optional[float] = None) -> float:
++    """Single source of the cap denominator for name/sleeve caps (value or cost basis)."""
++    inv = sum(vals.values())
++    if CAP_DENOMINATOR == "invested":
++        return inv
++    if CAP_DENOMINATOR == "equity":
++        return inv + float(cash or 0.0)
++    raise ValueError(f"unknown CAP_DENOMINATOR {CAP_DENOMINATOR!r}")
++
++
+ def _floor_units(x: float) -> float:
+     q = 10 ** UNITS_DP
+     return math.floor(max(x, 0.0) * q) / q
+@@ -368,15 +385,17 @@
+     sleeves_ok = c.check(f"sleeves_known{tag}", not unknown, {"unknown": unknown}, "SLEEVE_UNKNOWN")
+     for basis in ("values", "cost"):
+         vals = book[basis]
+-        inv = sum(vals.values())
+-        mx = _floor_units(((cap * inv - vals.get(symbol, 0.0)) / (1 - cap)) / ask)
++        inv = cap_denominator(vals, book.get("cash"))
++        k = (1 - cap) if CAP_DENOMINATOR == "invested" else 1.0  # buying adds to an invested denominator
++        mx = _floor_units(((cap * inv - vals.get(symbol, 0.0)) / k) / ask)
+         if fu > mx:
+             shrink.append({"reason": f"name_cap_{int(cap * 100)}pct_{basis}", "from_units": fu, "to_units": mx})
+             fu = mx
+         if sleeves_ok:
+             sl = smap[symbol]
+             scur = sum(v for s, v in vals.items() if smap.get(s) == sl)
+-            mx = _floor_units(((SLEEVE_CAP * inv - scur) / (1 - SLEEVE_CAP)) / ask)
++            ks = (1 - SLEEVE_CAP) if CAP_DENOMINATOR == "invested" else 1.0
++            mx = _floor_units(((SLEEVE_CAP * inv - scur) / ks) / ask)
+             if fu > mx:
+                 shrink.append({"reason": f"sleeve_cap_45pct_{basis}", "from_units": fu, "to_units": mx})
+                 fu = mx
+@@ -384,7 +403,7 @@
+     caps = {}
+     for basis in ("values", "cost"):
+         vals = book[basis]
+-        inv_after = sum(vals.values()) + notional
++        inv_after = cap_denominator(vals, book.get("cash")) + (notional if CAP_DENOMINATOR == "invested" else 0.0)
+         caps[basis] = {"name_pct": round((vals.get(symbol, 0.0) + notional) / inv_after * 100, 2) if inv_after else None}
+         if sleeves_ok:
+             sl = smap[symbol]
+@@ -640,7 +659,7 @@
+         smap = {**DEFAULT_SLEEVES, **(sleeve_map or {})}
+         pcts = {}
+         for basis in ("values", "cost"):
+-            inv = sum(book[basis].values())
++            inv = cap_denominator(book[basis], book.get("cash"))
+             pcts[f"name_{basis}"] = book[basis].get(symbol, 0.0) / inv if inv else 0.0
+             sl = smap.get(symbol)
+             pcts[f"sleeve_{basis}"] = (sum(v for s, v in book[basis].items() if smap.get(s) == sl) / inv
+@@ -682,27 +701,157 @@
+         per_unit = {"values": (_f(pos.get("value")) or 0.0) / held if held else 0.0,
+                     "cost": (_f(pos.get("invested")) or 0.0) / held if held else 0.0}
+         for basis in ("values", "cost"):
+-            T = sum(book[basis].values())
++            T = cap_denominator(book[basis], book.get("cash"))
++            k = 1.0 if CAP_DENOMINATOR == "invested" else 0.0  # selling shrinks an invested denominator
+             u = per_unit[basis]
+             if u <= 0:
+                 continue
+             X = book[basis].get(symbol, 0.0)
+             if cap:
+-                need[f"name_{basis}"] = (X - cap * T + B) / (u * (1 - cap))
++                need[f"name_{basis}"] = (X - cap * T + B) / (u * (1 - k * cap))
+             if sl:
+                 S = sum(v for s_, v in book[basis].items() if smap.get(s_) == sl)
+-                need[f"sleeve_{basis}"] = (S - SLEEVE_CAP * T + B) / (u * (1 - SLEEVE_CAP))
++                need[f"sleeve_{basis}"] = (S - SLEEVE_CAP * T + B) / (u * (1 - k * SLEEVE_CAP))
+     x = _ceil_units(max([0.0, *need.values()]))
+     residual_usd = max(held - x, 0.0) * bid
+     full = x >= held - 1e-9 or residual_usd < MIN_POSITION_USD
+     units = held if full else x
+-    return {"reason": reason, "held_units": held, "buffer_usd": round(B, 2),
++    plan_x = _ceil_units(x * RISK_EXIT_PLAN_HEADROOM)
++    plan_full = plan_x >= held - 1e-9 or max(held - plan_x, 0.0) * bid < MIN_POSITION_USD
++    return {"suggested_pack_units": round(held if plan_full else plan_x, 6),
++            "suggested_unitsToDeduct": None if plan_full else round(plan_x, 6),
++            "suggested_required_at_qa": round(x, 6),"reason": reason, "held_units": held, "buffer_usd": round(B, 2),
+             "required_units_by_constraint": {k: round(v, 6) for k, v in need.items()},
+             "min_units": round(x, 6), "residual_usd": round(residual_usd, 2), "full_close": full,
+             "full_close_reason": ("units >= held" if x >= held - 1e-9 else "residual < $400") if full else None,
+             "units": round(units, 6), "unitsToDeduct": None if full else round(units, 6)}
+ 
+ 
++def _risk_exit_band(*, u: Optional[float], held: float, sz: dict, bid: float,
++                    required_at_qa: Optional[float]) -> dict[str, Any]:
++    """Fix6: one-sided size band at GO (pack units are frozen by pack_sha256 / order-QA).
++
++    required_now = live min units (book + min(anchor, live) bid at GO). PASS when
++      required_now <= pack_units <= RISK_EXIT_SIZE_BAND * max(required_at_qa, required_now)
++    required_at_qa = the leg's declared `risk_exit_required_units` (sizing at plan/QA; hashed in the pack),
++    clamped to RISK_EXIT_QA_REQ_MAX_RATIO * required_now. The <$400 residual full-close rule is
++    re-evaluated at GO: a full close passes if the live rule says full close or held is inside the band;
++    a partial close must leave a live residual (held - pack_units) * bid >= $400.
++    """
++    rq_now = float(sz["min_units"])
++    rq_qa = _f(required_at_qa)
++    rq_qa_eff = None if rq_qa is None or rq_qa <= 0 else min(rq_qa, RISK_EXIT_QA_REQ_MAX_RATIO * max(rq_now, UNIT_STEP))
++    ref = max(rq_now, rq_qa_eff or 0.0)
++    upper = RISK_EXIT_SIZE_BAND * ref + UNIT_STEP
++    d: dict[str, Any] = {"pack_units": u, "held_units": held, "required_now": round(rq_now, 6),
++                         "required_at_qa": rq_qa, "required_at_qa_used": None if rq_qa_eff is None else round(rq_qa_eff, 6),
++                         "upper": round(upper, 6), "band": RISK_EXIT_SIZE_BAND, "live_full_close": sz["full_close"],
++                         "bid": bid}
++    if u is None or u <= 0:
++        d.update(ok=False, why="no units")
++        return d
++    if abs(u - held) < 1e-9:
++        ok = bool(sz["full_close"]) or held <= upper
++        d.update(ok=ok, mode="full", why=None if ok else "full close but live rule is partial and held > band upper")
++        return d
++    residual = (held - u) * bid
++    d["residual_usd"] = round(residual, 2)
++    if u < rq_now - 1e-9:
++        d.update(ok=False, mode="partial", why="below required_now (does not restore floor/cap at GO)")
++    elif u > upper:
++        d.update(ok=False, mode="partial", why="above band upper (oversized)")
++    elif residual < MIN_POSITION_USD:
++        d.update(ok=False, mode="partial", why="residual < $400 at GO => must be a full close")
++    else:
++        d.update(ok=True, mode="partial", why=None)
++    return d
++
++
++def _cap_pcts(vals: dict[str, float], cash: Optional[float], smap: dict) -> dict[str, float]:
++    den = cap_denominator(vals, cash)
++    out: dict[str, float] = {}
++    if den <= 0:
++        return out
++    for s_, v in vals.items():
++        out[f"name:{s_}"] = v / den
++    for sl in sorted({smap[s_] for s_ in vals if s_ in smap}):
++        out[f"sleeve:{sl}"] = sum(v for s_, v in vals.items() if smap.get(s_) == sl) / den
++    return out
++
++
++def _cap_limit(key: str) -> Optional[float]:
++    kind, name = key.split(":", 1)
++    if kind == "sleeve":
++        return SLEEVE_CAP
++    return NAME_CAP.get(str((resolve(name) or {}).get("assetClass") or ""))
++
++
++def post_trade_caps(book: dict, *, symbol: str, pos: dict, units: float, bid: float, close_fee: float = 0.0,
++                    sleeve_map: Optional[dict] = None) -> dict[str, Any]:
++    """Fix6: simulate the book after selling `units` of `pos` and check EVERY name cap (ETF 30% / stock 15%)
++    and sleeve cap (45%) on market value AND cost basis (denominator = cap_denominator()).
++
++    A cascade = a NEW breach: a bucket at/under its cap before the sale and over it after. Buckets
++    already over their cap before (they need their own risk exit) are reported in `worsened_existing`
++    but do not block, otherwise one pre-existing breach would block every protective exit. Sold value is removed at the position's per-unit book value / cost;
++    proceeds (units*bid - close_fee) go to cash (matters only if CAP_DENOMINATOR == "equity").
++    """
++    smap = {**DEFAULT_SLEEVES, **(sleeve_map or {})}
++    held = float(pos.get("units") or 0.0)
++    frac = min(max(units / held, 0.0), 1.0) if held else 0.0
++    cash0 = book.get("cash")
++    cash1 = None if cash0 is None else cash0 + units * bid - close_fee
++    res: dict[str, Any] = {"denominator": CAP_DENOMINATOR, "symbol": symbol, "units": units, "cascade": [],
++                           "worsened_existing": [], "after": {}, "before": {}}
++    for basis, field in (("values", "value"), ("cost", "invested")):
++        before = dict(book[basis])
++        after = dict(before)
++        after[symbol] = max(after.get(symbol, 0.0) - frac * (_f(pos.get(field)) or 0.0), 0.0)
++        if after[symbol] <= 1e-9:
++            after.pop(symbol)
++        pb, pa = _cap_pcts(before, cash0, smap), _cap_pcts(after, cash1, smap)
++        res["before"][basis] = {k: round(v * 100, 2) for k, v in pb.items()}
++        res["after"][basis] = {k: round(v * 100, 2) for k, v in pa.items()}
++        for k, v in pa.items():
++            lim = _cap_limit(k)
++            if lim is None:
++                continue
++            b = pb.get(k, 0.0)
++            if v > lim + 1e-12 and b > lim + 1e-12 and v > b + 1e-12:
++                res["worsened_existing"].append({"bucket": k, "basis": basis, "before_pct": round(b * 100, 2),
++                                                 "after_pct": round(v * 100, 2), "cap_pct": lim * 100})
++            elif v > lim + 1e-12 and b <= lim + 1e-12:
++                res["cascade"].append({"bucket": k, "basis": basis, "before_pct": round(pb.get(k, 0.0) * 100, 2),
++                                       "after_pct": round(v * 100, 2), "cap_pct": lim * 100})
++    res["ok"] = not res["cascade"]
++    return res
++
++
++def _risk_exit_alternatives(reason: str, *, sold_symbol: str, book: dict, cash: Optional[float],
++                            sleeve_map: Optional[dict]) -> list[dict]:
++    """Fix6: other held legs that would fix the same breach without a post-trade cap cascade (indicative,
++    priced at book value/unit; a new pack + order-QA is required — this pass never resizes or swaps legs)."""
++    out = []
++    for p in book.get("positions") or []:
++        s_ = str(p.get("symbol")).upper()
++        held = _f(p.get("units")) or 0.0
++        if s_ == sold_symbol or held <= 0:
++            continue
++        if reason == "hard_cap_breach":
++            ok_v, _ = _verify_risk_exit(_Ctx(datetime.now(IDT)), reason, symbol=s_, pos=p, book=book, scores=None,
++                                        live_bid=None, cash=cash, sleeve_map=sleeve_map)
++            if not ok_v:
++                continue
++        px = (_f(p.get("value")) or 0.0) / held
++        if px <= 0:
++            continue
++        sz = _risk_exit_size(reason, symbol=s_, pos=p, book=book, cash=cash, bid=px, close_fee=0.0, sleeve_map=sleeve_map)
++        pt = post_trade_caps(book, symbol=s_, pos=p, units=sz["units"], bid=px, sleeve_map=sleeve_map)
++        out.append({"symbol": s_, "positionId": p.get("positionId"), "units": sz["units"],
++                    "unitsToDeduct": sz["unitsToDeduct"], "post_trade_ok": pt["ok"], "cascade": pt["cascade"]})
++    return [a for a in out if a["post_trade_ok"]]
++
++
+ def _sl_bounds_ok(sl: Optional[float], anchor_ask: float, atr_d: Optional[float], asset_class: Optional[str]) -> dict:
+     res: dict[str, Any] = {"stopLossRate": sl, "anchor_ask": anchor_ask, "daily_atr": atr_d}
+     if sl is None:
+@@ -809,9 +958,22 @@
+                                          bid=min(x for x in (a_bid, lbid) if x) if (a_bid or lbid) else 0.0,
+                                          close_fee=_f(l.get("close_fee_usd")) or 0.0, sleeve_map=sleeve_map)
+                     out["risk_exit_sizing"] = sz
+-                    c.check(f"risk_exit_size{tag}", u is not None and abs(u - sz["units"]) <= UNIT_STEP * 1.5,
+-                            {"pack_units": u, "required_units": sz["units"], "unitsToDeduct": sz["unitsToDeduct"]},
+-                            "RISK_EXIT_SIZE_MISMATCH")
++                    sbid = min(x for x in (a_bid, lbid) if x) if (a_bid or lbid) else 0.0
++                    band = _risk_exit_band(u=u, held=float(pu or 0.0), sz=sz, bid=sbid,
++                                           required_at_qa=l.get("risk_exit_required_units"))
++                    band.update(required_units=sz["units"], unitsToDeduct=sz["unitsToDeduct"])
++                    out["risk_exit_band"] = band
++                    c.check(f"risk_exit_size{tag}", band["ok"], band, "RISK_EXIT_SIZE_MISMATCH")
++                    if u is not None and u > 0:
++                        pt = post_trade_caps(book, symbol=sym, pos=pos, units=min(u, float(pu or u)), bid=sbid,
++                                             close_fee=_f(l.get("close_fee_usd")) or 0.0, sleeve_map=sleeve_map)
++                        if not pt["ok"]:
++                            pt["alternatives"] = _risk_exit_alternatives(reason, sold_symbol=sym, book=book,
++                                                                         cash=cash, sleeve_map=sleeve_map)
++                        out["risk_exit_post_trade_caps"] = pt
++                        c.check(f"risk_exit_post_trade_caps{tag}", pt["ok"],
++                                {"cascade": pt["cascade"], "denominator": pt["denominator"],
++                                 "alternatives": pt.get("alternatives")}, "RISK_EXIT_POST_TRADE_CAP_CASCADE")
+             base = {"symbol": sym, "units": u, "spread_usd": l.get("spread_usd"), "close_fee_usd": l.get("close_fee_usd"),
+                     "overnight_usd": l.get("overnight_usd"), "realized_pnl_usd": rp_tax}
+             anchor_legs[i] = {**base, "bid": a_bid, "ask": a_ask}
+--- a/classic_rsi/test_execute_pass.py
++++ b/classic_rsi/test_execute_pass.py
+@@ -472,6 +472,164 @@
+         rr = rb(sp_, live_for(sp_, held=held))
+         t("fix5 trigger_4: full close allowed (unitsToDeduct null), no sizing", "risk_exit_sizing" not in rr
+           and rr["order_payloads"][0]["unitsToDeduct"] is None and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"], rr["blockers"])
++        # ---------- fix6: GO size band (book/bid/cash drift between plan and GO) ----------
++        def exit_pack(sym, pid, iid, units, reason, bid, oprate, req_qa=None):
++            p_ = sell_pack(units, kind="trim", pid=pid, iid=iid, sym=sym, bid=bid, rp=(bid - oprate) * units,
++                           risk_exit=True, risk_exit_reason=reason, edge_ref=None)
++            p_["legs"][0]["anchor_ask"] = round(bid * 1.0003, 2)
++            if req_qa is not None:
++                p_["legs"][0]["risk_exit_required_units"] = req_qa
++            return p_
++
++        def go_live(p_, live_bid=None):
++            lv_ = live_for(p_, held=held)
++            if live_bid is not None:
++                lv_["legs"][0].update(bid=live_bid, ask=round(live_bid * 1.0003, 2), independent_mark=live_bid)
++            return lv_
++
++        QB = 746.67
++        write_book(root, value_override={"QQQ": 1000.0})
++        plan_ = rb(exit_pack("QQQ", 1000, 3006, 0.3, "hard_cap_breach", QB, 677.9), live_for(
++            exit_pack("QQQ", 1000, 3006, 0.3, "hard_cap_breach", QB, 677.9), held={1000: 1.106357}))
++        rq = plan_["risk_exit_sizing"]["units"]
++        t("fix6 plan: QQQ-heavy growth sleeve verified, partial size computed", plan_["risk_exit_check"]["verified"]
++          and not plan_["risk_exit_sizing"]["full_close"] and 0 < rq < 1.106357, plan_.get("risk_exit_sizing"))
++        held[1000] = 1.106357
++        t("fix6 plan suggests pack units = ceil(1.01 x required) (headroom inside the 1.02 band)",
++          abs(plan_["risk_exit_sizing"]["suggested_pack_units"] - up(rq * 1.01)) < 2e-6, plan_.get("risk_exit_sizing"))
++        rq0, rq = rq, plan_["risk_exit_sizing"]["suggested_pack_units"]
++        qp = exit_pack("QQQ", 1000, 3006, rq, "hard_cap_breach", QB, 677.9, req_qa=rq0)
++        rr = rb(qp, go_live(qp))
++        t("fix6 GO no drift: in band, no SIZE_MISMATCH, no cascade", "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"]
++          and "RISK_EXIT_POST_TRADE_CAP_CASCADE" not in rr["blockers"], (rr["blockers"], rr.get("risk_exit_band")))
++        for lbl, ov in (("+0.02%", 1000.0 * 1.0002), ("-0.02%", 1000.0 * 0.9998)):
++            write_book(root, value_override={"QQQ": ov})
++            rr = rb(qp, go_live(qp))
++            t(f"fix6 QQQ book value {lbl} between plan and GO => still in band (Fix5 exact match would fail)",
++              "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"] and rr["risk_exit_band"]["ok"], rr.get("risk_exit_band"))
++        write_book(root, value_override={"QQQ": 1000.0})
++        for lbl, lb in (("+0.02%", round(QB * 1.0002, 2)), ("-0.02%", round(QB * 0.9998, 2))):
++            rr = rb(qp, go_live(qp, lb))
++            t(f"fix6 QQQ live bid {lbl} at GO => in band", "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"]
++              and "ANCHOR_DRIFT" not in rr["blockers"], (rr["blockers"], rr.get("risk_exit_band")))
++        write_book(root, value_override={"QQQ": 1030.0})
++        rr = rb(qp, go_live(qp))
++        t("fix6 QQQ +3% at GO => required_now > pack units => RISK_EXIT_SIZE_MISMATCH (undersized)",
++          "RISK_EXIT_SIZE_MISMATCH" in rr["blockers"] and "below required_now" in rr["risk_exit_band"]["why"], rr.get("risk_exit_band"))
++        write_book(root, value_override={"QQQ": 970.0})
++        rr = rb(qp, go_live(qp))
++        t("fix6 QQQ -3% at GO => pack units above 1.02x band => RISK_EXIT_SIZE_MISMATCH (oversized)",
++          "RISK_EXIT_SIZE_MISMATCH" in rr["blockers"] and "above band" in rr["risk_exit_band"]["why"], rr.get("risk_exit_band"))
++        write_book(root, value_override={"QQQ": 1000.0})
++        qp2 = exit_pack("QQQ", 1000, 3006, round(rq0 * 1.019, 6), "hard_cap_breach", QB, 677.9, req_qa=rq0)
++        t("fix6 pack 1.9% above required => in band", rb(qp2, go_live(qp2))["risk_exit_band"]["ok"])
++        qp3 = exit_pack("QQQ", 1000, 3006, round(rq0 * 1.03, 6), "hard_cap_breach", QB, 677.9, req_qa=rq0)
++        t("fix6 pack 3% above required => RISK_EXIT_SIZE_MISMATCH", "RISK_EXIT_SIZE_MISMATCH" in rb(qp3, go_live(qp3))["blockers"])
++        qp4 = exit_pack("QQQ", 1000, 3006, round(rq0 * 1.5, 6), "hard_cap_breach", QB, 677.9, req_qa=rq0 * 1.5)
++        rr = rb(qp4, go_live(qp4))
++        t("fix6 forged required_at_qa (1.5x) clamped to 1.05x required_now => oversize still blocked",
++          "RISK_EXIT_SIZE_MISMATCH" in rr["blockers"] and rr["risk_exit_band"]["required_at_qa_used"] < rq0 * 1.06, rr.get("risk_exit_band"))
++        # cash drift: SMH cash_below_floor
++        SB = 591.48
++        write_book(root, cash=2499.0)
++        sp0 = exit_pack("SMH", 1001, SMH, 0.1, "cash_below_floor", SB, 564.35)
++        sz0 = rb(sp0, go_live(sp0))["risk_exit_sizing"]
++        sp1 = exit_pack("SMH", 1001, SMH, sz0["suggested_pack_units"], "cash_below_floor", SB, 564.35,
++                        req_qa=sz0["suggested_required_at_qa"])
++        rr = rb(sp1, go_live(sp1))
++        t("fix6 SMH cash 2499 exit: in band, no cascade (sells the over-weight sleeve)",
++          "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"] and rr["risk_exit_post_trade_caps"]["ok"]
++          and "RISK_EXIT_POST_TRADE_CAP_CASCADE" not in rr["blockers"], (rr["blockers"], rr.get("risk_exit_band")))
++        for c_ in (2498.90, 2499.10):
++            write_book(root, cash=c_)
++            rr = rb(sp1, go_live(sp1))
++            t(f"fix6 cash 2499 -> {c_} at GO => in band", rr["risk_exit_band"]["ok"]
++              and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"], rr.get("risk_exit_band"))
++        write_book(root, cash=2480.0)
++        t("fix6 cash 2499 -> 2480 at GO => undersized => RISK_EXIT_SIZE_MISMATCH",
++          "RISK_EXIT_SIZE_MISMATCH" in rb(sp1, go_live(sp1))["blockers"])
++        write_book(root, cash=2490.0)
++        sz2 = rb(sp0, go_live(sp0))["risk_exit_sizing"]
++        sp2 = exit_pack("SMH", 1001, SMH, sz2["suggested_pack_units"], "cash_below_floor", SB, 564.35,
++                        req_qa=sz2["suggested_required_at_qa"])
++        write_book(root, cash=2499.9)
++        t("fix6 plan at cash 2490, GO at 2499.90 => oversized beyond 1.02x => RISK_EXIT_SIZE_MISMATCH",
++          "RISK_EXIT_SIZE_MISMATCH" in rb(sp2, go_live(sp2))["blockers"])
++        # full-close / residual rule re-evaluated at GO (direct)
++        sz_ = {"min_units": 2.0, "full_close": False}
++        t("fix6 band: partial leaving live residual < $400 => blocked",
++          not X._risk_exit_band(u=2.0, held=4.0, sz=sz_, bid=170.0, required_at_qa=2.0)["ok"])
++        t("fix6 band: partial leaving residual >= $400 => ok",
++          X._risk_exit_band(u=2.0, held=4.5, sz=sz_, bid=170.0, required_at_qa=2.0)["ok"])
++        t("fix6 band: full close when live rule says full => ok",
++          X._risk_exit_band(u=4.0, held=4.0, sz={"min_units": 3.0, "full_close": True}, bid=170.0, required_at_qa=None)["ok"])
++        t("fix6 band: full close when live rule says partial and held > band => blocked",
++          not X._risk_exit_band(u=4.0, held=4.0, sz={"min_units": 2.0, "full_close": False}, bid=300.0, required_at_qa=None)["ok"])
++        t("fix6 band: full close inside band (held <= 1.02x required) => ok",
++          X._risk_exit_band(u=4.0, held=4.0, sz={"min_units": 3.95, "full_close": False}, bid=300.0, required_at_qa=None)["ok"])
++        write_book(root, cash=2000.0)
++        xf = exit_pack("XLV", 1002, XLV, 4.537045, "cash_below_floor", 170.0, 156.44, req_qa=4.537045)
++        write_book(root, cash=2000.10)
++        rr = rb(xf, go_live(xf))
++        t("fix6 XLV full close (residual < $400) re-evaluated at GO with cash +$0.10 => size ok",
++          rr["risk_exit_band"]["ok"] and rr["risk_exit_band"]["live_full_close"], rr.get("risk_exit_band"))
++        # ---------- fix6: post-trade cap cascade (today's book) ----------
++        write_book(root, cash=2000.0)
++        rr = rb(xf, go_live(xf))
++        pt = rr["risk_exit_post_trade_caps"]
++        t("fix6 today's book: SMH+QQQ = 44.71% of invested before", pt["before"]["values"]["sleeve:growth_tech"] == 44.71, pt["before"])
++        t("fix6 closing XLV => growth_tech ~57% => RISK_EXIT_POST_TRADE_CAP_CASCADE",
++          "RISK_EXIT_POST_TRADE_CAP_CASCADE" in rr["blockers"] and 56.5 < pt["after"]["values"]["sleeve:growth_tech"] < 57.5
++          and rr["decision"] == "NO-GO", (rr["blockers"], pt["cascade"]))
++        t("fix6 cash 2000: no single leg avoids a new breach (SMH/QQQ full close => healthcare > 45%) => alternatives empty",
++          pt.get("alternatives") == [], pt.get("alternatives"))
++        write_book(root, cash=2300.0)
++        rr = rb(xf, go_live(xf))
++        t("fix6 today's book cash 2300: XLV partial cascades and no single-leg alternative exists (SMH/QQQ trims push "
++          "TMO > 15% value) => blocked with empty alternatives",
++          "RISK_EXIT_POST_TRADE_CAP_CASCADE" in rb(exit_pack("XLV", 1002, XLV, rr["risk_exit_sizing"]["suggested_pack_units"],
++                                                             "cash_below_floor", 170.0, 156.44), go_live(exit_pack(
++              "XLV", 1002, XLV, rr["risk_exit_sizing"]["suggested_pack_units"], "cash_below_floor", 170.0, 156.44)))["blockers"])
++        write_book(root, cash=2300.0, value_override={"TMO": 400.0}, cost_override={"TMO": 400.0})
++        rr = rb(xf, go_live(xf))
++        sx = rr["risk_exit_sizing"]
++        xp = exit_pack("XLV", 1002, XLV, sx["suggested_pack_units"], "cash_below_floor", 170.0, 156.44,
++                       req_qa=sx["suggested_required_at_qa"])
++        rr = rb(xp, go_live(xp))
++        pt = rr["risk_exit_post_trade_caps"]
++        alts = {a["symbol"] for a in pt.get("alternatives") or []}
++        t("fix6 (TMO 400) cash 2300 partial XLV exit => growth_tech > 45% cascade; lists SMH/QQQ trims as alternatives, never auto-swaps",
++          "RISK_EXIT_POST_TRADE_CAP_CASCADE" in rr["blockers"] and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"]
++          and {"SMH", "QQQ"} <= alts and "XLV" not in alts and rr["order_payloads"][0]["positionId"] == 1002,
++          (rr["blockers"], pt.get("alternatives")))
++        write_book(root)
++        tmo = list(X.load_book(MON)["positions"])[4]
++        pt2 = X.post_trade_caps(X.load_book(MON), symbol="TMO", pos=tmo, units=0.096534, bid=509.15)
++        t("fix6 small TMO trim => growth_tech 45.33% (> 45%) => cascade",
++          pt2["after"]["values"]["sleeve:growth_tech"] == 45.33 and not pt2["ok"], pt2["cascade"])
++        rr = rb(exit_pack("TMO", 1004, TMO, 1.0, "hard_cap_breach", 509.0, 520.0), go_live(
++            exit_pack("TMO", 1004, TMO, 1.0, "hard_cap_breach", 509.0, 520.0)))
++        rqt = rr["risk_exit_sizing"]["units"]
++        tp_ = exit_pack("TMO", 1004, TMO, rqt, "hard_cap_breach", 509.0, 520.0, req_qa=rqt)
++        rr = rb(tp_, go_live(tp_))
++        t("fix6 TMO cost-basis cap exit (15.25% cost) sized trim => RISK_EXIT_POST_TRADE_CAP_CASCADE",
++          rr["risk_exit_check"]["verified"] and "RISK_EXIT_SIZE_MISMATCH" not in rr["blockers"]
++          and "RISK_EXIT_POST_TRADE_CAP_CASCADE" in rr["blockers"], (rr["blockers"], rr.get("risk_exit_post_trade_caps", {}).get("cascade")))
++        t("fix6 pre-existing breach (TMO cost 15.25%) made worse by another exit is reported, not a new-breach block",
++          X.post_trade_caps(X.load_book(MON), symbol="SMH", pos=X.load_book(MON)["positions"][1], units=0.1, bid=591.48)
++          ["worsened_existing"][0]["bucket"] == "name:TMO")
++        t("fix6 post-trade check covers value AND cost basis", {"values", "cost"} == set(rr["risk_exit_post_trade_caps"]["after"]))
++        t("fix6 cap denominator is a single named constant, still 'invested' (Ofer decision pending)",
++          X.CAP_DENOMINATOR == "invested" and X.cap_denominator({"A": 1.0, "B": 2.0}, 10.0) == 3.0)
++        old_den = X.CAP_DENOMINATOR
++        X.CAP_DENOMINATOR = "equity"
++        try:
++            pt3 = X.post_trade_caps(X.load_book(MON), symbol="TMO", pos=tmo, units=0.096534, bid=509.15)
++            t("fix6 switching CAP_DENOMINATOR to 'equity' changes the basis (positions + cash)",
++              pt3["denominator"] == "equity" and pt3["before"]["values"]["sleeve:growth_tech"] < 30, pt3["before"])
++        finally:
++            X.CAP_DENOMINATOR = old_den
++        write_book(root)
+         t("crypto/bare symbol guard on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
+             {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="BTC", instrumentId=100000)]})["blockers"]))
+         t("bad shape => BAD_REBALANCE_PACK", "BAD_REBALANCE_PACK" in rb({"pack_id": "classic-rebalance-20261012-x",
+--- a/classic_rsi/README.md
++++ b/classic_rsi/README.md
+@@ -120,6 +120,14 @@
+ - The pack's units must equal the computed size (±1.5e-6) or the pass is NO-GO with `RISK_EXIT_SIZE_MISMATCH`; no silent resizing. Output `risk_exit_sizing` shows the required units per constraint, buffer, residual and `unitsToDeduct`.
+ - `stop_hit` and `trigger_3/4` may close any size, including the full position.
+ 
++## Risk-exit GO size band + post-trade caps (fix6)
++- Fix5's exact `±1.5e-6` units match is replaced by a one-sided band evaluated at GO with the live book and `min(anchor, live)` bid:
++  `required_now ≤ pack_units ≤ 1.02 · max(required_at_qa, required_now)` (`RISK_EXIT_SIZE_BAND`). `required_at_qa` = the leg's `risk_exit_required_units` (hashed with the pack), clamped to `1.05 · required_now`.
++- Planners should size the pack at `risk_exit_sizing.suggested_pack_units` = `ceil(1.01 · required)` (`RISK_EXIT_PLAN_HEADROOM`) and set `risk_exit_required_units` = `suggested_required_at_qa`, so small adverse drift (≈±0.02% price, ±$0.10 cash) stays inside the band.
++- The `<$400` residual full-close rule is re-evaluated at GO: full close OK if the live rule says full or `held` is inside the band; a partial must leave a live residual ≥ $400. Outside the band ⇒ `RISK_EXIT_SIZE_MISMATCH` (see `risk_exit_band`).
++- Post-trade caps: after the sized `cash_below_floor`/`hard_cap_breach` exit the resulting book is simulated and **every** name cap (ETF 30% / stock 15%) and sleeve cap (45%) is checked on value and cost basis. A new breach (bucket ≤ cap before, > cap after) ⇒ `RISK_EXIT_POST_TRADE_CAP_CASCADE`; `risk_exit_post_trade_caps.alternatives` lists other legs that would not cascade (indicative; a new pack + order-QA is needed, nothing is swapped automatically). Pre-existing breaches made worse are reported in `worsened_existing`, not blocked.
++- Cap denominator: `CAP_DENOMINATOR = "invested"` (sum of positions, cash excluded) via `cap_denominator()`; switching to `"equity"` is a one-line change pending Ofer's decision.
++
+ ## takeProfitRate on rebalance buys (fix3)
+ `user-OfersClaw5` `prepare-trade` schema (read-only lookup 2026-10-12): `takeProfitRate` type `["number","null"]`, default `null`, "Optional". Rebalance buys therefore send `takeProfitRate: null` (no fixed TP on core adds — SKILL Step 5; exits via trailing stop). The prepare echo must also be null, otherwise `PREPARE_TP_MISMATCH`.
+ 

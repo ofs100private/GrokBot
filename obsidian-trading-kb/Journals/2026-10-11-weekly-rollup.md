@@ -7,7 +7,7 @@ qa_fix_at: "2026-10-11T18:52:00+03:00"
 ---
 # Weekly rollup · week ending 2026-10-11 (Sunday IDT)
 
-Evidence-only. No invented PnL. Classic equity/cash from **OfersClaw5-PRIYN agent account** (`user-OfersClaw5`). Momentum from Mirror A id `11630170` (`user-Momentum-HHHGDTJ` / parent mirror). Parent Mirror A id `11368142` (OfersClaw5-PRIYN copy on `user-etoro`) is **reference only** since the 2026-10-06 reporting switch — live ~$12,773.46, not Classic book truth.
+Evidence-only. No invented PnL. Classic equity/cash from **OfersClaw5-PRIYN agent account** (`user-OfersClaw5`). Momentum from Mirror A id `11630170` (parent mirror via `user-etoro`; keys book `user-Momentum-HHHGDTJ`). Parent Mirror A id `11368142` (OfersClaw5-PRIYN copy on `user-etoro`) is **reference only** since the 2026-10-06 reporting switch — live ~$12,773.46, not Classic book truth.
 
 ## LIVE: Classic agent account (OfersClaw5-PRIYN) + Momentum Mirror A 11630170 (asOf 2026-10-11T15:50:00+03:00)
 
@@ -63,7 +63,7 @@ Duplicate closed this rollup: [[Process/Improvements/2026-09-30-daily-brief-0530
 - **Classic realized P&L Oct 5–11: −$2.00** (CVX −78.67, IGV +60.88, SPCX −19.10, RBRK −18.65, GS +1.94, ADBE +4.83, CAT −8.14, SMH trim +54.91).
 - Momentum: VTRS BE stop (brief 2026-10-08); live names now include ANET/ZBRA; MRVL/VTRS absent vs mid-week briefs.
 - **Momentum realized P&L Oct 5–11: −$156.96** (HPQ −61.50, MRVL −36.96, JNJ −59.92; rotation closes NDSN −15.91, DE −39.30, FTNT +72.08, AAPL −15.75, ETH +0.30, VTRS 0.00 BE; −$158.62 after fees).
-- **Parent account `ofs56etoro` (outside both bot books):** QNT round-trip; 10x SPX500 opened Oct 9; BAT/ORCA crypto Oct 10; STRK $1,200 opened Oct 11 16:26 IDT. Not part of Classic or Momentum books.
+- **Parent account `ofs56etoro` (outside both bot books; selected trades):** QNT round-trip; 10x SPX500 opened Oct 9; BAT/ORCA crypto Oct 10; STRK $1,200 opened Oct 11 16:26 IDT. Not part of Classic or Momentum books.
 - Job-Runs backfill this rollup: `Scripts/write_job_run.py --backfill --since 20261004 --cap 500` → Classic-RSI 39 · Breakout-TA 6 · Momentum-EOD 16 · Daily-Brief 11 · QA-Gates 1 (73 notes incl. Oct 4; Oct 5–11 = 70).
 
 ## Vault rebuild

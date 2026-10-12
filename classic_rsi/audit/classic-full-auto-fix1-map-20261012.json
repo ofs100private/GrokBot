@@ -1,0 +1,191 @@
+{
+  "kind": "qa-fix-map",
+  "review": "audit/qa-review-classic-full-auto-20261012.json",
+  "fix": "classic-full-auto-fix1-20261012",
+  "diff": "audit/classic-full-auto-fix1-20261012.diff",
+  "no_etoro_calls": true,
+  "prepared_or_placed": false,
+  "hard_fails": {
+    "COST_GATE_EV_INFLATED": {
+      "fix": "cost_gate.evaluate rsi_buy EV=units*[p(TP-ask)-(1-p)(ask-SL)], x0.75 if >0; P_EVIDENCE documented (12/19, Wilson95 lower 0.410 used); p without source or <= break-even -> SKIP; rebalance gain needs cited directional edge (EDGE_METHODS), ATR-magnitude removed",
+      "tests": [
+        "test_cost_gate: P_EVIDENCE matches backtest file",
+        "T-like pack default p => COST_GATE_SKIP",
+        "QA probe: p=0.43 => EV ~ +0.05 and SKIP",
+        "p without cited source => SKIP",
+        "positive EV taxed x0.75",
+        "rebalance_add without edge => SKIP",
+        "edge without cited evidence => SKIP"
+      ]
+    },
+    "COST_GATE_NO_QUOTE_STALENESS": {
+      "fix": "cost_gate.quote_errors: quote_ts required, tz-aware, <=60s; optional independent mark within 0.1%",
+      "tests": [
+        "quote 61s old => INVALID",
+        "quote_ts missing => INVALID",
+        "naive quote_ts => INVALID",
+        "ask vs independent mark > 0.1% => INVALID",
+        "test_execute_pass: stale quote (90s) => NO-GO"
+      ]
+    },
+    "COST_GATE_FINAL_ALLOWS_ASSUMED_INPUTS": {
+      "fix": "final stage: fees required (no defaults), quote required, ASSUMED_INPUTS_AT_FINAL -> INVALID; spread=max(spread_usd,(ask-bid)*units)",
+      "tests": [
+        "final with no bid/ask => INVALID",
+        "final with no getCost open fee => INVALID",
+        "spread = max(spread_usd 0.01, live (ask-bid)*units 10.0)"
+      ]
+    },
+    "COST_GATE_INPUT_VALIDATION": {
+      "fix": "negative fees/units/overnight, p outside (0,1), bid>=ask, total_cost<=0, invalid TP/SL -> COST_GATE_INVALID",
+      "tests": [
+        "negative fees => INVALID",
+        "bid==ask => INVALID",
+        "zero total cost => INVALID (no inf ratio)",
+        "p_hit=5 => INVALID",
+        "p_hit=0 => INVALID",
+        "negative units => INVALID",
+        "SL >= entry => INVALID"
+      ]
+    },
+    "COST_GATE_NO_AFTER_TAX_AND_NO_ROTATION_MODEL": {
+      "fix": "after-tax EV on buys; 25% tax on every sell leg; evaluate_rotation = one combined gate with legs[]; trim/sell gain only from edge method (expected_gain_usd parameter removed)",
+      "tests": [
+        "typed expected_gain_usd rejected (QA probe sell 1e6)",
+        "sell without edge => SKIP",
+        "trim EV = -notional x er_held, after tax",
+        "rotation: one gate, costs = both legs + sell tax",
+        "rotation EV = buy_notional x (er_new - er_held), after tax"
+      ]
+    },
+    "EXEC_VERDICT_KIND_NOT_CHECKED": {
+      "fix": "check_verdict requires skill classic-rsi-1h-run-qa / classic-real-money-order-qa-gate; run-QA and order-QA must be different files",
+      "tests": [
+        "same run-QA file as order-QA => NO-GO",
+        "order-QA with wrong skill => NO-GO"
+      ]
+    },
+    "EXEC_VERDICT_STALENESS_NOT_CHECKED": {
+      "fix": "checked_at tz-aware; run-QA <=60 min, order-QA <=15 min",
+      "tests": [
+        "QA repro: 2025 PASS file reused for both => NO-GO",
+        "run-QA 61 min old => NO-GO",
+        "order-QA 16 min old => NO-GO"
+      ]
+    },
+    "EXEC_NO_PACK_HASH_BINDING": {
+      "fix": "pack_sha256 = sha256(canonical {pack_id, pack, final_units, bid, ask, quote_ts, order_payloads}); order-QA must carry the same sha",
+      "tests": [
+        "size changed after order-QA => NO-GO",
+        "GO with matching order-QA (pack sha, skill, age)"
+      ]
+    },
+    "EXEC_TOCTOU_CASH": {
+      "fix": "--cash and --cash-ts required (<=60s); book asOf <=15 min",
+      "tests": [
+        "no live cash => CASH_NOT_LIVE",
+        "cash read 120s old => CASH_NOT_LIVE",
+        "book snapshot asOf 16 min old => BOOK_STALE"
+      ]
+    },
+    "EXEC_NO_IDEMPOTENCY": {
+      "fix": "atomic audit/placed/<sha(pack_id)>.lock on GO; existing lock or same-instrument position opened after bar_time -> NO-GO",
+      "tests": [
+        "GO writes idempotency lock",
+        "second identical run => ALREADY_GO_LOCKED",
+        "open position on same instrument after signal => DUPLICATE_OPEN_POSITION",
+        "rebalance idempotency lock"
+      ]
+    },
+    "EXEC_PLACE_PAYLOAD_NOT_PINNED": {
+      "fix": "order_payloads: buy {instrumentId,isBuy:true,leverage:1,units,stopLossRate,takeProfitRate}; sell {positionId,instrumentId,isBuy:false,unitsToDeduct}; included in pack sha",
+      "tests": [
+        "exact payload keys/values",
+        "risk-exit sell: close payload isBuy:false full close"
+      ]
+    },
+    "EXEC_NO_STOP_LOSS_CHECK": {
+      "fix": "0 < stopLossRate < bid asserted (and TP > bid if set)",
+      "tests": [
+        "0 < SL < bid, SL/TP rebased on ask",
+        "SL <= 0 => STOP_LOSS_INVALID",
+        "rebalance add without SL => STOP_LOSS_INVALID"
+      ]
+    },
+    "EXEC_CASH_FLOOR_FEE_MISMATCH": {
+      "fix": "open fee required (same value feeds cost gate and floor); cash_after = cash - units*ask - open_fee >= 2500",
+      "tests": [
+        "open fee omitted => NO-GO",
+        "QA repro 2499.25: units shrink so cash_after >= 2500 after the fee"
+      ]
+    },
+    "EXEC_CAPS_COST_BASIS_MISSING": {
+      "fix": "name and sleeve caps on market value AND positions[].invested; missing cost basis -> COST_BASIS_MISSING",
+      "tests": [
+        "name cap also on cost basis",
+        "sleeve cap 45% binds on cost basis"
+      ]
+    },
+    "REBALANCE_PATH_UNGATED": {
+      "fix": "execute_pass --rebalance-pack: rebalance_add/trim/sell/rotation through the same final cost gate, guards, caps, cash, RTH, order-QA sha, lock; sell legs emit isBuy:false close payloads; positions verified held",
+      "tests": [
+        "XLE $600 add without evidenced edge => COST_GATE_SKIP NO-GO",
+        "rebalance add GO via order-QA sha",
+        "trim without edge => COST_GATE_SKIP",
+        "sell of a position not held => POSITION_NOT_HELD",
+        "rotation: one combined gate (legs[]), sell payload first",
+        "rebalance crypto/bare symbol guard"
+      ]
+    }
+  },
+  "soft": {
+    "EXEC_NO_RTH_CHECK": {
+      "fix": "market_hours.us_session (NYSE 09:30-16:00 ET, 2026-27 holidays + early closes; unknown year fails closed); replaces --allow-weekend (removed)",
+      "tests": [
+        "QA repro Mon 03:00 IDT => NO-GO market closed",
+        "Tue 03:00 IDT => OUTSIDE_RTH",
+        "NYSE holiday",
+        "early close",
+        "calendar unknown year fails closed"
+      ]
+    },
+    "AUTO1H_FORCE_MAKES_PACKS_ELIGIBLE": {
+      "fix": "auto_1h: allow_new_buys=bool(gates['allow_new_buys']) and not force",
+      "tests": [
+        "AUTO1H_FORCE: --force never sets auto eligibility"
+      ]
+    },
+    "ACTIVE_SKILLS_CHANGED_OUTSIDE_DIFF": {
+      "fix": "not changed by Trader_Classic (skills are owned by Chief of Staff); flagged in report",
+      "tests": []
+    },
+    "TEST_COUNT_111_NOT_110": {
+      "fix": "acknowledged; exact counts reported now (38+20+52+50=160)",
+      "tests": []
+    },
+    "TESTS_DO_NOT_COVER_GAPS": {
+      "fix": "every evidence.probe has a test (see above)",
+      "tests": []
+    },
+    "REBALANCE_ROUTINE_CONFIG_NOT_FOUND": {
+      "fix": "not in scope of code; no routine config on the box; flagged in report",
+      "tests": []
+    }
+  },
+  "test_counts": {
+    "test_universe": "38/38",
+    "test_instruments": "20/20",
+    "test_cost_gate": "52/52",
+    "test_execute_pass": "50/50"
+  },
+  "sha256": {
+    "cost_gate.py": "4b3f5452b00ee62347b0c2b3b30c59e71bc023303e23d10d0bbf5a2e7a184c6f",
+    "execute_pass.py": "73cffd8d9ac909466281dfc29d34233d6643cd693ca2e3cd08504ec8286a4aa6",
+    "market_hours.py": "72455ac6b34afdfc53af6d0ded6b3e46e8f910aab6b91f280ffb95c57e647a71",
+    "propose.py": "1ee6550721a1ec99cd5335e9794aa71812c2fef57c630d7e85ca97a3f1a3fed2",
+    "auto_1h.py": "04456136833888eec62f53a7471ab4eaaaf06d003ef0aed48bb4fcecd0184b40",
+    "README.md": "da0e1920a9de71ff4616ac44c238a64e51064757c0652dfa88d7b68ce5fe23cf",
+    "test_cost_gate.py": "6c67e908ead1b4313b7a38f5cdd4dbca8dcba714d8b9263f43443f93a4ae792a",
+    "test_execute_pass.py": "4ac0effe88e70396631445b3a4f9ca5a4f433c9e4a99c8ce3697b71dbee44554"
+  }
+}

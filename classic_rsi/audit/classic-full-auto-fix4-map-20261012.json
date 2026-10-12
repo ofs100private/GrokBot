@@ -1,0 +1,89 @@
+{
+  "kind": "qa-fix-map",
+  "fix": "classic-full-auto-fix4-20261012",
+  "review": "audit/qa-review-classic-full-auto-fix3-20261012.json",
+  "diff": "audit/classic-full-auto-fix4-20261012.diff",
+  "prepared_or_placed": false,
+  "etoro_calls": "none",
+  "corrections": {
+    "SCORES_ROW_TYPES_UNVALIDATED + SCORES_DUPLICATE_SYMBOL_ROWS_ALLOWED (1)": {
+      "fix": "scorer.validate_rows: every numeric field finite real (no bool/str/NaN/inf) within range (|score|,|rs|<=5, ret in [-0.99,10], 0<last_close<=1e6, 0<atr14<=50% last_close, atr_pct<=50, dd_52w in [-1,0], vol<=10); booleans strictly bool; symbol regex; duplicate symbols rejected; trailing thresholds in [-0.5,-0.01] -> SCORES_VALUE_INVALID. Scorer writes with allow_nan=False.",
+      "tests": [
+        "test_scorer: string/bool/1e9 score, negative atr14, atr14=100% price, last_close 0, above_200dma 'false', rs_3m null, bad symbol, duplicate rows, trailing +0.5, NaN with valid sidecar, scorer refuses NaN, clean file still ok",
+        "test_execute_pass: fix4 string score in file => SCORES_VALUE_INVALID"
+      ]
+    },
+    "SCORES_STALENESS_ALLOWS_ONE_MISSED_SESSION (2)": {
+      "fix": "verify_scores_file max_trading_days 0: asOf_bars must equal market_hours.last_completed_session(now). 18:06 IDT routine (11:06 ET, session open) -> prior trading day -> age 0 passes; after 16:00 ET close or next morning without re-run -> SCORES_STALE_1.",
+      "tests": [
+        "test_scorer: 18:06 IDT Mon with Fri bars ok; Mon 23:30 IDT with Fri bars STALE_1; Tue 10:00 ET with Fri bars STALE_1",
+        "test_execute_pass: Thu bars on Mon => STALE_1; 18:06 IDT routine age 0 accepted"
+      ]
+    },
+    "RISK_EXIT_BLOCKED_WHEN_SCORES_UNVERIFIED (3)": {
+      "fix": "execute_pass BOOK_ONLY_RISK_EXITS = cash_below_floor, stop_hit, hard_cap_breach: sell/trim risk-exit packs with these reasons skip the scores_verified gate (out.scores.required=false); unverified scores are never passed on (data None), so stop_hit then uses only the position's own stopLossRate vs live bid. trigger_3/4, buys, non-risk sells and rotations still require verified scores.",
+      "tests": [
+        "scores missing: stop_hit own SL verified -> RISK_EXIT",
+        "scores missing: trailing-only stop NOT verified",
+        "scores missing: hard_cap_breach verified",
+        "scores missing: cash_below_floor verified",
+        "scores missing: trigger_4 SCORES_UNVERIFIED",
+        "scores missing: trigger_3 SCORES_UNVERIFIED",
+        "scores missing: non-risk trim SCORES_UNVERIFIED",
+        "verified scores: trailing stop verified"
+      ]
+    },
+    "EDGE_SCORE_UNITS_FRACTION_VS_PCT_CALIBRATION (4)": {
+      "fix": "Fraction chosen. Score file carries score_units='fraction'; edge_registry rules + top-level score_units='fraction'; each entry calibration must declare score_units='fraction'; er_pct = intercept_pct + per_score_pct x score_fraction. cost_gate.resolve_edge SKIPs EDGE_SCORE_UNITS_NOT_FRACTION / SCORE_FILE_UNITS_NOT_FRACTION; verify_scores_file rejects missing units (SCORES_UNITS_INVALID). edge_registry sha re-pinned 265d60f5 -> 7ccee3ad (entries still empty).",
+      "tests": [
+        "test_cost_gate: calibration w/o units SKIP, 'percent' SKIP, score file units != fraction SKIP, prod registry declares fraction",
+        "test_scorer: payload score_units fraction, missing score_units => SCORES_UNITS_INVALID"
+      ]
+    },
+    "SIDECAR_NAME_UNDOCUMENTED (5)": {
+      "fix": "Documented /workspace/classic-rebalance/scores-latest.sha256 (`<hex>  scores-latest.json`) in paths.py docstring, scorer.py docstring, README, SKILL-draft Step 0.",
+      "tests": [
+        "test_scorer: sidecar named scores-latest.sha256"
+      ]
+    },
+    "FIX3_MAP_MARKET_HOURS": {
+      "fix": "No fix3 map file was written (fix3 delivered diff only). Noted here: fix3 changed market_hours.py (added is_trading_day, last_completed_session, trading_days_between; import timedelta) -> sha acf86740f452...; unchanged in fix4.",
+      "sha256": "acf86740f4521d5cc879e08453e435fdb5ad0d0f9619cef5160d06f9a07442bb"
+    },
+    "SKILL_MD_SCHEMA_UNDOCUMENTED": {
+      "fix": "not addressed (skill owned by Chief of Staff); SKILL-draft Step 0 updated; live GrokBot/workflows/classic-rebalance/SKILL.md still needs Step 0"
+    }
+  },
+  "prod_scores_regenerated": {
+    "path": "/workspace/classic-rebalance/scores-latest.json",
+    "sha256": "d6b10055acec38b262b684954d8fe29c9e2ce969ce4d970f55502020bd515778",
+    "sidecar_sha256": "2afb2a108ed5a30c5fadaec9b0a021b84ea339d50b629ec4db1ef83f072e6c3e",
+    "asOf_bars": "2026-10-09",
+    "verify": "ok, age 0 (as of 11:4x IDT Mon)"
+  },
+  "test_counts": {
+    "test_cost_gate": "51/51",
+    "test_execute_pass": "103/103",
+    "test_scorer": "45/45",
+    "test_instruments": "20/20",
+    "test_universe": "38/38",
+    "total": "257/257"
+  },
+  "sha256": {
+    "cost_gate.py": "ec12ecc3ef441f575b0bca0b892d096ca732ba1d8278572b2a63cd76569614c0",
+    "execute_pass.py": "49ac5cc73b50d4110b8247105c87c4af52b4818ccefad9fd988f374895a0da11",
+    "scorer.py": "dbeaef3e919905d8c56a8e131806705070a923a89a83cfaa258eb5787c437ca9",
+    "paths.py": "1b024e69b1011cb897d17f60c1f9c85c9b5ba8d6b020c801be9a2dfa29eb1f45",
+    "testkit.py": "74afd85925d373e8508fcd77f7aca7b9e4a44d7142c12204afa3bd578b797948",
+    "market_hours.py": "acf86740f4521d5cc879e08453e435fdb5ad0d0f9619cef5160d06f9a07442bb",
+    "test_cost_gate.py": "20057f2da6ec7e32c5116099a6b3b7b67fe5e5988a62af77854111f06b59c23c",
+    "test_execute_pass.py": "82d9e559ac84edb2a64ad49e42f2fa1a9aaf288bd2907200247572adc912e529",
+    "test_scorer.py": "3262d6b84a26d6ad898fbea033a640d38340a2fb08cc167f9c09c072c7878469",
+    "README.md": "2f556a6d6c4accd75a3d07bd527e4ce82c535cc487e6839cf665528479c79cdf",
+    "evidence/edge_registry.json": "7ccee3ad8ac1235499c3fbc053526b9baeb9d083fdfdacd29a86358f82a349bf",
+    "evidence/p_registry.json": "a48eac6194fb025b57bfd522ddfb42a9b73b1abf3543cb25cee55f7ad6adc0c3"
+  },
+  "skill_draft_sha256": "50705cd62d35aa62a6c5bb53ece1af4194b58b26fe2df875bc625c4c04e82e02",
+  "diff_sha256": "0037308ef275d2e8607be9309501354be810edfa4be7a279ee680db8e68ac0a7",
+  "mirror": "/workspace/GrokBot/classic_rsi identical (diff -rq, excl. __pycache__/audit)"
+}

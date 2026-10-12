@@ -40,6 +40,8 @@ description: >-
 
 If length pressure: shorten section-9 reasons; keep sections 10–14. A brief that stops early is FAILED — complete through Source.
 
+**Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place still OFF until Ofer explicitly accepts QA's residual risks (shared-box verdict forgery, self-reported second-source mark, trader-controlled test mode, editable scores/registry pins) AND out-of-sample edge evidence exists. Until then every Classic place needs QA PASS + explicit Ofer authorization.
+
 ## Classic recommendation cap filter (mandatory — applies to sections 9 and 13)
 Source of truth for caps: `/home/box/agent-data/workflows/classic-rebalance/SKILL.md` — read it each run and cite its caps; if they differ from the values below, its values win.
 1. Before listing ANY Classic buy/add idea, compute from the live `user-OfersClaw5` book:
@@ -48,7 +50,7 @@ Source of truth for caps: `/home/box/agent-data/workflows/classic-rebalance/SKIL
    - Cash vs equity: if cash >50% of equity, note the cash drift trigger.
 2. Drop any idea that breaches a cap or leaves less than the minimum trade size of headroom (currently **$400** minimum position). A blocked idea may appear only under **Blocked / needs Ofer exception** — never under Would Buy. Market-watch names Classic can't buy must be labeled **market watch only**.
 3. Names already held go under **Hold/Watch**, not Would Buy.
-4. Authorization wording is always: **QA PASS + cost gate (Classic is full auto since 2026-10-11)**. There is no Classic new-names-per-month or trade-count cap.
+4. Authorization wording: briefs must say **Classic FULL AUTO approved 10-12; code gate passed QA — auto-place off pending Ofer risk acceptance + out-of-sample evidence (QA PASS + explicit Ofer authorization)**. There is no Classic new-names-per-month or trade-count cap.
 5. Last trump twit: check Truth Social (e.g. trumpstruth.org) as well as X; quote the freshest post.
 6. Weekends: if nothing material changed vs the last delivered brief, say so in the META line so the Chief of Staff can skip delivery.
 

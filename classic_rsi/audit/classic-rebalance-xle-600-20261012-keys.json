@@ -1,0 +1,129 @@
+{
+ "kind": "classic-rebalance-add",
+ "pack_id": "classic-rebalance-xle-600-20261012",
+ "account": "OfersClaw5-PRIYN (user-OfersClaw5)",
+ "created_at": "2026-10-12T18:47:30+03:00",
+ "source": "routine classic-xle-600-prepare-for-qa-mon-oct-12 (10-09 weekly check, cash >50% equity)",
+ "symbol": "XLE",
+ "instrumentId": 3008,
+ "direction": "buy",
+ "leverage": 1,
+ "orderType": "mkt",
+ "amount_usd": 600,
+ "stopLossType": "trailing",
+ "stopLossRate": 60.73,
+ "stop_pct": 8.0,
+ "takeProfitRate": null,
+ "live_read": {
+  "ts": "2026-10-12T15:22:42Z",
+  "equity": 7251.0,
+  "cash": 3671.18,
+  "holdings": {
+   "QQQ": 825.93,
+   "XLV": 777.52,
+   "SMH": 762.99,
+   "SPY": 705.8,
+   "TMO": 507.58
+  },
+  "pending_orders": 0
+ },
+ "checks": {
+  "sell_rotate": "none: all 5 holdings above 50DMA, trend_ok, no cap/floor breach (SMH rs_3m -1.2% but above 50DMA => trigger_3 not met)",
+  "cash_after": 3070.19,
+  "cash_floor_ok": true,
+  "xle_cap_pct_equity": 8.27,
+  "growth_sleeve_pct_equity": 21.91,
+  "caps_ok": true,
+  "xle_day_change_pct": 1.41,
+  "no_chase_ok": true,
+  "instrument_guard": "XLE -> 3008 ETF (map + live overview match)"
+ },
+ "prepare": {
+  "verdict": "ready",
+  "ask": 65.91,
+  "bid": 65.9,
+  "quote_asOf": "2026-10-12T15:47:13Z",
+  "estimatedUnits": 9.103322712790169,
+  "costs": {
+   "transactionFee": 0.9,
+   "markup": 0,
+   "marketSpread": 0.09,
+   "overnightFee": 0
+  },
+  "totalUpfrontCost": 0.99,
+  "warnings": [
+   "W-8BEN required for this instrument"
+  ],
+  "token": "<not stored; expired unused>"
+ },
+ "cost_gate": {
+  "version": "classic-cost-gate-v3-20261012-fix2",
+  "stage": "preliminary",
+  "binding": false,
+  "kind": "rebalance_add",
+  "rule": "total_cost > 0 and EV_after_tax >= 2 x total_cost and EV_after_tax - total_cost > 0",
+  "inputs": {
+   "entry": 65.91,
+   "units": 9.103323,
+   "notional_usd": 600.0,
+   "bid": 65.9,
+   "ask": 65.91,
+   "quote_ts": "2026-10-12T15:47:13Z",
+   "independent_mark": null,
+   "take_profit": null,
+   "stop_loss": 60.73,
+   "symbol": "XLE",
+   "p_hit": null,
+   "p_evidence": null,
+   "p_breakeven": null,
+   "edge": {
+    "edge_ref": null,
+    "skip": [
+     "EDGE_MISSING"
+    ],
+    "errors": []
+   },
+   "tax_rate": 0.25,
+   "realized_pnl_usd": null,
+   "risk_exit": false,
+   "risk_exit_reason": null,
+   "risk_exit_verified": false,
+   "sources": {
+    "spread": "max(getCost spread_usd, live (ask-bid) x units)",
+    "open_fee": "prepare/getCost",
+    "close_fee": "prepare/getCost"
+   }
+  },
+  "costs": {
+   "spread": 0.091,
+   "open_fee": 0.9,
+   "close_fee": 0.9,
+   "overnight": 0.0,
+   "tax_est": 0.0,
+   "total_cost": 1.891
+  },
+  "spread": 0.091,
+  "fees": 1.8,
+  "overnight": 0.0,
+  "realized_pnl": null,
+  "tax_est": 0.0,
+  "total_cost": 1.891,
+  "expected_gain_pre_tax": null,
+  "expected_gain": null,
+  "expected_net_gain": null,
+  "ratio": null,
+  "method": "rebalance_add: evidenced edge required (EDGE_MISSING)",
+  "verdict": "COST_GATE_SKIP",
+  "assumptions": [],
+  "errors": [],
+  "skip_reasons": [
+   "EDGE_MISSING"
+  ]
+ },
+ "decision": "NOT PLACED",
+ "placed": false,
+ "notes": [
+  "edge_registry.json has 0 entries, so every rebalance_add SKIPs by design (README 'Registry ships empty')",
+  "live execute_pass.py is fix7 (v8, cap denominator=equity), modified after the fix6 QA PASS; no QA review of fix7 exists yet"
+ ]
+}

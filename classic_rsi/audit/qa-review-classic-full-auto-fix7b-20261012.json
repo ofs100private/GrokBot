@@ -1,0 +1,50 @@
+{
+ "checker": "QA Bot",
+ "skill": "classic-full-auto-code-review",
+ "review": "fix7b (supersedes fix7)",
+ "checked_at": "2026-10-12T20:30:00+03:00",
+ "verdict": "PASS",
+ "hard_fail_codes": [],
+ "warn_codes": [
+  "BOOK_SLEEVES_BACKUP_PER_RUN_CLUTTER",
+  "SKILL_MD_SCHEMA_UNDOCUMENTED"
+ ],
+ "integrity": {
+  "execute_pass": "14d0eefe2648",
+  "book_sleeves": "51dbdb6f314a",
+  "book": "00ec55f88f71",
+  "SKILL-draft": "2dbe93816b16",
+  "diff": "b4cbf2d11db7 (execute_pass, test_execute_pass, README, book_sleeves new, SKILL-draft)",
+  "fix7_map": "actual 5cb1e721c02a (reported 'cb1e721c' = same hash missing leading '5')",
+  "fixture": "b2e604b9 match",
+  "mirror": "identical incl. book_sleeves.py and fixture (one transient diff at 20:19 while mirror was being written; re-check clean)"
+ },
+ "tests": "346/346 on fix7b code (cost_gate 51, execute_pass 192 [191 in QA scratch only: redirected PROD paths], scorer 45, instruments 20, universe 38), run niced at load ~16",
+ "reconciliation_review": "_common_gates (all RSI + rebalance incl. risk exits): BOOK_EQUITY_NOT_RECONCILED unless equity>0 and |equity-(sum values+cash)|<=0.5%; missing equity or cash => fails closed (gap None); CASH_INSANE kept. Bypass only by a self-consistent forged book (existing forgery residual).",
+ "book_sleeves_review": "local only, no eToro/no place; equity basis on value and cost(+cash); legacy invested numbers labelled; atomic temp+replace with backup; missing equity raises (fails loud, book unchanged); informational only - execute_pass does not read 'sleeves'. Writes a .bak per run (clutter).",
+ "live_crosscheck_OfersClaw5_read_only_20:25_IDT": {
+  "live_equity": 7249.33,
+  "book_equity": 7250.59,
+  "holdings+cash_live": "7249.33 exact",
+  "pct_equity live vs book": {
+   "QQQ": "11.38 vs 11.40",
+   "SMH": "10.55 vs 10.53",
+   "XLV": "10.72 vs 10.72",
+   "SPY": "9.73 vs 9.73",
+   "TMO": "6.98 vs 6.98",
+   "growth_tech": "21.93 vs 21.93"
+  },
+  "result": "match within 0.03pp; no breaches"
+ },
+ "adversarial_rerun": "unchanged: test mode demo-forced, account echo mismatch caught, forged copied verdict + self mark => GO (test mode), drift 0.100% GO / 0.101% ANCHOR_DRIFT, prod registry tamper caught, prod RSI SKIP (p 0.410 n=19), scores attacks fail closed except recomputed sidecar; no production locks",
+ "fix7_warns": {
+  "TESTS_NOT_RERUN_BY_QA_BOX_OVERLOAD": "closed",
+  "BOOK_EQUITY_NOT_RECONCILED": "closed",
+  "BOOK_PRODUCER_SLEEVES_STILL_INVESTED_BASIS": "closed (book_sleeves after each refresh; routine not inspected by QA)",
+  "SKILL_TARGETS_HEADER_STILL_PENDING_CONFIRMATION": "closed",
+  "SKILL_MD_SCHEMA_UNDOCUMENTED": "open"
+ },
+ "residual_risks": "unchanged from fix7 (shared-box forgery incl. self-consistent book/equity, self-asserted mark, test-mode env, scores recomputed sidecar, pins in editable code; caps looser on equity basis by Ofer's choice)",
+ "verdict_schema_change": "none",
+ "compliance": "no prepare-* calls; no orders/messages/locks/production verdicts; only QA review files written"
+}
