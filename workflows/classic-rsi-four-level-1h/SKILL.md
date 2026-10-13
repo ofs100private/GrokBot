@@ -31,6 +31,7 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 - **Classic account truth:** Classic account (OfersClaw5-PRIYN) via `user-OfersClaw5` (execution + reporting). Parent SSO mirror `11368142` is optional copy/UI corroboration only — never required, never the rejection reason
 - **QA Bot PASS** (run-QA, then order-QA) required before any place ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) or standing Classic order gate)
 - **Fear is the dip window (Ofer 2026-10-04):** CNN Fear or Extreme Fear is when Support / Over Sold longs are most in play. Do **not** block a pack only because F&G is Fear or the brief says No Buy for that reason. Still block on cash floor, weekend, explicit Ofer/CoS hold, and risk-off (no add) on that same name.
+- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
 
 ## Cash floor sizing (Ofer 2026-10-07)
 

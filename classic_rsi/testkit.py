@@ -52,6 +52,7 @@ def test_root():
         (root / "evidence").mkdir()
         os.environ[TEST_ENV] = str(root)
         write_registries(root)
+        write_momentum(root)
         try:
             yield root
         finally:
@@ -59,6 +60,35 @@ def test_root():
                 os.environ.pop(TEST_ENV, None)
             else:
                 os.environ[TEST_ENV] = old
+
+
+MOMENTUM_TEST = [("XOM", 1036), ("NTAP", 1796)]  # TEST ONLY; no overlap with the Classic test symbols
+
+
+def momentum_response(now=MON, age_s=5, holdings=None, orders=None, mirrors=None, warnings=None, **kw):
+    """TEST-ONLY raw user-Momentum-HHHGDTJ get-my-positions-and-orders response (fix8b)."""
+    h = MOMENTUM_TEST if holdings is None else holdings
+    r = {"account": "real", "statusCode": 200, "xRequestId": "test-xrid", "accountCurrency": "USD",
+         "timestamp": (now - timedelta(seconds=age_s)).astimezone(ZoneInfo("UTC")).strftime("%Y-%m-%dT%H:%M:%S.%f0Z"),
+         "direct": {"positions": [{"positionId": 9000 + n, "market": {"instrumentId": i, "symbol": s}, "direction": "long"}
+                                  for n, (s, i) in enumerate(h)],
+                    "orders": orders or []},
+         "mirrors": mirrors or [], "warnings": warnings}
+    r.update(kw)
+    return r
+
+
+def momentum_read(now=MON, age_s=5, captured_age_s=None, source="user-Momentum-HHHGDTJ", **kw):
+    return {"source": source, "captured_at": ts(now, age_s if captured_age_s is None else captured_age_s),
+            "response": momentum_response(now=now, age_s=age_s, **kw)}
+
+
+def write_momentum(root: Path, now=MON, age_s=5, holdings=None):
+    """TEST-ONLY pre-filter snapshot file (fix8/8b)."""
+    from .momentum_holdings import build_snapshot, write_snapshot
+    snap = build_snapshot(momentum_response(now=now, age_s=age_s, holdings=holdings))
+    write_snapshot(snap, root / "momentum.json")
+    return snap
 
 
 def write_registries(root: Path, p_entries=None, edge_entries=None):

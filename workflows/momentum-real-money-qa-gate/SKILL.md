@@ -21,11 +21,16 @@ Playbook **2026-09-16 full fix** + **sleeve capacity 2026-10-05** (Ofer): unlimi
 - Daily feedback ~23:05 IL; miss checks ~22:50 IL
 - `EOD_SCREENER_MISSED` HIGH AVOID only if no screener ACTION ≤22:50 IL (early/manual counts; catch-up never clears). Soft `SCHEDULED_2245_LATE` if cron late but gate already cleared — see trader-momentum-strategy EOD feedback scoring.
 
+## Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT)
+
+**Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either. **Code-enforced (2026-10-13):** read Classic via MCP `user-OfersClaw5` get-my-positions-and-orders → `python3 /workspace/classic_book.py save <result>` (snapshot `momentum_audit/classic_book/classic_holdings_latest.json`, timestamped). Screener pack + rebalance buy/rotation drop matches with TRACE `CROSS_BOOK_HELD`; `preplace` needs snapshot ≤120s old (`--classic-snapshot`); missing/stale = all buys blocked (`CROSS_BOOK_READ_MISSING_OR_STALE`).
+
 ## Cash books (Mirror A vs keys)
 
 - **Mirror A** (11630170 / parent SSO) = copy-basis truth for **reporting** and book allocation.
 - **Keys** (`user-Momentum-HHHGDTJ`) = **execution** cash; may diverge from Mirror A.
 - **`authorize_place` rule (hardened 2026-10-05 after r2 gap):** set `authorize_place=true` **only** when **keys** `availableCash` covers each intended fill **in sequence** (fees buffer). Mirror A cash alone must **never** authorize place. If Mirror A covers but keys cannot → overall `PASS_WITH_GATE_OK` or per-name `INSUFFICIENT_CASH` **GATE_OK**, `authorize_place=false` on blocked names (trim to keys-coverable prefix only if explicitly re-validated). Do **not** emit a bare place-PASS that FULL AUTO would treat as placeable when keys cannot execute.
+- Screener place-QA request (`python -m momentum_qa.place_qa_request`) needs a clean PM `RUN_END` for the same EOD; if PM crashed and reran, cite both run_ids. Sector overlap (≥2 same-sector buys in one pack, or a buy's sector ≥25% of invested book) is ADVISORY only, never a fail.
 - After a keys cash/state change, require a **fresh** place-QA (no self-PASS; flag `PLACE_WITHOUT_QA_BOT_RECHECK`).
 - Lesson 2026-10-05: r2 place-QA sized off Mirror A ~$4361 while keys had ~$1612 (then ~$610 after NTAP) → ANET/FFIV failed at place. Breach pattern = Mirror-A-only authorize.
 
@@ -43,6 +48,7 @@ Playbook **2026-09-16 full fix** + **sleeve capacity 2026-10-05** (Ofer): unlimi
 - leverage ≠ 1, amount > $1000, demo, short, bad mcp/stop shape
 - Mirror A cash cannot cover the authorized pack (`INSUFFICIENT_CASH` = GATE_OK)
 - Keys execution cash cannot cover the pack as sequenced (`INSUFFICIENT_CASH` = GATE_OK; `authorize_place=false`)
+- buy of a symbol already held in Classic (OfersClaw5-PRIYN) → `CROSS_BOOK_OVERLAP` (Ofer 2026-10-13 01:44 IDT); live-read Classic before authorize_place; existing overlap XLE kept in both books per Ofer 2026-10-13 — never add to it
 
 ## Regime
 

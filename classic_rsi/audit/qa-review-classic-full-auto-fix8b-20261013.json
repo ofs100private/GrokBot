@@ -1,0 +1,60 @@
+{
+ "verdict": "PASS",
+ "checker": "QA Bot",
+ "checked_at": "2026-10-13T01:51:19+03:00",
+ "scope": "Trader_Classic fix8b (R1-R4 of qa-review-classic-full-auto-fix8-20261013.json), OfersClaw5-PRIYN real money",
+ "sha_verification": {
+  "execute_pass.py": "3a4e8c628bae OK",
+  "momentum_holdings.py": "ab514afd OK",
+  "fix8b diff": "c82b2c11 OK",
+  "fix8b map": "9ed72c71 OK",
+  "snapshot": "05ed8a47 claimed; current file is 2d22c42332ac (rewritten since). Not GO-relevant: GO no longer reads the file",
+  "GrokBot mirror": "identical"
+ },
+ "tests": "re-run: 51+234+20+45+38 = 388/388 PASS",
+ "live_read": "user-Momentum-HHHGDTJ get-my-positions-and-orders (read-only, eToro ts 01:51:09 +03:00, xRequestId f922cde9\u2026): statusCode 200, warnings null, mirrors [], direct = ANET 4294, CRWD 5506, NTAP 1796, P 6823, XLE 3008, XLK 3021, XOM 1036, ZBRA 5662; 0 orders. Shape claim confirmed; names match. verify_go_read on it => ok (server_age 3.2 s). The parent user-etoro response fed as Momentum => MOMENTUM_SOURCE_MISMATCH. Parent cross-check vs mirrors[11630170] => match. No read => MOMENTUM_READ_MISSING.",
+ "findings": [
+  {
+   "id": "R1",
+   "status": "FIXED",
+   "detail": "GO (run_checks line 589; rebalance line 955/1038 for every buy leg) uses MH.verify_go_read on the CLI-passed raw response, never on the shared file. It requires source == user-Momentum-HHHGDTJ, xRequestId present, and both captured_at and eToro's response timestamp within [-5, 60] s. xRequestId, response_sha256 and both ages are written to the audit. The self-written asOf is no longer trusted."
+  },
+  {
+   "id": "R2",
+   "status": "FIXED",
+   "detail": "parse_read rejects non-200/error, non-null warnings, account != real, a missing direct section and an empty read (no positions and no orders)."
+  },
+  {
+   "id": "R3",
+   "status": "FIXED",
+   "detail": "Non-empty mirrors[] is rejected as parent shape. The optional parent cross-check requires mirrors[11630170] to be non-empty with identical ids. load_snapshot (pre-filter) also checks source/mirrorId/non-empty."
+  },
+  {
+   "id": "R4",
+   "status": "FIXED",
+   "detail": "Tests 367 -> 388 (+21 in test_execute_pass). norm_symbol strips case/whitespace/.US. Pending non-terminal orders count as held."
+  },
+  {
+   "id": "SELLS",
+   "status": "OK",
+   "detail": "Momentum read is only evaluated when the rebalance pack has buys, and only on buy legs. Sell/trim/risk-exit legs are unaffected (tests still pass)."
+  },
+  {
+   "id": "REG",
+   "status": "OK",
+   "detail": "No regressions vs fix7b/fix8. All prior suites pass."
+  }
+ ],
+ "residuals": [
+  "RES1 (accepted class, not a blocker): the raw response file passed via --momentum-response sits on the shared box and is writable by any box agent. A forger with a fresh eToro-style timestamp/xRequestId could pass. Same class as the forgeable verdict/score files Ofer has not accepted; mitigated by the 60 s server/capture timestamps and audited xRequestId+sha.",
+  "RES2 (minor): xRequestId is only checked for presence, not uniqueness. Replay is bounded by the 60 s window.",
+  "RES3 (minor): the optional parent_response has no freshness check (a 3-minute-old parent read still cross-checked OK). Suggest applying the same 60 s bound when it is supplied.",
+  "RES4 (minor): order statuses canceledPartiallyFilled/rejectedPartiallyFilled count as held. Conservative, acceptable."
+ ],
+ "required_fixes": [],
+ "recommended": [
+  "Add 60 s freshness to parent_response (RES3)",
+  "Optionally reject a reused xRequestId across GOs (RES2)"
+ ],
+ "compliance": "Read-only: one user-Momentum-HHHGDTJ get-my-positions-and-orders call; no prepare/place/close or write tools; only this QA file written."
+}

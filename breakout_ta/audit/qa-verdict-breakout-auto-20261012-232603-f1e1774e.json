@@ -1,0 +1,44 @@
+{
+ "verdict": "WARN",
+ "checker": "QA Bot",
+ "skill": "/home/box/agent-data/workflows/breakout-ta-tab-data-qa-gate/SKILL.md",
+ "checked_at": "2026-10-12T23:26:55+03:00",
+ "run_id": "breakout-auto-20261012-232603-f1e1774e",
+ "findings": [
+  {
+   "gate": "G1",
+   "status": "PASS",
+   "detail": "All 4 copies sha256 56dd8e4196285dfc24f4ebd6386ee8daba5bf10bc777f48e154014d655080679; tab run_id == latest-auto run_id"
+  },
+  {
+   "gate": "G2",
+   "status": "PASS",
+   "detail": "latest-auto.json byte-identical to {run_id}.json; index.jsonl has run; counts 1/10/1, 21 symbols, do_not_place true"
+  },
+  {
+   "gate": "G3",
+   "status": "PASS",
+   "detail": "ZBRA confirmed 1D, entry 388.12/stop 373.3407/target 417.6786, vol ratio 1.057; all confirmed/watch/failed rows identical to audit; doNotPlaceFromThisUi true; long-only"
+  },
+  {
+   "gate": "G4",
+   "status": "PASS",
+   "detail": "methods breakout_ta/classic_rsi/momentum_breakout present; Classic RSI run classic-rsi-auto-20261012-225112-5cb78486 with 0 packs; Classic place label 'after QA PASS (not FULL AUTO)'; no place authorization claimed"
+  },
+  {
+   "gate": "G5-classic",
+   "status": "PASS",
+   "detail": "Sidecar (22:56:45 IDT) symbols QQQ,SMH,SPY,TMO,XLE,XLV match live user-OfersClaw5 summary (xRequestId 4363970e-24e4-46dd-a60a-d913ed9aebbd) and mirror 11368142"
+  },
+  {
+   "gate": "G5-momentum",
+   "status": "WARN",
+   "detail": "Momentum sidecar asOf 16:11:06 IDT is stale. LIVE mirror 11630170 (user-etoro positions, the skill's reporting truth, not keys) holds XOM,NTAP,XLK,ANET,CRWD,ZBRA,P,XLE. Tab book misses XOM and XLE; overlap breakout_watch_in_momentum_book misses XLE. All symbols the tab does claim (ZBRA,NTAP,P,ANET,CRWD,XLK) are on the live book, so this is an omission, not a false claim. No hard-FAIL rule covers it, and the skill has no explicit staleness rule: G5 is soft-exact, so WARN."
+  },
+  {
+   "gate": "fixes",
+   "status": "REQUIRED_BEFORE_CLEAN_PASS",
+   "detail": "Refresh /workspace/etoroview/public/momentum-portfolio.json from live mirror 11630170; rebuild comparison: momentum book_symbols += XLE,XOM; breakout_watch_in_momentum_book = [NTAP,P,XLE]; momentum_book_no_breakout_signal = [CRWD,XLK,XOM] (XOM is not in the 21-symbol universe); re-dual-write all 4 copies and re-run QA"
+  }
+ ]
+}

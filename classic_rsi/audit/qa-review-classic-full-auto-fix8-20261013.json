@@ -1,0 +1,67 @@
+{
+ "verdict": "FAIL",
+ "checker": "QA Bot",
+ "checked_at": "2026-10-13T01:48:22+03:00",
+ "scope": "Trader_Classic fix8 (CROSS_BOOK_OVERLAP) for OfersClaw5-PRIYN real-money Classic",
+ "sha_verification": {
+  "execute_pass.py": "1a3e03d14777\u2026 OK",
+  "momentum_holdings.py": "ee0074ed\u2026 OK",
+  "momentum-holdings-for-classic.json": "d9487345\u2026 OK",
+  "fix8 diff": "98b7312b\u2026 OK",
+  "fix8 map": "485375fb\u2026 OK",
+  "GrokBot mirror": "identical (diff -rq clean)"
+ },
+ "tests": "re-run independently: 51+213+45+20+38 = 367/367 PASS",
+ "live_compare": "user-etoro get-my-positions-and-orders (read-only, 01:47:58 +03:00): mirror 11630170 = ANET 4294, CRWD 5506, NTAP 1796, P 6823, XLE 3008, XLK 3021, XOM 1036, ZBRA 5662; 0 pending orders. Matches the snapshot's 8 names/ids exactly.",
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "BLOCKER",
+   "title": "GO trusts the forgeable shared-box file only; no live read",
+   "detail": "_cross_book() calls MH.load_snapshot() which only reads /workspace/momentum-holdings-for-classic.json. Freshness is computed from the file's own asOf field, so anyone or anything that can write the shared box can drop XLE (or any name) and stamp a current asOf, and GO passes. No xRequestId/response-hash binding, no provenance check, no live Momentum read at GO."
+  },
+  {
+   "id": "F2",
+   "severity": "BLOCKER",
+   "title": "Empty Momentum read is not fail-closed",
+   "detail": "build_snapshot accepts a 200 response with zero positions, and load_snapshot accepts symbols: [] as ok=True, so every buy passes. An empty or degraded read (e.g. warnings set, mirrors missing) must fail closed. warnings is also ignored."
+  },
+  {
+   "id": "F3",
+   "severity": "MAJOR",
+   "title": "Producer does not pin mirror 11630170 / source",
+   "detail": "build_snapshot unions direct plus ALL mirrors and never checks that mirrorId 11630170 is present. Run on the user-etoro response, it yields 19 symbols (direct + mirror 11368142): it over-blocks, which is safe, but the result is labelled source user-Momentum-HHHGDTJ anyway. If mirror 11630170 is missing from a partial read, nothing is flagged. Require mirror 11630170 to be present and non-empty, and record the actual source namespace."
+  },
+  {
+   "id": "F4",
+   "severity": "MINOR",
+   "title": "Symbol normalisation",
+   "detail": "Matching is instrumentId OR upper-case ticker. Fine because _guard_leg resolves the iid, but tickers aren't normalised for suffixes (.US). Symbol-only collisions (e.g. crypto vs stock tickers) can only over-block, which is fail-safe. There's no explicit test for case or .US."
+  },
+  {
+   "id": "F5",
+   "severity": "INFO",
+   "title": "Coverage OK",
+   "detail": "_cross_book runs on RSI run_checks (line 583, every buy pack) and on every rebalance buy leg, including adds to existing names (line 1030). The test shows an XLE add => CROSS_BOOK_OVERLAP NO-GO. propose/auto_1h filter via filter_buy_packs and fail closed (drop all) when the snapshot is missing. The --force path never sets auto eligibility. No separate manual/override buy path exists in execute_pass. Sell/trim/risk-exit legs skip the check (tested)."
+  },
+  {
+   "id": "F6",
+   "severity": "INFO",
+   "title": "Pending orders",
+   "detail": "Non-canceled/rejected/expired orders count as held (direct and mirrors), which is conservative. Note that status 'canceledPartiallyFilled' also counts, which is acceptable."
+  },
+  {
+   "id": "F7",
+   "severity": "INFO",
+   "title": "No regressions vs fix7b",
+   "detail": "All 367 tests pass. The fix7b adversarial behaviours are unchanged in the suites, and the SKILL draft has a matching cross-book section. Symmetric enforcement on the Momentum side (momentum_rebalance.py cross_book_read) is out of scope here and wasn't reviewed."
+  }
+ ],
+ "required_fixes": [
+  "R1: At GO, execute_pass must verify a live Momentum read made for this GO: e.g. require the executor to pass the verbatim get-my-positions-and-orders response (or have GO consume it directly), parse it in-process, check its timestamp is within 60 s of now, and bind its sha/xRequestId into the audit. Treat the shared file only as a pre-filter for propose/auto_1h.",
+  "R2: Fail closed when the Momentum read is empty, when mirror 11630170 is absent or has 0 positions, or when warnings is non-null.",
+  "R3: Pin mirrorId 11630170 and the real source namespace in the producer and validate both in load_snapshot. Over-blocking with direct/other mirrors is acceptable if documented.",
+  "R4: Add tests for: forged file with a fresh asOf (must FAIL under R1), empty snapshot, mirror missing, lowercase and '.US' symbol inputs, and a pending Momentum buy order blocking a Classic buy."
+ ],
+ "compliance": "Read-only. Only user-etoro get-my-positions-and-orders was called; no prepare/place/close or write tools; only this QA file was written."
+}

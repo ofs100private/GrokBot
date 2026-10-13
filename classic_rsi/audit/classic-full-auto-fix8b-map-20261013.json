@@ -1,0 +1,30 @@
+{
+  "kind": "qa-fix-map",
+  "fix": "classic-full-auto-fix8b-20261013",
+  "review": "audit/qa-review-classic-full-auto-fix8-20261013.json (FAIL)",
+  "diff": "audit/classic-full-auto-fix8b-20261013.diff (vs fix8)",
+  "etoro_calls": "read-only: user-Momentum-HHHGDTJ get-my-positions-and-orders (xRequestId 05ed8a47-4ec8-4f81-875d-6244ff74f740) and get-my-profile-and-scopes (403 InsufficientPermissions). No writes on any account.",
+  "corrections": {
+    "R1/F1": {"fix": "execute_pass._momentum_go -> momentum_holdings.verify_go_read: GO for any buy requires momentum_read {source, captured_at, response[, parent_response]} (CLI --momentum-response/--momentum-captured-at/--momentum-source/--momentum-parent-response), parsed in-process; capture age AND server timestamp <= 60 s; audit out.momentum_read {xRequestId, response_sha256, captured_at, ages, symbols, ids}. Shared file no longer read at GO (pre-filter for propose/auto_1h only).",
+      "tests": ["forged fresh file + no read => MOMENTUM_READ_MISSING", "file without XLE vs live read with XLE => CROSS_BOOK_OVERLAP", "capture 61 s / server 61 s => STALE", "59 s ok", "capture time missing => STALE", "GO path source has no load_snapshot", "RSI no read => MISSING"]},
+    "R2/F2": {"fix": "parse_read fails closed: MOMENTUM_READ_EMPTY (0 positions+0 live orders), MOMENTUM_READ_INVALID (non-200/error/warnings/not real/no timestamp/no xRequestId), MOMENTUM_MIRROR_MISSING (direct absent)", "tests": ["empty", "warnings", "direct missing", "429"]},
+    "R3/F3": {"fix": "source pinned to user-Momentum-HHHGDTJ and mirror 11630170 in producer and loader. Structure: in user-etoro, Momentum = mirrors[mirrorId=11630170]; in user-Momentum-HHHGDTJ the same positions are under direct with mirrors=[] and no mirrorId (profile 403). Hence direct = 11630170 section; any mirrors[] content (parent shape) => MOMENTUM_SOURCE_MISMATCH, never merged. Optional parent cross-check requires parent mirrors[11630170] non-empty with identical ids. Snapshot kind v2 with response_sha256, role PRE-FILTER ONLY.", "tests": ["source user-etoro", "parent-shaped response", "parent cross-check ok / missing mirror / id mismatch", "producer refuses wrong source", "loader rejects empty/wrong source/wrong mirror"]},
+    "R4/F4": {"fix": "norm_symbol (upper, trim, drop .US) both sides", "tests": ["xle", "XLE.US", " xle.us ", "norm_symbol tmo.US", "pending placed XLE order blocks", "canceled order ignored"]}
+  },
+  "momentum_holdings_now": {"asOf": "2026-10-13T01:50:02+03:00", "xRequestId": "05ed8a47-4ec8-4f81-875d-6244ff74f740", "response_sha256": "0697339474045bd7b52a70d2ab2326da7205c6b00ce574c2d857684fba380c3e",
+    "positions": {"XOM": 1036, "NTAP": 1796, "XLE": 3008, "XLK": 3021, "ANET": 4294, "CRWD": 5506, "ZBRA": 5662, "P": 6823}, "pending_orders": 0,
+    "overlap_flags": {"XLE": "Classic candidate - buys blocked", "XLK": "Classic candidate - buys blocked"}},
+  "test_counts": {"test_cost_gate": "51/51", "test_execute_pass": "234/234", "test_scorer": "45/45", "test_instruments": "20/20", "test_universe": "38/38", "total": "388/388"},
+  "sha256": {
+    "execute_pass.py": "3a4e8c628bae3cf28236620fff815ac4b006ff06080b43ef64e7abdfce8aac46",
+    "momentum_holdings.py": "ab514afd660fa8a7b571b7918e7294abf83797c4cecea0a34dfbbefa74270904",
+    "testkit.py": "22eecb48c2377a92e8fbf19f77743edb2143d79790da06ba029fe01f5efec77c",
+    "test_execute_pass.py": "10d9d9bbf54992ba5bab261113d58dde0daa88e90c7141278c9d9122b84db695",
+    "README.md": "a64fd3c302f0107f58e368da18db2412391be29f2744c393d23606103a6330bf",
+    "classic-rebalance/SKILL-draft.md": "2e04255af5c7bcb8046f2e7a92f0a6a7df956a9c30e4994c5209aa4e5d70a44a",
+    "momentum-holdings-for-classic.json": "2d22c42332acebd687e84864d153451c4f32d0cc0d64604a386c300d011f8832",
+    "unchanged": "propose 6146a1eb, auto_1h a87d834b, paths b199f74d, cost_gate ec12ecc3, scorer 806313b9"
+  },
+  "diff_sha256": "c82b2c1110df6f45a580dc0c68bd903a20bf5c993efab2ba552495dc6ac49f29",
+  "mirror": "/workspace/GrokBot/classic_rsi identical (diff -rq excl. __pycache__/audit)"
+}

@@ -38,10 +38,14 @@ To fix only the comparison for an existing run: `/workspace/screener-venv/bin/py
 
 Entry / stop (structure + 1.5×ATR) / target (2R or measured move). Invalidation: close back below R.
 
+## Standing rule — Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT)
+
+**Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either. When comparing/suggesting, flag any buy-side overlap across Classic and Momentum as **blocked** (`CROSS_BOOK_OVERLAP`); never treat overlap as a green light to add.
+
 ## Comparison (required in feed)
 
 Methods: Breakout TA (analysis-only) · Classic RSI 1H · Momentum EOD breakout. Overlaps with live books only: Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`, from a live read; mirror 11368142 optional) · Momentum mirror 11630170 ($8k). Include `breakout_failed_in_classic_book` / `breakout_failed_in_momentum_book`. Agreement ≠ place; a failed breakout on a held name is not a close instruction.
 
 ## Do not
 
-Place · FULL AUTO attach · reject the Classic account / OfersClaw5 as Classic truth (or use Momentum keys alone as Momentum reporting truth) · build the Classic comparison from a stale snapshot file · skip the nightly user digest · skip QA on feed refresh
+Place · FULL AUTO attach · reject the Classic account / OfersClaw5 as Classic truth (or use Momentum keys alone as Momentum reporting truth) · build the Classic comparison from a stale snapshot file · skip the nightly user digest · skip QA on feed refresh · treat a cross-book held symbol as a buy candidate (cross-book no-overlap)

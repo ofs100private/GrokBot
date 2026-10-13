@@ -230,6 +230,12 @@ function PortfolioImpactCard({
   const rec = portfolio?.recommendation
   const cardPct = portfolio?.card
   const mirrorId = portfolio?.mirrorId
+  // Market value of open positions: brief card first, then Classic live metrics. Absent ⇒ not shown.
+  const investedMV: number | null =
+    cardPct?.investedMarketValue ??
+    (kind === 'classic' && classicLive?.status === 'ready'
+      ? (classicLive.snapshot.metrics?.investedMarketValue ?? null)
+      : null)
 
   let dollars: {
     equity: number
@@ -302,7 +308,7 @@ function PortfolioImpactCard({
             <span className="db-metric-value">{formatCurrency(dollars.cash)}</span>
           </div>
           <div className="db-metric">
-            <span className="db-metric-label">Invested</span>
+            <span className="db-metric-label">Invested (cost)</span>
             <span className="db-metric-value">{formatCurrency(dollars.invested)}</span>
           </div>
           <div className="db-metric">
@@ -335,7 +341,12 @@ function PortfolioImpactCard({
             <span className="db-pct-pill">Cash {cardPct.cashPct.toFixed(1)}%</span>
           ) : null}
           {cardPct.deploymentPct != null ? (
-            <span className="db-pct-pill">Deployed {cardPct.deploymentPct.toFixed(1)}%</span>
+            <span className="db-pct-pill">
+              Deployed (MV) {cardPct.deploymentPct.toFixed(1)}%
+            </span>
+          ) : null}
+          {investedMV != null ? (
+            <span className="db-pct-pill">Invested (MV) {formatCurrency(investedMV)}</span>
           ) : null}
           {cardPct.positionCount != null ? (
             <span className="db-pct-pill">{cardPct.positionCount} positions</span>

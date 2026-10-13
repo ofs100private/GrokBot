@@ -13,6 +13,7 @@ description: >-
 - **Standing default (Ofer):** `portfolios=[Classic, Momentum]` — always produce a separate Portfolio Recommendation card for **Classic** (Classic account (OfersClaw5-PRIYN)) **and** **Momentum** (Momentum-HHHGDTJ). Override only if Ofer narrows the list for a run.
 - **Classic truth** = Classic account (OfersClaw5-PRIYN) live via MCP `user-OfersClaw5` (equity/cash/positions). Parent SSO mirror `11368142` is optional copy/UI corroboration only — never required, never the rejection reason. Do **not** reject OfersClaw5 figures as Classic.
 - **Momentum truth** (UNCHANGED): Momentum agent book / mirror `11630170` as $8k reporting truth; keys Momentum-HHHGDTJ for execution only — never mix Classic dollars into Momentum or vice versa.
+- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal on a recommendation card, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either. **Recommendation cards (section 13):** any buy/add idea that overlaps the other book must appear under **Blocked** (not Buy / Would Buy).
 
 ## Live data rules
 1. Fetch LIVE only via tools. Preferred F&G: `https://production.dataviz.cnn.io/index/fearandgreed/graphdata`. Fallback: web search / CNN Fear & Greed page.
@@ -49,13 +50,24 @@ Source of truth for caps: `/home/box/agent-data/workflows/classic-rebalance/SKIL
    - Growth sleeve (QQQ+SMH+other growth/tech) % of invested vs the sleeve cap (currently **≤45%**).
    - Cash vs equity: if cash >50% of equity, note the cash drift trigger.
 2. Drop any idea that breaches a cap or leaves less than the minimum trade size of headroom (currently **$400** minimum position). A blocked idea may appear only under **Blocked / needs Ofer exception** — never under Would Buy. Market-watch names Classic can't buy must be labeled **market watch only**.
+2a. **Cross-book overlap:** before listing any Buy on either portfolio card, live-read the other book. If the symbol is held there, move that buy idea to **Blocked** (`CROSS_BOOK_OVERLAP`); never list it under Buy / Would Buy. Existing overlap XLE stays held in both books per Ofer 2026-10-13; any XLE add is Blocked.
 3. Names already held go under **Hold/Watch**, not Would Buy.
 4. Authorization wording: briefs must say **Classic FULL AUTO approved 10-12; code gate passed QA — auto-place off pending Ofer risk acceptance + out-of-sample evidence (QA PASS + explicit Ofer authorization)**. There is no Classic new-names-per-month or trade-count cap.
 5. Last trump twit: check Truth Social (e.g. trumpstruth.org) as well as X; quote the freshest post.
 6. Weekends: if nothing material changed vs the last delivered brief, say so in the META line so the Chief of Staff can skip delivery.
 
+## Dual-write target list
+- The canonical App JSON dual-write targets are **only** the live/latest ones:
+  - `etoroview` and `GrokBot/app/etoroview`: `public`, `public/latest`, `latest`, `dist`, `dist/latest` (each of `daily-brief.json`, `classic-portfolio.json`, `momentum-portfolio.json`)
+  - `daily-brief.json` and `latest.json` in `/workspace/daily-brief` and `/workspace/GrokBot/daily-brief` (plus the portfolio JSON siblings written alongside them)
+  - `/workspace/classic-portfolio.json`, `/workspace/classic-portfolio-for-app.json`, `/workspace/momentum-portfolio.json`
+  - **plus the CURRENT run's own dated folder and file only** (e.g. `/workspace/daily-brief/morning-0530-YYYY-MM-DD.json` or afternoon equivalent, `/workspace/daily-brief-SLOT-YYYY-MM-DD/*.json`, `/workspace/app-refresh-YYYY-MM-DD-am|pm/*.json`)
+- **Never** copy a target list from a previous `written-manifest.json`. Build the list fresh each run from the canonical set above.
+- **Never** write to a path whose name carries a **different date** than the current run (no overwriting past-dated archive copies).
+- Manifest `targetCount` / summary counts must state the **per-type breakdown**, for example `48 targets (17 daily-brief.json)` (include classic/momentum counts the same way when reporting).
+
 ## Coordination
 - Use X agent / X tools for Tier-2 analyst tape (estimate cost; keep cheap).
 - Use trader agents + MCP for portfolio cards (Classic via Trader_Classic / Classic account `user-OfersClaw5`; Momentum via Trader_momentum / Momentum MCP — Momentum reporting still mirror `11630170`).
-- After delivery, refresh App JSON dual-write with **both** portfolio cards when both are selected; Classic card numbers must come from live Classic account (`user-OfersClaw5`), not from inventing or requiring mirror `11368142`.
+- After delivery, refresh App JSON dual-write with **both** portfolio cards when both are selected (see **Dual-write target list**); Classic card numbers must come from live Classic account (`user-OfersClaw5`), not from inventing or requiring mirror `11368142`.
 - Deliver the full brief to the user (or hand off to Chief of Staff for user delivery when running in an isolated routine).

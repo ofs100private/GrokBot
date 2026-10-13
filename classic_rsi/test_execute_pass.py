@@ -19,6 +19,24 @@ from .testkit import (MON, PRID, RID, buy_prepare, close_prepare, make_pack, tes
                       write_envelope, write_order_qa, write_registries, write_run_qa, write_scores)
 
 IDT = ZoneInfo("Asia/Jerusalem")
+
+
+def _with_momentum_read(f):
+    """fix8b: every GO needs the executor's own live Momentum read; tests inject a fresh TEST-ONLY one
+    unless the caller passes momentum_read explicitly (incl. None)."""
+    import functools
+
+    @functools.wraps(f)
+    def g(**kw):
+        if "momentum_read" not in kw:
+            from .testkit import momentum_read as _mr
+            kw["momentum_read"] = _mr(now=kw.get("now") or MON)
+        return f(**kw)
+    return g
+
+
+X.run_checks = _with_momentum_read(X.run_checks)
+X.run_rebalance_checks = _with_momentum_read(X.run_rebalance_checks)
 ET = ZoneInfo("America/New_York")
 PID = f"{RID}#T"
 XLE, XLV, SMH, TMO = 3008, 3017, 6357, 1592
@@ -626,6 +644,7 @@ def run():
         X.CAP_DENOMINATOR = "equity"
         write_book(root)
         fix7_block(root, rb, held, t)
+        fix8_block(root, rb, add_pack, sell_pack, live_for, held, t)
         t("crypto/bare symbol guard on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
             {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="BTC", instrumentId=100000)]})["blockers"]))
         t("bad shape => BAD_REBALANCE_PACK", "BAD_REBALANCE_PACK" in rb({"pack_id": "classic-rebalance-20261012-x",
@@ -778,6 +797,135 @@ def fix7_block(root, rb, held, t):
       0.3 * (3389.05 + 3671.18) - 700.0), 2)) < 0.01 and "legacyInvestedBasis" in ct_, ct_["capCheck"])
     write_book(root)
 
+
+# ---------------------------------------------------------------- fix8/8b: Momentum cross-book rule
+def fix8_block(root, rb, add_pack, sell_pack, live_for, held, t):
+    from . import momentum_holdings as MH
+    from .testkit import momentum_read as MR, momentum_response as MRESP, write_momentum
+    write_book(root)
+
+    def rbm(pack, live=None, **mk):
+        return rb(pack, live, momentum_read=mk.pop("read", None) if "read" in mk else MR(**mk))
+
+    r0 = rbm(add_pack())
+    t("fix8b XLE add with a live Momentum read holding XOM/NTAP => no cross-book blocker; audit has xRequestId + sha",
+      not {b for b in r0["blockers"] if b.startswith(("CROSS_BOOK", "MOMENTUM"))}
+      and r0["momentum_read"]["xRequestId"] == "test-xrid" and len(r0["momentum_read"]["response_sha256"]) == 64, r0["blockers"])
+    r1 = rbm(add_pack(), holdings=[("XOM", 1036), ("XLE", 3008)])
+    t("fix8 XLE held in Momentum => rebalance buy CROSS_BOOK_OVERLAP (NO-GO)",
+      "CROSS_BOOK_OVERLAP" in r1["blockers"] and r1["decision"] == "NO-GO", r1["blockers"])
+    t("fix8 overlap by instrument id alone", "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[("ZZZ", 3008)])["blockers"])
+    t("fix8 overlap by symbol alone", "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[("XLE", 999999)])["blockers"])
+    for lbl, sym in (("lowercase", "xle"), (".US suffix", "XLE.US"), ("lowercase .us", " xle.us ")):
+        t(f"fix8b normalization: Momentum symbol {lbl} {sym!r} matches XLE",
+          "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[(sym, 999999)])["blockers"])
+    t("fix8b norm_symbol('tmo.US') == 'TMO' and overlap() normalizes the Classic side too",
+      MH.norm_symbol("tmo.US") == "TMO" and MH.overlaps({"symbols": {"XLE"}, "ids": set()}, "xle.us", None))
+    pend = [{"status": "placed", "market": {"instrumentId": 3008, "symbol": "XLE"}}]
+    t("fix8b pending Momentum XLE buy order blocks a Classic XLE buy",
+      "CROSS_BOOK_OVERLAP" in rbm(add_pack(), orders=pend)["blockers"])
+    canc = [{"status": "canceled", "market": {"instrumentId": 3008, "symbol": "XLE"}}]
+    t("fix8b canceled Momentum order does not count", "CROSS_BOOK_OVERLAP" not in rbm(add_pack(), orders=canc)["blockers"])
+    # R1: forged shared file is irrelevant at GO
+    (root / "momentum.json").write_text(json.dumps({"kind": MH.KIND, "source": MH.SOURCE, "mirrorId": MH.MIRROR_ID,
+                                                    "asOf": ts(MON, 1), "symbols": ["XOM"], "instrumentIds": [1036]}))
+    r2 = rbm(add_pack(), read=None)
+    t("fix8b R1 forged fresh shared file (no XLE, asOf now) + no live read => MOMENTUM_READ_MISSING, NO-GO",
+      "MOMENTUM_READ_MISSING" in r2["blockers"] and r2["decision"] == "NO-GO", r2["blockers"])
+    write_momentum(root, holdings=[("XOM", 1036)])
+    r3 = rbm(add_pack(), holdings=[("XLE", 3008)])
+    t("fix8b R1 GO uses the live read, not the file: file says no XLE, live read has XLE => CROSS_BOOK_OVERLAP",
+      "CROSS_BOOK_OVERLAP" in r3["blockers"], r3["blockers"])
+    t("fix8b R1 live read captured 61 s before GO => MOMENTUM_SNAPSHOT_STALE",
+      "MOMENTUM_SNAPSHOT_STALE" in rbm(add_pack(), age_s=5, captured_age_s=61)["blockers"])
+    t("fix8b R1 server timestamp 61 s old (capture fresh) => MOMENTUM_SNAPSHOT_STALE",
+      "MOMENTUM_SNAPSHOT_STALE" in rbm(add_pack(), age_s=61, captured_age_s=5)["blockers"])
+    t("fix8b R1 read 59 s old => live", not {b for b in rbm(add_pack(), age_s=59)["blockers"] if b.startswith("MOMENTUM")})
+    rd = MR()
+    rd["captured_at"] = None
+    t("fix8b R1 capture time missing => MOMENTUM_SNAPSHOT_STALE", "MOMENTUM_SNAPSHOT_STALE" in rbm(add_pack(), read=rd)["blockers"])
+    # R2
+    t("fix8b R2 empty Momentum read (0 positions, 0 orders) => MOMENTUM_READ_EMPTY",
+      "MOMENTUM_READ_EMPTY" in rbm(add_pack(), holdings=[])["blockers"])
+    t("fix8b R2 warnings set => MOMENTUM_READ_INVALID",
+      "MOMENTUM_READ_INVALID" in rbm(add_pack(), warnings=["positions partially unavailable"])["blockers"])
+    rd = MR()
+    del rd["response"]["direct"]
+    t("fix8b R2 mirror 11630170 section (direct) missing => MOMENTUM_MIRROR_MISSING",
+      "MOMENTUM_MIRROR_MISSING" in rbm(add_pack(), read=rd)["blockers"])
+    t("fix8b R2 non-200 => MOMENTUM_READ_INVALID", "MOMENTUM_READ_INVALID" in rbm(add_pack(), statusCode=429)["blockers"])
+    # R3
+    t("fix8b R3 declared source user-etoro => MOMENTUM_SOURCE_MISMATCH",
+      "MOMENTUM_SOURCE_MISMATCH" in rbm(add_pack(), source="user-etoro")["blockers"])
+    par_mirrors = [{"mirrorId": 11368142, "positions": [{"market": {"instrumentId": 3006, "symbol": "QQQ"}}]},
+                   {"mirrorId": 11630170, "positions": [{"market": {"instrumentId": 1036, "symbol": "XOM"}}]}]
+    t("fix8b R3 parent-shaped response (mirrors[] present) => MOMENTUM_SOURCE_MISMATCH (never merged)",
+      "MOMENTUM_SOURCE_MISMATCH" in rbm(add_pack(), mirrors=par_mirrors)["blockers"])
+    parent = {"statusCode": 200, "xRequestId": "p", "direct": {"positions": []},
+              "mirrors": [{"mirrorId": 11630170, "positions": [{"market": {"instrumentId": i, "symbol": s_}} for s_, i in
+                                                                (("XOM", 1036), ("NTAP", 1796))]}]}
+    rd = MR()
+    rd["parent_response"] = parent
+    r4 = rbm(add_pack(), read=rd)
+    t("fix8b R3 optional parent cross-check: mirror 11630170 ids match => ok, nothing merged",
+      not {b for b in r4["blockers"] if b.startswith("MOMENTUM")} and r4["momentum_read"]["parent_cross_check"]["match"]
+      and r4["momentum_read"]["instrumentIds"] == [1036, 1796], r4["blockers"])
+    rd["parent_response"] = {**parent, "mirrors": [par_mirrors[0]]}
+    t("fix8b R3 parent read without mirror 11630170 => MOMENTUM_MIRROR_MISSING",
+      "MOMENTUM_MIRROR_MISSING" in rbm(add_pack(), read=rd)["blockers"])
+    rd["parent_response"] = {**parent, "mirrors": [{"mirrorId": 11630170, "positions": [
+        {"market": {"instrumentId": 1036, "symbol": "XOM"}}]}]}
+    t("fix8b R3 parent mirror 11630170 ids differ => MOMENTUM_SOURCE_MISMATCH",
+      "MOMENTUM_SOURCE_MISMATCH" in rbm(add_pack(), read=rd)["blockers"])
+    try:
+        MH.build_snapshot(MRESP(), source="user-etoro")
+        ok_ = False
+    except MH.MomentumReadError:
+        ok_ = True
+    t("fix8b R3 producer refuses a non-Momentum source label", ok_)
+    sn = MH.build_snapshot(MRESP(holdings=[("xle.us", 3008)]))
+    t("fix8b producer pins source/mirror and normalizes symbols", sn["source"] == "user-Momentum-HHHGDTJ"
+      and sn["mirrorId"] == 11630170 and sn["symbols"] == ["XLE"] and "PRE-FILTER" in sn["role"])
+    for lbl, d_ in (("empty symbols", {**sn, "symbols": [], "instrumentIds": []}), ("wrong source", {**sn, "source": "user-etoro"}),
+                    ("wrong mirror", {**sn, "mirrorId": 11368142})):
+        (root / "momentum.json").write_text(json.dumps(d_))
+        t(f"fix8b loader rejects pre-filter file with {lbl}", not MH.load_snapshot(MON)["ok"])
+    # RSI path
+    rr = X.run_checks(pack_id=PID, bid=27.03, ask=27.05, quote_ts=ts(MON, 5), mark=27.05, units=23.0, open_fee_usd=0.75,
+                      close_fee_usd=0.75, now=MON, write_lock=False, momentum_read=MR(holdings=[("t", 1030)]))
+    t("fix8 RSI buy of a Momentum-held symbol => CROSS_BOOK_OVERLAP", "CROSS_BOOK_OVERLAP" in rr["blockers"], rr["blockers"])
+    rr = X.run_checks(pack_id=PID, bid=27.03, ask=27.05, quote_ts=ts(MON, 5), mark=27.05, units=23.0, open_fee_usd=0.75,
+                      close_fee_usd=0.75, now=MON, write_lock=False, momentum_read=None)
+    t("fix8b RSI buy with no live read => MOMENTUM_READ_MISSING", "MOMENTUM_READ_MISSING" in rr["blockers"])
+    sp = sell_pack(0.5)
+    rs = rb(sp, live_for(sp, held=held), momentum_read=None)
+    t("fix8 sells unaffected: no live read => no momentum check on a trim",
+      not {b for b in rs["blockers"] if b.startswith(("CROSS_BOOK", "MOMENTUM"))}
+      and not any(c_["name"].startswith(("momentum_", "no_cross_book")) for c_ in rs["checks"]), rs["blockers"])
+    rs = rb(sp, live_for(sp, held=held), momentum_read=MR(holdings=[("SMH", 6357)]))
+    t("fix8 sells unaffected: SMH held in Momentum, Classic SMH trim still allowed", "CROSS_BOOK_OVERLAP" not in rs["blockers"])
+    # pre-filter (propose / rebalance targets)
+    write_momentum(root, holdings=[("XLE", 3008)])
+    snap = MH.load_snapshot(MON)
+    packs = [{"instrument": {"symbol": "XLE", "instrumentId": 3008}}, {"instrument": {"symbol": "SPY", "instrumentId": 3000}}]
+    kept, sk = MH.filter_buy_packs(packs, snap)
+    t("fix8 propose filter drops XLE with reason CROSS_BOOK_OVERLAP, keeps SPY",
+      [p_["instrument"]["symbol"] for p_ in kept] == ["SPY"] and sk[0]["reason"] == "CROSS_BOOK_OVERLAP", sk)
+    kept, sk = MH.filter_buy_packs(packs, {"ok": False, "error": "MOMENTUM_SNAPSHOT_MISSING"})
+    t("fix8 propose filter, no snapshot => all buys skipped (fail closed)", not kept and len(sk) == 2)
+    ks, sks = MH.filter_symbols(["XLE", "xlk.us", "XLV"], {"ok": True, "symbols": {"XLE", "XLK"}, "ids": set()})
+    t("fix8 rebalance target filter drops Momentum symbols (normalized)", ks == ["XLV"])
+    resp = MRESP(timestamp="2026-10-12T22:45:24.5918216Z", xRequestId="x-1")
+    t("fix8 7-digit fractional Z timestamp -> IDT asOf", MH.build_snapshot(resp)["asOf"] == "2026-10-13T01:45:24+03:00")
+    t("fix8 extract_json handles a fenced tool output", MH.extract_json("<fence>\n" + json.dumps(resp) + "\n</fence>")["xRequestId"] == "x-1")
+    t("fix8 production snapshot path fixed", str(PROD["momentum"]) == "/workspace/momentum-holdings-for-classic.json")
+    import inspect as _i
+    from . import auto_1h as A, propose as PR
+    t("fix8 propose drops overlapping packs and lists cross_book_skipped; auto_1h surfaces it",
+      "filter_buy_packs" in _i.getsource(PR.propose_from_symbols) and '"cross_book_skipped"' in _i.getsource(A.run_auto_1h))
+    t("fix8b execute_pass GO path never reads the shared file", "load_snapshot" not in _i.getsource(X._cross_book)
+      and "load_snapshot" not in _i.getsource(X._momentum_go))
+    write_momentum(root)
 
 def main() -> int:
     import contextlib

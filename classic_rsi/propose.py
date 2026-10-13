@@ -338,6 +338,10 @@ def propose_from_symbols(
     instrument_flags = sorted({d["flag"] for d in instrument_dropped if d.get("flag")})
     # Pack-level eligibility (auto_1h re-stamps with envelope context: stale book, gates, flags)
     buy_packs = [stamp_auto_place(p) for p in buy_packs]
+    # fix8: never buy a symbol held in Momentum-HHHGDTJ (missing snapshot => drop all buys, fail closed)
+    from .momentum_holdings import filter_buy_packs, load_snapshot
+    _msnap = load_snapshot(datetime.now(IDT))
+    buy_packs, cross_book_skipped = filter_buy_packs(buy_packs, _msnap)
     cost_gate_skips = [p["instrument"]["symbol"] for p in buy_packs
                        if (p.get("cost_gate") or {}).get("verdict") != VERDICT_PASS]
 
@@ -375,6 +379,7 @@ def propose_from_symbols(
                 "Do not bypass QA",
                 "Do not use FX pip SL/TP",
                 "Do not touch Momentum from this module",
+                "Do not buy a symbol held in Momentum-HHHGDTJ (cross_book_skipped; Ofer 2026-10-13)",
             ],
         },
         "buy_packs": buy_packs,
@@ -382,6 +387,8 @@ def propose_from_symbols(
         "auto_place_doc": AUTO_PLACE_DOC,
         "auto_place_eligible_count": sum(1 for p in buy_packs if p.get("auto_place_eligible")),
         "cost_gate_skips": cost_gate_skips,
+        "cross_book_skipped": cross_book_skipped,
+        "momentum_snapshot": {k: _msnap.get(k) for k in ("ok", "error", "asOf", "xRequestId", "age_s", "path")},
         "instrument_map": map_meta(),
         "instrument_flags": instrument_flags,
         "instrument_dropped": instrument_dropped,

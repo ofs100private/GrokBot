@@ -3,7 +3,7 @@ name: Classic rebalance
 description: >-
   use this when running the daily (weekday) rebalance check or monthly full
   rebalance of the Classic account (OfersClaw5-PRIYN via user-OfersClaw5), or
-  when a drift trigger fires (name >30% of invested, sleeve >45%, cash <$2.5k or
+  when a drift trigger fires (name >30% of total equity, sleeve >45%, cash <$2.5k or
   >50% of equity, holding below 50DMA with negative 3M RS, or a trailing stop) —
   sell/rotate before buy, size to target weights, RSI 1H only as entry timing,
   cost/benefit gate, then FULL AUTO place after QA PASS (no Ofer chat auth,
@@ -24,7 +24,7 @@ Applies only to the **Classic account (OfersClaw5-PRIYN)** (REAL MONEY). It comp
 - An explicit Ofer/CoS hold still blocks.
 
 ## Mandate locks — kept pending Ofer confirmation
-Kept from the prior playbook, pending Ofer confirmation (2026-10-11): long ×1 only; no crypto (watch for eToro traps: `CVX` = Convex, use `CVX.US` id 1014; `T` and `DIA` are crypto tokens); liquid large caps and sector ETFs, then commodity ETFs; cash ≥ ~$2,500 after any batch (cut size or drop names rather than breach); name caps (30% ETF / 15% single stock) and the 45% sleeve cap; stops (drift triggers 3–5); sell/rotate-before-buy check; no weekend opens; **QA PASS is mandatory before every place.**
+Kept from the prior playbook, pending Ofer confirmation (2026-10-11): long ×1 only; no crypto (watch for eToro traps: `CVX` = Convex, use `CVX.US` id 1014; `T` and `DIA` are crypto tokens); liquid large caps and sector ETFs, then commodity ETFs; cash ≥ ~$2,500 after any batch (cut size or drop names rather than breach); name caps (30% fund/ETF / 15% single stock of **total equity**) and the 45% sleeve/growth cap (of **total equity**, not invested); stops (drift triggers 3–5); sell/rotate-before-buy check; no weekend opens; **QA PASS is mandatory before every place.** **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
 
 ## Cadence
 | When | What | Output |
@@ -35,12 +35,13 @@ Kept from the prior playbook, pending Ofer confirmation (2026-10-11): long ×1 o
 
 ## Targets and caps (kept pending Ofer confirmation)
 - Invested sleeves: growth/tech · healthcare · industrials/financials · energy/hard assets · broad core (SPY/RSP). Cash is its own sleeve.
-- Name ≤ 30% of invested (core ETF) or ≤ 15% (single stock). Sleeve ≤ 45% of invested.
+- **Caps are % of TOTAL EQUITY, not invested capital** (Ofer 2026-10-12 17:56 IDT): name ≤ 30% of total equity (fund/ETF) or ≤ 15% (single stock); growth sleeve (and any sleeve) ≤ 45% of total equity. Check **both** cost and market-value numerators over total equity — a breach on either counts.
 - Cash: floor $2,500. If cash is above 50% of equity and passing candidates exist, deploy toward target. If nothing passes, park it in SPY rather than sit idle (only if SPY passes the cost gate).
+- **Floor-vs-cap exit precedence undecided** (Ofer): when cash-floor and cap-breach exits conflict, do **not** auto-pick an order. Any exit pack that depends on that precedence is **held** until Ofer decides.
 - **No new-name cap and no trade-count cap** (Ofer 2026-10-11). Minimum position $400 (smaller positions are not worth the fees).
 
 ## Drift triggers (any one starts an ad-hoc rebalance)
-1. A name above 30% of invested, or a sleeve above 45%.
+1. A name above 30% of **total equity** (fund/ETF) or 15% (single stock), or a sleeve (incl. growth) above 45% of **total equity** — using either cost or market-value over total equity.
 2. Cash below $2,500, or above 50% of equity.
 3. A holding has a **confirmed daily close below its 50DMA AND negative 3M RS** vs SPY.
 4. A holding has a confirmed daily close below its 200DMA.
@@ -50,7 +51,7 @@ Kept from the prior playbook, pending Ofer confirmation (2026-10-11): long ×1 o
 `cd /workspace && python3 -m classic_rsi.scorer` (writes classic_rsi scores-latest.json + .sha256 sidecar; execute_pass fails closed SCORES_UNVERIFIED if missing/stale/mismatched).
 
 ## Step 1: Snapshot (live)
-Portfolio summary on the Classic keys connector gives equity, cash, and positions. Compute % of invested, sleeve %, and cash % of equity. Trading history gives closes since the last run (for the report).
+Portfolio summary on the Classic keys connector gives equity, cash, and positions. Compute name % and sleeve % of **total equity** (both cost/equity and market-value/equity), and cash % of equity. Do **not** use invested capital as the cap denominator. Trading history gives closes since the last run (for the report).
 
 ## Step 2: Score (daily bars, last confirmed close)
 For each holding and each candidate (sector ETFs XLK/XLV/XLF/XLI/XLE/XLP/XLU/XLB/XLY/XLC, SPY/RSP/QQQ/SMH, GLD/IAU/SLV, plus liquid large caps with ADV ≥ $100M):
@@ -116,4 +117,5 @@ RS top/bottom: … | Actions: none | <side sym $ — QA PASS, cost ratio x.x, pl
 - Use leverage above ×1, crypto, or bare `CVX`/`T`/`DIA`.
 - Place without QA PASS or without a passing, recorded cost/benefit gate.
 - Place a batch that leaves cash under ~$2,500.
+- Buy a symbol held in Momentum (mirror 11630170) — cross-book no-overlap (`CROSS_BOOK_OVERLAP`).
 - Invent expected returns: the cost-gate expected gain must come from TP distance / ATR math with the method recorded. Report realized vs SPY only.

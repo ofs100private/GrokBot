@@ -1,0 +1,37 @@
+{
+  "kind": "qa-fix-map",
+  "fix": "classic-full-auto-fix8-20261013",
+  "rule": "Ofer 2026-10-13 01:44 IDT: Classic never buys a symbol held in Momentum-HHHGDTJ (user-Momentum-HHHGDTJ, mirror 11630170); sells/exits unaffected",
+  "diff": "audit/classic-full-auto-fix8-20261013.diff (vs fix7b)",
+  "etoro_calls": "one READ-ONLY user-Momentum-HHHGDTJ get-my-positions-and-orders (account real, xRequestId 2b5ac152-5e84-45dc-af83-1aa965002592); no prepare/place/close on either account",
+  "changes": {
+    "momentum_holdings.py (new)": "build_snapshot/extract_json/write_snapshot(atomic)/load_snapshot/overlaps/filter_buy_packs/filter_symbols; CLI --response <saved MCP JSON>; direct + mirror positions + live pending orders count as held; non-200 rejected",
+    "paths.py": "momentum path /workspace/momentum-holdings-for-classic.json (test: <root>/momentum.json)",
+    "execute_pass.py": "_cross_book on every buy (RSI + rebalance): CROSS_BOOK_OVERLAP (symbol or instrumentId), MOMENTUM_SNAPSHOT_STALE (missing/invalid/>60s); sells untouched. VERSION execute-pass-v10-fix8",
+    "propose.py": "filter_buy_packs after guard/stamp; payload cross_book_skipped + momentum_snapshot; missing snapshot => all buys skipped",
+    "auto_1h.py": "envelope cross_book_skipped + momentum_snapshot",
+    "testkit.py": "write_momentum TEST-ONLY snapshot (XOM/NTAP) written by test_root",
+    "classic-rebalance/SKILL-draft.md": "Cross-book rule section for rebalance targets (filter_symbols, CROSS_BOOK_OVERLAP)",
+    "README.md": "Fix8 section"
+  },
+  "momentum_snapshot_now": {"asOf": "2026-10-13T01:45:24+03:00", "xRequestId": "2b5ac152-5e84-45dc-af83-1aa965002592",
+    "holdings": {"XOM": 1036, "NTAP": 1796, "XLE": 3008, "XLK": 3021, "ANET": 4294, "CRWD": 5506, "ZBRA": 5662, "P": 6823},
+    "pending_orders": 0, "mirrors": 0,
+    "overlap_flags": {"XLE": "held in Momentum (opened 2026-10-12 22:52 IDT) and is a Classic candidate -> Classic XLE buys now blocked", "XLK": "Classic candidate also blocked"}},
+  "test_counts": {"test_cost_gate": "51/51", "test_execute_pass": "213/213", "test_scorer": "45/45", "test_instruments": "20/20", "test_universe": "38/38", "total": "367/367"},
+  "sha256": {
+    "execute_pass.py": "1a3e03d14777d049396a8c2b01846f9ca53f645dd90405a0efbc51bf8a78b39a",
+    "propose.py": "6146a1eb0db0993ce508f970b38b76cf8240e222741500421c4d1985964474aa",
+    "auto_1h.py": "a87d834bdb50324ad5eda973df817c73d9c7f872a0b604cae83aab6827968b2c",
+    "paths.py": "b199f74dc9971ede9fc74a0a5d62b8df382238af2920701708b6eca0db25ceba",
+    "testkit.py": "28ab477cd3db39c9595c32a7eacb47b827e76994ec837a3b77657f01062d8402",
+    "test_execute_pass.py": "03f369f2770739a190604a3ac3a1d63ad2299a461191167a514b2feb97caba4a",
+    "README.md": "f914e23d224d8fd04ca1739d15e6bae3c6486b9aea99e2ac5e31aa95e3047f7f",
+    "momentum_holdings.py": "ee0074ed006445e8a24fb3836712c4591aed7efded554428cda844d7b7e59e6b",
+    "classic-rebalance/SKILL-draft.md": "3bf97c79f4048ee67df6a252c27da095bdb9bc18b507ee06845a3bf9b0a645af",
+    "momentum-holdings-for-classic.json": "d9487345fb3541bb5968d44ab5ae328e3e43fa4836ffe187ff0c403f00127469",
+    "cost_gate.py": "ec12ecc3 (unchanged)", "scorer.py": "806313b9 (unchanged)"
+  },
+  "diff_sha256": "98b7312b12e01b38722b8eff36bcc181bc7cecd76d9e67eef1264f70fc95345f",
+  "mirror": "/workspace/GrokBot/classic_rsi identical (diff -rq excl. __pycache__/audit)"
+}

@@ -284,6 +284,8 @@ def run_auto_1h(
             propose_payload["buy_packs"] = buy_packs
         propose_payload["auto_place_stamp"] = "re-stamped by auto_1h with envelope context"
     auto_place_eligible_count = sum(1 for p in buy_packs if p.get("auto_place_eligible"))
+    # fix8: overlapping Momentum symbols were dropped in propose_from_symbols; surface them here
+    cross_book_skipped = list(pp.get("cross_book_skipped") or [])
 
     instrument_guard = {
         "map": map_meta(),
@@ -344,6 +346,8 @@ def run_auto_1h(
         "mandate_gates": gates,
         "buy_packs": buy_packs,
         "risk_off": risk_off,
+        "cross_book_skipped": cross_book_skipped,
+        "momentum_snapshot": pp.get("momentum_snapshot"),
         "propose_run_id": (propose_payload or {}).get("run_id"),
         "propose": propose_payload,
         "handoff": {

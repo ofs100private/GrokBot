@@ -69,6 +69,8 @@ export interface PortfolioCard {
   equity?: number | null
   cash?: number | null
   invested?: number | null
+  /** Market value of open positions (card.investedMarketValue / investedMV). */
+  investedMarketValue?: number | null
   openPnl?: number | null
   closedPnl?: number | null
   positions?: PortfolioCardPosition[]
@@ -248,6 +250,7 @@ function parsePortfolioCard(raw: unknown): PortfolioCard | undefined {
     equity: numOrNull('equity'),
     cash: numOrNull('cash'),
     invested: numOrNull('invested'),
+    investedMarketValue: numOrNull('investedMarketValue') ?? numOrNull('investedMV'),
     openPnl: numOrNull('openPnl'),
     closedPnl: numOrNull('closedPnl'),
     positions,

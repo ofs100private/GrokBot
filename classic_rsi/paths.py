@@ -10,6 +10,7 @@ Production (env CLASSIC_EXEC_TEST_ROOT unset) — hard-coded, not overridable by
   score data     /workspace/classic-rebalance/scores-latest.json
   score sidecar  /workspace/classic-rebalance/scores-latest.sha256  (`<sha256hex>  scores-latest.json`; written
                  atomically by classic_rsi.scorer; test mode: <dir>/scores.sha256)
+  momentum       /workspace/momentum-holdings-for-classic.json (fix8; read-only Momentum holdings, <= 60 s at GO)
   evidence       /workspace/classic_rsi/evidence/{p_registry,edge_registry}.json (sha pinned)
 
 Test mode (env CLASSIC_EXEC_TEST_ROOT=<dir>): every path above is re-rooted under <dir>, the
@@ -31,6 +32,7 @@ PROD = {
     "lock_dir": Path("/workspace/classic_rsi/audit/placed"),
     "book": Path("/workspace/classic-portfolio-for-app.json"),
     "scores": Path("/workspace/classic-rebalance/scores-latest.json"),
+    "momentum": Path("/workspace/momentum-holdings-for-classic.json"),
     "evidence_dir": PKG / "evidence",
 }
 
@@ -41,7 +43,7 @@ def paths() -> dict[str, Any]:
         return {**PROD, "test_mode": False, "account": "real"}
     r = Path(root)
     return {"audit_dir": r / "audit", "qa_dir": r / "audit" / "qa", "lock_dir": r / "audit" / "placed",
-            "book": r / "book.json", "scores": r / "scores.json", "evidence_dir": r / "evidence",
+            "book": r / "book.json", "scores": r / "scores.json", "momentum": r / "momentum.json", "evidence_dir": r / "evidence",
             "test_mode": True, "test_root": str(r), "account": "demo"}
 
 

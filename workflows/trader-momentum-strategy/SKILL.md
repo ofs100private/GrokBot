@@ -38,6 +38,7 @@ If cash later frees (e.g. after `LOSS_PCT_GE_4` / SMA50 closes) and a prior pack
 - DWM: week and month green required for buys (breakout also needs day ≥ 0)
 - REAL only; never Classic; never demo
 - Intraday ban 16:30–18:30 Israel; skip NYSE holidays
+- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either. **Code-enforced (2026-10-13):** read Classic via MCP `user-OfersClaw5` get-my-positions-and-orders → `python3 /workspace/classic_book.py save <result>` (snapshot `momentum_audit/classic_book/classic_holdings_latest.json`, timestamped). Screener pack + rebalance buy/rotation drop matches with TRACE `CROSS_BOOK_HELD`; `preplace` needs snapshot ≤120s old (`--classic-snapshot`); missing/stale = all buys blocked (`CROSS_BOOK_READ_MISSING_OR_STALE`).
 
 ## Fear is the dip window (Ofer 2026-10-04)
 
@@ -98,4 +99,4 @@ See `/workspace/momentum_audit/improvement-2026-10-01.md`.
 
 ## Do not
 
-Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat CNN Fear as an automatic no-buy. Treat keys MCP as the $8k book. Double-buy a name filled this session. Cap open stocks at 3 (obsolete). Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book/sleeve-rule snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`).
+Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat CNN Fear as an automatic no-buy. Treat keys MCP as the $8k book. Double-buy a name filled this session. Cap open stocks at 3 (obsolete). Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book/sleeve-rule snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`). Buy a symbol held in Classic (OfersClaw5-PRIYN) — cross-book no-overlap.

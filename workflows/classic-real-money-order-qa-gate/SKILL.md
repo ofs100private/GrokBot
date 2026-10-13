@@ -61,6 +61,10 @@ For RSI packs, also expect an append-only trail under `/workspace/classic_rsi/au
 
 Independently recompute from the prepare snapshot / live quote: spread and fees match prepare/getCost; tax estimate is present on sells of winners; `expected_gain` follows the stated method (TP − live entry, ATR-based move) and is not invented. PASS only if `expected_gain ≥ 2 × total_cost` and `expected_net_gain` is clearly positive. Exception: hard risk exits (stop hit, cash below floor) may PASS with a negative ratio, but the numbers must still be present. Write the recomputed numbers into the verdict file.
 
+## Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT)
+
+**Cross-book no-overlap:** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
+
 ## Hard FAIL (any one fails the gate)
 
 - leverage ≠ 1
@@ -68,7 +72,8 @@ Independently recompute from the prepare snapshot / live quote: spread and fees 
 - crypto
 - missing `cost_gate` block, numbers that do not reconcile with prepare/getCost, or expected net gain not clearly positive (non-risk-exit) → `COST_GATE_FAIL`
 - cash after the place (or sequenced batch) below ~$2,500 without an explicit Ofer sizing override → `CASH_FLOOR`
-- name cap (30% ETF / 15% single stock) or sleeve cap (45%) breached after the buy (kept pending Ofer confirmation)
+- name cap (30% fund/ETF / 15% single stock of **total equity**) or sleeve/growth cap (45% of **total equity**) breached after the buy — denominator is total equity, not invested capital; check both cost and market-value numerators over total equity (Ofer 2026-10-12 17:56 IDT; kept pending Ofer confirmation on other mandate items)
+- exit pack that depends on **floor-vs-cap exit precedence** (undecided by Ofer) → hold; do not PASS a pack that assumes one precedence over the other
 - buy placed without the sell/rotate-before-buy check recorded
 - all cash invested with **zero** residual when size was not an explicit Ofer override on a small Classic account book
 - demo routes
@@ -80,6 +85,7 @@ Independently recompute from the prepare snapshot / live quote: spread and fees 
 - **RSI / signal “sell” tags that imply shorting** — sell tags authorize **risk-off / no-add / long-reducing close only**, NEVER shorts
 - RSI pack missing `run_id` in thesis / propose, or no matching audit trail row when required
 - prepare on **parent SSO** claiming to hit mirror `11368142` (parent cannot target the copy)
+- buy of a symbol already held in the other book (Classic vs Momentum mirror 11630170) → `CROSS_BOOK_OVERLAP` (Ofer 2026-10-13 01:44 IDT); live-read the other book before PASS; existing overlap XLE kept in both books per Ofer 2026-10-13 — never add to it
 
 ## Not a Hard FAIL (Classic)
 

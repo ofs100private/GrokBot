@@ -20,7 +20,7 @@ export function PortfolioSummary({ portfolio }: PortfolioSummaryProps) {
         <span className="summary-value">{formatCurrency(availableCash)}</span>
       </div>
       <div className="summary-card">
-        <span className="summary-label">Total invested</span>
+        <span className="summary-label">Invested (cost)</span>
         <span className="summary-value">{formatCurrency(totalInvested)}</span>
       </div>
       <div className="summary-card">

@@ -50,9 +50,10 @@ from . import cost_gate as CG
 from .instruments import guard_symbol, resolve
 from .market_hours import ET, us_session
 from .paths import order_verdict_path, paths, run_verdict_path
+from . import momentum_holdings as MH
 
 IDT = ZoneInfo("Asia/Jerusalem")
-VERSION = "execute-pass-v9-fix7b"
+VERSION = "execute-pass-v11-fix8b"
 CASH_FLOOR_USD = 2500.0
 MIN_POSITION_USD = 400.0
 NAME_CAP = {"etf": 0.30, "stock": 0.15}
@@ -371,6 +372,27 @@ def _guard_leg(c: _Ctx, symbol: str, instrument_id: Any, tag: str) -> Optional[d
     return resolve(symbol) if ok else None
 
 
+def _momentum_go(c: _Ctx, out: dict, momentum_read: Optional[dict]) -> dict:
+    """Fix8b R1: verify the executor's OWN live Momentum read for this GO (not the shared file)."""
+    v = MH.verify_go_read(momentum_read, c.now)
+    out["momentum_read"] = {k: val for k, val in v.items() if not k.startswith("_")}
+    return v
+
+
+def _cross_book(c: _Ctx, tag: str, symbol: str, instrument_id: Any, mv: dict) -> None:
+    """Fix8/8b (Ofer 2026-10-13 01:44 IDT): never buy a symbol/instrument held in Momentum-HHHGDTJ
+    (mirror 11630170). Buys only. Fails closed on a missing / invalid / empty / stale live read."""
+    c.check(f"momentum_live_read{tag}", bool(mv.get("ok")),
+            {k: mv.get(k) for k in ("code", "error", "source", "xRequestId", "response_sha256", "captured_at",
+                                    "capture_age_s", "server_age_s", "max_s")},
+            mv.get("code") or "MOMENTUM_READ_INVALID")
+    snap = mv.get("_snap") or {}
+    hit = MH.overlaps(snap, symbol, instrument_id) if mv.get("ok") else False
+    c.check(f"no_cross_book_overlap{tag}", not hit,
+            {"symbol": symbol, "instrumentId": instrument_id, "momentum_symbols": mv.get("symbols"),
+             "xRequestId": mv.get("xRequestId")}, MH.REASON)
+
+
 def _live_quote(c: _Ctx, tag: str, *, bid, ask, quote_ts, mark, pr: dict, anchor_ask: Optional[float]):
     """Live quote: ask/time from the prepare response when given (must equal any typed ask)."""
     if pr:
@@ -530,7 +552,7 @@ def run_checks(*, pack_id: str, mark: Optional[float], bid: Optional[float] = No
                open_fee_usd: Optional[float] = None, close_fee_usd: Optional[float] = None,
                overnight_usd: Optional[float] = None, spread_usd: Optional[float] = None,
                sleeve: Optional[str] = None, sleeve_map: Optional[dict] = None, now: Optional[datetime] = None,
-               hold: bool = False, write_lock: bool = True) -> dict[str, Any]:
+               hold: bool = False, write_lock: bool = True, momentum_read: Optional[dict] = None) -> dict[str, Any]:
     now = now or datetime.now(IDT)
     c = _Ctx(now)
     P = paths()
@@ -564,6 +586,7 @@ def run_checks(*, pack_id: str, mark: Optional[float], bid: Optional[float] = No
                             run_ids=run_ids)
     c.check("run_qa_pass", ok, {"why": why, "path": str(run_verdict_path(run_id))}, "RUN_QA_NOT_PASS")
     res = _guard_leg(c, symbol, iid, "")
+    _cross_book(c, "", symbol, iid, _momentum_go(c, out, momentum_read))
     c.check("long_only_x1", pack.get("side") == "buy" and pack.get("action") == "CANDIDATE_LONG"
             and pack.get("leverage") == 1, {"side": pack.get("side"), "leverage": pack.get("leverage")}, "NOT_LONG_X1")
     pr = norm_prepare(prepare_response)
@@ -891,7 +914,8 @@ def _sl_bounds_ok(sl: Optional[float], anchor_ask: float, atr_d: Optional[float]
 
 
 def run_rebalance_checks(*, pack: dict[str, Any], live: Optional[dict] = None, sleeve_map: Optional[dict] = None,
-                         now: Optional[datetime] = None, hold: bool = False, write_lock: bool = True) -> dict:
+                         now: Optional[datetime] = None, hold: bool = False, write_lock: bool = True,
+                         momentum_read: Optional[dict] = None) -> dict:
     now = now or datetime.now(IDT)
     c = _Ctx(now)
     P = paths()
@@ -928,6 +952,7 @@ def run_rebalance_checks(*, pack: dict[str, Any], live: Optional[dict] = None, s
     live_legs: dict[int, dict] = {}
     leg_lock_parts: list[list] = []
     risk_ok = False
+    mv = _momentum_go(c, out, momentum_read) if buys else None
     for i in sells + buys:  # sells first
         l, lv = legs[i], lives[i]
         side = l["side"]
@@ -1010,6 +1035,7 @@ def run_rebalance_checks(*, pack: dict[str, Any], live: Optional[dict] = None, s
             payloads.append(payload)
             echoes.append(close_echo(pr) if pr else {})
         else:
+            _cross_book(c, tag, sym, iid, mv or {})
             req = _f(l.get("units")) or 0.0
             of = _f(l.get("open_fee_usd"))
             if not c.check(f"open_fee_given{tag}", of is not None and of >= 0, l.get("open_fee_usd"), "OPEN_FEE_REQUIRED"):
@@ -1122,20 +1148,31 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--sleeve")
     p.add_argument("--sleeve-map")
     p.add_argument("--hold", action="store_true")
+    p.add_argument("--momentum-response", help="fix8b: YOUR raw user-Momentum-HHHGDTJ get-my-positions-and-orders "
+                                               "response saved for this GO (required for any buy)")
+    p.add_argument("--momentum-captured-at", help="ISO time (tz) when you received that response (<= 60 s before GO)")
+    p.add_argument("--momentum-source", default=None, help="MCP namespace of the read; must be user-Momentum-HHHGDTJ")
+    p.add_argument("--momentum-parent-response", help="optional user-etoro read for the mirror 11630170 cross-check")
     p.add_argument("--no-write", action="store_true", help="skip the audit JSON (GO locks are still written)")
     a = p.parse_args(argv)
     smap = json.loads(Path(a.sleeve_map).read_text()) if a.sleeve_map else None
+    mread = None
+    if a.momentum_response:
+        mread = {"source": a.momentum_source, "captured_at": a.momentum_captured_at,
+                 "response": MH.extract_json(Path(a.momentum_response).read_text()),
+                 "parent_response": (MH.extract_json(Path(a.momentum_parent_response).read_text())
+                                     if a.momentum_parent_response else None)}
     if a.rebalance_pack:
         live = json.loads(Path(a.live).read_text()) if a.live else None
         res = run_rebalance_checks(pack=json.loads(Path(a.rebalance_pack).read_text()), live=live,
-                                   sleeve_map=smap, hold=a.hold)
+                                   sleeve_map=smap, hold=a.hold, momentum_read=mread)
     else:
         pr = json.loads(Path(a.prepare_response).read_text()) if a.prepare_response else None
         res = run_checks(pack_id=a.pack_id, mark=a.mark, bid=a.bid, ask=a.ask, quote_ts=a.quote_ts,
                          prepare_response=pr, anchor_ask=a.anchor_ask, anchor_bid=a.anchor_bid, units=a.units,
                          amount_usd=a.amount, open_fee_usd=a.open_fee, close_fee_usd=a.close_fee,
                          overnight_usd=a.overnight, spread_usd=a.spread_usd, sleeve=a.sleeve, sleeve_map=smap,
-                         hold=a.hold)
+                         hold=a.hold, momentum_read=mread)
     if not a.no_write:
         res["audit_path"] = str(write_audit(res))
     print(json.dumps(res, indent=2, default=str))

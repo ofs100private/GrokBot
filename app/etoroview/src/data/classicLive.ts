@@ -26,6 +26,8 @@ export interface ClassicFlatMetrics {
   deploymentPct?: number
   closedPnl?: number | null
   symbols?: string[]
+  /** Market value of open positions, when the writer provides it. */
+  investedMarketValue?: number
 }
 
 export interface ClassicLiveSnapshot {
@@ -333,6 +335,16 @@ function parseFlatClassicPayload(raw: Record<string, unknown>): ClassicLiveSnaps
   if (raw.closedPnl === null || typeof raw.closedPnl === 'number') {
     metrics.closedPnl = raw.closedPnl as number | null
   }
+  const sleeves = isRecord(raw.sleeves) ? raw.sleeves : {}
+  const summaryRec = isRecord(raw.summary) ? raw.summary : {}
+  const investedMV = optNumber(
+    raw.investedMarketValue,
+    raw.investedMV,
+    summaryRec.investedMarketValue,
+    summaryRec.investedMV,
+    sleeves.investedMV,
+  )
+  if (investedMV !== undefined) metrics.investedMarketValue = investedMV
   if (Array.isArray(raw.symbols)) {
     metrics.symbols = (raw.symbols as unknown[]).filter((s): s is string => typeof s === 'string')
   }

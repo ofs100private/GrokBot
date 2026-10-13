@@ -34,10 +34,12 @@ Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PR
 - Long-only, leverage **×1**; **no crypto** opens
 - Prefer large liquid US companies / sector ETFs, then commodities
 - Prefer leaving cash uninvested; never all-in; cash floor ~$2,500
-- Name caps 30% ETF / 15% single stock; sleeve cap 45%; stops per [Classic rebalance](sand-workflow:classic-rebalance)
+- Name caps 30% fund/ETF / 15% single stock of **total equity**; growth/sleeve cap 45% of **total equity** (not invested capital; check cost and market-value numerators over total equity — Ofer 2026-10-12 17:56 IDT); stops per [Classic rebalance](sand-workflow:classic-rebalance)
+- **Floor-vs-cap exit precedence undecided** (Ofer): any exit pack that depends on choosing cash-floor vs cap-breach first is **held** until Ofer decides
 - REAL only; QA PASS + cost gate → auto place (only once the code gate passes QA) → fill audit → CoS
 - No place under an explicit Ofer/CoS HOLD; QA PASS is mandatory before every place
 - Weekend: no new size unless Ofer overrides
+- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
 
 ## Cost/benefit gate (mandatory before every place — Ofer 2026-10-11)
 
@@ -86,7 +88,7 @@ Named tickers are **examples only** — trade **any** fitting liquid large-cap/E
 
 ## Diversification
 
-Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. Caps: name ≤~25–30% open invested; sleeve ≤~40–45%. Prefer gap sleeves. In Fear, prefer the sleeve that is actually on sale, not another add to an extended winner.
+Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. Caps (Ofer 2026-10-12 17:56 IDT): name ≤ 30% of **total equity** (fund/ETF) or ≤ 15% (single stock); growth sleeve (and any sleeve) ≤ 45% of **total equity** — not % of invested capital; measure with both cost and market-value numerators over total equity. Prefer gap sleeves. In Fear, prefer the sleeve that is actually on sale, not another add to an extended winner.
 
 ## Research loop
 
@@ -115,4 +117,4 @@ Hold cash if the dip is not clean; event-vol freeze; in Fear lean into quality d
 
 ## Do not
 
-Crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA PASS or without a passing, recorded cost/benefit gate; churn trades whose expected gain does not clearly beat round-trip cost + tax; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy); auto-place packs that leave cash under ~$2.5k without Ofer’s explicit override; skip the sell/rotate check before new buys.
+Crypto/shorts/lev>1; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA PASS or without a passing, recorded cost/benefit gate; churn trades whose expected gain does not clearly beat round-trip cost + tax; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy); auto-place packs that leave cash under ~$2.5k without Ofer’s explicit override; skip the sell/rotate check before new buys; buy a symbol held in Momentum (mirror 11630170) — cross-book no-overlap.
