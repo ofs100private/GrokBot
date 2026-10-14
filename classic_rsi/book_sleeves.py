@@ -42,9 +42,28 @@ def _agg(book: dict) -> tuple[dict, dict]:
     return v, c
 
 
+def ensure_summary(b: dict) -> dict:
+    """fix9: guarantee summary.availableCash and summary.equity (auto_1h reads cash ONLY from
+    summary.availableCash and fails closed without it). Fills from top-level cash/equity when the
+    summary block or its fields are missing; existing summary values are kept. Raises if no
+    usable cash/equity exists anywhere (never writes a book without them)."""
+    s = b.get("summary")
+    if not isinstance(s, dict):
+        s = {}
+    cash = s.get("availableCash", b.get("cash", b.get("availableCash")))
+    eq = s.get("equity", b.get("equity", s.get("totalValue", b.get("totalValue"))))
+    if cash is None or eq is None:
+        raise ValueError("book has no cash/equity: refusing to write without summary.availableCash/equity")
+    s["availableCash"] = float(cash)
+    s["equity"] = float(eq)
+    s.setdefault("summaryFieldsBy", "classic_rsi.book_sleeves.ensure_summary (fix9)")
+    b["summary"] = s
+    return b
+
+
 def recompute(book: dict) -> dict:
     """Return a copy of `book` with `sleeves` (+ cashTriggerProposal cap fields) on total equity."""
-    b = json.loads(json.dumps(book))
+    b = ensure_summary(json.loads(json.dumps(book)))
     v, c = _agg(b)
     cash = float(b.get("cash", (b.get("summary") or {}).get("availableCash")))
     eq = float(b.get("equity"))

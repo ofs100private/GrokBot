@@ -210,3 +210,9 @@ tail -n 5 /workspace/classic_rsi/audit/index.jsonl
 - Emit or execute shorts from Sell triangles
 - Use pip distances on US equities/ETFs
 - Modify Momentum playbooks or Classic Fear/cash/weekend gates here
+
+## Fix9: cash floor fails closed (2026-10-14, QA CASH_FLOOR_NOT_ENFORCED on run classic-rsi-auto-20261014-174135-919e9c8a)
+- Root cause: from the 2026-10-14 16:12 IDT refresh on (slots `book_refresh_1612/1642/1712`), the off-box routine `classic-book-refresh-before-rsi-1h` wrote `/workspace/classic-portfolio-for-app.json` with only top-level `cash`/`equity` and no `summary` block. `auto_1h` reads cash only from `summary.availableCash`, got `None`, and `mandate_gate` treated `None` as "no block" (permissive).
+- `auto_1h` now fails closed: missing or invalid `summary.availableCash` (absent, None, non-numeric, NaN/inf, negative, bool) gives the hard flag `AVAILABLE_CASH_MISSING`, the gate block `available_cash_missing`, status `GATED`, buy packs suppressed and `auto_place_eligible=False`. `--force` does not bypass it. There is no fallback to top-level `cash`.
+- Writer: `book_sleeves.ensure_summary` (runs inside `recompute`, so on every `python3 -m classic_rsi.book_sleeves`) always writes `summary.availableCash` and `summary.equity` (kept if already present, else taken from top-level `cash`/`equity`), and refuses to write a book with no cash/equity. The refresh routine must run `book_sleeves` after every refresh. Its prompt should also write `summary.availableCash` + `summary.equity` itself.
+- Tests: `python -m classic_rsi.test_cash_floor`.

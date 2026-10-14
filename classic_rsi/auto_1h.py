@@ -39,6 +39,7 @@ PORTFOLIO = "OfersClaw5-PRIYN"
 MIRROR_ID = 11368142
 CASH_FLOOR_USD = 2500.0
 PORTFOLIO_SNAPSHOT = Path("/workspace/classic-portfolio-for-app.json")
+CASH_MISSING_FLAG = "AVAILABLE_CASH_MISSING"  # fix9 hard flag (summary.availableCash missing/invalid)
 BOOK_SNAPSHOT_MAX_AGE_MIN = 30.0  # older book snapshot => fail closed (no live-read path in this script)
 BOOK_SNAPSHOT_MAX_FUTURE_MIN = 2.0  # asOf further in the future => fail closed
 LATEST_AUTO = DEFAULT_AUDIT_DIR / "latest-auto.json"
@@ -83,12 +84,26 @@ def load_book_symbols(snapshot: Path = PORTFOLIO_SNAPSHOT) -> tuple[list[str], O
             syms.append(s)
     cash = None
     summary = data.get("summary") or {}
+    if not isinstance(summary, dict):
+        summary = {}
     if "availableCash" in summary:
-        try:
-            cash = float(summary["availableCash"])
-        except (TypeError, ValueError):
-            cash = None
+        cash = _valid_cash(summary.get("availableCash"))
+    # fix9: strict -- only summary.availableCash counts; a missing/invalid value stays None and
+    # run_auto_1h fails closed (AVAILABLE_CASH_MISSING hard flag). No fallback to other fields.
     return syms, cash, summary
+
+
+def _valid_cash(x: Any) -> Optional[float]:
+    """fix9: finite, non-negative float or None (bool / NaN / inf / negative / non-numeric -> None)."""
+    if isinstance(x, bool):
+        return None
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return None
+    if v != v or v in (float("inf"), float("-inf")) or v < 0:
+        return None
+    return v
 
 
 def book_snapshot_staleness(
@@ -172,7 +187,10 @@ def mandate_gate(
         blocks.append("weekend_no_new_opens")
     if not rth and not force and not weekend:
         blocks.append("outside_us_rth")
-    if cash is not None and cash < CASH_FLOOR_USD and not force:
+    if cash is None:
+        # fix9: fail closed -- the cash floor cannot be verified, so no new buys (even with --force)
+        blocks.append("available_cash_missing")
+    elif cash < CASH_FLOOR_USD and not force:
         blocks.append("cash_below_floor")
     return {
         "weekend": weekend,
@@ -226,7 +244,7 @@ def run_auto_1h(
         status = "BOOK_SNAPSHOT_STALE"
     elif dry_run:
         status = "DRY_RUN"
-    elif not gates["allow_new_buys"] and not force:
+    elif not gates["allow_new_buys"] and (not force or cash is None):
         status = "GATED"
         # Still scan for RISK_OFF notes on open book (useful weekend/off-hours)
         scan_syms = book_syms or universe[:3]
@@ -265,6 +283,8 @@ def run_auto_1h(
         if not g["ok"]:
             unresolved_universe.append({"symbol": s, "flag": g["flag"], "reason": g["reason"]})
     flags: list[str] = ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else []
+    if cash is None:
+        flags.append(CASH_MISSING_FLAG)  # fix9: hard flag -> every pack auto_place_eligible=False
     for f in sorted({d.get("flag") for d in instrument_dropped if d.get("flag")}):
         flags.append(f)
     # FULL AUTO eligibility (envelope context). Soft flags never block; hard flags do.
