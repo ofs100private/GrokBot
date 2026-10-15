@@ -30,6 +30,17 @@ The Python job can't call MCP itself. Before running it:
 
 To fix only the comparison for an existing run: `/workspace/screener-venv/bin/python -m breakout_ta.auto_daily --refresh-comparison <run_id> --classic-live-json <file>`, then re-dual-write and re-QA.
 
+## Live Momentum book (required before Classic/Momentum comparison, 2026-10-15)
+
+Classic/Momentum comparison must use a **LIVE Momentum read less than 60 minutes old**, the same freshness bar as the Classic live read. Never compare against a stale Momentum sidecar.
+
+Before comparing:
+1. Do a **read-only** `user-etoro` portfolio read of mirror **11630170** and save the raw JSON (Momentum reporting truth), e.g. `/workspace/breakout_ta/live/momentum-live-<YYYYMMDD-HHMMSS>.json`.
+2. Cross-check with the **user-Momentum-HHHGDTJ** keys book (keys-side confirmation only — not reporting truth alone).
+3. If the Momentum sidecar on disk is **older than 60 minutes**, refresh it with a new live read before comparing. Do **not** proceed with a stale sidecar.
+
+Agreement ≠ place; a failed breakout on a held name is not a close instruction.
+
 ## Signals
 
 `NONE` | `WATCH` | `BREAKOUT_CONFIRMED` | `FAILED_BREAKOUT` — daily close vs R + volume (≥ avg, prefer 1.5×).
@@ -44,8 +55,8 @@ Entry / stop (structure + 1.5×ATR) / target (2R or measured move). Invalidation
 
 ## Comparison (required in feed)
 
-Methods: Breakout TA (analysis-only) · Classic RSI 1H · Momentum EOD breakout. Overlaps with live books only: Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`, from a live read; mirror 11368142 optional) · Momentum mirror 11630170 ($8k). Include `breakout_failed_in_classic_book` / `breakout_failed_in_momentum_book`. Agreement ≠ place; a failed breakout on a held name is not a close instruction.
+Methods: Breakout TA (analysis-only) · Classic RSI 1H · Momentum EOD breakout. Overlaps with live books only: Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`, from a live read; mirror 11368142 optional) · Momentum mirror 11630170 ($8k, from a **live** `user-etoro` read < 60 min old; `user-Momentum-HHHGDTJ` keys book as cross-check). Include `breakout_failed_in_classic_book` / `breakout_failed_in_momentum_book`. Agreement ≠ place; a failed breakout on a held name is not a close instruction. **Never compare against a Momentum sidecar older than 60 minutes** — refresh first.
 
 ## Do not
 
-Place · FULL AUTO attach · reject the Classic account / OfersClaw5 as Classic truth (or use Momentum keys alone as Momentum reporting truth) · build the Classic comparison from a stale snapshot file · skip the nightly user digest · skip QA on feed refresh · treat a cross-book held symbol as a buy candidate (cross-book no-overlap)
+Place · FULL AUTO attach · reject the Classic account / OfersClaw5 as Classic truth (or use Momentum keys alone as Momentum reporting truth) · build the Classic comparison from a stale snapshot file · compare Classic vs Momentum against a Momentum sidecar older than 60 minutes (refresh the live `user-etoro` mirror-11630170 read first; keys book is cross-check only) · skip the nightly user digest · skip QA on feed refresh · treat a cross-book held symbol as a buy candidate (cross-book no-overlap)

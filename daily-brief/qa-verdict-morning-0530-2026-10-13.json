@@ -1,0 +1,25 @@
+{
+  "verdict": "PASS",
+  "checker": "QA Bot",
+  "checked_at": "2026-10-13T05:42:47+03:00",
+  "brief": "/workspace/daily-brief/brief-morning-0530-2026-10-13.md",
+  "brief_asOf": "2026-10-13T05:38:48+03:00",
+  "findings": [
+    "F&G live CNN graphdata 45.74 neutral, stamp 2026-10-12T23:59:52Z; prev 45.0 / wk 43.7 / mo 32.7 / yr 30.1 - matches brief (46 Neutral, 45.7).",
+    "Classic live user-OfersClaw5 @02:42:05Z: equity 7236.99 (brief 7237.58, -0.59 drift OK), cash 3070.28 exact (42.4%), 6 names QQQ/XLV/SMH/SPY/XLE/TMO, 0 pending. Growth (QQQ 818.43+SMH 763.25)/equity = 21.9% OK. SMH 590.64 vs SL 581.80 = 1.52% above OK.",
+    "Momentum mirror 11630170 live user-etoro @02:42:24Z: value 7839.28 (brief 7833.25, +6.03 drift OK), cash 1102.85 exact (14.1%), 8 names XOM/NTAP/XLE/XLK/ANET/CRWD/ZBRA/P. Closed PnL -479.80 exact.",
+    "Cross-book no-overlap: PASS. Would Buy = XLF/XLP/GLD (market watch only, held in neither book). XLE hold-only/no-add in both cards; all overlap buys listed under Blocked.",
+    "Classic auto-place: PASS. Wording says FULL AUTO approved, code gate passed (fix8b 01:51), auto-place OFF pending Ofer risk acceptance + out-of-sample evidence; no 'auto active' wording.",
+    "CPI/EVENT_VOL_FREEZE: PASS. Momentum No Buy Today, freeze active for Tue 10-13 session (consistent with 'CPI freeze all Tuesday'); no Momentum buy recommended.",
+    "Cost-basis cap sizing: PASS. Caps on total equity, both cost and MV checked (per classic-rebalance). XLF budget capped $400-$570.28 by cash floor; SPY cap room ~$1,467 shown but no add; TMO headroom ~$585, growth headroom ~$1,675 verified.",
+    "JSON: daily-brief.json parses, sha256 bc0a1ba5...ab9b matches; brief sha in manifest matches; all 14 non-excluded daily-brief.json targets parse.",
+    "Manifest /workspace/daily-brief-0530-2026-10-13/written-manifest.json: targetCount 48, 41 non-excluded targets exist and match recorded sha256; 7 excluded 10-12 dated targets.",
+    "WARN wording: 48 is ALL targets across 3 kinds (17 daily-brief.json, 16 classic-portfolio.json, 15 momentum-portfolio.json); bc0a1ba5 daily-brief.json was written to 17 targets, not 48.",
+    "WARN recurring bug: writer target list (manifestSource = 10-12 1530 manifest) still includes 10-12 dated archive copies (morning-0530-2026-10-12.json, daily-brief-0530-2026-10-12/*, app-refresh-2026-10-12-am/*), overwriting them each run; restored from .bak-0530-20261013. Remove dated paths from the writer target list."
+  ],
+  "fixes": [
+    "None required for delivery.",
+    "Optional: META wording 'App JSON ... 48 targets' -> '48 targets (17 daily-brief.json)'.",
+    "Follow-up: drop prior-date archive paths from the dual-write target list to stop the overwrite bug."
+  ]
+}

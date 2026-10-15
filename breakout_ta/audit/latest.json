@@ -1,7 +1,7 @@
 {
-  "run_id": "breakout-auto-20261013-231804-4ad183d6",
+  "run_id": "breakout-auto-20261014-232435-6c84ec0f",
   "kind": "breakout_auto_daily",
-  "asOfIDT": "2026-10-13 23:18:06 IDT",
+  "asOfIDT": "2026-10-14 23:24:36 IDT",
   "timeframe": "1D",
   "skill": "breakout-technical-analysis",
   "do_not_place": true,
@@ -12,14 +12,12 @@
     "QQQ",
     "XLE",
     "XLV",
-    "SMH",
     "P",
     "CRWD",
-    "NTAP",
     "XLK",
+    "NTAP",
     "XOM",
     "ZBRA",
-    "ANET",
     "AAPL",
     "MSFT",
     "NVDA",
@@ -28,7 +26,8 @@
     "META",
     "GOOGL",
     "AMZN",
-    "JNJ"
+    "JNJ",
+    "SMH"
   ],
   "params": {
     "lookback": 60,
@@ -41,43 +40,167 @@
     "sl_atr_mult": 1.5,
     "tp_r_mult": 2.0
   },
-  "confirmed": [],
+  "confirmed": [
+    {
+      "symbol": "XLV",
+      "timeframe": "1D",
+      "signal": "BREAKOUT_CONFIRMED",
+      "do_not_place": true,
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=171.9900 \u2014 status-quo change?",
+      "structure": {
+        "type": "horiz_close_resistance",
+        "resistance_R": 171.99,
+        "how_measured": "max close of prior 20 daily bars",
+        "touches_near_R": 5,
+        "bars_since_close_above_R": 35,
+        "consol_low": 166.18,
+        "range_height": 5.81
+      },
+      "volume": {
+        "breakout_vol": 11784062.0,
+        "avg_vol": 8104655.0,
+        "ratio": 1.454,
+        "note": "need >= avg; prefer >= 1.5x for conviction"
+      },
+      "bar": {
+        "open": 170.94000244140625,
+        "high": 173.98500061035156,
+        "low": 170.6699981689453,
+        "close": 173.9600067138672,
+        "upper_third_close": true,
+        "body": 3.02
+      },
+      "levels": {
+        "entry": 173.96,
+        "stop": 169.8939,
+        "target": 177.8,
+        "atr": 2.7107,
+        "risk_R_plan": 2.0,
+        "price_source": "yahoo_daily"
+      },
+      "invalidation": "Daily close back below R=171.9900",
+      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
+    },
+    {
+      "symbol": "XOM",
+      "timeframe": "1D",
+      "signal": "BREAKOUT_CONFIRMED",
+      "do_not_place": true,
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=174.0800 \u2014 status-quo change?",
+      "structure": {
+        "type": "horiz_close_resistance",
+        "resistance_R": 174.08,
+        "how_measured": "max close of prior 20 daily bars",
+        "touches_near_R": 1,
+        "bars_since_close_above_R": 59,
+        "consol_low": 158.3,
+        "range_height": 15.78
+      },
+      "volume": {
+        "breakout_vol": 13314149.0,
+        "avg_vol": 12953635.0,
+        "ratio": 1.028,
+        "note": "need >= avg; prefer >= 1.5x for conviction"
+      },
+      "bar": {
+        "open": 175.06500244140625,
+        "high": 177.42999267578125,
+        "low": 174.52999877929688,
+        "close": 177.00999450683594,
+        "upper_third_close": true,
+        "body": 1.945
+      },
+      "levels": {
+        "entry": 177.01,
+        "stop": 171.856,
+        "target": 187.3179,
+        "atr": 3.436,
+        "risk_R_plan": 2.0,
+        "price_source": "yahoo_daily"
+      },
+      "invalidation": "Daily close back below R=174.0800",
+      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
+    }
+  ],
   "watch": [
+    {
+      "symbol": "TMO",
+      "timeframe": "1D",
+      "signal": "WATCH",
+      "do_not_place": true,
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=679.6100 \u2014 status-quo change?",
+      "structure": {
+        "type": "horiz_close_resistance",
+        "resistance_R": 679.61,
+        "how_measured": "max close of prior 20 daily bars",
+        "touches_near_R": 6,
+        "bars_since_close_above_R": 59,
+        "consol_low": 648.43,
+        "range_height": 31.18
+      },
+      "volume": {
+        "breakout_vol": 2475731.0,
+        "avg_vol": 2363930.0,
+        "ratio": 1.047,
+        "note": "need >= avg; prefer >= 1.5x for conviction"
+      },
+      "bar": {
+        "open": 664.010009765625,
+        "high": 681.5,
+        "low": 659.0,
+        "close": 673.2000122070312,
+        "upper_third_close": false,
+        "body": 9.19
+      },
+      "levels": {
+        "entry": 679.61,
+        "stop": 652.6205,
+        "target": 710.79,
+        "atr": 17.993,
+        "risk_R_plan": 2.0,
+        "price_source": "yahoo_daily"
+      },
+      "invalidation": "Daily close back below R=679.6100",
+      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
+    },
     {
       "symbol": "SPY",
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=779.0900 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
         "resistance_R": 779.09,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 9,
+        "touches_near_R": 10,
         "bars_since_close_above_R": 59,
         "consol_low": 752.1822,
         "range_height": 26.9078
       },
       "volume": {
-        "breakout_vol": 25183303.0,
-        "avg_vol": 43535620.0,
-        "ratio": 0.578,
+        "breakout_vol": 54511707.0,
+        "avg_vol": 42518270.0,
+        "ratio": 1.282,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 777.3400268554688,
-        "high": 778.75,
-        "low": 775.9500122070312,
-        "close": 778.010009765625,
-        "upper_third_close": true,
-        "body": 0.67
+        "open": 774.9199829101562,
+        "high": 776.2999877929688,
+        "low": 766.7100219726562,
+        "close": 769.5999755859375,
+        "upper_third_close": false,
+        "body": 5.32
       },
       "levels": {
         "entry": 779.09,
-        "stop": 770.093,
-        "target": 797.084,
-        "atr": 5.998,
+        "stop": 769.5462,
+        "target": 798.1777,
+        "atr": 6.3626,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
@@ -89,245 +212,40 @@
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=66.0100 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=67.2000 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 66.01,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 2,
-        "bars_since_close_above_R": 59,
-        "consol_low": 61.5,
-        "range_height": 4.51
-      },
-      "volume": {
-        "breakout_vol": 27373782.0,
-        "avg_vol": 34049405.0,
-        "ratio": 0.804,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 66.5,
-        "high": 67.24500274658203,
-        "low": 66.29000091552734,
-        "close": 67.16999816894531,
-        "upper_third_close": true,
-        "body": 0.67
-      },
-      "levels": {
-        "entry": 66.01,
-        "stop": 64.0856,
-        "target": 69.8588,
-        "atr": 1.2829,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=66.0100",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "XLV",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=171.9900 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 171.99,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 5,
-        "bars_since_close_above_R": 34,
-        "consol_low": 166.18,
-        "range_height": 5.81
-      },
-      "volume": {
-        "breakout_vol": 8662867.0,
-        "avg_vol": 8038875.0,
-        "ratio": 1.078,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 172.32000732421875,
-        "high": 172.76800537109375,
-        "low": 169.47999572753906,
-        "close": 169.66000366210938,
-        "upper_third_close": false,
-        "body": 2.66
-      },
-      "levels": {
-        "entry": 171.99,
-        "stop": 168.0914,
-        "target": 177.8,
-        "atr": 2.5991,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=171.9900",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "P",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=155.3100 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 155.31,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 2,
-        "bars_since_close_above_R": 59,
-        "consol_low": 96.97,
-        "range_height": 58.34
-      },
-      "volume": {
-        "breakout_vol": 3245235.0,
-        "avg_vol": 8364745.0,
-        "ratio": 0.388,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 150.6199951171875,
-        "high": 157.57000732421875,
-        "low": 148.9499969482422,
-        "close": 156.97000122070312,
-        "upper_third_close": true,
-        "body": 6.35
-      },
-      "levels": {
-        "entry": 155.31,
-        "stop": 145.5354,
-        "target": 174.8591,
-        "atr": 6.5164,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=155.3100",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "NTAP",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=239.1800 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 239.18,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 2,
-        "bars_since_close_above_R": 59,
-        "consol_low": 189.5025,
-        "range_height": 49.6775
-      },
-      "volume": {
-        "breakout_vol": 2348987.0,
-        "avg_vol": 2616310.0,
-        "ratio": 0.898,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 236.19000244140625,
-        "high": 240.83999633789062,
-        "low": 232.53289794921875,
-        "close": 239.00999450683594,
-        "upper_third_close": true,
-        "body": 2.82
-      },
-      "levels": {
-        "entry": 239.18,
-        "stop": 227.0277,
-        "target": 263.4846,
-        "atr": 8.1015,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=239.1800",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "XOM",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=172.1500 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 172.15,
+        "resistance_R": 67.2,
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 1,
         "bars_since_close_above_R": 59,
-        "consol_low": 158.3,
-        "range_height": 13.85
+        "consol_low": 61.5,
+        "range_height": 5.7
       },
       "volume": {
-        "breakout_vol": 11362664.0,
-        "avg_vol": 12994835.0,
-        "ratio": 0.874,
+        "breakout_vol": 25120661.0,
+        "avg_vol": 33695240.0,
+        "ratio": 0.746,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 173.44500732421875,
-        "high": 174.88999938964844,
-        "low": 172.65179443359375,
-        "close": 174.13999938964844,
-        "upper_third_close": false,
-        "body": 0.695
-      },
-      "levels": {
-        "entry": 172.15,
-        "stop": 166.9574,
-        "target": 182.5351,
-        "atr": 3.4617,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=172.1500",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "ZBRA",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=388.1200 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 388.12,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 4,
-        "bars_since_close_above_R": 59,
-        "consol_low": 341.18,
-        "range_height": 46.94
-      },
-      "volume": {
-        "breakout_vol": 443453.0,
-        "avg_vol": 537715.0,
-        "ratio": 0.825,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 387.80999755859375,
-        "high": 389.5199890136719,
-        "low": 379.8699951171875,
-        "close": 386.57000732421875,
+        "open": 67.5999984741211,
+        "high": 67.71800231933594,
+        "low": 67.11499786376953,
+        "close": 67.62999725341797,
         "upper_third_close": true,
-        "body": 1.24
+        "body": 0.03
       },
       "levels": {
-        "entry": 388.12,
-        "stop": 373.3017,
-        "target": 417.7566,
-        "atr": 9.8789,
+        "entry": 67.2,
+        "stop": 65.3499,
+        "target": 70.9003,
+        "atr": 1.2334,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=388.1200",
+      "invalidation": "Daily close back below R=67.2000",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
@@ -335,40 +253,40 @@
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=341.0700 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=341.2700 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 341.07,
+        "resistance_R": 341.27,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 6,
+        "touches_near_R": 7,
         "bars_since_close_above_R": 59,
         "consol_low": 329.4,
-        "range_height": 11.67
+        "range_height": 11.87
       },
       "volume": {
-        "breakout_vol": 38701103.0,
-        "avg_vol": 37105365.0,
-        "ratio": 1.043,
+        "breakout_vol": 49732644.0,
+        "avg_vol": 37467145.0,
+        "ratio": 1.327,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 344.6650085449219,
-        "high": 348.14990234375,
-        "low": 340.739990234375,
-        "close": 341.2699890136719,
+        "open": 344.6050109863281,
+        "high": 347.07000732421875,
+        "low": 341.7200012207031,
+        "close": 342.9599914550781,
         "upper_third_close": false,
-        "body": 3.395
+        "body": 1.645
       },
       "levels": {
-        "entry": 341.07,
-        "stop": 330.9708,
-        "target": 352.74,
-        "atr": 6.7328,
+        "entry": 341.27,
+        "stop": 331.301,
+        "target": 353.14,
+        "atr": 6.646,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=341.0700",
+      "invalidation": "Daily close back below R=341.2700",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
@@ -376,134 +294,135 @@
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=541.1500 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=543.4500 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 541.15,
+        "resistance_R": 543.45,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 1,
+        "touches_near_R": 2,
         "bars_since_close_above_R": 59,
         "consol_low": 490.3,
-        "range_height": 50.85
+        "range_height": 53.15
       },
       "volume": {
-        "breakout_vol": 23647907.0,
-        "avg_vol": 22156535.0,
-        "ratio": 1.067,
+        "breakout_vol": 21176641.0,
+        "avg_vol": 22459405.0,
+        "ratio": 0.943,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 544.6400146484375,
-        "high": 551.1500244140625,
-        "low": 543.0599975585938,
-        "close": 543.4500122070312,
+        "open": 545.27001953125,
+        "high": 545.739990234375,
+        "low": 532.5399780273438,
+        "close": 533.6900024414062,
         "upper_third_close": false,
-        "body": 1.19
+        "body": 11.58
       },
       "levels": {
-        "entry": 541.15,
-        "stop": 524.1303,
-        "target": 575.1894,
-        "atr": 11.3465,
+        "entry": 543.45,
+        "stop": 526.0757,
+        "target": 578.1986,
+        "atr": 11.5829,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=541.1500",
+      "invalidation": "Daily close back below R=543.4500",
+      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
+    }
+  ],
+  "failed": [
+    {
+      "symbol": "P",
+      "timeframe": "1D",
+      "signal": "FAILED_BREAKOUT",
+      "do_not_place": true,
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=156.9700 \u2014 status-quo change?",
+      "structure": {
+        "type": "horiz_close_resistance",
+        "resistance_R": 156.97,
+        "how_measured": "max close of prior 20 daily bars",
+        "touches_near_R": 1,
+        "bars_since_close_above_R": 59,
+        "consol_low": 97.61,
+        "range_height": 59.36
+      },
+      "volume": {
+        "breakout_vol": 5538493.0,
+        "avg_vol": 8380060.0,
+        "ratio": 0.661,
+        "note": "need >= avg; prefer >= 1.5x for conviction"
+      },
+      "bar": {
+        "open": 152.5,
+        "high": 154.0399932861328,
+        "low": 140.6649932861328,
+        "close": 141.49000549316406,
+        "upper_third_close": false,
+        "body": 11.01
+      },
+      "levels": {
+        "entry": null,
+        "stop": null,
+        "target": null,
+        "atr": 7.2005,
+        "risk_R_plan": null,
+        "price_source": "yahoo_daily"
+      },
+      "invalidation": "Daily close back below R=156.9700",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
       "symbol": "GOOGL",
       "timeframe": "1D",
-      "signal": "WATCH",
+      "signal": "FAILED_BREAKOUT",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=354.9700 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
         "resistance_R": 354.97,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 3,
-        "bars_since_close_above_R": 48,
+        "touches_near_R": 4,
+        "bars_since_close_above_R": 49,
         "consol_low": 337.83,
         "range_height": 17.14
       },
       "volume": {
-        "breakout_vol": 22090690.0,
-        "avg_vol": 25456650.0,
-        "ratio": 0.868,
+        "breakout_vol": 26833388.0,
+        "avg_vol": 25520605.0,
+        "ratio": 1.051,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 356.2300109863281,
-        "high": 358.5799865722656,
-        "low": 351.6000061035156,
-        "close": 353.7799987792969,
+        "open": 355.7300109863281,
+        "high": 359.3999938964844,
+        "low": 346.364990234375,
+        "close": 347.6400146484375,
         "upper_third_close": false,
-        "body": 2.45
+        "body": 8.09
       },
       "levels": {
-        "entry": 354.97,
-        "stop": 342.9091,
-        "target": 372.11,
-        "atr": 8.0406,
-        "risk_R_plan": 2.0,
+        "entry": null,
+        "stop": null,
+        "target": null,
+        "atr": 8.4429,
+        "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
       "invalidation": "Daily close back below R=354.9700",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "AMZN",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=262.4300 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 262.43,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 2,
-        "bars_since_close_above_R": 31,
-        "consol_low": 245.96,
-        "range_height": 16.47
-      },
-      "volume": {
-        "breakout_vol": 24829884.0,
-        "avg_vol": 36674420.0,
-        "ratio": 0.677,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 259.44000244140625,
-        "high": 262.8349914550781,
-        "low": 258.42498779296875,
-        "close": 258.5799865722656,
-        "upper_third_close": false,
-        "body": 0.86
-      },
-      "levels": {
-        "entry": 262.43,
-        "stop": 253.964,
-        "target": 278.9,
-        "atr": 5.644,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=262.4300",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     }
   ],
-  "failed": [],
-  "none_or_error_count": 11,
+  "none_or_error_count": 12,
   "per_symbol": [
     {
       "symbol": "TMO",
       "timeframe": "1D",
-      "signal": "NONE",
+      "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=679.6100 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -511,29 +430,29 @@
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 6,
         "bars_since_close_above_R": 59,
-        "consol_low": 641.39,
-        "range_height": 38.22
+        "consol_low": 648.43,
+        "range_height": 31.18
       },
       "volume": {
-        "breakout_vol": 2290662.0,
-        "avg_vol": 2400090.0,
-        "ratio": 0.954,
+        "breakout_vol": 2475731.0,
+        "avg_vol": 2363930.0,
+        "ratio": 1.047,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 662.8400268554688,
-        "high": 666.3400268554688,
-        "low": 655.8099975585938,
-        "close": 663.0399780273438,
-        "upper_third_close": true,
-        "body": 0.2
+        "open": 664.010009765625,
+        "high": 681.5,
+        "low": 659.0,
+        "close": 673.2000122070312,
+        "upper_third_close": false,
+        "body": 9.19
       },
       "levels": {
-        "entry": null,
-        "stop": null,
-        "target": null,
-        "atr": 17.8916,
-        "risk_R_plan": null,
+        "entry": 679.61,
+        "stop": 652.6205,
+        "target": 710.79,
+        "atr": 17.993,
+        "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
       "invalidation": "Daily close back below R=679.6100",
@@ -544,36 +463,36 @@
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=779.0900 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
         "resistance_R": 779.09,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 9,
+        "touches_near_R": 10,
         "bars_since_close_above_R": 59,
         "consol_low": 752.1822,
         "range_height": 26.9078
       },
       "volume": {
-        "breakout_vol": 25183303.0,
-        "avg_vol": 43535620.0,
-        "ratio": 0.578,
+        "breakout_vol": 54511707.0,
+        "avg_vol": 42518270.0,
+        "ratio": 1.282,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 777.3400268554688,
-        "high": 778.75,
-        "low": 775.9500122070312,
-        "close": 778.010009765625,
-        "upper_third_close": true,
-        "body": 0.67
+        "open": 774.9199829101562,
+        "high": 776.2999877929688,
+        "low": 766.7100219726562,
+        "close": 769.5999755859375,
+        "upper_third_close": false,
+        "body": 5.32
       },
       "levels": {
         "entry": 779.09,
-        "stop": 770.093,
-        "target": 797.084,
-        "atr": 5.998,
+        "stop": 769.5462,
+        "target": 798.1777,
+        "atr": 6.3626,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
@@ -585,7 +504,7 @@
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=759.6600 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -593,28 +512,28 @@
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 3,
         "bars_since_close_above_R": 59,
-        "consol_low": 703.8066,
-        "range_height": 55.8534
+        "consol_low": 703.9864,
+        "range_height": 55.6736
       },
       "volume": {
-        "breakout_vol": 28425926.0,
-        "avg_vol": 33493465.0,
-        "ratio": 0.849,
+        "breakout_vol": 49885770.0,
+        "avg_vol": 33598810.0,
+        "ratio": 1.485,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 739.5150146484375,
-        "high": 744.2000122070312,
-        "low": 738.8400268554688,
-        "close": 743.5700073242188,
-        "upper_third_close": true,
-        "body": 4.055
+        "open": 737.97998046875,
+        "high": 740.530029296875,
+        "low": 726.4299926757812,
+        "close": 728.9500122070312,
+        "upper_third_close": false,
+        "body": 9.03
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 8.7547,
+        "atr": 9.34,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
@@ -626,77 +545,77 @@
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=66.0100 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=67.2000 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 66.01,
+        "resistance_R": 67.2,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 2,
+        "touches_near_R": 1,
         "bars_since_close_above_R": 59,
         "consol_low": 61.5,
-        "range_height": 4.51
+        "range_height": 5.7
       },
       "volume": {
-        "breakout_vol": 27373782.0,
-        "avg_vol": 34049405.0,
-        "ratio": 0.804,
+        "breakout_vol": 25120661.0,
+        "avg_vol": 33695240.0,
+        "ratio": 0.746,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 66.5,
-        "high": 67.24500274658203,
-        "low": 66.29000091552734,
-        "close": 67.16999816894531,
+        "open": 67.5999984741211,
+        "high": 67.71800231933594,
+        "low": 67.11499786376953,
+        "close": 67.62999725341797,
         "upper_third_close": true,
-        "body": 0.67
+        "body": 0.03
       },
       "levels": {
-        "entry": 66.01,
-        "stop": 64.0856,
-        "target": 69.8588,
-        "atr": 1.2829,
+        "entry": 67.2,
+        "stop": 65.3499,
+        "target": 70.9003,
+        "atr": 1.2334,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=66.0100",
+      "invalidation": "Daily close back below R=67.2000",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
       "symbol": "XLV",
       "timeframe": "1D",
-      "signal": "WATCH",
+      "signal": "BREAKOUT_CONFIRMED",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=171.9900 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
         "resistance_R": 171.99,
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 5,
-        "bars_since_close_above_R": 34,
+        "bars_since_close_above_R": 35,
         "consol_low": 166.18,
         "range_height": 5.81
       },
       "volume": {
-        "breakout_vol": 8662867.0,
-        "avg_vol": 8038875.0,
-        "ratio": 1.078,
+        "breakout_vol": 11784062.0,
+        "avg_vol": 8104655.0,
+        "ratio": 1.454,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 172.32000732421875,
-        "high": 172.76800537109375,
-        "low": 169.47999572753906,
-        "close": 169.66000366210938,
-        "upper_third_close": false,
-        "body": 2.66
+        "open": 170.94000244140625,
+        "high": 173.98500061035156,
+        "low": 170.6699981689453,
+        "close": 173.9600067138672,
+        "upper_third_close": true,
+        "body": 3.02
       },
       "levels": {
-        "entry": 171.99,
-        "stop": 168.0914,
+        "entry": 173.96,
+        "stop": 169.8939,
         "target": 177.8,
-        "atr": 2.5991,
+        "atr": 2.7107,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
@@ -704,85 +623,44 @@
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
-      "symbol": "SMH",
+      "symbol": "P",
       "timeframe": "1D",
-      "signal": "NONE",
+      "signal": "FAILED_BREAKOUT",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=633.9000 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=156.9700 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 633.9,
+        "resistance_R": 156.97,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 3,
+        "touches_near_R": 1,
         "bars_since_close_above_R": 59,
-        "consol_low": 542.11,
-        "range_height": 91.79
+        "consol_low": 97.61,
+        "range_height": 59.36
       },
       "volume": {
-        "breakout_vol": 7876153.0,
-        "avg_vol": 6234125.0,
-        "ratio": 1.263,
+        "breakout_vol": 5538493.0,
+        "avg_vol": 8380060.0,
+        "ratio": 0.661,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 578.010009765625,
-        "high": 588.6799926757812,
-        "low": 574.75,
-        "close": 588.1199951171875,
-        "upper_third_close": true,
-        "body": 10.11
+        "open": 152.5,
+        "high": 154.0399932861328,
+        "low": 140.6649932861328,
+        "close": 141.49000549316406,
+        "upper_third_close": false,
+        "body": 11.01
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 14.7933,
+        "atr": 7.2005,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=633.9000",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "P",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=155.3100 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 155.31,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 2,
-        "bars_since_close_above_R": 59,
-        "consol_low": 96.97,
-        "range_height": 58.34
-      },
-      "volume": {
-        "breakout_vol": 3245235.0,
-        "avg_vol": 8364745.0,
-        "ratio": 0.388,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 150.6199951171875,
-        "high": 157.57000732421875,
-        "low": 148.9499969482422,
-        "close": 156.97000122070312,
-        "upper_third_close": true,
-        "body": 6.35
-      },
-      "levels": {
-        "entry": 155.31,
-        "stop": 145.5354,
-        "target": 174.8591,
-        "atr": 6.5164,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=155.3100",
+      "invalidation": "Daily close back below R=156.9700",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
@@ -790,7 +668,7 @@
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=278.8600 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -802,24 +680,24 @@
         "range_height": 41.21
       },
       "volume": {
-        "breakout_vol": 6317634.0,
-        "avg_vol": 9759200.0,
-        "ratio": 0.647,
+        "breakout_vol": 9097598.0,
+        "avg_vol": 9216500.0,
+        "ratio": 0.987,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 260.2699890136719,
-        "high": 268.0799865722656,
-        "low": 259.29998779296875,
-        "close": 261.2099914550781,
+        "open": 253.74000549316406,
+        "high": 256.07000732421875,
+        "low": 248.0305938720703,
+        "close": 249.2899932861328,
         "upper_third_close": false,
-        "body": 0.94
+        "body": 4.45
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 11.5879,
+        "atr": 11.6796,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
@@ -827,52 +705,11 @@
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
-      "symbol": "NTAP",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=239.1800 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 239.18,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 2,
-        "bars_since_close_above_R": 59,
-        "consol_low": 189.5025,
-        "range_height": 49.6775
-      },
-      "volume": {
-        "breakout_vol": 2348987.0,
-        "avg_vol": 2616310.0,
-        "ratio": 0.898,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 236.19000244140625,
-        "high": 240.83999633789062,
-        "low": 232.53289794921875,
-        "close": 239.00999450683594,
-        "upper_third_close": true,
-        "body": 2.82
-      },
-      "levels": {
-        "entry": 239.18,
-        "stop": 227.0277,
-        "target": 263.4846,
-        "atr": 8.1015,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=239.1800",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
       "symbol": "XLK",
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=202.0000 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -880,28 +717,28 @@
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 3,
         "bars_since_close_above_R": 59,
-        "consol_low": 183.5258,
-        "range_height": 18.4742
+        "consol_low": 183.7156,
+        "range_height": 18.2844
       },
       "volume": {
-        "breakout_vol": 6647335.0,
-        "avg_vol": 7280545.0,
-        "ratio": 0.913,
+        "breakout_vol": 11837290.0,
+        "avg_vol": 7310660.0,
+        "ratio": 1.619,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 194.197998046875,
-        "high": 196.3300018310547,
-        "low": 193.9199981689453,
-        "close": 196.24000549316406,
-        "upper_third_close": true,
-        "body": 2.042
+        "open": 193.99000549316406,
+        "high": 194.66000366210938,
+        "low": 189.72999572753906,
+        "close": 190.42999267578125,
+        "upper_third_close": false,
+        "body": 3.56
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 2.9621,
+        "atr": 3.2234,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
@@ -909,126 +746,126 @@
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
-      "symbol": "XOM",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=172.1500 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 172.15,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 1,
-        "bars_since_close_above_R": 59,
-        "consol_low": 158.3,
-        "range_height": 13.85
-      },
-      "volume": {
-        "breakout_vol": 11362664.0,
-        "avg_vol": 12994835.0,
-        "ratio": 0.874,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 173.44500732421875,
-        "high": 174.88999938964844,
-        "low": 172.65179443359375,
-        "close": 174.13999938964844,
-        "upper_third_close": false,
-        "body": 0.695
-      },
-      "levels": {
-        "entry": 172.15,
-        "stop": 166.9574,
-        "target": 182.5351,
-        "atr": 3.4617,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=172.1500",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "ZBRA",
-      "timeframe": "1D",
-      "signal": "WATCH",
-      "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=388.1200 \u2014 status-quo change?",
-      "structure": {
-        "type": "horiz_close_resistance",
-        "resistance_R": 388.12,
-        "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 4,
-        "bars_since_close_above_R": 59,
-        "consol_low": 341.18,
-        "range_height": 46.94
-      },
-      "volume": {
-        "breakout_vol": 443453.0,
-        "avg_vol": 537715.0,
-        "ratio": 0.825,
-        "note": "need >= avg; prefer >= 1.5x for conviction"
-      },
-      "bar": {
-        "open": 387.80999755859375,
-        "high": 389.5199890136719,
-        "low": 379.8699951171875,
-        "close": 386.57000732421875,
-        "upper_third_close": true,
-        "body": 1.24
-      },
-      "levels": {
-        "entry": 388.12,
-        "stop": 373.3017,
-        "target": 417.7566,
-        "atr": 9.8789,
-        "risk_R_plan": 2.0,
-        "price_source": "yahoo_daily"
-      },
-      "invalidation": "Daily close back below R=388.1200",
-      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
-    },
-    {
-      "symbol": "ANET",
+      "symbol": "NTAP",
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=216.7400 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=239.1800 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 216.74,
+        "resistance_R": 239.18,
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 3,
         "bars_since_close_above_R": 59,
-        "consol_low": 192.84,
-        "range_height": 23.9
+        "consol_low": 191.059,
+        "range_height": 48.121
       },
       "volume": {
-        "breakout_vol": 7905501.0,
-        "avg_vol": 4902900.0,
-        "ratio": 1.612,
+        "breakout_vol": 3077750.0,
+        "avg_vol": 2613165.0,
+        "ratio": 1.178,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 204.97999572753906,
-        "high": 205.1999969482422,
-        "low": 197.60000610351562,
-        "close": 204.52000427246094,
-        "upper_third_close": true,
-        "body": 0.46
+        "open": 231.60499572753906,
+        "high": 233.3300018310547,
+        "low": 221.33999633789062,
+        "close": 222.1999969482422,
+        "upper_third_close": false,
+        "body": 9.405
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 7.3459,
+        "atr": 8.7789,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=216.7400",
+      "invalidation": "Daily close back below R=239.1800",
+      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
+    },
+    {
+      "symbol": "XOM",
+      "timeframe": "1D",
+      "signal": "BREAKOUT_CONFIRMED",
+      "do_not_place": true,
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=174.0800 \u2014 status-quo change?",
+      "structure": {
+        "type": "horiz_close_resistance",
+        "resistance_R": 174.08,
+        "how_measured": "max close of prior 20 daily bars",
+        "touches_near_R": 1,
+        "bars_since_close_above_R": 59,
+        "consol_low": 158.3,
+        "range_height": 15.78
+      },
+      "volume": {
+        "breakout_vol": 13314149.0,
+        "avg_vol": 12953635.0,
+        "ratio": 1.028,
+        "note": "need >= avg; prefer >= 1.5x for conviction"
+      },
+      "bar": {
+        "open": 175.06500244140625,
+        "high": 177.42999267578125,
+        "low": 174.52999877929688,
+        "close": 177.00999450683594,
+        "upper_third_close": true,
+        "body": 1.945
+      },
+      "levels": {
+        "entry": 177.01,
+        "stop": 171.856,
+        "target": 187.3179,
+        "atr": 3.436,
+        "risk_R_plan": 2.0,
+        "price_source": "yahoo_daily"
+      },
+      "invalidation": "Daily close back below R=174.0800",
+      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
+    },
+    {
+      "symbol": "ZBRA",
+      "timeframe": "1D",
+      "signal": "NONE",
+      "do_not_place": true,
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=388.1200 \u2014 status-quo change?",
+      "structure": {
+        "type": "horiz_close_resistance",
+        "resistance_R": 388.12,
+        "how_measured": "max close of prior 20 daily bars",
+        "touches_near_R": 5,
+        "bars_since_close_above_R": 59,
+        "consol_low": 341.18,
+        "range_height": 46.94
+      },
+      "volume": {
+        "breakout_vol": 513650.0,
+        "avg_vol": 535195.0,
+        "ratio": 0.96,
+        "note": "need >= avg; prefer >= 1.5x for conviction"
+      },
+      "bar": {
+        "open": 380.510009765625,
+        "high": 384.78509521484375,
+        "low": 375.7749938964844,
+        "close": 376.8800048828125,
+        "upper_third_close": false,
+        "body": 3.63
+      },
+      "levels": {
+        "entry": null,
+        "stop": null,
+        "target": null,
+        "atr": 9.8972,
+        "risk_R_plan": null,
+        "price_source": "yahoo_daily"
+      },
+      "invalidation": "Daily close back below R=388.1200",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
@@ -1036,40 +873,40 @@
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=341.0700 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=341.2700 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 341.07,
+        "resistance_R": 341.27,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 6,
+        "touches_near_R": 7,
         "bars_since_close_above_R": 59,
         "consol_low": 329.4,
-        "range_height": 11.67
+        "range_height": 11.87
       },
       "volume": {
-        "breakout_vol": 38701103.0,
-        "avg_vol": 37105365.0,
-        "ratio": 1.043,
+        "breakout_vol": 49732644.0,
+        "avg_vol": 37467145.0,
+        "ratio": 1.327,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 344.6650085449219,
-        "high": 348.14990234375,
-        "low": 340.739990234375,
-        "close": 341.2699890136719,
+        "open": 344.6050109863281,
+        "high": 347.07000732421875,
+        "low": 341.7200012207031,
+        "close": 342.9599914550781,
         "upper_third_close": false,
-        "body": 3.395
+        "body": 1.645
       },
       "levels": {
-        "entry": 341.07,
-        "stop": 330.9708,
-        "target": 352.74,
-        "atr": 6.7328,
+        "entry": 341.27,
+        "stop": 331.301,
+        "target": 353.14,
+        "atr": 6.646,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=341.0700",
+      "invalidation": "Daily close back below R=341.2700",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
@@ -1077,40 +914,40 @@
       "timeframe": "1D",
       "signal": "WATCH",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
-      "question": "Close vs resistance R=541.1500 \u2014 status-quo change?",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=543.4500 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
-        "resistance_R": 541.15,
+        "resistance_R": 543.45,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 1,
+        "touches_near_R": 2,
         "bars_since_close_above_R": 59,
         "consol_low": 490.3,
-        "range_height": 50.85
+        "range_height": 53.15
       },
       "volume": {
-        "breakout_vol": 23647907.0,
-        "avg_vol": 22156535.0,
-        "ratio": 1.067,
+        "breakout_vol": 21176641.0,
+        "avg_vol": 22459405.0,
+        "ratio": 0.943,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 544.6400146484375,
-        "high": 551.1500244140625,
-        "low": 543.0599975585938,
-        "close": 543.4500122070312,
+        "open": 545.27001953125,
+        "high": 545.739990234375,
+        "low": 532.5399780273438,
+        "close": 533.6900024414062,
         "upper_third_close": false,
-        "body": 1.19
+        "body": 11.58
       },
       "levels": {
-        "entry": 541.15,
-        "stop": 524.1303,
-        "target": 575.1894,
-        "atr": 11.3465,
+        "entry": 543.45,
+        "stop": 526.0757,
+        "target": 578.1986,
+        "atr": 11.5829,
         "risk_R_plan": 2.0,
         "price_source": "yahoo_daily"
       },
-      "invalidation": "Daily close back below R=541.1500",
+      "invalidation": "Daily close back below R=543.4500",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     },
     {
@@ -1118,7 +955,7 @@
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=239.2400 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -1126,28 +963,28 @@
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 3,
         "bars_since_close_above_R": 59,
-        "consol_low": 212.17,
-        "range_height": 27.07
+        "consol_low": 213.9,
+        "range_height": 25.34
       },
       "volume": {
-        "breakout_vol": 83237708.0,
-        "avg_vol": 105781470.0,
-        "ratio": 0.787,
+        "breakout_vol": 115959194.0,
+        "avg_vol": 105580330.0,
+        "ratio": 1.098,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 224.33999633789062,
-        "high": 228.63999938964844,
-        "low": 223.06019592285156,
-        "close": 228.52000427246094,
-        "upper_third_close": true,
-        "body": 4.18
+        "open": 225.52999877929688,
+        "high": 226.0,
+        "low": 219.63999938964844,
+        "close": 221.3000030517578,
+        "upper_third_close": false,
+        "body": 4.23
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 5.5562,
+        "atr": 5.8498,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
@@ -1159,7 +996,7 @@
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=127.3900 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -1167,28 +1004,28 @@
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 1,
         "bars_since_close_above_R": 59,
-        "consol_low": 97.14,
-        "range_height": 30.25
+        "consol_low": 101.05,
+        "range_height": 26.34
       },
       "volume": {
-        "breakout_vol": 84641843.0,
-        "avg_vol": 108144420.0,
-        "ratio": 0.783,
+        "breakout_vol": 102340556.0,
+        "avg_vol": 108307055.0,
+        "ratio": 0.945,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 99.58999633789062,
-        "high": 102.87999725341797,
-        "low": 98.2249984741211,
-        "close": 102.80999755859375,
-        "upper_third_close": true,
-        "body": 3.22
+        "open": 99.55000305175781,
+        "high": 101.33999633789062,
+        "low": 97.66999816894531,
+        "close": 98.12000274658203,
+        "upper_third_close": false,
+        "body": 1.43
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 5.6363,
+        "atr": 5.6034,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
@@ -1200,7 +1037,7 @@
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=649.4200 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -1208,28 +1045,28 @@
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 2,
         "bars_since_close_above_R": 59,
-        "consol_low": 504.2,
-        "range_height": 145.22
+        "consol_low": 512.5,
+        "range_height": 136.92
       },
       "volume": {
-        "breakout_vol": 17616788.0,
-        "avg_vol": 21668140.0,
-        "ratio": 0.813,
+        "breakout_vol": 21880824.0,
+        "avg_vol": 21708075.0,
+        "ratio": 1.008,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 577.4959716796875,
-        "high": 606.2000122070312,
-        "low": 570.5999755859375,
-        "close": 605.530029296875,
-        "upper_third_close": true,
-        "body": 28.0341
+        "open": 589.6525268554688,
+        "high": 591.8800048828125,
+        "low": 567.0,
+        "close": 570.8200073242188,
+        "upper_third_close": false,
+        "body": 18.8325
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 24.4142,
+        "atr": 25.5318,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
@@ -1241,7 +1078,7 @@
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=777.5900 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
@@ -1253,24 +1090,24 @@
         "range_height": 112.365
       },
       "volume": {
-        "breakout_vol": 22586972.0,
-        "avg_vol": 21965255.0,
-        "ratio": 1.028,
+        "breakout_vol": 15822931.0,
+        "avg_vol": 22125425.0,
+        "ratio": 0.715,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 735.989990234375,
-        "high": 771.269775390625,
-        "low": 734.8400268554688,
-        "close": 762.5,
-        "upper_third_close": true,
-        "body": 26.51
+        "open": 760.75,
+        "high": 761.47998046875,
+        "low": 734.2864990234375,
+        "close": 737.5399780273438,
+        "upper_third_close": false,
+        "body": 23.21
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 23.7305,
+        "atr": 24.195,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
@@ -1280,39 +1117,39 @@
     {
       "symbol": "GOOGL",
       "timeframe": "1D",
-      "signal": "WATCH",
+      "signal": "FAILED_BREAKOUT",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=354.9700 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
         "resistance_R": 354.97,
         "how_measured": "max close of prior 20 daily bars",
-        "touches_near_R": 3,
-        "bars_since_close_above_R": 48,
+        "touches_near_R": 4,
+        "bars_since_close_above_R": 49,
         "consol_low": 337.83,
         "range_height": 17.14
       },
       "volume": {
-        "breakout_vol": 22090690.0,
-        "avg_vol": 25456650.0,
-        "ratio": 0.868,
+        "breakout_vol": 26833388.0,
+        "avg_vol": 25520605.0,
+        "ratio": 1.051,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 356.2300109863281,
-        "high": 358.5799865722656,
-        "low": 351.6000061035156,
-        "close": 353.7799987792969,
+        "open": 355.7300109863281,
+        "high": 359.3999938964844,
+        "low": 346.364990234375,
+        "close": 347.6400146484375,
         "upper_third_close": false,
-        "body": 2.45
+        "body": 8.09
       },
       "levels": {
-        "entry": 354.97,
-        "stop": 342.9091,
-        "target": 372.11,
-        "atr": 8.0406,
-        "risk_R_plan": 2.0,
+        "entry": null,
+        "stop": null,
+        "target": null,
+        "atr": 8.4429,
+        "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
       "invalidation": "Daily close back below R=354.9700",
@@ -1321,39 +1158,39 @@
     {
       "symbol": "AMZN",
       "timeframe": "1D",
-      "signal": "WATCH",
+      "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=262.4300 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
         "resistance_R": 262.43,
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 2,
-        "bars_since_close_above_R": 31,
+        "bars_since_close_above_R": 32,
         "consol_low": 245.96,
         "range_height": 16.47
       },
       "volume": {
-        "breakout_vol": 24829884.0,
-        "avg_vol": 36674420.0,
-        "ratio": 0.677,
+        "breakout_vol": 33260130.0,
+        "avg_vol": 36125625.0,
+        "ratio": 0.921,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 259.44000244140625,
-        "high": 262.8349914550781,
-        "low": 258.42498779296875,
-        "close": 258.5799865722656,
+        "open": 257.9599914550781,
+        "high": 259.6499938964844,
+        "low": 252.66000366210938,
+        "close": 254.0800018310547,
         "upper_third_close": false,
-        "body": 0.86
+        "body": 3.88
       },
       "levels": {
-        "entry": 262.43,
-        "stop": 253.964,
-        "target": 278.9,
-        "atr": 5.644,
-        "risk_R_plan": 2.0,
+        "entry": null,
+        "stop": null,
+        "target": null,
+        "atr": 5.7769,
+        "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
       "invalidation": "Daily close back below R=262.4300",
@@ -1364,40 +1201,81 @@
       "timeframe": "1D",
       "signal": "NONE",
       "do_not_place": true,
-      "asOfBar": "2026-10-13 00:00:00-04:00",
+      "asOfBar": "2026-10-14 00:00:00-04:00",
       "question": "Close vs resistance R=271.9500 \u2014 status-quo change?",
       "structure": {
         "type": "horiz_close_resistance",
         "resistance_R": 271.95,
         "how_measured": "max close of prior 20 daily bars",
         "touches_near_R": 6,
-        "bars_since_close_above_R": 26,
-        "consol_low": 252.93,
-        "range_height": 19.02
+        "bars_since_close_above_R": 27,
+        "consol_low": 248.61,
+        "range_height": 23.34
       },
       "volume": {
-        "breakout_vol": 16588133.0,
-        "avg_vol": 6882040.0,
-        "ratio": 2.41,
+        "breakout_vol": 9630503.0,
+        "avg_vol": 7450220.0,
+        "ratio": 1.293,
         "note": "need >= avg; prefer >= 1.5x for conviction"
       },
       "bar": {
-        "open": 254.55999755859375,
-        "high": 256.18218994140625,
-        "low": 245.19000244140625,
-        "close": 248.61000061035156,
-        "upper_third_close": false,
-        "body": 5.95
+        "open": 249.09500122070312,
+        "high": 253.94000244140625,
+        "low": 248.5,
+        "close": 253.91000366210938,
+        "upper_third_close": true,
+        "body": 4.815
       },
       "levels": {
         "entry": null,
         "stop": null,
         "target": null,
-        "atr": 6.1229,
+        "atr": 6.0659,
         "risk_R_plan": null,
         "price_source": "yahoo_daily"
       },
       "invalidation": "Daily close back below R=271.9500",
+      "patience_note": "Only trade ripe inflection; green candle alone is NONE"
+    },
+    {
+      "symbol": "SMH",
+      "timeframe": "1D",
+      "signal": "NONE",
+      "do_not_place": true,
+      "asOfBar": "2026-10-14 00:00:00-04:00",
+      "question": "Close vs resistance R=633.9000 \u2014 status-quo change?",
+      "structure": {
+        "type": "horiz_close_resistance",
+        "resistance_R": 633.9,
+        "how_measured": "max close of prior 20 daily bars",
+        "touches_near_R": 3,
+        "bars_since_close_above_R": 59,
+        "consol_low": 545.56,
+        "range_height": 88.34
+      },
+      "volume": {
+        "breakout_vol": 11600824.0,
+        "avg_vol": 6330095.0,
+        "ratio": 1.833,
+        "note": "need >= avg; prefer >= 1.5x for conviction"
+      },
+      "bar": {
+        "open": 576.489990234375,
+        "high": 580.0800170898438,
+        "low": 563.1199951171875,
+        "close": 564.739990234375,
+        "upper_third_close": false,
+        "body": 11.75
+      },
+      "levels": {
+        "entry": null,
+        "stop": null,
+        "target": null,
+        "atr": 15.601,
+        "risk_R_plan": null,
+        "price_source": "yahoo_daily"
+      },
+      "invalidation": "Daily close back below R=633.9000",
       "patience_note": "Only trade ripe inflection; green candle alone is NONE"
     }
   ],
