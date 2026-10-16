@@ -57,16 +57,16 @@ Momentum playbook is **EOD breakout / VCP** (often high RS / upper-range). Blind
 
 ### Neither book as 1m/5m scalper
 
-Default pip SL/TP (70/80 pips) and 1m/5m tuning are for FX. Our books are **US stocks/ETFs, ×1, QA-gated**. Do not auto-trade the published pip distances on eToro equities.
+Default pip SL/TP (70/80 pips) and 1m/5m tuning are for FX. Our books are **US stocks/ETFs (+ Classic BTC/ETH/SOL), ×1, QA-gated**. Do not auto-trade the published pip distances on eToro equities.
 
 ## Prerequisites before live use
 
-1. **Mandate:** long-only ×1; Classic no crypto; Momentum ≤$1k/name; REAL money; QA PASS before place  
+1. **Mandate:** long-only ×1; Classic crypto only BTC/ETH/SOL (≤15% sleeve); Momentum ≤$1k/name; REAL money; QA PASS before place  
 2. **Ledger truth:** Classic = Classic account (OfersClaw5-PRIYN) via `user-OfersClaw5` (mirror `11368142` optional corroboration only); Momentum mirror `11630170` ($8k reporting truth; keys Momentum-HHHGDTJ execution only) — do not mix books  
 3. **Timeframe:** prefer **daily** (or 1H for Classic discretionary timing). Retune strong-candle multiplier on that TF  
 4. **Stops/targets:** replace pip engine with **ATR or %** (e.g. SL 1.5–2×ATR, TP ≥1.5R) aligned with Classic/Momentum risk rules  
 5. **Confirm on close:** keep ON for any automation  
-6. **Regime gates still win:** Momentum EVENT_VOL_FREEZE / HARD_HALT / SOFT; Classic Fear/cash floor / weekend no new opens  
+6. **Regime gates still win:** Momentum EVENT_VOL_FREEZE / HARD_HALT / SOFT; Classic Fear/cash floor / equities outside 24x5 (crypto 24/7) / max 4 new trades/IDT day  
 7. **No alert→place bypass:** TradingView alert ≠ order; still prepare → QA → place  
 8. **Backtest first:** measure expectancy on the actual symbols/TF before FULL AUTO attachment  
 9. **IP:** third-party Pine remains the author’s; we store **logic parameters + adaptation rules** here, not a redistributed copy of their script

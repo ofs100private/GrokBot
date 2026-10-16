@@ -31,6 +31,13 @@ def _with_momentum_read(f):
         if "momentum_read" not in kw:
             from .testkit import momentum_read as _mr
             kw["momentum_read"] = _mr(now=kw.get("now") or MON)
+        # 2026-10-16: stocks/ETFs need an explicit live isOpen (unknown => CLOSED); legacy tests run open
+        if f.__name__ == "run_checks":
+            kw.setdefault("instrument_is_open", True)
+        else:
+            for lg in ((kw.get("live") or {}).get("legs") or []):
+                if isinstance(lg, dict):
+                    lg.setdefault("is_open", True)
         return f(**kw)
     return g
 
@@ -39,7 +46,7 @@ X.run_checks = _with_momentum_read(X.run_checks)
 X.run_rebalance_checks = _with_momentum_read(X.run_rebalance_checks)
 ET = ZoneInfo("America/New_York")
 PID = f"{RID}#T"
-XLE, XLV, SMH, TMO = 3008, 3017, 6357, 1592
+XLE, XLV, SMH, TMO, DIA = 3008, 3017, 6357, 1592, 3026
 
 
 def rsi(now=MON, **kw):
@@ -203,11 +210,11 @@ def run():
           and rr["caps_after"]["market_value"]["name_pct"] <= 15 + 1e-6)
 
         # ---------- rebalance ----------
-        def add_pack(pid="classic-rebalance-20261012-xle-add", units=5.0, sl=89.3, **kw):
+        def add_pack(pid="classic-rebalance-20261012-xle-add", units=5.0, sl=89.3, tp=103.0, **kw):
             p = {"pack_id": pid, "kind": "rebalance_add", "edge_ref": {"evidence_id": "test_rs_oos"},
-                 "legs": [{"side": "buy", "symbol": "XLE", "instrumentId": XLE, "units": units, "anchor_bid": 94.98,
+                 "legs": [{"side": "buy", "symbol": "DIA", "instrumentId": DIA, "units": units, "anchor_bid": 94.98,
                            "anchor_ask": 95.0, "open_fee_usd": 0.75, "close_fee_usd": 0.75, "stop_loss": sl,
-                           "take_profit": None}]}
+                           "take_profit": tp}]}
             p.update(kw)
             return p
 
@@ -238,15 +245,16 @@ def run():
         write_order_qa(r)
         g = rb(p, write_lock=True)
         t("rebalance GO with QA verdict at fixed path", g["decision"] == "GO", g["blockers"])
-        t("fix3 TP: rebalance buy sends takeProfitRate null (schema: number|null, Optional) and reaches GO",
-          "takeProfitRate" in g["order_payloads"][0] and g["order_payloads"][0]["takeProfitRate"] is None
-          and g["decision"] == "GO", g["order_payloads"])
+        t("2026-10-16 TP: rebalance buy carries calculated takeProfitRate and reaches GO",
+          g["order_payloads"][0]["takeProfitRate"] == 103.0 and g["decision"] == "GO", g["order_payloads"])
+        t("2026-10-16 TP: rebalance buy with TP null => TAKE_PROFIT_MISSING",
+          "TAKE_PROFIT_MISSING" in rb(add_pack(pid="classic-rebalance-20261012-xle-notp", tp=None))["blockers"])
         lv = live_for(p)
         lv["legs"][0]["prepare_response"]["takeProfitRate"] = 142.5
-        t("fix3 TP: payload TP null but prepare echoes a TP => NO-GO",
+        t("fix3 TP: prepare echoes a different TP => NO-GO",
           rb(p, lv)["decision"] != "GO" and any(x.startswith("PREPARE") for x in rb(p, lv)["blockers"]), rb(p, lv)["blockers"])
         p2 = add_pack(pid="classic-rebalance-20261012-xle-add-b")
-        t("E/F: QA repro renamed pack_id same XLE add => locked", {"ALREADY_GO_LOCKED", "SAME_DAY_LEG_LOCKED"} & set(rb(p2)["blockers"]))
+        t("E/F: QA repro renamed pack_id same DIA add => locked", {"ALREADY_GO_LOCKED", "SAME_DAY_LEG_LOCKED"} & set(rb(p2)["blockers"]))
         for f in (root / "audit" / "placed").glob("*.lock"):
             f.unlink()
         t("E: free-text rebalance pack_id => BAD_PACK_ID", "BAD_PACK_ID" in rb(add_pack(pid="rb-xle-A"))["blockers"])
@@ -261,9 +269,9 @@ def run():
         t("C: typed 40%/1d n=1 edge => SKIP", "COST_GATE_SKIP" in rr["blockers"])
         write_registries(root)
         t("size beyond caps => SIZE_EXCEEDS_LIMITS (no silent shrink)", "SIZE_EXCEEDS_LIMITS" in rb(add_pack(units=40.0))["blockers"])
-        write_book(root, extra=[{"symbol": "XLE", "instrumentId": XLE, "value": 50.0, "invested": 50.0, "units": 0.5,
+        write_book(root, extra=[{"symbol": "DIA", "instrumentId": DIA, "value": 50.0, "invested": 50.0, "units": 0.5,
                                  "openRate": 95.0, "positionId": 88, "openTime": ts(MON, 7200)}])
-        t("F: XLE position opened < 24h => RECENT_POSITION_24H", "RECENT_POSITION_24H" in rb(add_pack())["blockers"])
+        t("F: DIA position opened < 24h => RECENT_POSITION_24H", "RECENT_POSITION_24H" in rb(add_pack())["blockers"])
         write_book(root, age_s=61)
         t("F: rebalance book 61s old => BOOK_NOT_LIVE", "BOOK_NOT_LIVE" in rb(add_pack())["blockers"])
         write_book(root)
@@ -334,7 +342,7 @@ def run():
         rr = rb(rot, live_for(rot, held=held))
         t("rotation: one combined gate, payloads sell then buy", rr["cost_gate"]["kind"] == "rotation"
           and "positionId" in rr["order_payloads"][0] and rr["order_payloads"][1]["direction"] == "buy", rr["blockers"])
-        t("rotation edge recomputed from scores (XLE 3% vs XLV -1%)",
+        t("rotation edge recomputed from scores (DIA 3% vs XLV -1%)",
           abs(rr["cost_gate"]["inputs"]["edge"]["expected_return_pct"] - 3.0) < 1e-9
           and abs(rr["cost_gate"]["inputs"]["edge"]["held_expected_return_pct"] + 1.0) < 1e-9)
         write_scores(root, asof="2026-09-30")
@@ -408,7 +416,7 @@ def run():
         sp_ = sell_pack(1.29223, kind="sell", bid=585.0, risk_exit=True, risk_exit_reason="stop_hit", edge_ref=None)
         rr = rb(sp_, live_for(sp_, held=held))
         t("fix4 verified scores: trailing stop SMH 585 <= 588.3 verified", rr["risk_exit_check"]["verified"], rr.get("risk_exit_check"))
-        write_scores(root, overrides={"XLE": ("0.15", 95.0, 1.9, True, True, 0.03)})
+        write_scores(root, overrides={"DIA": ("0.15", 95.0, 1.9, True, True, 0.03)})
         rr = rb(add_pack())
         t("fix4 string score in file => SCORES_VALUE_INVALID", rr["scores"]["error"] == "SCORES_VALUE_INVALID", rr["scores"])
         (root / "scores.json").unlink()
@@ -645,8 +653,10 @@ def run():
         write_book(root)
         fix7_block(root, rb, held, t)
         fix8_block(root, rb, add_pack, sell_pack, live_for, held, t)
-        t("crypto/bare symbol guard on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
-            {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="BTC", instrumentId=100000)]})["blockers"]))
+        t("crypto/bare symbol guard on rebalance leg (bare T = Threshold crypto)", any(b.startswith("INSTRUMENT") for b in rb(
+            {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="T", instrumentId=100528)]})["blockers"]))
+        t("non-major crypto (DOGE) blocked on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
+            {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="DOGE", instrumentId=100043)]})["blockers"]))
         t("bad shape => BAD_REBALANCE_PACK", "BAD_REBALANCE_PACK" in rb({"pack_id": "classic-rebalance-20261012-x",
                                                                             "kind": "rotation", "legs": []}, {"legs": []})["blockers"])
     os.environ.pop(TEST_ENV, None)
@@ -808,23 +818,23 @@ def fix8_block(root, rb, add_pack, sell_pack, live_for, held, t):
         return rb(pack, live, momentum_read=mk.pop("read", None) if "read" in mk else MR(**mk))
 
     r0 = rbm(add_pack())
-    t("fix8b XLE add with a live Momentum read holding XOM/NTAP => no cross-book blocker; audit has xRequestId + sha",
+    t("fix8b DIA add with a live Momentum read holding XOM/NTAP => no cross-book blocker; audit has xRequestId + sha",
       not {b for b in r0["blockers"] if b.startswith(("CROSS_BOOK", "MOMENTUM"))}
       and r0["momentum_read"]["xRequestId"] == "test-xrid" and len(r0["momentum_read"]["response_sha256"]) == 64, r0["blockers"])
-    r1 = rbm(add_pack(), holdings=[("XOM", 1036), ("XLE", 3008)])
-    t("fix8 XLE held in Momentum => rebalance buy CROSS_BOOK_OVERLAP (NO-GO)",
+    r1 = rbm(add_pack(), holdings=[("XOM", 1036), ("DIA", 3026)])
+    t("fix8 DIA held in Momentum => rebalance buy CROSS_BOOK_OVERLAP (NO-GO)",
       "CROSS_BOOK_OVERLAP" in r1["blockers"] and r1["decision"] == "NO-GO", r1["blockers"])
-    t("fix8 overlap by instrument id alone", "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[("ZZZ", 3008)])["blockers"])
-    t("fix8 overlap by symbol alone", "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[("XLE", 999999)])["blockers"])
-    for lbl, sym in (("lowercase", "xle"), (".US suffix", "XLE.US"), ("lowercase .us", " xle.us ")):
-        t(f"fix8b normalization: Momentum symbol {lbl} {sym!r} matches XLE",
+    t("fix8 overlap by instrument id alone", "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[("ZZZ", 3026)])["blockers"])
+    t("fix8 overlap by symbol alone", "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[("DIA", 999999)])["blockers"])
+    for lbl, sym in (("lowercase", "dia"), (".US suffix", "DIA.US"), ("lowercase .us", " dia.us ")):
+        t(f"fix8b normalization: Momentum symbol {lbl} {sym!r} matches DIA",
           "CROSS_BOOK_OVERLAP" in rbm(add_pack(), holdings=[(sym, 999999)])["blockers"])
     t("fix8b norm_symbol('tmo.US') == 'TMO' and overlap() normalizes the Classic side too",
       MH.norm_symbol("tmo.US") == "TMO" and MH.overlaps({"symbols": {"XLE"}, "ids": set()}, "xle.us", None))
-    pend = [{"status": "placed", "market": {"instrumentId": 3008, "symbol": "XLE"}}]
-    t("fix8b pending Momentum XLE buy order blocks a Classic XLE buy",
+    pend = [{"status": "placed", "market": {"instrumentId": 3026, "symbol": "DIA"}}]
+    t("fix8b pending Momentum DIA buy order blocks a Classic DIA buy",
       "CROSS_BOOK_OVERLAP" in rbm(add_pack(), orders=pend)["blockers"])
-    canc = [{"status": "canceled", "market": {"instrumentId": 3008, "symbol": "XLE"}}]
+    canc = [{"status": "canceled", "market": {"instrumentId": 3026, "symbol": "DIA"}}]
     t("fix8b canceled Momentum order does not count", "CROSS_BOOK_OVERLAP" not in rbm(add_pack(), orders=canc)["blockers"])
     # R1: forged shared file is irrelevant at GO
     (root / "momentum.json").write_text(json.dumps({"kind": MH.KIND, "source": MH.SOURCE, "mirrorId": MH.MIRROR_ID,
@@ -833,8 +843,8 @@ def fix8_block(root, rb, add_pack, sell_pack, live_for, held, t):
     t("fix8b R1 forged fresh shared file (no XLE, asOf now) + no live read => MOMENTUM_READ_MISSING, NO-GO",
       "MOMENTUM_READ_MISSING" in r2["blockers"] and r2["decision"] == "NO-GO", r2["blockers"])
     write_momentum(root, holdings=[("XOM", 1036)])
-    r3 = rbm(add_pack(), holdings=[("XLE", 3008)])
-    t("fix8b R1 GO uses the live read, not the file: file says no XLE, live read has XLE => CROSS_BOOK_OVERLAP",
+    r3 = rbm(add_pack(), holdings=[("DIA", 3026)])
+    t("fix8b R1 GO uses the live read, not the file: file says no DIA, live read has DIA => CROSS_BOOK_OVERLAP",
       "CROSS_BOOK_OVERLAP" in r3["blockers"], r3["blockers"])
     t("fix8b R1 live read captured 61 s before GO => MOMENTUM_SNAPSHOT_STALE",
       "MOMENTUM_SNAPSHOT_STALE" in rbm(add_pack(), age_s=5, captured_age_s=61)["blockers"])
@@ -930,8 +940,19 @@ def fix8_block(root, rb, add_pack, sell_pack, live_for, held, t):
 def main() -> int:
     import contextlib
     import io
-    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-        res = run()
+    # Legacy regression suite asserts with the pre-2026-10-16 numeric limits (floor $2500, ETF 30% /
+    # stock 15%); the sizing/cap LOGIC is unchanged, so it runs with those constants pinned. The new
+    # limits, 24x5/crypto windows, daily budget and mandatory TP are covered in test_rules_20261016.
+    legacy = {"CASH_FLOOR_USD": 2500.0, "NAME_CAP": {"etf": 0.30, "stock": 0.15, "crypto": 0.15}}
+    saved = {k: getattr(X, k) for k in legacy}
+    for k, v in legacy.items():
+        setattr(X, k, v)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            res = run()
+    finally:
+        for k, v in saved.items():
+            setattr(X, k, v)
     for name, ok, detail in res:
         print(f"{'PASS' if ok else 'FAIL'}  {name}" + (f"  [{detail}]" if not ok and detail != "" else ""))
     n_fail = sum(1 for _, ok, _ in res if not ok)

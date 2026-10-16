@@ -1,0 +1,758 @@
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/auto_1h.py /workspace/classic_rsi/auto_1h.py
+--- classic_rsi_orig/auto_1h.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/auto_1h.py	2026-10-16 01:29:51.311831794 +0300
+@@ -1,7 +1,9 @@
+ """Classic-only 1H auto runner (OfersClaw5-PRIYN).
+ 
+ On each fire:
+-  1. Session / weekend gate (no new opens on weekend unless --force)
++  1. Session gate (2026-10-16): US stocks/ETFs 24x5 via eToro extended hours (RTH fallback when an
++     instrument lacks extended hours); crypto majors BTC/ETH/SOL 24/7 incl. weekends; max 4 NEW
++     trades per IDT day (trade_counter.py)
+   2. Build symbol universe via dynamic screener:
+        S&P pool → liquid ADV$ → rising 1H volume (top N) ∪ live Classic book
+        (never the old fixed 6-name DEFAULT_SYMBOLS as primary universe)
+@@ -15,8 +17,9 @@
+      spread/fee, cash floor auto-shrink, caps, drift) → order-QA PASS → Trader_Classic places
+      via user-OfersClaw5 — no chat authorization, no trade-count or monthly new-name cap.
+ 
+-Mandate locks unchanged: x1 long only, no crypto, cash floor ~$2.5k, 30% ETF / 15% stock /
+-45% sleeve caps, stops, sell-before-buy. Does not touch Momentum.
++Mandate (2026-10-16): x1 long only, crypto ONLY BTC/ETH/SOL (crypto sleeve <=15% total equity),
++cash floor ~$1.5k, 35% ETF / 20% stock / 45% sleeve caps of TOTAL equity, SL+TP required,
++sell-before-buy, max 4 new trades/day. Does not touch Momentum.
+ """
+ 
+ from __future__ import annotations
+@@ -29,7 +32,9 @@
+ from zoneinfo import ZoneInfo
+ 
+ from .audit import DEFAULT_AUDIT_DIR, append_audit, new_run_id
+-from .instruments import guard_symbol, map_meta
++from .instruments import crypto_major, guard_symbol, map_meta
++from .market_hours import extended_session
++from . import trade_counter as TC
+ from .propose import AUTO_PLACE_DOC, propose_from_symbols, stamp_auto_place
+ from .universe import build_screened_universe
+ 
+@@ -37,7 +42,8 @@
+ ET = ZoneInfo("America/New_York")
+ PORTFOLIO = "OfersClaw5-PRIYN"
+ MIRROR_ID = 11368142
+-CASH_FLOOR_USD = 2500.0
++CASH_FLOOR_USD = 1500.0  # Ofer 2026-10-16 (was 2500)
++CRYPTO_UNIVERSE = ("BTC", "ETH", "SOL")
+ PORTFOLIO_SNAPSHOT = Path("/workspace/classic-portfolio-for-app.json")
+ CASH_MISSING_FLAG = "AVAILABLE_CASH_MISSING"  # fix9 hard flag (summary.availableCash missing/invalid)
+ BOOK_SNAPSHOT_MAX_AGE_MIN = 30.0  # older book snapshot => fail closed (no live-read path in this script)
+@@ -69,6 +75,15 @@
+     return (9 * 60 + 30) <= minutes < (16 * 60)
+ 
+ 
++def is_equity_window_open(now: Optional[datetime] = None) -> bool:
++    """eToro 24x5 extended window for US stocks/ETFs (Sun 20:05 ET -> Fri 20:00 ET, minus holidays)."""
++    return bool(extended_session(now)["open"])
++
++
++def daily_budget() -> dict[str, Any]:
++    return TC.status()
++
++
+ def load_book_symbols(snapshot: Path = PORTFOLIO_SNAPSHOT) -> tuple[list[str], Optional[float], Optional[dict]]:
+     """Return (symbols, available_cash, summary) from Classic App snapshot if present."""
+     if not snapshot.exists():
+@@ -182,11 +197,11 @@
+     """Soft gates for the auto envelope (Trader_Classic still re-checks live)."""
+     weekend = is_weekend_idt()
+     rth = is_us_rth()
++    eq_open = is_equity_window_open()
++    budget = daily_budget()
+     blocks: list[str] = []
+-    if weekend and not force:
+-        blocks.append("weekend_no_new_opens")
+-    if not rth and not force and not weekend:
+-        blocks.append("outside_us_rth")
++    if not budget.get("ok"):
++        blocks.append("daily_new_trade_limit")  # max 4/day; never bypassed by --force
+     if cash is None:
+         # fix9: fail closed -- the cash floor cannot be verified, so no new buys (even with --force)
+         blocks.append("available_cash_missing")
+@@ -195,6 +210,12 @@
+     return {
+         "weekend": weekend,
+         "us_rth": rth,
++        "equity_window_open": eq_open,
++        "equity_session": "extended_24x5" if eq_open else "closed",
++        "crypto_window_open": True,
++        "allow_equity_buys": eq_open or force,
++        "allow_crypto_buys": True,
++        "daily_trade_budget": budget,
+         "available_cash": cash,
+         "cash_floor_usd": CASH_FLOOR_USD,
+         "blocks": blocks,
+@@ -231,6 +252,9 @@
+         }
+     else:
+         universe, universe_meta = build_universe()
++    if book_stale is None:
++        # 2026-10-16: crypto majors always scanned (24/7); dedupe; never bare crypto look-alikes
++        universe = list(dict.fromkeys([*universe, *CRYPTO_UNIVERSE]))
+ 
+     gates = mandate_gate(force=force, cash=cash)
+     rid = new_run_id("auto")
+@@ -271,6 +295,11 @@
+         )
+         buy_packs = list(propose_payload.get("buy_packs") or [])
+         risk_off = list(propose_payload.get("risk_off") or [])
++        if not gates.get("allow_equity_buys"):
++            # equities closed (weekend/holiday): only crypto majors may proceed
++            held = [p for p in buy_packs if not crypto_major((p.get("instrument") or {}).get("symbol") or "")]
++            buy_packs = [p for p in buy_packs if p not in held]
++            propose_payload["equity_window_closed_suppressed"] = held
+ 
+     # Instrument guard (fail closed): packs without a resolved US stock/ETF eToro id were
+     # dropped inside propose_from_symbols; surface the flags + dropped list here.
+@@ -309,7 +338,7 @@
+ 
+     instrument_guard = {
+         "map": map_meta(),
+-        "rule": "drop pack if no instrumentId, crypto asset class/exchange, or not a US stock/ETF",
++        "rule": "drop pack if no instrumentId, or not a US stock/ETF, or crypto other than BTC/ETH/SOL majors (100000/100001/100063)",
+         "dropped": [
+             {k: d.get(k) for k in ("kind", "symbol", "flag", "reason", "carriedInstrumentId")}
+             for d in instrument_dropped
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/backtest.py /workspace/classic_rsi/backtest.py
+--- classic_rsi_orig/backtest.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/backtest.py	2026-10-16 01:29:23.879831794 +0300
+@@ -46,7 +46,9 @@
+     """Fetch 1H bars from Yahoo via yfinance. period max ~60d for 1h."""
+     import yfinance as yf
+ 
+-    t = yf.Ticker(symbol)
++    from .instruments import YAHOO_CRYPTO, crypto_major
++    cm = crypto_major(symbol)
++    t = yf.Ticker(YAHOO_CRYPTO[cm] if cm else symbol)
+     # interval 1h; Yahoo caps history for intraday
+     raw = t.history(period=period, interval="1h", auto_adjust=True)
+     return _normalize_ohlc(raw)
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/execute_pass.py /workspace/classic_rsi/execute_pass.py
+--- classic_rsi_orig/execute_pass.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/execute_pass.py	2026-10-16 01:29:30.771831794 +0300
+@@ -48,17 +48,25 @@
+ 
+ from . import cost_gate as CG
+ from .instruments import guard_symbol, resolve
+-from .market_hours import ET, us_session
++from .market_hours import ET, trading_window, us_session  # noqa: F401
++from . import trade_counter as TC
+ from .paths import order_verdict_path, paths, run_verdict_path
+ from . import momentum_holdings as MH
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v11-fix8b"
+-CASH_FLOOR_USD = 2500.0
++VERSION = "execute-pass-v12-24x5-crypto"
++CASH_FLOOR_USD = 1500.0  # Ofer 2026-10-16 (was 2500)
+ MIN_POSITION_USD = 400.0
+-NAME_CAP = {"etf": 0.30, "stock": 0.15}
++NAME_CAP = {"etf": 0.35, "stock": 0.20, "crypto": 0.15}  # Ofer 2026-10-16 (was etf .30 / stock .15)
+ SLEEVE_CAP = 0.45
++CRYPTO_SLEEVE = "crypto"
++CRYPTO_SLEEVE_CAP = 0.15  # BTC+ETH+SOL combined, % of total equity
++
++
++def sleeve_cap(sleeve: Optional[str]) -> float:
++    return CRYPTO_SLEEVE_CAP if sleeve == CRYPTO_SLEEVE else SLEEVE_CAP
+ RISK_EXIT_BUFFER_EQUITY_PCT = 0.01  # fix5: sized risk exits overshoot the floor/cap by 1% of equity
++MIN_REWARD_RISK = 1.25  # TP distance >= 1.25x SL distance (ATR 2.0/1.5 default = 1.33)
+ SIZED_RISK_EXITS = ("cash_below_floor", "hard_cap_breach")  # full close only via the <$400 residual rule
+ UNIT_STEP = 1e-6
+ # fix6: GO accepts pack units in [required_now, RISK_EXIT_SIZE_BAND * max(required_at_qa, required_now)]
+@@ -86,7 +94,7 @@
+ BOOK_ONLY_RISK_EXITS = ("cash_below_floor", "stop_hit", "hard_cap_breach")
+ SCORES_MAX_TRADING_DAYS = 0  # enforced in scorer.verify_scores_file (sidecar sha + schema + age)
+ SL_ATR_BOUNDS = (1.0, 3.5)
+-TRAIL_BOUNDS = {"etf": (0.075, 0.085), "stock": (0.10, 0.12)}  # fraction below ask (ETF 8% +/-0.5pp)
++TRAIL_BOUNDS = {"etf": (0.075, 0.085), "stock": (0.10, 0.12), "crypto": (0.12, 0.20)}  # fraction below ask (ETF 8% +/-0.5pp)
+ RSI_PACK_ID_RE = re.compile(r"^(classic-rsi-auto-\d{8}-\d{6}-[0-9a-f]{8})#([A-Z][A-Z.]{0,9})$")
+ REBAL_PACK_ID_RE = re.compile(r"^classic-rebalance-\d{8}-[a-z0-9][a-z0-9-]{0,80}$")
+ 
+@@ -99,6 +107,7 @@
+     "XLF": "industrials_financials", "XLI": "industrials_financials",
+     "T": "communication_defensive", "VZ": "communication_defensive",
+     "XLP": "defensive", "XLU": "defensive", "XLY": "consumer",
++    "BTC": "crypto", "ETH": "crypto", "SOL": "crypto",
+ }
+ 
+ 
+@@ -342,9 +351,11 @@
+         return bool(ok)
+ 
+ 
+-def _common_gates(c: _Ctx, hold: bool, book: dict) -> Optional[float]:
+-    s = us_session(c.now)
+-    c.check("us_regular_session", s["open"], s, s.get("reason") or "MARKET_CLOSED")
++def _common_gates(c: _Ctx, hold: bool, book: dict, asset_class: Optional[str] = "stock",
++                  instrument_is_open: Optional[bool] = None) -> Optional[float]:
++    # 2026-10-16: US stocks/ETFs 24x5 (eToro extended hours), crypto majors 24/7.
++    s = trading_window(asset_class, c.now, instrument_is_open=instrument_is_open)
++    c.check("market_window_open", s["open"], s, s.get("reason") or "MARKET_CLOSED")
+     c.check("no_hold", not hold, "explicit Ofer/CoS hold" if hold else None, "HOLD")
+     if not c.check("book_loaded", book.get("ok"), book.get("error"), "BOOK_MISSING"):
+         return None
+@@ -431,10 +442,11 @@
+         if sleeves_ok:
+             sl = smap[symbol]
+             scur = sum(v for s, v in vals.items() if smap.get(s) == sl)
+-            ks = (1 - SLEEVE_CAP) if CAP_DENOMINATOR == "invested" else 1.0
+-            mx = _floor_units(((SLEEVE_CAP * inv - scur) / ks) / ask)
++            scap = sleeve_cap(sl)
++            ks = (1 - scap) if CAP_DENOMINATOR == "invested" else 1.0
++            mx = _floor_units(((scap * inv - scur) / ks) / ask)
+             if fu > mx:
+-                shrink.append({"reason": f"sleeve_cap_45pct_{basis}", "from_units": fu, "to_units": mx})
++                shrink.append({"reason": f"sleeve_cap_{int(scap * 100)}pct_{basis}", "from_units": fu, "to_units": mx})
+                 fu = mx
+     notional = fu * ask
+     caps = {}
+@@ -447,7 +459,7 @@
+             caps[basis].update(sleeve=sl, sleeve_pct=round((sum(v for s, v in vals.items() if smap.get(s) == sl)
+                                                             + notional) / inv_after * 100, 2) if inv_after else None)
+     info["caps_after"] = {"market_value": caps["values"], "cost_basis": caps["cost"], "name_cap_pct": cap * 100,
+-                          "sleeve_cap_pct": SLEEVE_CAP * 100}
++                          "sleeve_cap_pct": sleeve_cap(smap.get(symbol)) * 100}
+     return fu, shrink, info
+ 
+ 
+@@ -464,6 +476,29 @@
+     return out
+ 
+ 
++def _tp_check(c: _Ctx, tag: str, tp: Any, sl: Any, entry: Optional[float]) -> None:
++    """2026-10-16: every new buy MUST carry a calculated take-profit above entry (fail closed)."""
++    tpf, slf = _f(tp), _f(sl)
++    c.check(f"take_profit_required{tag}", tpf is not None and entry is not None and tpf > entry,
++            {"takeProfitRate": tpf, "entry": entry}, "TAKE_PROFIT_MISSING")
++    rr = None if (tpf is None or slf is None or entry is None or entry <= slf) else (tpf - entry) / (entry - slf)
++    c.check(f"reward_risk_min{tag}", rr is not None and rr >= MIN_REWARD_RISK,
++            {"reward_risk": None if rr is None else round(rr, 3), "min": MIN_REWARD_RISK}, "REWARD_RISK_TOO_LOW")
++
++
++def _daily_trade_budget(c: _Ctx, book: dict) -> dict:
++    """Max 4 NEW trades per IDT calendar day (file counter, cross-checked with book opens today)."""
++    day0 = c.now.astimezone(IDT).replace(hour=0, minute=0, second=0, microsecond=0)
++    opens = 0
++    for p in (book.get("positions") or []) if book.get("ok") else []:
++        t = _open_time_utc(p.get("openTime"))
++        if t is not None and t >= day0:
++            opens += 1
++    st = TC.status(c.now, book_opens_today=opens)
++    c.check("daily_new_trade_budget", st["ok"], st, "DAILY_TRADE_LIMIT")
++    return st
++
++
+ def _sl_check(c: _Ctx, tag: str, sl: Any, live_bid: Optional[float]) -> None:
+     slf = _f(sl)
+     c.check(f"stop_loss_valid{tag}", slf is not None and live_bid is not None and 0 < slf < live_bid,
+@@ -579,7 +614,9 @@
+     out.update(instrumentId=iid, etoroSymbol=inst.get("etoroSymbol"))
+     run_ids = {run_id, ctx.get("envelope_run_id"), ctx.get("propose_run_id"), pack.get("run_id")}
+     book = load_book(now)
+-    cash = _common_gates(c, hold, book)
++    cash = _common_gates(c, hold, book, (resolve(symbol) or {}).get("assetClass"),
++                         (pack.get("instrument") or {}).get("isOpen"))
++    out["daily_trade_budget"] = _daily_trade_budget(c, book)
+     c.check("auto_place_eligible", pack.get("auto_place_eligible") is True, pack.get("auto_place_blockers"),
+             "NOT_AUTO_PLACE_ELIGIBLE")
+     ok, why = check_verdict(run_verdict_path(run_id), skill=RUN_QA_SKILL, max_age_s=RUN_QA_MAX_AGE_S, now=now,
+@@ -634,6 +671,7 @@
+                "orderType": "mkt", "stopLossRate": rl.get("stop_loss"), "takeProfitRate": rl.get("take_profit")}
+     out["order_payloads"] = [payload]
+     _sl_check(c, "", rl.get("stop_loss"), lbid)
++    _tp_check(c, "", rl.get("take_profit"), rl.get("stop_loss"), a_ask)
+     anchor_cg = live_cg = None
+     if fu > 0 and rl.get("stop_loss") and rl.get("take_profit"):
+         kw = dict(units=fu, open_fee_usd=open_fee_usd, close_fee_usd=close_fee_usd, overnight_usd=overnight_usd,
+@@ -823,7 +861,7 @@
+ def _cap_limit(key: str) -> Optional[float]:
+     kind, name = key.split(":", 1)
+     if kind == "sleeve":
+-        return SLEEVE_CAP
++        return sleeve_cap(name)
+     return NAME_CAP.get(str((resolve(name) or {}).get("assetClass") or ""))
+ 
+ 
+@@ -934,7 +972,12 @@
+                    {"kind": kind, "sells": len(sells), "buys": len(buys), "live_legs": len(lives)}, "BAD_REBALANCE_PACK"):
+         return _finish(out, c, None, False)
+     book = load_book(now)
+-    cash = _common_gates(c, hold, book)
++    leg_acs = {str((resolve(l.get("symbol") or "") or {}).get("assetClass") or "") for l in legs}
++    # every leg must be tradable now: any stock/ETF leg => 24x5 window; crypto-only => 24/7
++    win_ac = "crypto" if leg_acs == {"crypto"} else ("stock" if leg_acs <= {"stock", "etf", "crypto"} else None)
++    cash = _common_gates(c, hold, book, win_ac)
++    if buys:  # buy legs are NEW trades for the 4/day budget; pure sells/trims/protective exits are not
++        out["daily_trade_budget"] = _daily_trade_budget(c, book)
+     sc = load_scores(now)
+     out["scores"] = {k: sc.get(k) for k in ("ok", "error", "asOf_bars", "path", "sha256", "age_trading_days")}
+     # fix4: protective exits that read only the book + live quote (cash_below_floor, stop_hit on the
+@@ -1060,9 +1103,7 @@
+             slb = _sl_bounds_ok(_f(l.get("stop_loss")), a_ask or 0.0, atr_d, ac)
+             c.check(f"sl_bounds{tag}", slb["ok"], slb, "SL_OUT_OF_BOUNDS")
+             _sl_check(c, tag, l.get("stop_loss"), lbid)
+-            if l.get("take_profit") is not None:
+-                c.check(f"take_profit_valid{tag}", (_f(l.get("take_profit")) or 0) > (a_ask or 0),
+-                        l.get("take_profit"), "TAKE_PROFIT_INVALID")
++            _tp_check(c, tag, l.get("take_profit"), l.get("stop_loss"), a_ask)
+             payload = {"account": P["account"], "direction": "buy", "instrumentId": iid, "units": fu, "leverage": 1,
+                        "orderType": "mkt", "stopLossRate": _f(l.get("stop_loss")), "takeProfitRate": _f(l.get("take_profit"))}
+             base = {"symbol": sym, "units": fu, "spread_usd": l.get("spread_usd"), "open_fee_usd": l.get("open_fee_usd"),
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/instruments.py /workspace/classic_rsi/instruments.py
+--- classic_rsi_orig/instruments.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/instruments.py	2026-10-16 01:29:23.879831794 +0300
+@@ -31,6 +31,19 @@
+ ALLOWED_TYPES = frozenset({"Stocks", "ETF"})
+ ALLOWED_ASSET_CLASSES = frozenset({"stock", "etf"})
+ CRYPTO_WORDS = frozenset({"crypto", "cryptocurrency", "digital currency"})
++# 2026-10-16: ONLY these crypto majors are tradable (x1 long). Verified via user-OfersClaw5
++# GET /api/v1/market-data/search (xRequestId 93a0dc63-d79a-4005-9e3b-a8de00c5b87d).
++# Bare 'T' stays blocked (Threshold crypto 100528); AT&T is T.US 1030.
++CRYPTO_MAJORS = {"BTC": 100000, "ETH": 100001, "SOL": 100063}
++CRYPTO_MAJOR_IDS = frozenset(CRYPTO_MAJORS.values())
++YAHOO_CRYPTO = {k: f"{k}-USD" for k in CRYPTO_MAJORS}
++
++
++def crypto_major(symbol: str) -> Optional[str]:
++    s = str(symbol or "").upper().strip()
++    if s.endswith("-USD"):
++        s = s[:-4]
++    return s if s in CRYPTO_MAJORS else None
+ 
+ 
+ @lru_cache(maxsize=4)
+@@ -76,6 +89,10 @@
+     s = _norm(symbol)
+     if not s:
+         return None
++    cm = crypto_major(s)
++    if cm:
++        return {"symbol": cm, "etoroSymbol": cm, "instrumentId": CRYPTO_MAJORS[cm], "type": "Crypto",
++                "assetClass": "crypto", "exchangeId": 8}
+     for key in (s, s.replace(".", "-")):
+         if key in inst:
+             return dict(inst[key])
+@@ -103,6 +120,9 @@
+         exch = int(entry.get("exchangeId"))
+     except (TypeError, ValueError):
+         exch = None
++    if (iid in CRYPTO_MAJOR_IDS and ac == "crypto"
++            and CRYPTO_MAJORS.get(str(entry.get("etoroSymbol") or "").upper()) == iid):
++        return True, None, "ok (crypto major)"
+     if (
+         iid in crypto_ids
+         or typ.lower() in CRYPTO_WORDS
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/market_hours.py /workspace/classic_rsi/market_hours.py
+--- classic_rsi_orig/market_hours.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/market_hours.py	2026-10-16 01:29:23.879831794 +0300
+@@ -41,6 +41,47 @@
+     return {**base, "open": True, "reason": None, "close": close.strftime("%H:%M")}
+ 
+ 
++# ---------------------------------------------------------------- 24x5 / crypto windows (2026-10-16)
++# eToro 24/5 for US stocks/ETFs: Sun 20:05 ET -> Fri 20:00 ET (overnight + pre + RTH + after-hours),
++# closed on US market holidays. Not every instrument supports it: the per-instrument live flag
++# (isOpen from market-data / prepare-trade rejection) always wins; if it is unknown the caller may
++# fall back to RTH. Crypto majors trade 24/7 including weekends.
++EXT_SUN_OPEN, EXT_FRI_CLOSE = time(20, 5), time(20, 0)
++
++
++def extended_session(now: Optional[datetime] = None) -> dict:
++    now = now or datetime.now(ET)
++    if now.tzinfo is None:
++        return {"open": False, "reason": "NAIVE_TIMESTAMP"}
++    et = now.astimezone(ET)
++    d, t, wd = et.date(), et.time(), et.weekday()
++    base = {"et": et.strftime("%Y-%m-%d %H:%M %Z"), "session": "extended_24x5"}
++    if d.year not in KNOWN_YEARS:
++        return {**base, "open": False, "reason": "MARKET_CALENDAR_UNKNOWN"}
++    if wd == 5 or (wd == 6 and t < EXT_SUN_OPEN) or (wd == 4 and t >= EXT_FRI_CLOSE):
++        return {**base, "open": False, "reason": "WEEKEND"}
++    # trading date the overnight session belongs to (after 20:00 ET -> next day's session)
++    sess = d + timedelta(days=1) if t >= time(20, 0) else d
++    if sess in HOLIDAYS or (t < time(20, 0) and d in HOLIDAYS):
++        return {**base, "open": False, "reason": "US_HOLIDAY"}
++    return {**base, "open": True, "reason": None}
++
++
++def trading_window(asset_class: Optional[str], now: Optional[datetime] = None, *,
++                   instrument_is_open: Optional[bool] = None, supports_extended: Optional[bool] = True) -> dict:
++    """Open/closed for one asset class. crypto -> 24/7; stock/etf -> 24x5 (or RTH if not extended)."""
++    ac = str(asset_class or "").lower()
++    if ac == "crypto":
++        out = {"open": True, "reason": None, "session": "crypto_24x7"}
++    elif ac in ("stock", "etf"):
++        out = extended_session(now) if supports_extended else {**us_session(now), "session": "rth_fallback"}
++    else:
++        return {"open": False, "reason": "ASSET_CLASS_UNKNOWN", "session": None}
++    if instrument_is_open is False:  # live per-instrument flag always wins (fail closed)
++        return {**out, "open": False, "reason": "INSTRUMENT_CLOSED"}
++    return out
++
++
+ # ---------------------------------------------------------------- trading-day helpers (fix3)
+ def is_trading_day(d: date) -> bool:
+     """Weekday, known calendar year, not a US market holiday."""
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/propose.py /workspace/classic_rsi/propose.py
+--- classic_rsi_orig/propose.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/propose.py	2026-10-16 01:29:47.403831794 +0300
+@@ -169,17 +169,19 @@
+         "levels": levels_to_dict(levels),
+         "sizing": {
+             "suggested_notional_usd": suggested_notional_usd,
+-            "note": "Trader_Classic sets size; cash floor ≥~$2.5k after fill; ×1 only",
++            "note": "Trader_Classic sets size; cash floor ≥~$1.5k after fill; ×1 only",
+         },
+         "thesis": thesis,
+         "mandate_reminders": [
+             "long-only ×1",
+-            "no crypto",
+-            "cash floor ≥ ~$2.5k after add",
+-            "weekend: no new opens unless Ofer overrides",
++            "crypto: only BTC/ETH/SOL x1 long, crypto sleeve <= 15% of total equity",
++            "cash floor ≥ ~$1.5k after add",
++            "hours: US stocks/ETFs 24x5 (eToro extended, RTH fallback); crypto 24/7",
++            "max 4 NEW trades per IDT day (SL edits / protective exits excluded)",
++            "TP + SL both required on the order",
+             "Fear / regime gates unchanged — still apply",
+             "run-QA PASS + order-QA PASS + final cost gate (execute_pass GO) required before place",
+-            "caps 30% ETF / 15% stock / 45% sleeve; sell-before-buy",
++            "caps 35% ETF / 20% stock / 15% crypto sleeve / 45% sleeve of TOTAL equity; sell-before-buy",
+         ],
+         "fee_estimate": None,  # set below from the preliminary cost gate; final via prepare/getCost
+         "overnight_financing_estimate": None,
+@@ -204,7 +206,7 @@
+ AUTO_PLACE_DOC = (
+     "auto_place_eligible=True means the pack may proceed on the FULL AUTO path "
+     "(prepare → execute_pass final gate → order-QA PASS → Trader_Classic places via MCP). "
+-    "True only if: no hard flags, instrument guard OK (resolved US stock/ETF id), long-only x1 buy, "
++    "True only if: no hard flags, instrument guard OK (resolved US stock/ETF id or BTC/ETH/SOL major), long-only x1 buy, entry>SL and a calculated TP>entry, "
+     "book snapshot not stale, soft mandate gates allow new buys (a --force run is never eligible), "
+     "and the preliminary cost gate verdict is PASS (not COST_GATE_SKIP / COST_GATE_INVALID). It is NOT a place instruction; do_not_place=True still means this "
+     "script never places. run-QA PASS is still required first."
+@@ -232,6 +234,13 @@
+         blockers.append("INSTRUMENT_GUARD")
+     if pack.get("side") != "buy" or pack.get("action") != "CANDIDATE_LONG" or pack.get("leverage") != 1:
+         blockers.append("NOT_LONG_X1")
++    lv = pack.get("levels") or {}
++    try:
++        tp_ok = float(lv.get("take_profit")) > float(lv.get("entry")) > float(lv.get("stop_loss")) > 0
++    except (TypeError, ValueError):
++        tp_ok = False
++    if not tp_ok:
++        blockers.append("TAKE_PROFIT_OR_STOP_MISSING")
+     cg = pack.get("cost_gate") or {}
+     if not cg:
+         blockers.append("COST_GATE_MISSING")
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/test_cash_floor.py /workspace/classic_rsi/test_cash_floor.py
+--- classic_rsi_orig/test_cash_floor.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/test_cash_floor.py	2026-10-16 01:29:51.311831794 +0300
+@@ -43,8 +43,10 @@
+     t("non-dict summary -> None", c is None, str(c))
+ 
+     # --- mandate_gate
+-    o_we, o_rth = A.is_weekend_idt, A.is_us_rth
++    o_we, o_rth, o_eq, o_bud = A.is_weekend_idt, A.is_us_rth, A.is_equity_window_open, A.daily_budget
+     A.is_weekend_idt, A.is_us_rth = (lambda: False), (lambda: True)
++    A.is_equity_window_open = lambda *a: True
++    A.daily_budget = lambda: {"ok": True, "count": 0, "remaining": 4, "max": 4}
+     try:
+         g = A.mandate_gate(force=False, cash=None)
+         t("gate blocks on missing cash", "available_cash_missing" in g["blocks"] and not g["allow_new_buys"], str(g))
+@@ -52,7 +54,7 @@
+         t("--force does not bypass missing cash", "available_cash_missing" in g["blocks"] and not g["allow_new_buys"], str(g))
+         g = A.mandate_gate(force=False, cash=3816.07)
+         t("gate clear with cash above floor", g["blocks"] == [] and g["allow_new_buys"] and g["available_cash"] == 3816.07, str(g))
+-        g = A.mandate_gate(force=False, cash=2400.0)
++        g = A.mandate_gate(force=False, cash=1400.0)
+         t("cash below floor still blocks", "cash_below_floor" in g["blocks"], str(g))
+ 
+         # --- run_auto_1h end-to-end with stubs
+@@ -86,7 +88,7 @@
+             A.load_book_symbols, A.book_snapshot_staleness, A.propose_from_symbols, A.guard_symbol = o_load, o_stale, o_prop, o_guard
+             A.append_audit, A.LATEST_AUTO = o_audit, o_latest
+     finally:
+-        A.is_weekend_idt, A.is_us_rth = o_we, o_rth
++        A.is_weekend_idt, A.is_us_rth, A.is_equity_window_open, A.daily_budget = o_we, o_rth, o_eq, o_bud
+ 
+     # --- book writer (book_sleeves.ensure_summary)
+     b = B.ensure_summary({"cash": 3816.07, "equity": 7243.35, "positions": pos})
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/test_execute_pass.py /workspace/classic_rsi/test_execute_pass.py
+--- classic_rsi_orig/test_execute_pass.py	2026-10-16 01:29:00.311831794 +0300
++++ /workspace/classic_rsi/test_execute_pass.py	2026-10-16 01:30:17.191831794 +0300
+@@ -203,11 +203,11 @@
+           and rr["caps_after"]["market_value"]["name_pct"] <= 15 + 1e-6)
+ 
+         # ---------- rebalance ----------
+-        def add_pack(pid="classic-rebalance-20261012-xle-add", units=5.0, sl=89.3, **kw):
++        def add_pack(pid="classic-rebalance-20261012-xle-add", units=5.0, sl=89.3, tp=103.0, **kw):
+             p = {"pack_id": pid, "kind": "rebalance_add", "edge_ref": {"evidence_id": "test_rs_oos"},
+                  "legs": [{"side": "buy", "symbol": "XLE", "instrumentId": XLE, "units": units, "anchor_bid": 94.98,
+                            "anchor_ask": 95.0, "open_fee_usd": 0.75, "close_fee_usd": 0.75, "stop_loss": sl,
+-                           "take_profit": None}]}
++                           "take_profit": tp}]}
+             p.update(kw)
+             return p
+ 
+@@ -238,12 +238,13 @@
+         write_order_qa(r)
+         g = rb(p, write_lock=True)
+         t("rebalance GO with QA verdict at fixed path", g["decision"] == "GO", g["blockers"])
+-        t("fix3 TP: rebalance buy sends takeProfitRate null (schema: number|null, Optional) and reaches GO",
+-          "takeProfitRate" in g["order_payloads"][0] and g["order_payloads"][0]["takeProfitRate"] is None
+-          and g["decision"] == "GO", g["order_payloads"])
++        t("2026-10-16 TP: rebalance buy carries calculated takeProfitRate and reaches GO",
++          g["order_payloads"][0]["takeProfitRate"] == 103.0 and g["decision"] == "GO", g["order_payloads"])
++        t("2026-10-16 TP: rebalance buy with TP null => TAKE_PROFIT_MISSING",
++          "TAKE_PROFIT_MISSING" in rb(add_pack(pid="classic-rebalance-20261012-xle-notp", tp=None))["blockers"])
+         lv = live_for(p)
+         lv["legs"][0]["prepare_response"]["takeProfitRate"] = 142.5
+-        t("fix3 TP: payload TP null but prepare echoes a TP => NO-GO",
++        t("fix3 TP: prepare echoes a different TP => NO-GO",
+           rb(p, lv)["decision"] != "GO" and any(x.startswith("PREPARE") for x in rb(p, lv)["blockers"]), rb(p, lv)["blockers"])
+         p2 = add_pack(pid="classic-rebalance-20261012-xle-add-b")
+         t("E/F: QA repro renamed pack_id same XLE add => locked", {"ALREADY_GO_LOCKED", "SAME_DAY_LEG_LOCKED"} & set(rb(p2)["blockers"]))
+@@ -645,8 +646,10 @@
+         write_book(root)
+         fix7_block(root, rb, held, t)
+         fix8_block(root, rb, add_pack, sell_pack, live_for, held, t)
+-        t("crypto/bare symbol guard on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
+-            {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="BTC", instrumentId=100000)]})["blockers"]))
++        t("crypto/bare symbol guard on rebalance leg (bare T = Threshold crypto)", any(b.startswith("INSTRUMENT") for b in rb(
++            {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="T", instrumentId=100528)]})["blockers"]))
++        t("non-major crypto (DOGE) blocked on rebalance leg", any(b.startswith("INSTRUMENT") for b in rb(
++            {**add_pack(), "legs": [dict(add_pack()["legs"][0], symbol="DOGE", instrumentId=100043)]})["blockers"]))
+         t("bad shape => BAD_REBALANCE_PACK", "BAD_REBALANCE_PACK" in rb({"pack_id": "classic-rebalance-20261012-x",
+                                                                             "kind": "rotation", "legs": []}, {"legs": []})["blockers"])
+     os.environ.pop(TEST_ENV, None)
+@@ -930,8 +933,19 @@
+ def main() -> int:
+     import contextlib
+     import io
+-    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+-        res = run()
++    # Legacy regression suite asserts with the pre-2026-10-16 numeric limits (floor $2500, ETF 30% /
++    # stock 15%); the sizing/cap LOGIC is unchanged, so it runs with those constants pinned. The new
++    # limits, 24x5/crypto windows, daily budget and mandatory TP are covered in test_rules_20261016.
++    legacy = {"CASH_FLOOR_USD": 2500.0, "NAME_CAP": {"etf": 0.30, "stock": 0.15, "crypto": 0.15}}
++    saved = {k: getattr(X, k) for k in legacy}
++    for k, v in legacy.items():
++        setattr(X, k, v)
++    try:
++        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
++            res = run()
++    finally:
++        for k, v in saved.items():
++            setattr(X, k, v)
+     for name, ok, detail in res:
+         print(f"{'PASS' if ok else 'FAIL'}  {name}" + (f"  [{detail}]" if not ok and detail != "" else ""))
+     n_fail = sum(1 for _, ok, _ in res if not ok)
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/test_rules_20261016.py /workspace/classic_rsi/test_rules_20261016.py
+--- classic_rsi_orig/test_rules_20261016.py	1970-01-01 02:00:00.000000000 +0200
++++ /workspace/classic_rsi/test_rules_20261016.py	2026-10-16 01:30:28.423831794 +0300
+@@ -0,0 +1,109 @@
++"""Offline tests for Ofer's 2026-10-16 rule update (24x5 + crypto 24/7, 4 trades/day, caps, crypto, TP).
++
++Run: cd /workspace && ./screener-venv/bin/python -m classic_rsi.test_rules_20261016  (never calls eToro)
++"""
++from __future__ import annotations
++
++import tempfile
++from datetime import datetime
++from pathlib import Path
++from zoneinfo import ZoneInfo
++
++from . import auto_1h as A
++from . import execute_pass as X
++from . import trade_counter as TC
++from .instruments import guard_symbol, resolve
++from .market_hours import extended_session, trading_window
++from .propose import auto_place_eligibility
++
++ET = ZoneInfo("America/New_York")
++IDT = ZoneInfo("Asia/Jerusalem")
++
++
++def run():
++    out = []
++    t = lambda n, ok, d="": out.append((n, bool(ok), d))  # noqa: E731
++    # --- windows
++    t("24x5 open Tue 03:00 ET (overnight)", extended_session(datetime(2026, 10, 13, 3, 0, tzinfo=ET))["open"])
++    t("24x5 open Tue 18:30 ET (after-hours)", extended_session(datetime(2026, 10, 13, 18, 30, tzinfo=ET))["open"])
++    t("24x5 closed Sat", not extended_session(datetime(2026, 10, 17, 12, 0, tzinfo=ET))["open"])
++    t("24x5 closed Sun 19:00 ET", not extended_session(datetime(2026, 10, 18, 19, 0, tzinfo=ET))["open"])
++    t("24x5 open Sun 21:00 ET", extended_session(datetime(2026, 10, 18, 21, 0, tzinfo=ET))["open"])
++    t("24x5 closed Fri 20:30 ET", not extended_session(datetime(2026, 10, 16, 20, 30, tzinfo=ET))["open"])
++    t("24x5 closed Thanksgiving", not extended_session(datetime(2026, 11, 26, 12, 0, tzinfo=ET))["open"])
++    t("24x5 closed eve-of-holiday overnight (Wed 21:00 ET before Thanksgiving)",
++      not extended_session(datetime(2026, 11, 25, 21, 0, tzinfo=ET))["open"])
++    t("24x5 unknown year fails closed", not extended_session(datetime(2028, 1, 4, 12, 0, tzinfo=ET))["open"])
++    sat = datetime(2026, 10, 17, 12, 0, tzinfo=ET)
++    t("crypto open Saturday", trading_window("crypto", sat)["open"])
++    t("stock closed Saturday", not trading_window("stock", sat)["open"])
++    t("RTH fallback when no extended support (Tue 18:30 ET closed)",
++      not trading_window("stock", datetime(2026, 10, 13, 18, 30, tzinfo=ET), supports_extended=False)["open"])
++    t("instrument isOpen=False wins", not trading_window("crypto", sat, instrument_is_open=False)["open"])
++    t("unknown asset class closed", not trading_window(None, sat)["open"])
++    # --- crypto instruments
++    for s, i in (("BTC", 100000), ("ETH", 100001), ("SOL", 100063), ("BTC-USD", 100000)):
++        g = guard_symbol(s)
++        t(f"crypto major {s} -> {i}", g["ok"] and g["instrumentId"] == i, g)
++    t("bare T is NOT a crypto major / stays AT&T or blocked", (resolve("T") or {}).get("instrumentId") != 100528
++      or not guard_symbol("T")["ok"])
++    t("DOGE blocked", not guard_symbol("DOGE")["ok"])
++    t("SOLV not treated as SOL", (resolve("SOLV") or {}).get("instrumentId") != 100063)
++    # --- caps / floor
++    t("stock cap 20%", X.NAME_CAP["stock"] == 0.20)
++    t("ETF cap 35%", X.NAME_CAP["etf"] == 0.35)
++    t("sleeve cap 45%", X.SLEEVE_CAP == 0.45)
++    t("crypto sleeve cap 15%", X.sleeve_cap("crypto") == 0.15 and X.sleeve_cap("growth_tech") == 0.45)
++    t("cash floor 1500 (execute_pass + auto_1h)", X.CASH_FLOOR_USD == 1500.0 and A.CASH_FLOOR_USD == 1500.0)
++    t("crypto majors mapped to crypto sleeve", all(X.DEFAULT_SLEEVES[s] == "crypto" for s in ("BTC", "ETH", "SOL")))
++    # --- daily counter
++    p = Path(tempfile.mkdtemp()) / "c.json"
++    now = datetime(2026, 10, 16, 10, 0, tzinfo=IDT)
++    t("counter empty -> 4 remaining", TC.status(now, p)["remaining"] == 4)
++    for k in range(4):
++        st = TC.record(f"S{k}", now=now, path=p)
++    t("after 4 records -> limit reached", not st["ok"] and st["remaining"] == 0, st)
++    t("next IDT day resets", TC.status(datetime(2026, 10, 17, 0, 1, tzinfo=IDT), p)["ok"])
++    t("book opens cross-check (file 0, book 4) -> blocked", not TC.status(now, Path(tempfile.mkdtemp()) / "x.json",
++                                                                         book_opens_today=4)["ok"])
++    bad = Path(tempfile.mkdtemp()) / "bad.json"
++    bad.write_text("{not json")
++    t("unreadable counter fails closed", not TC.status(now, bad)["ok"])
++    # --- mandatory TP
++    c = X._Ctx(now)
++    X._tp_check(c, "", None, 90.0, 100.0)
++    t("TP missing -> TAKE_PROFIT_MISSING", "TAKE_PROFIT_MISSING" in c.blockers)
++    c = X._Ctx(now)
++    X._tp_check(c, "", 101.0, 90.0, 100.0)
++    t("TP with R:R 0.1 -> REWARD_RISK_TOO_LOW", "REWARD_RISK_TOO_LOW" in c.blockers)
++    c = X._Ctx(now)
++    X._tp_check(c, "", 115.0, 90.0, 100.0)
++    t("TP R:R 1.5 passes", not c.blockers, c.blockers)
++    pack = {"instrument": {"symbol": "BTC", "instrumentId": 100000}, "side": "buy", "action": "CANDIDATE_LONG",
++            "leverage": 1, "cost_gate": {"verdict": "COST_GATE_PASS"}, "levels": {"entry": 100, "stop_loss": 90}}
++    ok, why = auto_place_eligibility(pack)
++    t("auto_place: pack without TP not eligible", not ok and "TAKE_PROFIT_OR_STOP_MISSING" in why, why)
++    # --- mandate gate daily limit never bypassed by --force
++    o = A.daily_budget
++    A.daily_budget = lambda: {"ok": False, "remaining": 0}
++    try:
++        g = A.mandate_gate(force=True, cash=5000.0)
++        t("daily limit blocks even with --force", "daily_new_trade_limit" in g["blocks"] and not g["allow_new_buys"], g)
++    finally:
++        A.daily_budget = o
++    g = A.mandate_gate(force=False, cash=5000.0)
++    t("crypto window always allowed in mandate gate", g["allow_crypto_buys"] is True)
++    return out
++
++
++def main() -> int:
++    res = run()
++    for n, ok, d in res:
++        print(f"{'PASS' if ok else 'FAIL'}  {n}" + (f"  [{d}]" if not ok and d != "" else ""))
++    nf = sum(1 for _, ok, _ in res if not ok)
++    print(f"{len(res) - nf}/{len(res)} passed")
++    return 1 if nf else 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff -ruN -x __pycache__ -x audit -x evidence classic_rsi_orig/trade_counter.py /workspace/classic_rsi/trade_counter.py
+--- classic_rsi_orig/trade_counter.py	1970-01-01 02:00:00.000000000 +0200
++++ /workspace/classic_rsi/trade_counter.py	2026-10-16 01:29:23.851831794 +0300
+@@ -0,0 +1,83 @@
++"""Daily NEW-trade counter (Ofer 2026-10-16 01:27 IDT): max 4 new opens per IDT calendar day.
++
++SL edits and protective/risk exits do NOT count. Persisted to a JSON file so every runner
++(hourly RSI, rebalance, manual) shares one budget. Fails closed: unreadable file => limit reached.
++"""
++from __future__ import annotations
++
++import json
++import os
++from datetime import datetime
++from pathlib import Path
++from typing import Any, Optional
++from zoneinfo import ZoneInfo
++
++IDT = ZoneInfo("Asia/Jerusalem")
++MAX_NEW_TRADES_PER_DAY = 4
++COUNTER_PATH = Path(os.environ.get("CLASSIC_TRADE_COUNTER", "/workspace/classic_rsi/state/daily_new_trades.json"))
++
++
++def _day(now: Optional[datetime] = None) -> str:
++    return (now or datetime.now(IDT)).astimezone(IDT).strftime("%Y-%m-%d")
++
++
++def _load(path: Path) -> Optional[dict[str, Any]]:
++    if not path.exists():
++        return {}
++    try:
++        d = json.loads(path.read_text())
++        return d if isinstance(d, dict) else None
++    except Exception:  # noqa: BLE001
++        return None
++
++
++def status(now: Optional[datetime] = None, path: Optional[Path] = None, book_opens_today: int = 0) -> dict[str, Any]:
++    path = path or COUNTER_PATH
++    d = _load(path)
++    day = _day(now)
++    if d is None:
++        return {"day": day, "count": None, "max": MAX_NEW_TRADES_PER_DAY, "remaining": 0,
++                "ok": False, "error": f"counter unreadable: {path}"}
++    trades = list((d.get(day) or {}).get("trades") or [])
++    count = max(len(trades), int(book_opens_today or 0))
++    rem = max(0, MAX_NEW_TRADES_PER_DAY - count)
++    return {"day": day, "count": count, "file_count": len(trades), "book_opens_today": book_opens_today,
++            "max": MAX_NEW_TRADES_PER_DAY, "remaining": rem, "ok": rem > 0, "path": str(path)}
++
++
++def record(symbol: str, *, position_id: Any = None, instrument_id: Any = None, now: Optional[datetime] = None,
++           path: Optional[Path] = None) -> dict[str, Any]:
++    """Call ONLY after a NEW buy is confirmed placed. Not for SL edits / exits."""
++    path = path or COUNTER_PATH
++    d = _load(path)
++    if d is None:
++        raise RuntimeError(f"counter unreadable: {path}")
++    n = now or datetime.now(IDT)
++    day = _day(n)
++    d.setdefault(day, {"trades": []})["trades"].append(
++        {"symbol": symbol, "positionId": position_id, "instrumentId": instrument_id,
++         "at": n.astimezone(IDT).isoformat(timespec="seconds")})
++    path.parent.mkdir(parents=True, exist_ok=True)
++    tmp = path.with_suffix(".tmp")
++    tmp.write_text(json.dumps(d, indent=2))
++    tmp.replace(path)
++    return status(n, path)
++
++
++def main(argv: Optional[list[str]] = None) -> int:
++    import argparse
++    ap = argparse.ArgumentParser(description=__doc__)
++    sub = ap.add_subparsers(dest="cmd", required=True)
++    sub.add_parser("status")
++    r = sub.add_parser("record")
++    r.add_argument("--symbol", required=True)
++    r.add_argument("--position-id")
++    r.add_argument("--instrument-id")
++    a = ap.parse_args(argv)
++    out = status() if a.cmd == "status" else record(a.symbol, position_id=a.position_id, instrument_id=a.instrument_id)
++    print(json.dumps(out, indent=2))
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())

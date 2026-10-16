@@ -35,7 +35,7 @@ POS = [("QQQ", 3006, 830.65, 750.0, 677.9, 1.106357, 644.0),
        ("SPY", 3000, 705.82, 700.0, 771.62, 0.907182, 709.97),
        ("TMO", 1592, 509.15, 520.0, 520.0, 1.0, 470.0)]
 SCORES = {"QQQ": (0.05, 751.27, 8.53, True, True, 0.01), "SMH": (0.08, 603.33, 13.5, True, True, 0.02),
-          "XLV": (-0.05, 170.81, 2.75, True, True, -0.01), "XLE": (0.15, 95.0, 1.9, True, True, 0.03),
+          "XLV": (-0.05, 170.81, 2.75, True, True, -0.01), "XLE": (0.15, 95.0, 1.9, True, True, 0.03), "DIA": (0.15, 95.0, 1.9, True, True, 0.03),
           "TMO": (-0.2, 509.15, 12.0, False, False, -0.08), "SPY": (0.0, 778.57, 7.0, True, True, 0.0)}
 
 
@@ -113,6 +113,22 @@ def write_book(root: Path, now=MON, age_s=10, cash=3671.18, equity=7270.38, extr
     pos += extra or []
     (root / "book.json").write_text(json.dumps({"asOf": ts(now, age_s), "equity": equity,
                                                 "summary": {"availableCash": cash}, "positions": pos}))
+    write_history(root, now=now)
+    write_prebuy(root, now=now)
+
+
+def write_prebuy(root: Path, now=MON, age_s=30, pending=None, opened=None, **flags):
+    """TEST-ONLY pre_buy state (as written by pre_buy.refresh after good history+rates+orders reads)."""
+    st = {"asOf": ts(now, age_s), "history_ok": True, "rates_ok": True, "orders_ok": True,
+          "opened_today_position_ids": list(opened or []), "pending_order_keys": list(pending or [])}
+    st.update(flags)
+    (root / "prebuy-state.json").write_text(json.dumps(st))
+
+
+def write_history(root: Path, now=MON, age_s=20, items=None):
+    """TEST-ONLY saved get-my-trading-history read (today's opened/closed positions)."""
+    (root / "history.json").write_text(json.dumps({"asOf": ts(now, age_s), "response": {
+        "account": "demo", "statusCode": 200, "hasMore": False, "trades": list(items or [])}}))
 
 
 def write_scores(root: Path, asof="2026-10-09", overrides=None, sidecar=True):

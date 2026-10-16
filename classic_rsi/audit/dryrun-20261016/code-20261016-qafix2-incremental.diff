@@ -1,0 +1,682 @@
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v2/auto_1h.py /workspace/classic_rsi/auto_1h.py
+--- classic_rsi_v2/auto_1h.py	2026-10-16 01:39:24.159831794 +0300
++++ /workspace/classic_rsi/auto_1h.py	2026-10-16 01:39:58.795831794 +0300
+@@ -315,6 +315,10 @@
+         if not g["ok"]:
+             unresolved_universe.append({"symbol": s, "flag": g["flag"], "reason": g["reason"]})
+     flags: list[str] = ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else []
++    import os as _os
++    from .paths import TEST_ENV as _TEST_ENV
++    if _os.environ.get(_TEST_ENV):
++        flags.append("TEST_MODE")  # QA WARN fix: a test-mode envelope is never auto-place eligible
+     if cash is None:
+         flags.append(CASH_MISSING_FLAG)  # fix9: hard flag -> every pack auto_place_eligible=False
+     for f in sorted({d.get("flag") for d in instrument_dropped if d.get("flag")}):
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v2/execute_pass.py /workspace/classic_rsi/execute_pass.py
+--- classic_rsi_v2/execute_pass.py	2026-10-16 01:39:24.163831794 +0300
++++ /workspace/classic_rsi/execute_pass.py	2026-10-16 01:39:54.327831794 +0300
+@@ -55,7 +55,7 @@
+ from . import momentum_holdings as MH
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v13-qa1-counter-xle"
++VERSION = "execute-pass-v14-qa2-prebuy"
+ CASH_FLOOR_USD = 1500.0  # Ofer 2026-10-16 (was 2500)
+ MIN_POSITION_USD = 400.0
+ NAME_CAP = {"etf": 0.35, "stock": 0.20, "crypto": 0.15}  # Ofer 2026-10-16 (was etf .30 / stock .15)
+@@ -507,9 +507,9 @@
+     hist = load_history(c.now)
+     c.check("trading_history_fresh", hist.get("ok"), {k: hist.get(k) for k in ("path", "asOf", "age_s", "error")},
+             "TRADING_HISTORY_MISSING")
+-    opens = TC.count_opens_today(c.now, positions=(book.get("positions") or []) if book.get("ok") else [],
+-                                 history=hist.get("items") or [])
+-    st = TC.status(c.now, external_opens_today=opens)
++    opens = TC.count_opens_today(c.now, positions=(book.get("positions") or []) if book.get("ok") else [])
++    opens |= set(hist.get("opened_today_position_ids") or [])
++    st = TC.status(c.now, external_position_ids=opens)
+     c.check("daily_new_trade_budget", st["ok"], st, "DAILY_TRADE_LIMIT")
+     return st
+ 
+@@ -517,25 +517,6 @@
+ HISTORY_MAX_AGE_S = 1800
+ 
+ 
+-def _hist_items(o: Any) -> list:
+-    """Collect dicts that look like positions (have an open time) anywhere in a raw MCP response."""
+-    out: list = []
+-    if isinstance(o, dict):
+-        if any(k in o for k in ("openTime", "openDateTime", "openDate", "openTimestamp")):
+-            out.append(o)
+-        for v in o.values():
+-            out.extend(_hist_items(v))
+-    elif isinstance(o, list):
+-        for v in o:
+-            out.extend(_hist_items(v))
+-    elif isinstance(o, str) and o.strip()[:1] in "[{":
+-        try:
+-            out.extend(_hist_items(json.loads(o)))
+-        except ValueError:
+-            pass
+-    return out
+-
+-
+ def load_history(now: datetime) -> dict[str, Any]:
+     """Saved user-OfersClaw5 get-my-trading-history read for today: {"asOf": ISO, "response": <raw>}.
+     Missing / unreadable / older than 30 min => not ok (new buys fail closed)."""
+@@ -546,10 +527,15 @@
+         d = json.loads(hp.read_text())
+     except Exception as e:  # noqa: BLE001
+         return {"ok": False, "path": str(hp), "error": f"unreadable: {e}"}
++    if not isinstance(d, dict):
++        return {"ok": False, "path": str(hp), "error": "history file not an object"}
+     a = _age_s(d.get("asOf"), now)
+-    ok = a is not None and -5 <= a <= HISTORY_MAX_AGE_S
+-    return {"ok": ok, "path": str(hp), "asOf": d.get("asOf"), "age_s": a,
+-            "error": None if ok else "history stale/no asOf", "items": _hist_items(d.get("response"))}
++    if a is None or not (-5 <= a <= HISTORY_MAX_AGE_S):
++        return {"ok": False, "path": str(hp), "asOf": d.get("asOf"), "age_s": a, "error": "history stale/no asOf"}
++    from .pre_buy import parse_history
++    h = parse_history(d.get("response"), now)  # re-validate: must be a recognisable success response
++    return {"ok": h["ok"], "path": str(hp), "asOf": d.get("asOf"), "age_s": a, "error": h.get("error"),
++            "opened_today_position_ids": h.get("opened_today_position_ids") or []}
+ 
+ 
+ def _sl_check(c: _Ctx, tag: str, sl: Any, live_bid: Optional[float]) -> None:  # noqa: D401
+@@ -624,7 +610,7 @@
+     slot = out.pop("_trade_slot", None)
+     if go and slot and write_lock:
+         # atomic check+reserve of a daily new-trade slot (flock); placer must mark/release it
+-        r = TC.reserve(slot["key"], slot["symbol"], now=c.now, external_opens_today=slot.get("external", 0),
++        r = TC.reserve(slot["key"], slot["symbol"], now=c.now, external_position_ids=slot.get("external") or [],
+                        instrument_id=slot.get("instrumentId"))
+         out["trade_reservation"] = r
+         if not (r.get("ok") and r.get("reservation")):
+@@ -638,6 +624,11 @@
+             out["after_place"] = (f"on fill: python -m classic_rsi.trade_counter mark --reservation {r['reservation']} "
+                                   f"--position-id <ID>; on failure/abort: ... release --reservation {r['reservation']}")
+     out["decision"] = "GO" if go else "NO-GO"
++    # QA WARN fix: a test-mode run (CLASSIC_EXEC_TEST_ROOT set) is never placeable / auto-place eligible
++    out["placeable"] = bool(go and not P["test_mode"])
++    out["auto_place_eligible"] = out["placeable"]
++    if P["test_mode"]:
++        out["test_mode_warning"] = "TEST MODE (CLASSIC_EXEC_TEST_ROOT set): demo paths only - NEVER place from this result"
+     out["note"] = ("GO = place with the token of the prepare-trade/prepare-close whose response was verified here "
+                    "(payloads were prepared verbatim; sells first). This CLI never places."
+                    if go else "NO-GO = do not place. Log the skip with the numbers.")
+@@ -685,11 +676,17 @@
+     out.update(instrumentId=iid, etoroSymbol=inst.get("etoroSymbol"))
+     run_ids = {run_id, ctx.get("envelope_run_id"), ctx.get("propose_run_id"), pack.get("run_id")}
+     book = load_book(now)
++    if instrument_is_open is None:
++        from .pre_buy import load_open_state
++        instrument_is_open = load_open_state(iid, now) if iid is not None else None
++        out["instrument_open_source"] = "pre_buy state file (<=5 min)" if instrument_is_open is not None else "unknown"
++    else:
++        out["instrument_open_source"] = "caller"
+     cash = _common_gates(c, hold, book, (_rs(symbol, iid) or {}).get("assetClass"), instrument_is_open)
+     c.check("no_xle_adds", not is_no_add_symbol(symbol), symbol, "NO_XLE_ADDS")
+     out["daily_trade_budget"] = _daily_trade_budget(c, book)
+     out["_trade_slot"] = {"key": f"rsi:{pack_id}", "symbol": symbol, "instrumentId": iid,
+-                          "external": out["daily_trade_budget"].get("external_opens_today", 0)}
++                          "external": out["daily_trade_budget"].get("external_position_ids") or []}
+     c.check("auto_place_eligible", pack.get("auto_place_eligible") is True, pack.get("auto_place_blockers"),
+             "NOT_AUTO_PLACE_ELIGIBLE")
+     ok, why = check_verdict(run_verdict_path(run_id), skill=RUN_QA_SKILL, max_age_s=RUN_QA_MAX_AGE_S, now=now,
+@@ -1064,7 +1061,7 @@
+         out["daily_trade_budget"] = _daily_trade_budget(c, book)
+         out["_trade_slot"] = {"key": f"rebalance:{pack_id}", "symbol": legs[buys[0]].get("symbol"),
+                               "instrumentId": legs[buys[0]].get("instrumentId"),
+-                              "external": out["daily_trade_budget"].get("external_opens_today", 0)}
++                              "external": out["daily_trade_budget"].get("external_position_ids") or []}
+     sc = load_scores(now)
+     out["scores"] = {k: sc.get(k) for k in ("ok", "error", "asOf_bars", "path", "sha256", "age_trading_days")}
+     # fix4: protective exits that read only the book + live quote (cash_below_floor, stop_hit on the
+@@ -1307,8 +1304,11 @@
+     if not a.no_write:
+         res["audit_path"] = str(write_audit(res))
+     print(json.dumps(res, indent=2, default=str))
+-    print(f"{res['decision']} {res['pack_id']} test_mode={res.get('test_mode')} blockers={res['blockers'] or 'none'}",
+-          file=sys.stderr)
++    print(f"{res['decision']} {res['pack_id']} test_mode={res.get('test_mode')} placeable={res.get('placeable')} "
++          f"blockers={res['blockers'] or 'none'}", file=sys.stderr)
++    if res.get("test_mode"):
++        print("TEST MODE: refusing a placeable GO (exit 3). Unset CLASSIC_EXEC_TEST_ROOT for production.", file=sys.stderr)
++        return 3
+     return 0 if res["decision"] == "GO" else 2
+ 
+ 
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v2/pre_buy.py /workspace/classic_rsi/pre_buy.py
+--- classic_rsi_v2/pre_buy.py	1970-01-01 02:00:00.000000000 +0200
++++ /workspace/classic_rsi/pre_buy.py	2026-10-16 01:39:54.323831794 +0300
+@@ -0,0 +1,213 @@
++"""Pre-buy refresh for Classic FULL AUTO (QA WARN fix 2026-10-16). Run before EVERY buy GO.
++
++The script has no eToro access of its own: Trader_Classic makes two READ-ONLY MCP calls on
++user-OfersClaw5, saves the raw outputs, and passes them here:
++
++  1. get-my-trading-history                      -> --history-response FILE
++  2. execute-read GET /api/v1/market-data/instruments/rates?instrumentIds=<ids>
++                                                 -> --rates-response FILE
++
++It then (fail closed on anything unexpected):
++  * validates the history is a recognisable SUCCESS response (statusCode 200, a `trades` list, every
++    trade has a parseable openTime/closeTime, and the page reaches back before today's IDT midnight
++    or hasMore=false) and writes /workspace/classic_rsi/state/trading-history-today.json;
++  * derives a live per-instrument isOpen from the rates read: open iff the instrument's last quote
++    `date` is within OPEN_QUOTE_MAX_AGE_S of the read time and bid/ask > 0 (eToro stops quoting an
++    instrument outside its tradable session — e.g. 2026-10-16 01:39 IDT: AAPL 1001 quoting live
++    (extended hours) while SPY 3000 and AAPL.RTH 8754 were last quoted at 19:28Z). Writes
++    /workspace/classic_rsi/state/instrument-open.json;
++  * releases unmarked daily-slot reservations older than 30 minutes.
++Prints a JSON summary incl. the `--instrument-open true|false` value to pass to execute_pass.
++"""
++from __future__ import annotations
++
++import argparse
++import json
++import os
++import tempfile
++from datetime import datetime, timezone
++from pathlib import Path
++from typing import Any, Optional
++from zoneinfo import ZoneInfo
++
++from . import trade_counter as TC
++from .paths import TEST_ENV, paths
++
++IDT = ZoneInfo("Asia/Jerusalem")
++OPEN_QUOTE_MAX_AGE_S = 300.0
++OPEN_STATE_MAX_AGE_S = 300.0
++RATES_ENDPOINT = "GET /api/v1/market-data/instruments/rates?instrumentIds=<ids> (user-OfersClaw5 execute-read)"
++
++
++def _unwrap(raw: Any) -> Any:
++    """Accept a dict, a JSON string, or an execute-read envelope {statusCode, body:"<json>"}."""
++    if isinstance(raw, (bytes, bytearray)):
++        raw = raw.decode()
++    if isinstance(raw, str):
++        s = raw.strip()
++        if not s:
++            raise ValueError("empty response")
++        if not s.startswith(("{", "[")) and "{" in s:  # tolerate a tool-output wrapper line around the JSON
++            s = s[s.index("{"): s.rindex("}") + 1]
++        raw = json.loads(s)
++    if isinstance(raw, dict) and isinstance(raw.get("body"), str) and "trades" not in raw and "rates" not in raw:
++        sc = raw.get("statusCode")
++        if sc not in (200, None) or raw.get("isSuccess") is False:
++            raise ValueError(f"execute-read not successful: statusCode={sc}")
++        inner = json.loads(raw["body"])
++        if isinstance(inner, dict):
++            inner.setdefault("statusCode", sc)
++        raw = inner
++    return raw
++
++
++def _ts(v: Any) -> Optional[datetime]:
++    if not isinstance(v, str) or not v.strip():
++        return None
++    try:
++        t = datetime.fromisoformat(v.strip().replace("Z", "+00:00").replace(" ", "T"))
++    except ValueError:
++        return None
++    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
++
++
++def parse_history(raw: Any, now: datetime) -> dict[str, Any]:
++    """Validate a get-my-trading-history response. Returns {ok, error, opened_today_position_ids, ...}."""
++    try:
++        d = _unwrap(raw)
++    except Exception as e:  # noqa: BLE001
++        return {"ok": False, "error": f"HISTORY_UNPARSEABLE: {e}"}
++    if not isinstance(d, dict):
++        return {"ok": False, "error": "HISTORY_NOT_OBJECT"}
++    if d.get("statusCode") != 200 or d.get("error") or d.get("errors"):
++        return {"ok": False, "error": f"HISTORY_NOT_SUCCESS: statusCode={d.get('statusCode')} error={d.get('error')}"}
++    trades = d.get("trades")
++    if not isinstance(trades, list):
++        return {"ok": False, "error": "HISTORY_NO_TRADES_LIST"}
++    day0 = now.astimezone(IDT).replace(hour=0, minute=0, second=0, microsecond=0)
++    ids: set[str] = set()
++    oldest_close: Optional[datetime] = None
++    for i, tr in enumerate(trades):
++        if not isinstance(tr, dict):
++            return {"ok": False, "error": f"HISTORY_TRADE_{i}_NOT_OBJECT"}
++        ot, ct = _ts(tr.get("openTime")), _ts(tr.get("closeTime"))
++        pid = tr.get("positionId")
++        if ot is None or ct is None or pid in (None, ""):
++            return {"ok": False, "error": f"HISTORY_TRADE_{i}_BAD_FIELDS (openTime/closeTime/positionId)"}
++        if ot >= day0:
++            ids.add(str(pid))
++        oldest_close = ct if oldest_close is None or ct < oldest_close else oldest_close
++    if d.get("hasMore") and (oldest_close is None or oldest_close >= day0):
++        return {"ok": False, "error": "HISTORY_PAGE_DOES_NOT_COVER_TODAY (hasMore and oldest close is today)"}
++    return {"ok": True, "error": None, "opened_today_position_ids": sorted(ids), "trades_seen": len(trades),
++            "has_more": bool(d.get("hasMore")), "xRequestId": d.get("xRequestId")}
++
++
++def parse_rates(raw: Any, read_at: datetime, instrument_ids: list[int]) -> dict[str, Any]:
++    try:
++        d = _unwrap(raw)
++    except Exception as e:  # noqa: BLE001
++        return {"ok": False, "error": f"RATES_UNPARSEABLE: {e}", "instruments": {}}
++    rates = d.get("rates") if isinstance(d, dict) else None
++    if not isinstance(rates, list):
++        return {"ok": False, "error": "RATES_NO_LIST", "instruments": {}}
++    by = {}
++    for r in rates:
++        if isinstance(r, dict) and r.get("instrumentID") is not None:
++            by[int(r["instrumentID"])] = r
++    out: dict[str, Any] = {}
++    for iid in instrument_ids:
++        r = by.get(int(iid))
++        if r is None:
++            out[str(iid)] = {"is_open": False, "reason": "NO_RATE"}
++            continue
++        qt = _ts(r.get("date"))
++        bid, ask = r.get("bid"), r.get("ask")
++        age = None if qt is None else (read_at - qt).total_seconds()
++        ok = (age is not None and -30 <= age <= OPEN_QUOTE_MAX_AGE_S and isinstance(bid, (int, float))
++              and isinstance(ask, (int, float)) and 0 < bid <= ask)
++        out[str(iid)] = {"is_open": bool(ok), "quote_date": r.get("date"), "quote_age_s": None if age is None else round(age, 1),
++                         "bid": bid, "ask": ask,
++                         "reason": None if ok else ("QUOTE_STALE" if age is not None else "QUOTE_TIME_MISSING")}
++    return {"ok": True, "error": None, "instruments": out, "rule": f"open iff last quote <= {OPEN_QUOTE_MAX_AGE_S:g}s old"}
++
++
++def state_paths() -> dict[str, Path]:
++    P = paths()
++    return {"history": Path(P["history"]), "open": Path(P["history"]).with_name(
++        "instrument-open.json" if not P["test_mode"] else "instrument-open.json")}
++
++
++def _atomic_write(path: Path, obj: Any) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    fd, tmp = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=str(path.parent))
++    with os.fdopen(fd, "w") as fh:
++        json.dump(obj, fh, indent=2, default=str)
++    os.replace(tmp, path)
++
++
++def load_open_state(iid: Any, now: datetime) -> Optional[bool]:
++    """Live isOpen for iid from the last refresh (<= 5 min old), else None (=> CLOSED for stocks/ETFs)."""
++    p = state_paths()["open"]
++    try:
++        d = json.loads(p.read_text())
++        t = _ts(d.get("asOf"))
++        if t is None or not (-5 <= (now - t).total_seconds() <= OPEN_STATE_MAX_AGE_S):
++            return None
++        v = (d.get("instruments") or {}).get(str(int(iid)))
++        return None if not isinstance(v, dict) else (v.get("is_open") is True)
++    except Exception:  # noqa: BLE001
++        return None
++
++
++def refresh(*, history_raw: Any, rates_raw: Any, instrument_ids: list[int], now: Optional[datetime] = None,
++            read_at: Optional[datetime] = None, release_after_min: float = 30.0) -> dict[str, Any]:
++    now = now or datetime.now(IDT)
++    read_at = read_at or now
++    sp = state_paths()
++    out: dict[str, Any] = {"kind": "pre_buy_refresh", "asOf": now.isoformat(), "test_mode": paths()["test_mode"],
++                           "rates_endpoint": RATES_ENDPOINT}
++    h = parse_history(history_raw, now)
++    out["history"] = {k: v for k, v in h.items()}
++    if h["ok"]:
++        resp = _unwrap(history_raw)
++        _atomic_write(sp["history"], {"asOf": now.isoformat(), "source": "user-OfersClaw5 get-my-trading-history",
++                                      "validated_by": "pre_buy.parse_history", "response": resp})
++        out["history"]["path"] = str(sp["history"])
++        # release stale reservations only after a successful history read
++        out["released_stale_reservations"] = TC.release_stale(release_after_min, now)
++    else:
++        sp["history"].unlink(missing_ok=True)  # never leave an old success file behind a failed read
++        out["released_stale_reservations"] = []
++    r = parse_rates(rates_raw, read_at, instrument_ids)
++    out["open"] = r
++    if r["ok"]:
++        _atomic_write(sp["open"], {"asOf": read_at.isoformat(), "rule": r["rule"], "endpoint": RATES_ENDPOINT,
++                                   "instruments": r["instruments"]})
++    else:
++        sp["open"].unlink(missing_ok=True)
++    out["instrument_open_flags"] = {k: ("true" if v.get("is_open") else "false") for k, v in r["instruments"].items()}
++    out["counter"] = TC.status(now, external_position_ids=h.get("opened_today_position_ids") or [])
++    out["ok"] = bool(h["ok"] and r["ok"])
++    return out
++
++
++def main(argv: Optional[list[str]] = None) -> int:
++    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
++    ap.add_argument("--history-response", required=True, help="file: raw get-my-trading-history output")
++    ap.add_argument("--rates-response", required=True, help="file: raw execute-read rates output")
++    ap.add_argument("--instrument-ids", required=True, help="comma list of instrumentIds in the rates read")
++    ap.add_argument("--rates-read-at", help="ISO time the rates read returned (default: now)")
++    a = ap.parse_args(argv)
++    if os.environ.get(TEST_ENV):
++        print(json.dumps({"warning": "TEST MODE (CLASSIC_EXEC_TEST_ROOT set): writes test state only"}))
++    ids = [int(x) for x in a.instrument_ids.split(",") if x.strip()]
++    ra = datetime.fromisoformat(a.rates_read_at) if a.rates_read_at else None
++    res = refresh(history_raw=Path(a.history_response).read_text(), rates_raw=Path(a.rates_response).read_text(),
++                  instrument_ids=ids, read_at=ra)
++    print(json.dumps(res, indent=2, default=str))
++    return 0 if res["ok"] else 2
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v2/test_prebuy_20261016.py /workspace/classic_rsi/test_prebuy_20261016.py
+--- classic_rsi_v2/test_prebuy_20261016.py	1970-01-01 02:00:00.000000000 +0200
++++ /workspace/classic_rsi/test_prebuy_20261016.py	2026-10-16 01:40:18.623831794 +0300
+@@ -0,0 +1,146 @@
++"""QA WARN fixes (2026-10-16 fix2): pre_buy refresh (history validation, live isOpen from rates quote
++freshness, stale reservation release), union daily count, test-mode GO never placeable. Never calls eToro.
++
++Run: cd /workspace && ./screener-venv/bin/python -m classic_rsi.test_prebuy_20261016
++"""
++from __future__ import annotations
++
++import json
++import os
++from datetime import datetime, timedelta, timezone
++from zoneinfo import ZoneInfo
++
++from . import execute_pass as X
++from . import pre_buy as PB
++from . import trade_counter as TC
++from .testkit import MON, buy_prepare, make_pack, test_root, ts, write_book, write_envelope, write_order_qa, \
++    write_run_qa, write_scores
++from .test_execute_pass import rsi, rsi_ready  # noqa: F401
++
++UTC = timezone.utc
++IDT = ZoneInfo("Asia/Jerusalem")
++
++
++def _hist(trades, sc=200, more=False):
++    return {"account": "real", "statusCode": sc, "hasMore": more, "trades": trades}
++
++
++def _tr(pid, open_dt, close_dt):
++    return {"positionId": pid, "openTime": open_dt.astimezone(UTC).isoformat().replace("+00:00", "Z"),
++            "closeTime": close_dt.astimezone(UTC).isoformat().replace("+00:00", "Z"), "market": {"instrumentId": 1}}
++
++
++def run():
++    out = []
++    t = lambda n, ok, d="": out.append((n, bool(ok), d))  # noqa: E731
++    now = MON
++    y = now - timedelta(days=1)
++    # --- history validation
++    h = PB.parse_history(_hist([_tr(1, now - timedelta(hours=2), now - timedelta(hours=1)),
++                                _tr(2, y, now - timedelta(hours=1)), _tr(3, y - timedelta(days=2), y)]), now)
++    t("history success: only same-IDT-day opens counted", h["ok"] and h["opened_today_position_ids"] == ["1"], h)
++    t("history: execute-read envelope unwrapped",
++      PB.parse_history({"statusCode": 200, "isSuccess": True, "body": json.dumps(_hist([]))}, now)["ok"])
++    t("history: wrapper text around JSON tolerated", PB.parse_history("<x>\n" + json.dumps(_hist([])) + "\n</x>", now)["ok"])
++    for lbl, raw in (("empty string", ""), ("not json", "{oops"), ("error status", _hist([], sc=401)),
++                     ("error key", {**_hist([]), "error": "unauthorized"}), ("no trades list", {"statusCode": 200}),
++                     ("list body", [1, 2]),
++                     ("unparseable openTime", _hist([{"positionId": 1, "openTime": "yesterday-ish",
++                                                      "closeTime": "2026-10-12T10:00:00Z"}])),
++                     ("missing positionId", _hist([{"openTime": "2026-10-12T10:00:00Z", "closeTime": "2026-10-12T11:00:00Z"}])),
++                     ("hasMore and page all today", _hist([_tr(5, now - timedelta(hours=3), now - timedelta(hours=1))], more=True)),
++                     ("execute-read 500", {"statusCode": 500, "isSuccess": False, "body": "{}"})):
++        t(f"history fails closed: {lbl}", not PB.parse_history(raw, now)["ok"])
++    t("history hasMore but page reaches before today => ok",
++      PB.parse_history(_hist([_tr(6, y - timedelta(days=1), y)], more=True), now)["ok"])
++    # --- rates -> isOpen
++    rd = now.astimezone(UTC)
++    rates = {"rates": [
++        {"instrumentID": 1001, "bid": 341.49, "ask": 341.58, "date": (rd - timedelta(seconds=40)).isoformat().replace("+00:00", "Z")},
++        {"instrumentID": 3000, "bid": 772.29, "ask": 772.3, "date": (rd - timedelta(hours=3)).isoformat().replace("+00:00", "Z")},
++        {"instrumentID": 8754, "bid": 0, "ask": 343.2, "date": (rd - timedelta(seconds=5)).isoformat().replace("+00:00", "Z")}]}
++    r = PB.parse_rates({"statusCode": 200, "body": json.dumps(rates)}, rd, [1001, 3000, 8754, 4242])
++    ins = r["instruments"]
++    t("rates: fresh quote => open", ins["1001"]["is_open"] is True)
++    t("rates: 3h-old quote => closed (QUOTE_STALE)", ins["3000"]["is_open"] is False and ins["3000"]["reason"] == "QUOTE_STALE")
++    t("rates: bid 0 => closed", ins["8754"]["is_open"] is False)
++    t("rates: instrument missing => closed", ins["4242"]["is_open"] is False and ins["4242"]["reason"] == "NO_RATE")
++    t("rates: garbage => not ok", not PB.parse_rates("nope", rd, [1])["ok"])
++    with test_root() as root:
++        os.environ.pop(TC.ENV_OVERRIDE, None)
++        # --- union count
++        TC.reserve("a", "S", now=now)
++        rb = TC.reserve("b", "S", now=now)["reservation"]
++        TC.mark(rb, position_id=777)
++        st = TC.status(now, external_position_ids=["777", "888"])
++        t("union: 1 reserved + {777 placed ∪ 777,888 history} = 3 (not max)", st["count"] == 3 and st["history_only_opens"] == 1, st)
++        st = TC.status(now, external_position_ids=["888", "999"])
++        t("union: history-only opens add to reservations", st["count"] == 4 and not st["ok"], st)
++        # --- refresh end-to-end + stale release
++        stale_at = now - timedelta(minutes=45)
++        rs = TC.reserve("old", "S", now=stale_at)["reservation"]
++        res = PB.refresh(history_raw=json.dumps(_hist([_tr(777, now - timedelta(hours=1), now - timedelta(minutes=10))])),
++                         rates_raw=json.dumps({"statusCode": 200, "body": json.dumps(rates)}), instrument_ids=[1001, 3000],
++                         now=now, read_at=rd)
++        rel = [x["id"] for x in res["released_stale_reservations"]]
++        t("refresh ok; writes history + open state", res["ok"] and PB.state_paths()["history"].exists()
++          and PB.state_paths()["open"].exists(), res.get("history"))
++        t("refresh releases only the >30 min unmarked reservation", rel == [rs], rel)
++        t("refresh flags: 1001 true / 3000 false", res["instrument_open_flags"] == {"1001": "true", "3000": "false"})
++        t("load_open_state reads fresh state", PB.load_open_state(1001, now) is True and PB.load_open_state(3000, now) is False)
++        t("load_open_state stale (>5 min) => None", PB.load_open_state(1001, now + timedelta(minutes=10)) is None)
++        bad = PB.refresh(history_raw="", rates_raw="{}", instrument_ids=[1001], now=now, read_at=rd)
++        t("refresh with empty history: not ok, history file removed, nothing released",
++          not bad["ok"] and not PB.state_paths()["history"].exists() and bad["released_stale_reservations"] == [])
++        # --- execute_pass end-to-end with refresh state and test-mode labelling
++        T = make_pack("T", entry=27.0, atr=0.5, notional=1000)
++        write_envelope(root, [T])
++        write_book(root)
++        write_scores(root)
++        write_run_qa()
++        (root / "state" / "daily_new_trades.json").unlink(missing_ok=True)
++        (root / "history.json").write_text(json.dumps({"asOf": ts(now, 10), "response": _hist([], sc=500)}))
++        t("history file with error response => TRADING_HISTORY_MISSING", "TRADING_HISTORY_MISSING" in rsi()["blockers"])
++        write_book(root)
++        plan, r, anc = rsi_ready()
++        write_order_qa(r)
++        fresh = buy_prepare(plan["order_payloads"][0], ask=anc["anchor_ask"], quote_ts=ts(now, 2))
++        g = rsi(prepare_response=fresh, write_lock=True, **anc)
++        t("test-mode GO is labelled and NOT placeable / not auto-place eligible",
++          g["decision"] == "GO" and g["test_mode"] is True and g["placeable"] is False
++          and g["auto_place_eligible"] is False and "NEVER place" in g.get("test_mode_warning", ""), g["blockers"])
++        TC.release(g["trade_reservation_id"])
++        for p_ in g.get("locks") or []:
++            os.unlink(p_)
++        # isOpen from pre_buy state when caller omits it (T resolves to AT&T id from the map)
++        iid = plan["instrumentId"]
++        (root / "instrument-open.json").write_text(json.dumps({"asOf": now.isoformat(), "instruments": {str(iid): {"is_open": False}}}))
++        r2 = X.run_checks.__wrapped__(pack_id=plan["pack_id"], bid=27.03, ask=27.05, quote_ts=ts(now, 5), mark=27.05, units=23.0,
++                          open_fee_usd=0.75, close_fee_usd=0.75, now=now, write_lock=False,
++                          momentum_read=__import__("classic_rsi.testkit", fromlist=["momentum_read"]).momentum_read(now=now))
++        t("isOpen omitted -> taken from pre_buy state (closed) => INSTRUMENT_CLOSED",
++          "INSTRUMENT_CLOSED" in r2["blockers"] and r2.get("instrument_open_source", "").startswith("pre_buy"), r2["blockers"])
++        (root / "instrument-open.json").unlink()
++        r3 = X.run_checks.__wrapped__(pack_id=plan["pack_id"], bid=27.03, ask=27.05, quote_ts=ts(now, 5), mark=27.05, units=23.0,
++                          open_fee_usd=0.75, close_fee_usd=0.75, now=now, write_lock=False,
++                          momentum_read=__import__("classic_rsi.testkit", fromlist=["momentum_read"]).momentum_read(now=now))
++        t("no state + no caller isOpen => INSTRUMENT_OPEN_UNKNOWN", "INSTRUMENT_OPEN_UNKNOWN" in r3["blockers"])
++    # CLI refuses test mode (exit 3) - source check (CLI needs live inputs)
++    import inspect
++    t("CLI returns 3 for any test-mode result", "return 3" in inspect.getsource(X.main))
++    from . import auto_1h as A
++    t("auto_1h adds TEST_MODE hard flag when CLASSIC_EXEC_TEST_ROOT set", '"TEST_MODE"' in inspect.getsource(A.run_auto_1h))
++    return out
++
++
++def main() -> int:
++    res = run()
++    for n, ok, d in res:
++        print(f"{'PASS' if ok else 'FAIL'}  {n}" + (f"  [{d}]" if not ok and d != "" else ""))
++    nf = sum(1 for _, ok, _ in res if not ok)
++    print(f"{len(res) - nf}/{len(res)} passed")
++    return 1 if nf else 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v2/test_rules_20261016.py /workspace/classic_rsi/test_rules_20261016.py
+--- classic_rsi_v2/test_rules_20261016.py	2026-10-16 01:39:24.163831794 +0300
++++ /workspace/classic_rsi/test_rules_20261016.py	2026-10-16 01:40:15.255831794 +0300
+@@ -75,7 +75,7 @@
+         t("5th reserve refused", TC.reserve("S9", "S", now=now)["reservation"] is None)
+         t("next IDT day resets", TC.status(datetime(2026, 10, 17, 0, 1, tzinfo=IDT))["ok"])
+         t("external opens (book+history) 4 -> blocked", not TC.status(datetime(2026, 10, 18, 9, 0, tzinfo=IDT),
+-                                                                  external_opens_today=4)["ok"])
++                                                                  external_position_ids=["p1", "p2", "p3", "p4"])["ok"])
+         bad = TC.counter_path()[0]
+         bad.write_text("{not json")
+         t("unreadable counter fails closed", not TC.status(now)["ok"])
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v2/testkit.py /workspace/classic_rsi/testkit.py
+--- classic_rsi_v2/testkit.py	2026-10-16 01:39:24.163831794 +0300
++++ /workspace/classic_rsi/testkit.py	2026-10-16 01:39:58.795831794 +0300
+@@ -118,8 +118,8 @@
+ 
+ def write_history(root: Path, now=MON, age_s=20, items=None):
+     """TEST-ONLY saved get-my-trading-history read (today's opened/closed positions)."""
+-    (root / "history.json").write_text(json.dumps({"asOf": ts(now, age_s),
+-                                                   "response": {"closedPositions": list(items or [])}}))
++    (root / "history.json").write_text(json.dumps({"asOf": ts(now, age_s), "response": {
++        "account": "demo", "statusCode": 200, "hasMore": False, "trades": list(items or [])}}))
+ 
+ 
+ def write_scores(root: Path, asof="2026-10-09", overrides=None, sidecar=True):
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v2/trade_counter.py /workspace/classic_rsi/trade_counter.py
+--- classic_rsi_v2/trade_counter.py	2026-10-16 01:39:24.163831794 +0300
++++ /workspace/classic_rsi/trade_counter.py	2026-10-16 01:39:47.147831794 +0300
+@@ -9,8 +9,10 @@
+   * path pinned: production always uses /workspace/classic_rsi/state/daily_new_trades.json.
+     CLASSIC_TRADE_COUNTER is honoured ONLY in test mode (CLASSIC_EXEC_TEST_ROOT set); if it is set
+     in production every status/reserve fails closed (COUNTER_ENV_OVERRIDE_IN_PRODUCTION).
+-  * external count: callers pass the number of distinct positions opened today (open book + trading
+-    history incl. opened-and-closed same day); the budget uses max(file, external).
++  * count = unmarked reservations + |placed positionIds ∪ positionIds opened today in the open book
++    and the validated trading history (incl. opened-and-closed same day)| — a union, not max().
++  * release_stale(): unmarked reservations older than 30 min are released by pre_buy_refresh, only
++    after it has re-read trading history (a placed-but-unmarked fill still counts via its positionId).
+ SL edits and protective/risk exits do NOT count.
+ """
+ from __future__ import annotations
+@@ -84,15 +86,26 @@
+         raise
+ 
+ 
+-def _summ(d: dict[str, Any], day: str, external: int, path: Path) -> dict[str, Any]:
++def _pid(x: Any) -> Optional[str]:
++    return None if x in (None, "") else str(x).strip()
++
++
++def _summ(d: dict[str, Any], day: str, external: Any, path: Path) -> dict[str, Any]:
++    """count = unmarked reservations + |placed positionIds ∪ external (book+history) positionIds|.
++    Placed slots without a positionId count individually (fail closed)."""
+     slots = list((d.get(day) or {}).get("slots") or [])
+     live = [s for s in slots if s.get("state") in COUNTED]
+-    count = max(len(live), int(external or 0))
++    reserved = [s for s in live if s["state"] == "reserved"]
++    placed = [s for s in live if s["state"] == "placed"]
++    ext = {_pid(x) for x in (external or [])} - {None}
++    placed_ids = {_pid(s.get("positionId")) for s in placed} - {None}
++    placed_noid = sum(1 for s in placed if _pid(s.get("positionId")) is None)
++    union = placed_ids | ext
++    count = len(reserved) + placed_noid + len(union)
+     rem = max(0, MAX_NEW_TRADES_PER_DAY - count)
+-    return {"day": day, "count": count, "file_count": len(live),
+-            "reserved": sum(1 for s in live if s["state"] == "reserved"),
+-            "placed": sum(1 for s in live if s["state"] == "placed"),
+-            "external_opens_today": external, "max": MAX_NEW_TRADES_PER_DAY, "remaining": rem,
++    return {"day": day, "count": count, "reserved": len(reserved), "placed": len(placed),
++            "external_position_ids": sorted(ext), "history_only_opens": len(ext - placed_ids),
++            "union_position_ids": sorted(union), "max": MAX_NEW_TRADES_PER_DAY, "remaining": rem,
+             "ok": rem > 0, "path": str(path)}
+ 
+ 
+@@ -101,7 +114,7 @@
+             "error": err, "path": str(path)}
+ 
+ 
+-def status(now: Optional[datetime] = None, external_opens_today: int = 0) -> dict[str, Any]:
++def status(now: Optional[datetime] = None, external_position_ids: Any = ()) -> dict[str, Any]:
+     path, err = counter_path()
+     day = _day(now)
+     if err:
+@@ -110,10 +123,10 @@
+         d = _read(path)
+     if d is None:
+         return _fail(day, path, f"COUNTER_UNREADABLE: {path}")
+-    return _summ(d, day, external_opens_today, path)
++    return _summ(d, day, external_position_ids, path)
+ 
+ 
+-def reserve(key: str, symbol: str, *, now: Optional[datetime] = None, external_opens_today: int = 0,
++def reserve(key: str, symbol: str, *, now: Optional[datetime] = None, external_position_ids: Any = (),
+             instrument_id: Any = None) -> dict[str, Any]:
+     """Atomic check+reserve. Idempotent per (day, key): a live reservation for key is returned again."""
+     path, err = counter_path()
+@@ -128,16 +141,16 @@
+         slots = d.setdefault(day, {}).setdefault("slots", [])
+         for s in slots:
+             if s.get("key") == key and s.get("state") in COUNTED:
+-                return {**_summ(d, day, external_opens_today, path), "ok": True, "reservation": s["id"],
++                return {**_summ(d, day, external_position_ids, path), "ok": True, "reservation": s["id"],
+                         "idempotent": True}
+-        st = _summ(d, day, external_opens_today, path)
++        st = _summ(d, day, external_position_ids, path)
+         if not st["ok"]:
+             return {**st, "reservation": None}
+         rid = f"tc-{day}-{uuid.uuid4().hex[:12]}"
+         slots.append({"id": rid, "key": key, "symbol": symbol, "instrumentId": instrument_id, "state": "reserved",
+                       "reserved_at": n.astimezone(IDT).isoformat(timespec="seconds")})
+         _write(path, d)
+-        return {**_summ(d, day, external_opens_today, path), "ok": True, "reservation": rid}
++        return {**_summ(d, day, external_position_ids, path), "ok": True, "reservation": rid}
+ 
+ 
+ def _transition(rid: str, new_state: str, **extra: Any) -> dict[str, Any]:
+@@ -171,7 +184,38 @@
+     return _transition(rid, "released", release_reason=reason or None)
+ 
+ 
+-def count_opens_today(now: datetime, *, positions: Optional[list] = None, history: Optional[list] = None) -> int:
++def release_stale(max_age_min: float = 30.0, now: Optional[datetime] = None) -> list[dict[str, Any]]:
++    """Release reservations still 'reserved' (never marked) older than max_age_min. Returns released slots.
++    Only safe because the pre-buy refresh first re-reads trading history/book: a fill that was placed but
++    not marked still counts through its positionId there."""
++    path, err = counter_path()
++    if err:
++        raise RuntimeError(err)
++    n = now or datetime.now(IDT)
++    out: list[dict[str, Any]] = []
++    with _locked(path):
++        d = _read(path)
++        if d is None:
++            raise RuntimeError(f"COUNTER_UNREADABLE: {path}")
++        for v in d.values():
++            for s_ in (v or {}).get("slots") or []:
++                if s_.get("state") != "reserved":
++                    continue
++                try:
++                    t = datetime.fromisoformat(s_["reserved_at"])
++                except (KeyError, ValueError):
++                    continue  # unparseable => keep counting (fail closed)
++                if (n - t).total_seconds() > max_age_min * 60:
++                    s_["state"] = "released"
++                    s_["release_reason"] = f"stale unmarked > {max_age_min:g} min (pre_buy_refresh)"
++                    s_["released_at"] = n.astimezone(IDT).isoformat(timespec="seconds")
++                    out.append(dict(s_))
++        if out:
++            _write(path, d)
++    return out
++
++
++def count_opens_today(now: datetime, *, positions: Optional[list] = None, history: Optional[list] = None) -> set:
+     """Distinct positionIds whose openTime falls on today's IDT date — open book AND trading history
+     (covers positions opened and closed the same day)."""
+     day = _day(now)
+@@ -189,8 +233,8 @@
+         if t.tzinfo is None:
+             t = t.replace(tzinfo=ZoneInfo("UTC"))
+         if t.astimezone(IDT).strftime("%Y-%m-%d") == day:
+-            ids.add(p.get("positionId") or p.get("positionID") or (p.get("instrumentId"), str(ot)))
+-    return len(ids)
++            ids.add(str(p.get("positionId") or p.get("positionID") or f"{p.get('instrumentId')}@{ot}"))
++    return ids
+ 
+ 
+ def main(argv: Optional[list[str]] = None) -> int:

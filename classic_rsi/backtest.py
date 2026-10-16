@@ -46,7 +46,9 @@ def fetch_1h(symbol: str, period: str = "60d") -> pd.DataFrame:
     """Fetch 1H bars from Yahoo via yfinance. period max ~60d for 1h."""
     import yfinance as yf
 
-    t = yf.Ticker(symbol)
+    from .instruments import YAHOO_CRYPTO, crypto_major
+    cm = crypto_major(symbol)
+    t = yf.Ticker(YAHOO_CRYPTO[cm] if cm else symbol)
     # interval 1h; Yahoo caps history for intraday
     raw = t.history(period=period, interval="1h", auto_adjust=True)
     return _normalize_ohlc(raw)

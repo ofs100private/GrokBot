@@ -21,7 +21,7 @@ description: >-
 3. Commodities: WTI oil, gold, silver — live price + day % change.
 4. Trump section: last Trump post with timestamp, short quote, link; 1 line market relevance; enforce freshness.
 5. Analyst score (X Tier 2): 3–6 theme bullets from last 24h, or `Nothing Special from the last 24h`.
-6. Weekend = recommendations for next US session; no new opens.
+6. Weekend: Classic equities are outside the 24x5 window (no new equity size; BTC/ETH/SOL still 24/7). Momentum / RTH-only books → recommendations for next US session; no new equity opens.
 
 ## Required brief structure (stop only after Source)
 1. Header: `Good Morning | (CNN Fear & Greed)` + today's date (user TZ Asia/Jerusalem)
@@ -41,18 +41,18 @@ description: >-
 
 If length pressure: shorten section-9 reasons; keep sections 10–14. A brief that stops early is FAILED — complete through Source.
 
-**Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place still OFF until Ofer explicitly accepts QA's residual risks (shared-box verdict forgery, self-reported second-source mark, trader-controlled test mode, editable scores/registry pins) AND out-of-sample edge evidence exists. Until then every Classic place needs QA PASS + explicit Ofer authorization.
+**Activation status (Ofer 2026-10-16 01:27 IDT):** Classic FULL AUTO is ON. Code gate PASSED QA (fix3, 2026-10-12); Ofer accepted QA's residual risks. After run-QA + order-QA + cost-gate PASS, Trader_Classic auto-places via `user-OfersClaw5` with **no chat authorization**. Caps of **total equity**: stock ≤20%, ETF ≤35%, sleeve ≤45%, crypto (BTC/ETH/SOL) ≤15%. Cash floor ~$1,500. Max **4 new trades per IDT day**. Equities 24x5 (extended hours); BTC/ETH/SOL 24/7. Long ×1; SL+TP mandatory. Unchanged: cross-book no-overlap; no XLE adds.
 
 ## Classic recommendation cap filter (mandatory — applies to sections 9 and 13)
 Source of truth for caps: `/home/box/agent-data/workflows/classic-rebalance/SKILL.md` — read it each run and cite its caps; if they differ from the values below, its values win.
 1. Before listing ANY Classic buy/add idea, compute from the live `user-OfersClaw5` book:
-   - Each name's % of invested MV vs the name cap (currently **≤30% ETF / ≤15% single stock**).
-   - Growth sleeve (QQQ+SMH+other growth/tech) % of invested vs the sleeve cap (currently **≤45%**).
+   - Each name's % of **total equity** vs the name cap (currently **≤35% ETF / ≤20% single stock**).
+   - Growth sleeve (QQQ+SMH+other growth/tech) and any sleeve % of **total equity** vs the sleeve cap (currently **≤45%**); crypto sleeve (BTC+ETH+SOL) ≤ **15%** of total equity.
    - Cash vs equity: if cash >50% of equity, note the cash drift trigger.
 2. Drop any idea that breaches a cap or leaves less than the minimum trade size of headroom (currently **$400** minimum position). A blocked idea may appear only under **Blocked / needs Ofer exception** — never under Would Buy. Market-watch names Classic can't buy must be labeled **market watch only**.
 2a. **Cross-book overlap:** before listing any Buy on either portfolio card, live-read the other book. If the symbol is held there, move that buy idea to **Blocked** (`CROSS_BOOK_OVERLAP`); never list it under Buy / Would Buy. Existing overlap XLE stays held in both books per Ofer 2026-10-13; any XLE add is Blocked.
 3. Names already held go under **Hold/Watch**, not Would Buy.
-4. Authorization wording: briefs must say **Classic FULL AUTO approved 10-12; code gate passed QA — auto-place off pending Ofer risk acceptance + out-of-sample evidence (QA PASS + explicit Ofer authorization)**. There is no Classic new-names-per-month or trade-count cap.
+4. Authorization wording: briefs must say **Classic FULL AUTO ON (Ofer 2026-10-16 01:27 IDT) — residual risks accepted; auto-place after run-QA + order-QA + cost-gate PASS, no chat auth**. Max **4 new trades per IDT day**; no monthly new-name cap. Cash floor ~$1,500; caps of total equity 20%/35%/45%/15% crypto.
 5. Last trump twit: check Truth Social (e.g. trumpstruth.org) as well as X; quote the freshest post.
 6. Weekends: if nothing material changed vs the last delivered brief, say so in the META line so the Chief of Staff can skip delivery.
 

@@ -11,6 +11,10 @@ Independent QA for **App Classic Bot tab** and **Classic RSI** surfaces. **Class
 
 **Naming (Ofer 2026-10-06):** Use **Classic account (OfersClaw5-PRIYN)** — stop calling it keys-B or ledger B for Classic.
 
+## Standing rules update — Ofer 2026-10-16 01:27 IDT
+Classic FULL AUTO ON (run-QA + order-QA + cost-gate PASS → auto-place, no chat auth; residual risks accepted). Caps of total equity: stock ≤20%, ETF ≤35%, sleeve ≤45%, crypto ≤15%. Cash floor ~$1,500. Max 4 new trades/IDT day. Equities 24x5 extended hours; BTC/ETH/SOL 24/7. Long ×1; SL+TP mandatory. RSI scan every 3h weekdays (`CRON_TZ=Asia/Jerusalem 35 */3 * * 1-5`) with `classic_rsi.pre_buy` before buys. Unchanged: cross-book no-overlap; no XLE adds. This gate still never places.
+
+
 Companion gates (still required):
 - [Classic portfolio data QA gate](sand-workflow:classic-portfolio-data-qa-gate) for portfolio numbers
 - [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) before any real-money place
@@ -52,7 +56,7 @@ Before Classic Bot tab go-live, on every App refresh of Classic Bot / RSI JSON, 
 
 ### G4 — Auto envelope honesty
 - `do_not_place` = true (and `place` false if present).
-- Weekend / US RTH gates match calendar reality (e.g. weekend → GATED, `buy_packs` empty).
+- Equity window / 24x5 gates match calendar reality (weekend or outside extended-hours window → GATED for equities, `buy_packs` empty unless crypto-only; BTC/ETH/SOL may still propose 24/7).
 - When `status` = GATED (or equivalent), **`buy_packs` must be empty**.
 - Sell / RISK_OFF tags never become short orders or short packs.
 

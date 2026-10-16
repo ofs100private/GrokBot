@@ -1,0 +1,466 @@
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v3/execute_pass.py /workspace/classic_rsi/execute_pass.py
+--- classic_rsi_v3/execute_pass.py	2026-10-16 01:42:10.319831794 +0300
++++ /workspace/classic_rsi/execute_pass.py	2026-10-16 01:42:28.099831794 +0300
+@@ -55,7 +55,7 @@
+ from . import momentum_holdings as MH
+ 
+ IDT = ZoneInfo("Asia/Jerusalem")
+-VERSION = "execute-pass-v14-qa2-prebuy"
++VERSION = "execute-pass-v15-qa3-orders"
+ CASH_FLOOR_USD = 1500.0  # Ofer 2026-10-16 (was 2500)
+ MIN_POSITION_USD = 400.0
+ NAME_CAP = {"etf": 0.35, "stock": 0.20, "crypto": 0.15}  # Ofer 2026-10-16 (was etf .30 / stock .15)
+@@ -507,8 +507,15 @@
+     hist = load_history(c.now)
+     c.check("trading_history_fresh", hist.get("ok"), {k: hist.get(k) for k in ("path", "asOf", "age_s", "error")},
+             "TRADING_HISTORY_MISSING")
++    from .pre_buy import load_prebuy_state
++    pb = load_prebuy_state(c.now)
++    c.check("pre_buy_fresh", pb.get("ok"), {k: pb.get(k) for k in ("path", "asOf", "age_s", "error", "history_ok",
++                                                                 "rates_ok", "orders_ok")}, "PRE_BUY_NOT_FRESH")
++    ba = book.get("age_s")
++    c.check("book_fresh_for_count", ba is not None and -5 <= ba <= 60, {"age_s": ba, "max_s": 60}, "BOOK_NOT_FRESH_FOR_COUNT")
+     opens = TC.count_opens_today(c.now, positions=(book.get("positions") or []) if book.get("ok") else [])
+     opens |= set(hist.get("opened_today_position_ids") or [])
++    opens |= set(pb.get("opened_today_position_ids") or []) | set(pb.get("pending_order_keys") or [])
+     st = TC.status(c.now, external_position_ids=opens)
+     c.check("daily_new_trade_budget", st["ok"], st, "DAILY_TRADE_LIMIT")
+     return st
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v3/pre_buy.py /workspace/classic_rsi/pre_buy.py
+--- classic_rsi_v3/pre_buy.py	2026-10-16 01:42:10.319831794 +0300
++++ /workspace/classic_rsi/pre_buy.py	2026-10-16 01:42:28.095831794 +0300
+@@ -6,6 +6,7 @@
+   1. get-my-trading-history                      -> --history-response FILE
+   2. execute-read GET /api/v1/market-data/instruments/rates?instrumentIds=<ids>
+                                                  -> --rates-response FILE
++  3. get-my-positions-and-orders (<= 60 s old)   -> --orders-response FILE
+ 
+ It then (fail closed on anything unexpected):
+   * validates the history is a recognisable SUCCESS response (statusCode 200, a `trades` list, every
+@@ -36,6 +37,9 @@
+ IDT = ZoneInfo("Asia/Jerusalem")
+ OPEN_QUOTE_MAX_AGE_S = 300.0
+ OPEN_STATE_MAX_AGE_S = 300.0
++ORDERS_MAX_AGE_S = 60.0       # positions-and-orders read used for counting must be <= 60 s old
++PREBUY_MAX_AGE_S = 300.0      # execute_pass: pre_buy must have run (all reads ok) <= 5 min before GO
++TERMINAL_ORDER = ("canceled", "cancelled", "rejected", "expired", "executed", "filled")
+ RATES_ENDPOINT = "GET /api/v1/market-data/instruments/rates?instrumentIds=<ids> (user-OfersClaw5 execute-read)"
+ 
+ 
+@@ -86,6 +90,7 @@
+         return {"ok": False, "error": "HISTORY_NO_TRADES_LIST"}
+     day0 = now.astimezone(IDT).replace(hour=0, minute=0, second=0, microsecond=0)
+     ids: set[str] = set()
++    meta: list[dict[str, Any]] = []
+     oldest_close: Optional[datetime] = None
+     for i, tr in enumerate(trades):
+         if not isinstance(tr, dict):
+@@ -96,10 +101,12 @@
+             return {"ok": False, "error": f"HISTORY_TRADE_{i}_BAD_FIELDS (openTime/closeTime/positionId)"}
+         if ot >= day0:
+             ids.add(str(pid))
++        meta.append({"positionId": str(pid), "instrumentId": (tr.get("market") or {}).get("instrumentId",
++                     tr.get("instrumentId")), "openTime": ot.isoformat()})
+         oldest_close = ct if oldest_close is None or ct < oldest_close else oldest_close
+     if d.get("hasMore") and (oldest_close is None or oldest_close >= day0):
+         return {"ok": False, "error": "HISTORY_PAGE_DOES_NOT_COVER_TODAY (hasMore and oldest close is today)"}
+-    return {"ok": True, "error": None, "opened_today_position_ids": sorted(ids), "trades_seen": len(trades),
++    return {"ok": True, "error": None, "opened_today_position_ids": sorted(ids), "trades_seen": len(trades), "trades_meta": meta,
+             "has_more": bool(d.get("hasMore")), "xRequestId": d.get("xRequestId")}
+ 
+ 
+@@ -132,10 +139,98 @@
+     return {"ok": True, "error": None, "instruments": out, "rule": f"open iff last quote <= {OPEN_QUOTE_MAX_AGE_S:g}s old"}
+ 
+ 
++def parse_orders(raw: Any, read_at: datetime) -> dict[str, Any]:
++    """Validate a user-OfersClaw5 get-my-positions-and-orders response (Classic `direct` block).
++    Returns open positions (instrumentId, positionId, openTime) and pending (non-terminal) orders.
++    Fail closed: non-200/error, missing direct.positions/orders lists, stale `timestamp` (> 60 s),
++    unparseable position openTime. A pending order without a parseable time or instrumentId is kept
++    with time=None (counts as today and blocks every stale release)."""
++    try:
++        d = _unwrap(raw)
++    except Exception as e:  # noqa: BLE001
++        return {"ok": False, "error": f"ORDERS_UNPARSEABLE: {e}"}
++    if not isinstance(d, dict) or d.get("statusCode") != 200 or d.get("error"):
++        return {"ok": False, "error": f"ORDERS_NOT_SUCCESS: statusCode={(d or {}).get('statusCode') if isinstance(d, dict) else None}"}
++    blk = d.get("direct")
++    if not isinstance(blk, dict) or not isinstance(blk.get("positions"), list) or not isinstance(blk.get("orders"), list):
++        return {"ok": False, "error": "ORDERS_NO_DIRECT_LISTS"}
++    ts_ = _ts(d.get("timestamp"))
++    age = None if ts_ is None else (read_at - ts_).total_seconds()
++    if age is None or not (-30 <= age <= ORDERS_MAX_AGE_S):
++        return {"ok": False, "error": f"ORDERS_STALE: timestamp={d.get('timestamp')} age_s={age}"}
++    positions, pending = [], []
++    for i, p in enumerate(blk["positions"]):
++        m = p.get("market") or {}
++        ot = _ts(p.get("openTime"))
++        if ot is None or p.get("positionId") in (None, ""):
++            return {"ok": False, "error": f"ORDERS_POSITION_{i}_BAD_FIELDS"}
++        positions.append({"positionId": str(p["positionId"]), "instrumentId": m.get("instrumentId", p.get("instrumentId")),
++                          "openTime": ot.isoformat()})
++    for o in blk["orders"]:
++        if str(o.get("status") or "").lower() in TERMINAL_ORDER:
++            continue
++        m = o.get("market") or {}
++        t = None
++        for k in ("openTime", "orderTime", "createdAt", "openDateTime", "requestTime", "date"):
++            t = _ts(o.get(k))
++            if t:
++                break
++        oid = o.get("orderId") or o.get("orderID") or o.get("id")
++        pending.append({"orderId": None if oid is None else str(oid),
++                        "instrumentId": m.get("instrumentId", o.get("instrumentId")),
++                        "time": None if t is None else t.isoformat(), "status": o.get("status")})
++    return {"ok": True, "error": None, "timestamp": d.get("timestamp"), "age_s": round(age, 1),
++            "positions": positions, "pending_orders": pending, "xRequestId": d.get("xRequestId")}
++
++
++def pending_keys_today(orders: dict[str, Any], now: datetime) -> list[str]:
++    """Pending (unfilled) orders placed today (IDT) — or with unknown time — count as used slots."""
++    day0 = now.astimezone(IDT).replace(hour=0, minute=0, second=0, microsecond=0)
++    keys = []
++    for i, o in enumerate(orders.get("pending_orders") or []):
++        t = _ts(o.get("time"))
++        if t is None or t >= day0:
++            keys.append(f"order:{o.get('orderId') or f'unknown{i}'}")
++    return keys
++
++
++def release_blocker(orders: dict[str, Any], history: dict[str, Any]):
++    """Return fn(slot, reserved_at) -> reason|None for TC.release_stale."""
++    def fn(slot: dict, reserved_at: datetime) -> Optional[str]:
++        iid = slot.get("instrumentId")
++        for o in orders.get("pending_orders") or []:
++            if o.get("instrumentId") is None or iid is None:
++                return "PENDING_ORDER_UNKNOWN_INSTRUMENT"
++            if str(o["instrumentId"]) == str(iid):
++                return f"PENDING_ORDER_FOR_INSTRUMENT {iid}"
++        for p in (orders.get("positions") or []) + (history.get("trades_meta") or []):
++            t = _ts(p.get("openTime"))
++            if (iid is None or str(p.get("instrumentId")) == str(iid)) and (t is None or t >= reserved_at):
++                return f"POSITION_OPENED_AFTER_RESERVATION {iid} positionId={p.get('positionId')}"
++        return None
++    return fn
++
++
+ def state_paths() -> dict[str, Path]:
+     P = paths()
+-    return {"history": Path(P["history"]), "open": Path(P["history"]).with_name(
+-        "instrument-open.json" if not P["test_mode"] else "instrument-open.json")}
++    base = Path(P["history"])
++    return {"history": base, "open": base.with_name("instrument-open.json"),
++            "prebuy": base.with_name("prebuy-state.json")}
++
++
++def load_prebuy_state(now: datetime) -> dict[str, Any]:
++    """execute_pass: the last successful pre_buy refresh, required <= 5 min old with history+rates+orders ok."""
++    p = state_paths()["prebuy"]
++    try:
++        d = json.loads(p.read_text())
++    except Exception as e:  # noqa: BLE001
++        return {"ok": False, "path": str(p), "error": f"PREBUY_MISSING: {e}"}
++    t = _ts(d.get("asOf"))
++    age = None if t is None else (now - t).total_seconds()
++    fresh = age is not None and -5 <= age <= PREBUY_MAX_AGE_S
++    allok = all(d.get(k) is True for k in ("history_ok", "rates_ok", "orders_ok"))
++    return {**d, "ok": bool(fresh and allok), "age_s": age, "path": str(p),
++            "error": None if (fresh and allok) else ("PREBUY_STALE" if not fresh else "PREBUY_INCOMPLETE")}
+ 
+ 
+ def _atomic_write(path: Path, obj: Any) -> None:
+@@ -160,22 +255,27 @@
+         return None
+ 
+ 
+-def refresh(*, history_raw: Any, rates_raw: Any, instrument_ids: list[int], now: Optional[datetime] = None,
+-            read_at: Optional[datetime] = None, release_after_min: float = 30.0) -> dict[str, Any]:
++def refresh(*, history_raw: Any, rates_raw: Any, instrument_ids: list[int], orders_raw: Any = None,
++            now: Optional[datetime] = None, read_at: Optional[datetime] = None,
++            orders_read_at: Optional[datetime] = None, release_after_min: float = 30.0) -> dict[str, Any]:
+     now = now or datetime.now(IDT)
+     read_at = read_at or now
+     sp = state_paths()
+     out: dict[str, Any] = {"kind": "pre_buy_refresh", "asOf": now.isoformat(), "test_mode": paths()["test_mode"],
+                            "rates_endpoint": RATES_ENDPOINT}
+     h = parse_history(history_raw, now)
+-    out["history"] = {k: v for k, v in h.items()}
++    out["history"] = {k: v for k, v in h.items() if k != "trades_meta"}
++    od = parse_orders(orders_raw, orders_read_at or now) if orders_raw is not None else {"ok": False, "error": "ORDERS_RESPONSE_REQUIRED"}
++    out["orders"] = {k: v for k, v in od.items()}
+     if h["ok"]:
+         resp = _unwrap(history_raw)
+         _atomic_write(sp["history"], {"asOf": now.isoformat(), "source": "user-OfersClaw5 get-my-trading-history",
+                                       "validated_by": "pre_buy.parse_history", "response": resp})
+         out["history"]["path"] = str(sp["history"])
+-        # release stale reservations only after a successful history read
+-        out["released_stale_reservations"] = TC.release_stale(release_after_min, now)
++        # release stale reservations only after successful history AND positions/orders reads; a pending
++        # order or a position for that instrument opened after the reservation blocks the release
++        out["released_stale_reservations"] = (TC.release_stale(release_after_min, now, blocker=release_blocker(od, h))
++                                              if od["ok"] else [])
+     else:
+         sp["history"].unlink(missing_ok=True)  # never leave an old success file behind a failed read
+         out["released_stale_reservations"] = []
+@@ -187,8 +287,20 @@
+     else:
+         sp["open"].unlink(missing_ok=True)
+     out["instrument_open_flags"] = {k: ("true" if v.get("is_open") else "false") for k, v in r["instruments"].items()}
+-    out["counter"] = TC.status(now, external_position_ids=h.get("opened_today_position_ids") or [])
+-    out["ok"] = bool(h["ok"] and r["ok"])
++    day0 = now.astimezone(IDT).replace(hour=0, minute=0, second=0, microsecond=0)
++    book_ids = [p["positionId"] for p in od.get("positions") or [] if (_ts(p["openTime"]) or day0) >= day0]
++    pend = pending_keys_today(od, now) if od["ok"] else []
++    ext = sorted(set(h.get("opened_today_position_ids") or []) | set(book_ids) | set(pend))
++    out["counter"] = TC.status(now, external_position_ids=ext)
++    out["ok"] = bool(h["ok"] and r["ok"] and od["ok"])
++    st = {"asOf": now.isoformat(), "history_ok": bool(h["ok"]), "rates_ok": bool(r["ok"]), "orders_ok": bool(od["ok"]),
++          "opened_today_position_ids": sorted(set(h.get("opened_today_position_ids") or []) | set(book_ids)),
++          "pending_order_keys": pend, "orders_timestamp": od.get("timestamp"), "rates_read_at": read_at.isoformat()}
++    if out["ok"]:
++        _atomic_write(sp["prebuy"], st)
++    else:
++        sp["prebuy"].unlink(missing_ok=True)
++    out["prebuy_state"] = st
+     return out
+ 
+ 
+@@ -197,6 +309,7 @@
+     ap.add_argument("--history-response", required=True, help="file: raw get-my-trading-history output")
+     ap.add_argument("--rates-response", required=True, help="file: raw execute-read rates output")
+     ap.add_argument("--instrument-ids", required=True, help="comma list of instrumentIds in the rates read")
++    ap.add_argument("--orders-response", required=True, help="file: raw get-my-positions-and-orders output (<= 60 s old)")
+     ap.add_argument("--rates-read-at", help="ISO time the rates read returned (default: now)")
+     a = ap.parse_args(argv)
+     if os.environ.get(TEST_ENV):
+@@ -204,7 +317,7 @@
+     ids = [int(x) for x in a.instrument_ids.split(",") if x.strip()]
+     ra = datetime.fromisoformat(a.rates_read_at) if a.rates_read_at else None
+     res = refresh(history_raw=Path(a.history_response).read_text(), rates_raw=Path(a.rates_response).read_text(),
+-                  instrument_ids=ids, read_at=ra)
++                  orders_raw=Path(a.orders_response).read_text(), instrument_ids=ids, read_at=ra)
+     print(json.dumps(res, indent=2, default=str))
+     return 0 if res["ok"] else 2
+ 
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v3/test_orders_20261016.py /workspace/classic_rsi/test_orders_20261016.py
+--- classic_rsi_v3/test_orders_20261016.py	1970-01-01 02:00:00.000000000 +0200
++++ /workspace/classic_rsi/test_orders_20261016.py	2026-10-16 01:42:43.611831794 +0300
+@@ -0,0 +1,146 @@
++"""QA fix3: pending orders / positions guard stale-reservation release; pending orders count as used slots;
++pre_buy must have run (history+rates+orders ok) <= 5 min before GO; book <= 60 s for counting. Never calls eToro.
++
++Run: cd /workspace && ./screener-venv/bin/python -m classic_rsi.test_orders_20261016
++"""
++from __future__ import annotations
++
++import json
++import os
++from datetime import timedelta, timezone
++
++from . import pre_buy as PB
++from . import trade_counter as TC
++from .testkit import MON, make_pack, test_root, ts, write_book, write_envelope, write_prebuy, write_run_qa, write_scores
++from .test_execute_pass import rsi  # noqa: F401  (decorated)
++
++UTC = timezone.utc
++
++
++def _orders(positions=(), orders=(), age_s=5, sc=200, now=MON):
++    return {"account": "real", "statusCode": sc, "timestamp": (now - timedelta(seconds=age_s)).astimezone(UTC).isoformat(),
++            "direct": {"positions": list(positions), "orders": list(orders)}, "mirrors": []}
++
++
++def _pos(pid, iid, open_dt):
++    return {"positionId": pid, "market": {"instrumentId": iid}, "openTime": open_dt.astimezone(UTC).replace(tzinfo=None).isoformat()}
++
++
++def _ord(oid, iid, t=None, status="placed"):
++    o = {"orderId": oid, "market": {"instrumentId": iid}, "status": status}
++    if t is not None:
++        o["openTime"] = t.astimezone(UTC).isoformat()
++    return o
++
++
++def _hist(trades=()):
++    return json.dumps({"statusCode": 200, "hasMore": False, "trades": list(trades)})
++
++
++RATES = json.dumps({"rates": [{"instrumentID": 1001, "bid": 1.0, "ask": 1.01, "date": MON.astimezone(UTC).isoformat()}]})
++
++
++def run():
++    out = []
++    t = lambda n, ok, d="": out.append((n, bool(ok), d))  # noqa: E731
++    now = MON
++    # --- parse_orders
++    t("orders: success parsed", PB.parse_orders(_orders([_pos(1, 1592, now - timedelta(days=3))]), now)["ok"])
++    for lbl, raw in (("stale timestamp 61s", _orders(age_s=61)), ("non-200", _orders(sc=500)), ("empty", ""),
++                     ("no direct", {"statusCode": 200, "timestamp": now.isoformat()}),
++                     ("bad position openTime", _orders([{"positionId": 1, "market": {"instrumentId": 1}, "openTime": "x"}])),
++                     ("missing timestamp", {**_orders(), "timestamp": None})):
++        t(f"orders fail closed: {lbl}", not PB.parse_orders(raw, now)["ok"])
++    real = open("/workspace/agent-tools/bf916bda-3d7d-4646-9cce-79c4ed92933e.txt").read() \
++        if os.path.exists("/workspace/agent-tools/bf916bda-3d7d-4646-9cce-79c4ed92933e.txt") else None
++    if real:
++        from datetime import datetime
++        r = PB.parse_orders(real, datetime.fromisoformat("2026-10-15T22:42:10+00:00"))
++        t("real user-OfersClaw5 positions-and-orders read parses (4 positions, 0 pending)",
++          r["ok"] and len(r["positions"]) == 4 and r["pending_orders"] == [], r.get("error"))
++    od = PB.parse_orders(_orders(orders=[_ord(11, 1001, now - timedelta(hours=1)), _ord(12, 1001, now - timedelta(days=2)),
++                                         _ord(13, 3000), _ord(14, 3000, status="canceled")]), now)
++    keys = PB.pending_keys_today(od, now)
++    t("pending today + unknown-time count; old pending / terminal don't", keys == ["order:11", "order:13"], keys)
++    with test_root() as root:
++        os.environ.pop(TC.ENV_OVERRIDE, None)
++        old = now - timedelta(minutes=45)
++
++        def fresh_res(iid):
++            return TC.reserve(f"k{iid}-{len(os.listdir(root))}", "S", now=old, instrument_id=iid)["reservation"]
++
++        def refresh(orders, hist=_hist()):
++            return PB.refresh(history_raw=hist, rates_raw=RATES, instrument_ids=[1001], orders_raw=json.dumps(orders),
++                              now=now, read_at=now)
++        # pending order for the same instrument blocks release
++        r1 = fresh_res(1001)
++        res = refresh(_orders(orders=[_ord(21, 1001, now - timedelta(minutes=40))]))
++        t("pending order same instrument => release blocked", r1 not in [x["id"] for x in res["released_stale_reservations"]])
++        st = json.loads(TC.counter_path()[0].read_text())
++        blk = [s_ for v in st.values() for s_ in v.get("slots", []) if s_["id"] == r1][0]
++        t("blocked slot stays reserved with reason", blk["state"] == "reserved" and "PENDING_ORDER" in blk["release_blocked"], blk)
++        # position opened after reservation blocks
++        res = refresh(_orders(positions=[_pos(31, 1001, now - timedelta(minutes=40))]))
++        t("position for instrument opened after reservation => blocked", res["released_stale_reservations"] == [])
++        # history trade (opened+closed) after reservation blocks
++        h = _hist([{"positionId": 41, "market": {"instrumentId": 1001},
++                    "openTime": (now - timedelta(minutes=40)).astimezone(UTC).isoformat(),
++                    "closeTime": (now - timedelta(minutes=5)).astimezone(UTC).isoformat()}])
++        res = refresh(_orders(), hist=h)
++        t("history trade for instrument opened after reservation => blocked", res["released_stale_reservations"] == [])
++        # pending order with unknown instrument blocks everything
++        res = refresh(_orders(orders=[{"orderId": 51, "status": "placed"}]))
++        t("pending order unknown instrument => all releases blocked", res["released_stale_reservations"] == [])
++        # clean read: other-instrument position before reservation => released
++        res = refresh(_orders(positions=[_pos(61, 3000, now - timedelta(minutes=40)), _pos(62, 1001, now - timedelta(hours=2))]))
++        t("no pending / no newer position for instrument => stale reservation released",
++          r1 in [x["id"] for x in res["released_stale_reservations"]], res["released_stale_reservations"])
++        # orders read stale => nothing released, refresh not ok, prebuy state removed
++        r2 = fresh_res(1001)
++        res = refresh(_orders(age_s=90))
++        t("stale orders read => not ok, no release, no prebuy state",
++          not res["ok"] and res["released_stale_reservations"] == [] and not PB.state_paths()["prebuy"].exists())
++        res = PB.refresh(history_raw=_hist(), rates_raw=RATES, instrument_ids=[1001], now=now, read_at=now)
++        t("orders response omitted => not ok (ORDERS_RESPONSE_REQUIRED)", not res["ok"]
++          and res["orders"]["error"] == "ORDERS_RESPONSE_REQUIRED")
++        TC.release(r2)
++        # pending orders count as used slots in refresh counter
++        res = refresh(_orders(orders=[_ord(70 + i, 1001, now - timedelta(minutes=10)) for i in range(4)]))
++        t("4 pending orders today => counter full", res["counter"]["count"] >= 4 and not res["counter"]["ok"], res["counter"])
++        t("prebuy state written with pending keys", PB.state_paths()["prebuy"].exists()
++          and len(json.loads(PB.state_paths()["prebuy"].read_text())["pending_order_keys"]) == 4)
++        # --- execute_pass gates
++        (root / "state" / "daily_new_trades.json").unlink(missing_ok=True)
++        write_envelope(root, [make_pack("T", entry=27.0, atr=0.5, notional=1000)])
++        write_book(root)
++        write_scores(root)
++        write_run_qa()
++        base = rsi()["blockers"]
++        t("baseline: fresh prebuy => no PRE_BUY/count blockers",
++          not {"PRE_BUY_NOT_FRESH", "DAILY_TRADE_LIMIT", "BOOK_NOT_FRESH_FOR_COUNT"} & set(base), base)
++        (root / "prebuy-state.json").unlink()
++        t("no prebuy state => PRE_BUY_NOT_FRESH", "PRE_BUY_NOT_FRESH" in rsi()["blockers"])
++        write_prebuy(root, age_s=301)
++        t("prebuy 5m01s old => PRE_BUY_NOT_FRESH", "PRE_BUY_NOT_FRESH" in rsi()["blockers"])
++        write_prebuy(root, orders_ok=False)
++        t("prebuy without orders_ok => PRE_BUY_NOT_FRESH", "PRE_BUY_NOT_FRESH" in rsi()["blockers"])
++        write_prebuy(root, pending=["order:1", "order:2", "order:3", "order:4"])
++        t("4 pending orders in prebuy state => DAILY_TRADE_LIMIT", "DAILY_TRADE_LIMIT" in rsi()["blockers"])
++        write_prebuy(root)
++        write_book(root, age_s=61)
++        b = rsi()["blockers"]
++        t("book 61 s old => BOOK_NOT_FRESH_FOR_COUNT", "BOOK_NOT_FRESH_FOR_COUNT" in b, b)
++    return out
++
++
++def main() -> int:
++    res = run()
++    for n, ok, d in res:
++        print(f"{'PASS' if ok else 'FAIL'}  {n}" + (f"  [{d}]" if not ok and d != "" else ""))
++    nf = sum(1 for _, ok, _ in res if not ok)
++    print(f"{len(res) - nf}/{len(res)} passed")
++    return 1 if nf else 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v3/test_prebuy_20261016.py /workspace/classic_rsi/test_prebuy_20261016.py
+--- classic_rsi_v3/test_prebuy_20261016.py	2026-10-16 01:42:10.319831794 +0300
++++ /workspace/classic_rsi/test_prebuy_20261016.py	2026-10-16 01:42:43.607831794 +0300
+@@ -81,6 +81,8 @@
+         rs = TC.reserve("old", "S", now=stale_at)["reservation"]
+         res = PB.refresh(history_raw=json.dumps(_hist([_tr(777, now - timedelta(hours=1), now - timedelta(minutes=10))])),
+                          rates_raw=json.dumps({"statusCode": 200, "body": json.dumps(rates)}), instrument_ids=[1001, 3000],
++                         orders_raw=json.dumps({"statusCode": 200, "timestamp": rd.isoformat(),
++                                                "direct": {"positions": [], "orders": []}}),
+                          now=now, read_at=rd)
+         rel = [x["id"] for x in res["released_stale_reservations"]]
+         t("refresh ok; writes history + open state", res["ok"] and PB.state_paths()["history"].exists()
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v3/testkit.py /workspace/classic_rsi/testkit.py
+--- classic_rsi_v3/testkit.py	2026-10-16 01:42:10.319831794 +0300
++++ /workspace/classic_rsi/testkit.py	2026-10-16 01:42:28.099831794 +0300
+@@ -114,6 +114,15 @@
+     (root / "book.json").write_text(json.dumps({"asOf": ts(now, age_s), "equity": equity,
+                                                 "summary": {"availableCash": cash}, "positions": pos}))
+     write_history(root, now=now)
++    write_prebuy(root, now=now)
++
++
++def write_prebuy(root: Path, now=MON, age_s=30, pending=None, opened=None, **flags):
++    """TEST-ONLY pre_buy state (as written by pre_buy.refresh after good history+rates+orders reads)."""
++    st = {"asOf": ts(now, age_s), "history_ok": True, "rates_ok": True, "orders_ok": True,
++          "opened_today_position_ids": list(opened or []), "pending_order_keys": list(pending or [])}
++    st.update(flags)
++    (root / "prebuy-state.json").write_text(json.dumps(st))
+ 
+ 
+ def write_history(root: Path, now=MON, age_s=20, items=None):
+diff -ruN -x __pycache__ -x audit -x evidence -x state classic_rsi_v3/trade_counter.py /workspace/classic_rsi/trade_counter.py
+--- classic_rsi_v3/trade_counter.py	2026-10-16 01:42:10.319831794 +0300
++++ /workspace/classic_rsi/trade_counter.py	2026-10-16 01:42:28.095831794 +0300
+@@ -184,7 +184,8 @@
+     return _transition(rid, "released", release_reason=reason or None)
+ 
+ 
+-def release_stale(max_age_min: float = 30.0, now: Optional[datetime] = None) -> list[dict[str, Any]]:
++def release_stale(max_age_min: float = 30.0, now: Optional[datetime] = None,
++                  blocker: Optional[Any] = None) -> list[dict[str, Any]]:
+     """Release reservations still 'reserved' (never marked) older than max_age_min. Returns released slots.
+     Only safe because the pre-buy refresh first re-reads trading history/book: a fill that was placed but
+     not marked still counts through its positionId there."""
+@@ -193,6 +194,7 @@
+         raise RuntimeError(err)
+     n = now or datetime.now(IDT)
+     out: list[dict[str, Any]] = []
++    changed = False
+     with _locked(path):
+         d = _read(path)
+         if d is None:
+@@ -206,11 +208,17 @@
+                 except (KeyError, ValueError):
+                     continue  # unparseable => keep counting (fail closed)
+                 if (n - t).total_seconds() > max_age_min * 60:
++                    why = blocker(s_, t) if blocker is not None else "NO_ORDERS_READ"
++                    if why:  # pending order / new position for this instrument (or no read) => keep counting
++                        s_["release_blocked"] = why
++                        s_["release_blocked_at"] = n.astimezone(IDT).isoformat(timespec="seconds")
++                        changed = True
++                        continue
+                     s_["state"] = "released"
+                     s_["release_reason"] = f"stale unmarked > {max_age_min:g} min (pre_buy_refresh)"
+                     s_["released_at"] = n.astimezone(IDT).isoformat(timespec="seconds")
+                     out.append(dict(s_))
+-        if out:
++        if out or changed:
+             _write(path, d)
+     return out
+ 

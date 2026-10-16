@@ -34,6 +34,8 @@ PROD = {
     "scores": Path("/workspace/classic-rebalance/scores-latest.json"),
     "momentum": Path("/workspace/momentum-holdings-for-classic.json"),
     "evidence_dir": PKG / "evidence",
+    # 2026-10-16: saved user-OfersClaw5 get-my-trading-history read (today's opened+closed positions)
+    "history": Path("/workspace/classic_rsi/state/trading-history-today.json"),
 }
 
 
@@ -44,7 +46,7 @@ def paths() -> dict[str, Any]:
     r = Path(root)
     return {"audit_dir": r / "audit", "qa_dir": r / "audit" / "qa", "lock_dir": r / "audit" / "placed",
             "book": r / "book.json", "scores": r / "scores.json", "momentum": r / "momentum.json", "evidence_dir": r / "evidence",
-            "test_mode": True, "test_root": str(r), "account": "demo"}
+            "history": r / "history.json", "test_mode": True, "test_root": str(r), "account": "demo"}
 
 
 def run_verdict_path(run_id: str) -> Path:

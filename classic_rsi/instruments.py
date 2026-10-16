@@ -31,6 +31,26 @@ CRYPTO_EXCHANGE_IDS = frozenset({8})  # Digital Currency
 ALLOWED_TYPES = frozenset({"Stocks", "ETF"})
 ALLOWED_ASSET_CLASSES = frozenset({"stock", "etf"})
 CRYPTO_WORDS = frozenset({"crypto", "cryptocurrency", "digital currency"})
+# 2026-10-16: ONLY these crypto majors are tradable (x1 long). Verified via user-OfersClaw5
+# GET /api/v1/market-data/search (xRequestId 93a0dc63-d79a-4005-9e3b-a8de00c5b87d).
+# Bare 'T' stays blocked (Threshold crypto 100528); AT&T is T.US 1030.
+CRYPTO_MAJORS = {"BTC": 100000, "ETH": 100001, "SOL": 100063}
+CRYPTO_MAJOR_IDS = frozenset(CRYPTO_MAJORS.values())
+YAHOO_CRYPTO = {k: f"{k}-USD" for k in CRYPTO_MAJORS}
+
+
+NO_ADD_SYMBOLS = frozenset({"XLE"})  # standing rule: no XLE adds (buys/adds blocked; sells/trims allowed)
+
+
+def is_no_add_symbol(symbol: Any) -> bool:
+    return str(symbol or "").upper().strip() in NO_ADD_SYMBOLS
+
+
+def crypto_major(symbol: str) -> Optional[str]:
+    s = str(symbol or "").upper().strip()
+    if s.endswith("-USD"):
+        s = s[:-4]
+    return s if s in CRYPTO_MAJORS else None
 
 
 @lru_cache(maxsize=4)
@@ -69,13 +89,24 @@ def _norm(symbol: str) -> str:
     return str(symbol or "").upper().strip()
 
 
-def resolve(symbol: str, imap: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
-    """Return the map entry for a scanned ticker (Yahoo or eToro form), else None."""
+def resolve(symbol: str, imap: Optional[dict[str, Any]] = None, instrument_id: Any = None) -> Optional[dict[str, Any]]:
+    """Return the map entry for a scanned ticker (Yahoo or eToro form), else None.
+
+    Crypto majors resolve ONLY with an explicit matching instrument_id (BTC 100000 / ETH 100001 /
+    SOL 100063); a bare 'BTC'/'ETH'/'SOL' never maps to crypto implicitly (QA 2026-10-16)."""
     imap = imap if imap is not None else load_map()
     inst = imap.get("instruments") or {}
     s = _norm(symbol)
     if not s:
         return None
+    cm = crypto_major(s)
+    try:
+        iid_given = None if instrument_id is None or isinstance(instrument_id, bool) else int(instrument_id)
+    except (TypeError, ValueError):
+        iid_given = None
+    if cm and iid_given is not None and iid_given == CRYPTO_MAJORS[cm]:
+        return {"symbol": cm, "etoroSymbol": cm, "instrumentId": CRYPTO_MAJORS[cm], "type": "Crypto",
+                "assetClass": "crypto", "exchangeId": 8}
     for key in (s, s.replace(".", "-")):
         if key in inst:
             return dict(inst[key])
@@ -103,6 +134,9 @@ def check_entry(entry: Optional[dict[str, Any]], imap: Optional[dict[str, Any]] 
         exch = int(entry.get("exchangeId"))
     except (TypeError, ValueError):
         exch = None
+    if (iid in CRYPTO_MAJOR_IDS and ac == "crypto"
+            and CRYPTO_MAJORS.get(str(entry.get("etoroSymbol") or "").upper()) == iid):
+        return True, None, "ok (crypto major)"
     if (
         iid in crypto_ids
         or typ.lower() in CRYPTO_WORDS
@@ -117,10 +151,11 @@ def check_entry(entry: Optional[dict[str, Any]], imap: Optional[dict[str, Any]] 
     return True, None, "ok"
 
 
-def guard_symbol(symbol: str, imap: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-    """Resolve + guard one ticker. Always returns a dict with ok/flag/reason/instrument fields."""
+def guard_symbol(symbol: str, imap: Optional[dict[str, Any]] = None, instrument_id: Any = None) -> dict[str, Any]:
+    """Resolve + guard one ticker. Always returns a dict with ok/flag/reason/instrument fields.
+    Pass instrument_id for crypto majors (required) or to pin a stock id."""
     imap = imap if imap is not None else load_map()
-    entry = resolve(symbol, imap)
+    entry = resolve(symbol, imap, instrument_id=instrument_id)
     ok, flag, reason = check_entry(entry, imap)
     return {
         "symbol": _norm(symbol),
@@ -149,8 +184,8 @@ def guard_items(items: list[dict[str, Any]], kind: str, imap: Optional[dict[str,
     dropped: list[dict[str, Any]] = []
     for it in items:
         sym = get_sym(it)
-        g = guard_symbol(sym, imap)
         carried = (it.get("instrument") or {}).get("instrumentId", it.get("instrumentId"))
+        g = guard_symbol(sym, imap, instrument_id=carried if crypto_major(sym) else None)
         if g["ok"] and carried is not None:
             try:
                 carried_i = int(carried)

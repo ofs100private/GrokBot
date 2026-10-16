@@ -41,6 +41,58 @@ def us_session(now: Optional[datetime] = None) -> dict:
     return {**base, "open": True, "reason": None, "close": close.strftime("%H:%M")}
 
 
+# ---------------------------------------------------------------- 24x5 / crypto windows (2026-10-16)
+# eToro 24/5 for US stocks/ETFs: Sun 20:05 ET -> Fri 20:00 ET (overnight + pre + RTH + after-hours),
+# closed on US market holidays. Not every instrument supports it: the per-instrument live flag
+# (isOpen from market-data / prepare-trade rejection) always wins; if it is unknown the caller may
+# fall back to RTH. Crypto majors trade 24/7 including weekends.
+EXT_SUN_OPEN, EXT_FRI_CLOSE = time(20, 5), time(20, 0)
+
+
+def extended_session(now: Optional[datetime] = None) -> dict:
+    now = now or datetime.now(ET)
+    if now.tzinfo is None:
+        return {"open": False, "reason": "NAIVE_TIMESTAMP"}
+    et = now.astimezone(ET)
+    d, t, wd = et.date(), et.time(), et.weekday()
+    base = {"et": et.strftime("%Y-%m-%d %H:%M %Z"), "session": "extended_24x5"}
+    if d.year not in KNOWN_YEARS:
+        return {**base, "open": False, "reason": "MARKET_CALENDAR_UNKNOWN"}
+    if wd == 5 or (wd == 6 and t < EXT_SUN_OPEN) or (wd == 4 and t >= EXT_FRI_CLOSE):
+        return {**base, "open": False, "reason": "WEEKEND"}
+    # trading date the overnight session belongs to (after 20:00 ET -> next day's session)
+    sess = d + timedelta(days=1) if t >= time(20, 0) else d
+    if sess in HOLIDAYS or (t < time(20, 0) and d in HOLIDAYS):
+        return {**base, "open": False, "reason": "US_HOLIDAY"}
+    return {**base, "open": True, "reason": None}
+
+
+def trading_window(asset_class: Optional[str], now: Optional[datetime] = None, *,
+                   instrument_is_open: Optional[bool] = None, supports_extended: Optional[bool] = None) -> dict:
+    """Open/closed for one asset class (fail-safe).
+
+    crypto  -> 24/7 (an explicit isOpen=False still closes it).
+    stock/etf -> calendar window (24x5 if supports_extended is not False, else RTH) AND an explicit
+                 live per-instrument isOpen=True. Unknown isOpen (None) => CLOSED. Unknown extended
+                 support is therefore only tradable when the live read says the instrument is open now.
+    """
+    ac = str(asset_class or "").lower()
+    if ac == "crypto":
+        if instrument_is_open is False:
+            return {"open": False, "reason": "INSTRUMENT_CLOSED", "session": "crypto_24x7"}
+        return {"open": True, "reason": None, "session": "crypto_24x7"}
+    if ac not in ("stock", "etf"):
+        return {"open": False, "reason": "ASSET_CLASS_UNKNOWN", "session": None}
+    out = ({**us_session(now), "session": "rth_fallback"} if supports_extended is False else extended_session(now))
+    if not out["open"]:
+        return out
+    if instrument_is_open is None:
+        return {**out, "open": False, "reason": "INSTRUMENT_OPEN_UNKNOWN"}
+    if instrument_is_open is not True:
+        return {**out, "open": False, "reason": "INSTRUMENT_CLOSED"}
+    return out
+
+
 # ---------------------------------------------------------------- trading-day helpers (fix3)
 def is_trading_day(d: date) -> bool:
     """Weekday, known calendar year, not a US market holiday."""

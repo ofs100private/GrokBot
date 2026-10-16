@@ -1,0 +1,21 @@
+{
+ "verdict": "PASS",
+ "fix": "fix3",
+ "checker": "QA Bot",
+ "checked_at": "2026-10-16T01:43:39+03:00",
+ "subject": "Trader_Classic code-20261016-v4.diff + qafix3-incremental (execute-pass v15-qa3-orders)",
+ "tests": "549/549 passed (execute_pass 236, orders_20261016 25, prebuy 33, regression 35, rules 41, cash_floor 25, cost_gate 51, instruments 20, scorer 45, universe 38)",
+ "verified": [
+  "release_stale: with no blocker function (no valid orders read) the reason is NO_ORDERS_READ and nothing is released. pre_buy passes a blocker only when orders_ok and history_ok.",
+  "release_blocker keeps the slot if any pending order matches the instrumentId (an unknown instrument on either side blocks all), or if any orders-read position or history trade for that instrument opened at/after reserved_at (unknown time blocks).",
+  "parse_orders: statusCode 200, direct.positions/orders lists, timestamp <=60s (-30s skew), positions need openTime+positionId. Terminal statuses are excluded; other orders count as pending, and an unknown time counts as today.",
+  "Pending orders placed today (or with unknown time) add order:<id> keys to the union count in pre_buy and execute_pass.",
+  "execute_pass gates: PRE_BUY_NOT_FRESH unless prebuy-state <=5 min with history/rates/orders all ok; BOOK_NOT_FRESH_FOR_COUNT if book >60s."
+ ],
+ "findings": [],
+ "warnings": [
+  "DOUBLE_COUNT_CONSERVATIVE: a pending order and its own still-reserved slot both count (reservation + order:<id>), because nothing links them. The same applies when a release is blocked by a newly opened position (reservation + positionId). This can block the 4th trade wrongly until the slot is marked or released (once marked placed with positionId, the pending key disappears on fill). Fail-closed. Fix: link the reservation to orderId/positionId at place time (mark with orderId) and dedupe.",
+  "STALE_SLOT_BLOCKED_BY_UNRELATED: any pending order with an unknown instrumentId blocks every stale release, and a same-instrument manual trade blocks release of an unrelated stale slot. Conservative.",
+  "Carried: isOpen derived from quote freshness is a heuristic (fail-closed). Each buy needs pre_buy with 3 fresh read-only reads (history, rates, positions-and-orders) <=5 min before GO."
+ ]
+}

@@ -55,6 +55,9 @@ MULTIPLIER = 2.0
 
 TAX_RATE = 0.25  # conservative: Israeli capital-gains rate 25%
 DEFAULT_SPREAD_PCT = 0.0015  # PRELIMINARY ONLY
+# QA 2026-10-16: crypto majors preliminary cost floor >= 1% per side (eToro crypto fee) + 1% spread
+CRYPTO_SPREAD_PCT = 0.01
+CRYPTO_FEE_PCT_PER_SIDE = 0.01
 DEFAULT_FEE_SOURCE = "real Classic fills 2026-10-07 (ADBE/GS/CAT $500 each) charged $0.75 per order on keys"
 DEFAULT_OPEN_FEE_USD = 0.75  # PRELIMINARY ONLY
 DEFAULT_CLOSE_FEE_USD = 0.75  # PRELIMINARY ONLY
@@ -550,8 +553,21 @@ def preliminary_for_pack(pack: dict[str, Any], *, notional_usd: Optional[float] 
     lv = pack.get("levels") or {}
     sz = (pack.get("sizing") or {}).get("suggested_notional_usd")
     n = notional_usd if notional_usd is not None else _f(sz)
+    kw: dict[str, Any] = {}
+    if str(lv.get("asset_class") or (pack.get("instrument") or {}).get("assetClass") or "") == "crypto":
+        e = _f(lv.get("entry"))
+        if e and n:
+            kw = {"spread_usd": n * CRYPTO_SPREAD_PCT, "open_fee_usd": n * CRYPTO_FEE_PCT_PER_SIDE,
+                  "close_fee_usd": n * CRYPTO_FEE_PCT_PER_SIDE}
+        elif e:
+            # no notional: assume $1,000 so the % floors still bind
+            n = 1000.0
+            kw = {"spread_usd": n * CRYPTO_SPREAD_PCT, "open_fee_usd": n * CRYPTO_FEE_PCT_PER_SIDE,
+                  "close_fee_usd": n * CRYPTO_FEE_PCT_PER_SIDE}
     cg = evaluate(kind="rsi_buy", entry=lv.get("entry"), notional_usd=n, take_profit=lv.get("take_profit"),
-                  stop_loss=lv.get("stop_loss"), stage="preliminary")
+                  stop_loss=lv.get("stop_loss"), stage="preliminary", **kw)
+    if kw:
+        cg.setdefault("assumptions", []).append("crypto preliminary floor: spread 1% + fee 1%/side of notional")
     cg["note"] = ("PRELIMINARY: assumed spread/fees (no live eToro access in-script). Binding gate is "
                   "recomputed by execute_pass at the anchor (QA) quote and at the live quote.")
     return cg
@@ -562,6 +578,11 @@ def rebase_levels(pack: dict[str, Any], ask: float) -> dict[str, Any]:
     atr1h = _f(lv.get("atr"))
     if not atr1h or atr1h <= 0:
         return {"entry": _r(ask), "take_profit": None, "stop_loss": None, "atr_1h": atr1h, "rebased_on": "anchor ask"}
+    if lv.get("asset_class") == "crypto":
+        from .levels import CRYPTO_TP_R, crypto_sl_distance
+        d = crypto_sl_distance(ask, atr1h)
+        return {"entry": _r(ask), "take_profit": _r(ask + CRYPTO_TP_R * d), "stop_loss": _r(ask - d),
+                "atr_1h": atr1h, "rebased_on": "anchor ask", "sl_rule": "crypto max(2.5*ATR,4%) cap 20%, TP 1.5R"}
     return {"entry": _r(ask), "take_profit": _r(ask + float(lv.get("tp_mult", 2.0)) * atr1h),
             "stop_loss": _r(ask - float(lv.get("sl_mult", 1.5)) * atr1h), "atr_1h": atr1h,
             "rebased_on": "anchor ask"}

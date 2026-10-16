@@ -124,6 +124,9 @@ def append_audit(
         "params_fingerprint": fp,
         "aggregate": (body.get("aggregate") if kind == "backtest" else None),
     }
+    if kind == "auto":
+        # QA 2026-10-16: link the auto row to its propose row in the index
+        index_line["propose_run_id"] = body.get("propose_run_id")
     with (root / "index.jsonl").open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(index_line, default=str) + "\n")
 

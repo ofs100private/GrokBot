@@ -8,6 +8,7 @@ Defaults (long-only, 1H ATR(14)):
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from typing import Any  # noqa: F401
 from typing import Any, Mapping, Optional
 
 import numpy as np
@@ -68,6 +69,30 @@ def atr_long_levels(
         "r_multiple": float(r_multiple),
         "units": "price",  # never pips
     }
+
+
+# Crypto majors SL rule (QA 2026-10-16): SL distance = max(2.5 x ATR(1H), 4% of entry), capped at
+# 20% of entry; TP distance = 1.5 x SL distance (reward:risk 1.5 >= MIN_REWARD_RISK 1.25). The cost
+# gate (expected gain >= 2x round-trip cost, crypto spread floor 1%/side) still has to pass.
+CRYPTO_SL_ATR_MULT = 2.5
+CRYPTO_SL_MIN_PCT = 0.04
+CRYPTO_SL_MAX_PCT = 0.20
+CRYPTO_TP_R = 1.5
+
+
+def crypto_sl_distance(entry: float, atr_value: float) -> float:
+    return min(max(CRYPTO_SL_ATR_MULT * atr_value, CRYPTO_SL_MIN_PCT * entry), CRYPTO_SL_MAX_PCT * entry)
+
+
+def crypto_long_levels(entry: float, atr_value: float) -> dict[str, Any]:
+    if entry <= 0 or atr_value is None or not np.isfinite(atr_value) or atr_value <= 0:
+        raise ValueError("entry and atr_value must be positive finite numbers")
+    d = crypto_sl_distance(entry, atr_value)
+    sl, tp = entry - d, entry + CRYPTO_TP_R * d
+    return {"entry": float(entry), "stop_loss": float(sl), "take_profit": float(tp), "atr": float(atr_value),
+            "sl_rule": "crypto: max(2.5*ATR1h, 4%) capped 20%; TP = 1.5R", "asset_class": "crypto",
+            "risk_per_share": float(d), "reward_per_share": float(CRYPTO_TP_R * d), "r_multiple": CRYPTO_TP_R,
+            "units": "price"}
 
 
 def levels_from_bar(

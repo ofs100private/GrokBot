@@ -1,0 +1,125 @@
+{
+ "run_id": "classic-rebalance-daily-20261016-1810",
+ "kind": "rebalance_daily_skip",
+ "asOfIDT": "2026-10-16 18:11 IDT",
+ "account": "OfersClaw5-PRIYN",
+ "live": {
+  "summary_xRequestId": "8bd8a5b0-8378-4e2d-a44f-8912c4e6ee8e",
+  "ts": "2026-10-16T15:11:00Z",
+  "equity": 7257.25,
+  "cash": 4778.2,
+  "cash_pct": 65.84,
+  "pending_orders": 0
+ },
+ "momentum_live": {
+  "symbols": [
+   "MSFT",
+   "STLD",
+   "USO",
+   "VTRS",
+   "XOM"
+  ],
+  "overlap": []
+ },
+ "scores": {
+  "file": "/workspace/classic-rebalance/scores-latest.json",
+  "sha256": "5d8ef19e931ae288b7f33a15b03214b484500789b23971412db1ce856622185f",
+  "asOf_bars": "2026-10-15"
+ },
+ "weights": {
+  "XLV": {
+   "mv_pct": 11.11,
+   "cost_pct": 9.78,
+   "sleeve": "health",
+   "type": "ETF",
+   "units": 4.537045,
+   "open": 156.44,
+   "live": 177.72,
+   "value": 806.33
+  },
+  "QQQ": {
+   "mv_pct": 10.94,
+   "cost_pct": 10.33,
+   "sleeve": "growth",
+   "type": "ETF",
+   "units": 1.106357,
+   "open": 677.9,
+   "live": 717.79,
+   "value": 794.14
+  },
+  "XLE": {
+   "mv_pct": 8.44,
+   "cost_pct": 8.27,
+   "sleeve": "energy",
+   "type": "ETF",
+   "units": 9.096422,
+   "open": 65.96,
+   "live": 67.34,
+   "value": 612.56
+  },
+  "TMO": {
+   "mv_pct": 3.67,
+   "cost_pct": 3.44,
+   "sleeve": "health",
+   "type": "stock",
+   "units": 0.386291,
+   "open": 647.18,
+   "live": 688.64,
+   "value": 266.02
+  }
+ },
+ "triggers": {
+  "1_caps": "none",
+  "2_cash": "FIRED 65.84% > 50%",
+  "3_50dma_negRS": "none",
+  "4_200dma": "none",
+  "5_trailing": "none (QQQ 717.79 vs 701.83; XLV 177.72 vs 164.55; XLE 67.34 vs 62.47; TMO 688.64 vs 633.60)"
+ },
+ "edge_registry_entries": 0,
+ "skipped": [
+  {
+   "symbol": "SPY",
+   "notional": 600,
+   "verdict": "COST_GATE_SKIP",
+   "reason": "EDGE_MISSING; also flagged: do not re-buy keys SPY without asking Ofer"
+  },
+  {
+   "symbol": "XLV",
+   "notional": 400,
+   "verdict": "COST_GATE_SKIP",
+   "reason": "EDGE_MISSING"
+  },
+  {
+   "symbol": "QQQ",
+   "notional": 400,
+   "verdict": "COST_GATE_SKIP",
+   "reason": "EDGE_MISSING"
+  },
+  {
+   "symbol": "TMO",
+   "notional": 400,
+   "verdict": "COST_GATE_SKIP",
+   "reason": "EDGE_MISSING"
+  },
+  {
+   "symbol": "XLK",
+   "notional": 600,
+   "verdict": "COST_GATE_SKIP",
+   "reason": "trend fail on 2026-10-15 bars (trend_ok false) + EDGE_MISSING"
+  }
+ ],
+ "notes": [
+  "TMO position $266 is below the $400 minimum after Ofer-authorized half close today; no action (min hold, authorized trade).",
+  "Saved routine prompt guard text is stale; current rules (Ofer 2026-10-16 01:27) = FULL AUTO after QA PASS, floor ~$1.5k, caps 20/35/45/15."
+ ],
+ "result": "NO_ACTION",
+ "weekly": {
+  "acct_1W_pct": -0.14,
+  "spy_1W_pct": -0.87,
+  "acct_1M_pct": 0.83,
+  "spy_1M_pct": 1.9,
+  "acct_since_0430_pct": -27.36,
+  "spy_since_0430_pct": 7.94,
+  "basis": "acct eToro gain/daily thru 10-15 (xRequestId b598e02e-a651-4b30-b1cd-0950d3df782a); SPY Yahoo closes 10-09 778.57, 09-15 757.39, 10-15 771.79"
+ }
+}

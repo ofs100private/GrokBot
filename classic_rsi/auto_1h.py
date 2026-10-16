@@ -1,7 +1,9 @@
 """Classic-only 1H auto runner (OfersClaw5-PRIYN).
 
 On each fire:
-  1. Session / weekend gate (no new opens on weekend unless --force)
+  1. Session gate (2026-10-16): US stocks/ETFs 24x5 via eToro extended hours (RTH fallback when an
+     instrument lacks extended hours); crypto majors BTC/ETH/SOL 24/7 incl. weekends; max 4 NEW
+     trades per IDT day (trade_counter.py)
   2. Build symbol universe via dynamic screener:
        S&P pool → liquid ADV$ → rising 1H volume (top N) ∪ live Classic book
        (never the old fixed 6-name DEFAULT_SYMBOLS as primary universe)
@@ -15,8 +17,9 @@ On each fire:
      spread/fee, cash floor auto-shrink, caps, drift) → order-QA PASS → Trader_Classic places
      via user-OfersClaw5 — no chat authorization, no trade-count or monthly new-name cap.
 
-Mandate locks unchanged: x1 long only, no crypto, cash floor ~$2.5k, 30% ETF / 15% stock /
-45% sleeve caps, stops, sell-before-buy. Does not touch Momentum.
+Mandate (2026-10-16): x1 long only, crypto ONLY BTC/ETH/SOL (crypto sleeve <=15% total equity),
+cash floor ~$1.5k, 35% ETF / 20% stock / 45% sleeve caps of TOTAL equity, SL+TP required,
+sell-before-buy, max 4 new trades/day. Does not touch Momentum.
 """
 
 from __future__ import annotations
@@ -29,7 +32,9 @@ from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 from .audit import DEFAULT_AUDIT_DIR, append_audit, new_run_id
-from .instruments import guard_symbol, map_meta
+from .instruments import crypto_major, guard_symbol, map_meta
+from .market_hours import extended_session
+from . import trade_counter as TC
 from .propose import AUTO_PLACE_DOC, propose_from_symbols, stamp_auto_place
 from .universe import build_screened_universe
 
@@ -37,7 +42,9 @@ IDT = ZoneInfo("Asia/Jerusalem")
 ET = ZoneInfo("America/New_York")
 PORTFOLIO = "OfersClaw5-PRIYN"
 MIRROR_ID = 11368142
-CASH_FLOOR_USD = 2500.0
+CASH_FLOOR_USD = 1500.0  # Ofer 2026-10-16 (was 2500)
+CRYPTO_UNIVERSE = ("BTC", "ETH", "SOL")
+from .instruments import CRYPTO_MAJORS as CRYPTO_IDS  # explicit ids required for crypto (QA 2026-10-16)
 PORTFOLIO_SNAPSHOT = Path("/workspace/classic-portfolio-for-app.json")
 CASH_MISSING_FLAG = "AVAILABLE_CASH_MISSING"  # fix9 hard flag (summary.availableCash missing/invalid)
 BOOK_SNAPSHOT_MAX_AGE_MIN = 30.0  # older book snapshot => fail closed (no live-read path in this script)
@@ -67,6 +74,15 @@ def is_us_rth(now_et: Optional[datetime] = None) -> bool:
         return False
     minutes = n.hour * 60 + n.minute
     return (9 * 60 + 30) <= minutes < (16 * 60)
+
+
+def is_equity_window_open(now: Optional[datetime] = None) -> bool:
+    """eToro 24x5 extended window for US stocks/ETFs (Sun 20:05 ET -> Fri 20:00 ET, minus holidays)."""
+    return bool(extended_session(now)["open"])
+
+
+def daily_budget() -> dict[str, Any]:
+    return TC.status()
 
 
 def load_book_symbols(snapshot: Path = PORTFOLIO_SNAPSHOT) -> tuple[list[str], Optional[float], Optional[dict]]:
@@ -182,11 +198,11 @@ def mandate_gate(
     """Soft gates for the auto envelope (Trader_Classic still re-checks live)."""
     weekend = is_weekend_idt()
     rth = is_us_rth()
+    eq_open = is_equity_window_open()
+    budget = daily_budget()
     blocks: list[str] = []
-    if weekend and not force:
-        blocks.append("weekend_no_new_opens")
-    if not rth and not force and not weekend:
-        blocks.append("outside_us_rth")
+    if not budget.get("ok"):
+        blocks.append("daily_new_trade_limit")  # max 4/day; never bypassed by --force
     if cash is None:
         # fix9: fail closed -- the cash floor cannot be verified, so no new buys (even with --force)
         blocks.append("available_cash_missing")
@@ -195,6 +211,12 @@ def mandate_gate(
     return {
         "weekend": weekend,
         "us_rth": rth,
+        "equity_window_open": eq_open,
+        "equity_session": "extended_24x5" if eq_open else "closed",
+        "crypto_window_open": True,
+        "allow_equity_buys": eq_open or force,
+        "allow_crypto_buys": True,
+        "daily_trade_budget": budget,
         "available_cash": cash,
         "cash_floor_usd": CASH_FLOOR_USD,
         "blocks": blocks,
@@ -231,6 +253,9 @@ def run_auto_1h(
         }
     else:
         universe, universe_meta = build_universe()
+    if book_stale is None:
+        # 2026-10-16: crypto majors always scanned (24/7); dedupe; never bare crypto look-alikes
+        universe = list(dict.fromkeys([*universe, *CRYPTO_UNIVERSE]))
 
     gates = mandate_gate(force=force, cash=cash)
     rid = new_run_id("auto")
@@ -252,6 +277,7 @@ def run_auto_1h(
             symbols=scan_syms or universe,
             period=period,
             suggested_notional_usd=notional,
+            instrument_ids=dict(CRYPTO_IDS),
         )
         risk_off = list(propose_payload.get("risk_off") or [])
         # Strip buy_packs when gated — no new opens
@@ -268,9 +294,15 @@ def run_auto_1h(
             symbols=universe,
             period=period,
             suggested_notional_usd=notional,
+            instrument_ids=dict(CRYPTO_IDS),
         )
         buy_packs = list(propose_payload.get("buy_packs") or [])
         risk_off = list(propose_payload.get("risk_off") or [])
+        if not gates.get("allow_equity_buys"):
+            # equities closed (weekend/holiday): only crypto majors may proceed
+            held = [p for p in buy_packs if not crypto_major((p.get("instrument") or {}).get("symbol") or "")]
+            buy_packs = [p for p in buy_packs if p not in held]
+            propose_payload["equity_window_closed_suppressed"] = held
 
     # Instrument guard (fail closed): packs without a resolved US stock/ETF eToro id were
     # dropped inside propose_from_symbols; surface the flags + dropped list here.
@@ -279,10 +311,14 @@ def run_auto_1h(
     # gated_buy_packs_suppressed are already guarded (guard runs before gating)
     unresolved_universe = []
     for s in universe:
-        g = guard_symbol(s)
+        g = guard_symbol(s, instrument_id=CRYPTO_IDS.get(str(s).upper()))
         if not g["ok"]:
             unresolved_universe.append({"symbol": s, "flag": g["flag"], "reason": g["reason"]})
     flags: list[str] = ["BOOK_SNAPSHOT_STALE"] if book_stale is not None else []
+    import os as _os
+    from .paths import TEST_ENV as _TEST_ENV
+    if _os.environ.get(_TEST_ENV):
+        flags.append("TEST_MODE")  # QA WARN fix: a test-mode envelope is never auto-place eligible
     if cash is None:
         flags.append(CASH_MISSING_FLAG)  # fix9: hard flag -> every pack auto_place_eligible=False
     for f in sorted({d.get("flag") for d in instrument_dropped if d.get("flag")}):
@@ -309,7 +345,7 @@ def run_auto_1h(
 
     instrument_guard = {
         "map": map_meta(),
-        "rule": "drop pack if no instrumentId, crypto asset class/exchange, or not a US stock/ETF",
+        "rule": "drop pack if no instrumentId, or not a US stock/ETF, or crypto other than BTC/ETH/SOL majors (100000/100001/100063)",
         "dropped": [
             {k: d.get(k) for k in ("kind", "symbol", "flag", "reason", "carriedInstrumentId")}
             for d in instrument_dropped

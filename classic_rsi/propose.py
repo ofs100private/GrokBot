@@ -25,7 +25,8 @@ import pandas as pd
 from .backtest import DEFAULT_SYMBOLS, fetch_1h, _normalize_ohlc
 from .levels import LevelsConfig, atr, atr_long_levels, levels_to_dict
 from .audit import append_audit, attach_run_id_to_packs, new_run_id
-from .instruments import guard_items, guard_symbol, load_map, map_meta
+from .instruments import crypto_major, guard_items, guard_symbol, is_no_add_symbol, load_map, map_meta
+from .levels import crypto_long_levels
 from .cost_gate import VERDICT_PASS, VERDICT_SKIP, preliminary_for_pack
 from .signals import RSILevels, StrongCandleConfig, compute_signals, long_only_remap
 
@@ -49,6 +50,7 @@ def propose_from_bars(
     lvl_cfg: Optional[LevelsConfig] = None,
     lookback_signals: int = 5,
     suggested_notional_usd: Optional[float] = None,
+    instrument_id: Optional[int] = None,
 ) -> dict[str, Any]:
     """Emit latest CANDIDATE_LONG pack(s) and RISK_OFF notes for one symbol.
 
@@ -84,8 +86,12 @@ def propose_from_bars(
     if last["action"] == "CANDIDATE_LONG":
         atr_v = last["atr"]
         if pd.notna(atr_v) and float(atr_v) > 0:
-            lv = atr_long_levels(float(last["close"]), float(atr_v), cfg=lvl_cfg)
+            if crypto_major(symbol) and instrument_id is not None:
+                lv = crypto_long_levels(float(last["close"]), float(atr_v))
+            else:
+                lv = atr_long_levels(float(last["close"]), float(atr_v), cfg=lvl_cfg)
             pack = _buy_pack(
+                instrument_id=instrument_id,
                 symbol=symbol,
                 bar_time=last_ts,
                 row=last,
@@ -95,7 +101,7 @@ def propose_from_bars(
             buys.append(pack)
 
     if last["action"] == "RISK_OFF":
-        risk_off.append(_risk_off_note(symbol, last_ts, last))
+        risk_off.append(_risk_off_note(symbol, last_ts, last, instrument_id))
 
     # Historical recent for audit (not actionable unless last bar)
     recent = []
@@ -140,6 +146,7 @@ def _buy_pack(
     row: pd.Series,
     levels: dict[str, float],
     suggested_notional_usd: Optional[float],
+    instrument_id: Optional[int] = None,
 ) -> dict[str, Any]:
     """classic-real-money-order-qa-gate style candidate pack (pre-prepare)."""
     remap = long_only_remap(row["raw_signal"])
@@ -154,7 +161,7 @@ def _buy_pack(
         "route": "REAL",
         "side": "buy",
         "action": "CANDIDATE_LONG",
-        "instrument": _instrument_block(symbol),
+        "instrument": _instrument_block(symbol, instrument_id),
         "leverage": 1,
         "timeframe": TIMEFRAME,
         "bar_confirmed": True,
@@ -169,17 +176,19 @@ def _buy_pack(
         "levels": levels_to_dict(levels),
         "sizing": {
             "suggested_notional_usd": suggested_notional_usd,
-            "note": "Trader_Classic sets size; cash floor ≥~$2.5k after fill; ×1 only",
+            "note": "Trader_Classic sets size; cash floor ≥~$1.5k after fill; ×1 only",
         },
         "thesis": thesis,
         "mandate_reminders": [
             "long-only ×1",
-            "no crypto",
-            "cash floor ≥ ~$2.5k after add",
-            "weekend: no new opens unless Ofer overrides",
+            "crypto: only BTC/ETH/SOL x1 long, crypto sleeve <= 15% of total equity",
+            "cash floor ≥ ~$1.5k after add",
+            "hours: US stocks/ETFs 24x5 (eToro extended, RTH fallback); crypto 24/7",
+            "max 4 NEW trades per IDT day (SL edits / protective exits excluded)",
+            "TP + SL both required on the order",
             "Fear / regime gates unchanged — still apply",
             "run-QA PASS + order-QA PASS + final cost gate (execute_pass GO) required before place",
-            "caps 30% ETF / 15% stock / 45% sleeve; sell-before-buy",
+            "caps 35% ETF / 20% stock / 15% crypto sleeve / 45% sleeve of TOTAL equity; sell-before-buy",
         ],
         "fee_estimate": None,  # set below from the preliminary cost gate; final via prepare/getCost
         "overnight_financing_estimate": None,
@@ -204,7 +213,7 @@ def _buy_pack(
 AUTO_PLACE_DOC = (
     "auto_place_eligible=True means the pack may proceed on the FULL AUTO path "
     "(prepare → execute_pass final gate → order-QA PASS → Trader_Classic places via MCP). "
-    "True only if: no hard flags, instrument guard OK (resolved US stock/ETF id), long-only x1 buy, "
+    "True only if: no hard flags, instrument guard OK (resolved US stock/ETF id or BTC/ETH/SOL major), long-only x1 buy, entry>SL and a calculated TP>entry, "
     "book snapshot not stale, soft mandate gates allow new buys (a --force run is never eligible), "
     "and the preliminary cost gate verdict is PASS (not COST_GATE_SKIP / COST_GATE_INVALID). It is NOT a place instruction; do_not_place=True still means this "
     "script never places. run-QA PASS is still required first."
@@ -227,11 +236,20 @@ def auto_place_eligibility(
     if not allow_new_buys:
         blockers.append("MANDATE_GATED")
     inst = pack.get("instrument") or {}
-    g = guard_symbol(inst.get("symbol") or "")
+    g = guard_symbol(inst.get("symbol") or "", instrument_id=inst.get("instrumentId"))
+    if is_no_add_symbol(inst.get("symbol")):
+        blockers.append("NO_XLE_ADDS")
     if not g["ok"] or inst.get("instrumentId") is None or int(inst.get("instrumentId")) != int(g["instrumentId"] or -1):
         blockers.append("INSTRUMENT_GUARD")
     if pack.get("side") != "buy" or pack.get("action") != "CANDIDATE_LONG" or pack.get("leverage") != 1:
         blockers.append("NOT_LONG_X1")
+    lv = pack.get("levels") or {}
+    try:
+        tp_ok = float(lv.get("take_profit")) > float(lv.get("entry")) > float(lv.get("stop_loss")) > 0
+    except (TypeError, ValueError):
+        tp_ok = False
+    if not tp_ok:
+        blockers.append("TAKE_PROFIT_OR_STOP_MISSING")
     cg = pack.get("cost_gate") or {}
     if not cg:
         blockers.append("COST_GATE_MISSING")
@@ -248,9 +266,10 @@ def stamp_auto_place(pack: dict[str, Any], **kw: Any) -> dict[str, Any]:
     return out
 
 
-def _instrument_block(symbol: str) -> dict[str, Any]:
-    """eToro instrument identity for a pack (never trust the bare ticker — see instruments.py)."""
-    g = guard_symbol(symbol)
+def _instrument_block(symbol: str, instrument_id: Optional[int] = None) -> dict[str, Any]:
+    """eToro instrument identity for a pack (never trust the bare ticker — see instruments.py).
+    Crypto majors need an explicit instrument_id (100000/100001/100063)."""
+    g = guard_symbol(symbol, instrument_id=instrument_id)
     return {
         "symbol": symbol,
         "etoroSymbol": g["etoroSymbol"],
@@ -260,9 +279,9 @@ def _instrument_block(symbol: str) -> dict[str, Any]:
     }
 
 
-def _risk_off_note(symbol: str, bar_time: str, row: pd.Series) -> dict[str, Any]:
+def _risk_off_note(symbol: str, bar_time: str, row: pd.Series, instrument_id: Optional[int] = None) -> dict[str, Any]:
     remap = long_only_remap(row["raw_signal"])
-    g = guard_symbol(symbol)
+    g = guard_symbol(symbol, instrument_id=instrument_id)
     return {
         "symbol": symbol,
         "etoroSymbol": g["etoroSymbol"],
@@ -290,8 +309,11 @@ def propose_from_symbols(
     strong_cfg: Optional[StrongCandleConfig] = None,
     lvl_cfg: Optional[LevelsConfig] = None,
     suggested_notional_usd: Optional[float] = None,
+    instrument_ids: Optional[dict[str, int]] = None,
 ) -> dict[str, Any]:
-    """Batch propose for a symbol list (Yahoo 1H or caller-supplied frames)."""
+    """Batch propose for a symbol list (Yahoo 1H or caller-supplied frames).
+    instrument_ids: explicit eToro ids (REQUIRED for crypto majors, e.g. {"BTC": 100000})."""
+    instrument_ids = {str(k).upper(): int(v) for k, v in (instrument_ids or {}).items()}
     symbols = symbols or list(DEFAULT_SYMBOLS)
     levels = levels or RSILevels()
     strong_cfg = strong_cfg or StrongCandleConfig()
@@ -314,6 +336,7 @@ def propose_from_symbols(
                 strong_cfg=strong_cfg,
                 lvl_cfg=lvl_cfg,
                 suggested_notional_usd=suggested_notional_usd,
+                instrument_id=instrument_ids.get(str(sym).upper()),
             )
         except Exception as exc:  # noqa: BLE001
             one = {
@@ -323,7 +346,7 @@ def propose_from_symbols(
                 "risk_off": [],
                 "error": str(exc),
             }
-        g = guard_symbol(sym, imap)
+        g = guard_symbol(sym, imap, instrument_id=instrument_ids.get(str(sym).upper()))
         one["etoroSymbol"] = g["etoroSymbol"]
         one["instrumentId"] = g["instrumentId"]
         one["instrument_guard"] = {"ok": g["ok"], "flag": g["flag"], "reason": g["reason"]}
@@ -333,6 +356,11 @@ def propose_from_symbols(
 
     # Fail-closed instrument guard: drop any pack/note without a resolved US stock/ETF id
     buy_packs, dropped_buys = guard_items(buy_packs, "buy_pack", imap)
+    # standing rule: no XLE adds (hard drop, recorded)
+    xle = [p for p in buy_packs if is_no_add_symbol((p.get("instrument") or {}).get("symbol"))]
+    buy_packs = [p for p in buy_packs if p not in xle]
+    no_add_dropped = [{"kind": "buy_pack", "symbol": (p.get("instrument") or {}).get("symbol"), "flag": "NO_XLE_ADDS",
+                       "reason": "standing rule: no XLE adds"} for p in xle]  # soft: not an instrument hard flag
     risk_off, dropped_ro = guard_items(risk_off, "risk_off", imap)
     instrument_dropped = dropped_buys + dropped_ro
     instrument_flags = sorted({d["flag"] for d in instrument_dropped if d.get("flag")})
@@ -391,6 +419,7 @@ def propose_from_symbols(
         "momentum_snapshot": {k: _msnap.get(k) for k in ("ok", "error", "asOf", "xRequestId", "age_s", "path")},
         "instrument_map": map_meta(),
         "instrument_flags": instrument_flags,
+        "no_add_dropped": no_add_dropped,
         "instrument_dropped": instrument_dropped,
         "per_symbol": results,
     }

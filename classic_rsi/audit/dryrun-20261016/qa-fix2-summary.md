@@ -1,0 +1,10 @@
+# Classic 2026-10-16 — QA fix2 (WARNs after fix1 PASS). No trades placed. execute_pass v14-qa2-prebuy.
+Diffs: code-20261016-qafix2-incremental.diff (vs fix1), code-20261016-v3.diff (full vs original).
+Tests 524/524: execute_pass 236 · prebuy_20261016 (NEW) 33 · regression_20261016 35 · rules_20261016 41 · cash_floor 25 · cost_gate 51 · instruments 20 · scorer 45 · universe 38.
+
+1. Test mode in production — execute_pass result always carries test_mode; placeable=auto_place_eligible=False when CLASSIC_EXEC_TEST_ROOT is set (+ test_mode_warning); CLI exits 3 for any test-mode result; auto_1h adds hard flag TEST_MODE (every pack ineligible).
+2. History must be a recognisable success — pre_buy.parse_history: statusCode 200, `trades` list, no error keys; each trade needs parseable openTime + closeTime + positionId; empty/unparseable/non-200/execute-read failure → fail closed; hasMore with a page entirely closed today → fail closed. execute_pass.load_history re-validates the saved raw response (≤30 min). Verified against a real user-OfersClaw5 response (50 trades, ok).
+3. Daily count — trade_counter: count = unmarked reservations + placed slots without positionId + |placed positionIds ∪ positionIds opened today in book ∪ validated history| (union, not max).
+4. Helper — classic_rsi/pre_buy.py (CLI `python -m classic_rsi.pre_buy`): ingests raw READ-ONLY MCP outputs (get-my-trading-history; execute-read GET /api/v1/market-data/instruments/rates), writes state/trading-history-today.json and state/instrument-open.json (isOpen = last quote ≤300 s old & bid/ask>0; execute_pass uses it when --instrument-open omitted, 5 min validity), releases unmarked reservations >30 min (only after a good history read). Documented in trader-classic-strategy and classic-rsi-four-level-1h skills.
+
+isOpen evidence (2026-10-16 01:39 IDT, read-only): v1 rates AAPL 1001 last quote 22:38:28Z (live, extended hours) vs SPY 3000 and AAPL.RTH 8754 last quote 19:28:11Z (not quoting) → SPY is not extended-hours on eToro right now. No eToro read endpoint returns an isOpen field (search `isOpen` projection/filter ignored; v2 rates/instruments lack it).

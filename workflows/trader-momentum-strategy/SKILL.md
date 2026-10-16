@@ -2,9 +2,8 @@
 name: Trader Momentum strategy
 description: >-
   use this when planning, reviewing, or executing Trader_momentum EOD buys/sells
-  on Momentum-HHHGDTJ — full auto after QA PASS, no user confirmation, playbook
-  2026-09-16 breakout sleeve + event freeze + 1R trail, Fear-as-dip window,
-  unlimited stocks + ≥1 ETF (2026-10-05)
+  on Momentum-HHHGDTJ — full auto after QA PASS, place_lock before prepare-trade,
+  playbook 2026-09-16 + capacity 2026-10-05 (unlimited stocks, ≤1 new ETF/pack)
 ---
 # Trader Momentum strategy
 
@@ -17,6 +16,18 @@ Changelog: `/workspace/momentum_audit/playbook-2026-09-16-full-fix.md` (supersed
 **Buy and sell without waiting for the user in chat.** After [Momentum screener run QA](sand-workflow:momentum-screener-run-qa) PASS and [Momentum real-money QA gate](sand-workflow:momentum-real-money-qa-gate) PASS **from QA Bot**, **prepare then place immediately**. No confirm widget. No waiting for CoS/Ofer “go.” Report fills after the fact.
 
 Same auto rule for position_manager **CLOSE**, **MOVE_SL_BREAKEVEN**, and **TRAIL_SL** when QA PASS. HOLD needs no place. Platform Auto-review cards are the host gate, not chat confirmation. `WaitingForMarket` = leave working order; do not re-place.
+
+
+### Place lock (mandatory, 2026-10-15)
+
+Before **every** `prepare-trade` (EOD routine **and** parent chat):
+
+1. Live `get-my-positions-and-orders` → JSON with top-level `timestamp`/`asOf` **<120s**.
+2. `python -m momentum_qa.place_lock acquire --verdict <qa-verdict.json> --symbol SYM --caller <eod-routine|parent-chat> --positions-json <live.json>`
+3. Exit **0** only → prepare-trade → place-trade → `place_lock mark --status PLACED|FAILED|EXPIRED`.
+4. Refuse place on **LOCK_HELD** (2), **ALREADY_HELD** (3), **POSITIONS_STALE** (4; missing/stale timestamp). Same verdict sha never re-places. PM trail/close: `--allow-held`.
+
+See `/workspace/momentum_qa/place_flow.md`.
 
 ### Cash-block → recheck (CoS / QA Bot 2026-09-22)
 
@@ -38,7 +49,7 @@ If cash later frees (e.g. after `LOSS_PCT_GE_4` / SMA50 closes) and a prior pack
 - DWM: week and month green required for buys (breakout also needs day ≥ 0)
 - REAL only; never Classic; never demo
 - Intraday ban 16:30–18:30 Israel; skip NYSE holidays
-- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either. **Code-enforced (2026-10-13):** read Classic via MCP `user-OfersClaw5` get-my-positions-and-orders → `python3 /workspace/classic_book.py save <result>` (snapshot `momentum_audit/classic_book/classic_holdings_latest.json`, timestamped). Screener pack + rebalance buy/rotation drop matches with TRACE `CROSS_BOOK_HELD`; `preplace` needs snapshot ≤120s old (`--classic-snapshot`); missing/stale = all buys blocked (`CROSS_BOOK_READ_MISSING_OR_STALE`).
+- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either. **Code-enforced (2026-10-13/15):** read Classic via MCP `user-OfersClaw5` get-my-positions-and-orders → `python3 /workspace/classic_book.py save <result>` (snapshot `momentum_audit/classic_book/classic_holdings_latest.json`). Pack scan needs Classic ≤**900s**; stale/missing → fail closed **GATE_OK** (`STALE_CROSSBOOK_FAIL_CLOSED` / `CROSS_BOOK_READ_MISSING_OR_STALE`, no pack). `preplace` needs ≤**120s**. Overlap → `CROSS_BOOK_HELD` / hard-FAIL `CROSS_BOOK_OVERLAP`.
 
 ## Fear is the dip window (Ofer 2026-10-04)
 
@@ -93,10 +104,12 @@ Wed 2026-09-30: place-QA **PASS** for JNJ CLOSE + CRWD BE, but Mirror A next day
 3. **Sticky pending queue:** once authorize_place PASS for CLOSE/BE/TRAIL, keep until Mirror A confirms (position gone / SL ≥ new_stop / cash freed). Re-attempt next EOD even if live R later slips below 2R (missed BE is still debt).
 4. Watchdog / eod_miss_check: if `authorize_place_now` has no matching place_ack within ~15m → **`EOD_PLACE_NOT_ACKED`** (not CLEAN). Scan/PM ACTION alone is insufficient.
 5. Execution path: keys MCP must be keys-only (no mixed OAuth). If keys broken, route place via documented working Real path — never silent skip after PASS.
-6. Thin cash (&lt;~$1000): log `CASH_RECYCLE_REQUIRED`; BUY pack is advisory until cash covers; then **fresh** place-QA (existing cash-block rule). Stock-count alone is **not** a capacity block after 2026-10-05.
+6. Thin cash (<~$1000): log `CASH_RECYCLE_REQUIRED`; BUY pack is advisory until cash covers; then **fresh** place-QA (existing cash-block rule). Stock-count alone is **not** a capacity block after 2026-10-05.
 
 See `/workspace/momentum_audit/improvement-2026-10-01.md`.
 
 ## Do not
 
-Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat CNN Fear as an automatic no-buy. Treat keys MCP as the $8k book. Double-buy a name filled this session. Cap open stocks at 3 (obsolete). Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book/sleeve-rule snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`). Buy a symbol held in Classic (OfersClaw5-PRIYN) — cross-book no-overlap.
+Wait for chat confirmation after QA PASS. Average down. Buy VCP into soft regime. Buy into event freeze. Treat CNN Fear as an automatic no-buy. Treat keys MCP as the $8k book. Double-buy a name filled this session. Cap open stocks at 3 (obsolete). Place after a prior place-QA FAIL without a **fresh** QA Bot place-QA PASS on the new cash/book/sleeve-rule snapshot (`PLACE_WITHOUT_QA_BOT_RECHECK`). Buy a symbol held in Classic (OfersClaw5-PRIYN) — cross-book no-overlap. Skip `place_lock acquire`/`mark`. Place on LOCK_HELD / ALREADY_HELD / POSITIONS_STALE.
+
+**Hard FAIL deviations (HIGH):** `DUPLICATE_PLACE`, `AMOUNT_GT_1000_PER_NAME` — day_verdict FAIL; Ofer KEEP does not clear them.

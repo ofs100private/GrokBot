@@ -47,18 +47,27 @@ from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 from . import cost_gate as CG
-from .instruments import guard_symbol, resolve
-from .market_hours import ET, us_session
+from .instruments import crypto_major, guard_symbol, is_no_add_symbol, resolve
+from .levels import CRYPTO_SL_MAX_PCT, CRYPTO_SL_MIN_PCT
+from .market_hours import ET, trading_window, us_session  # noqa: F401
+from . import trade_counter as TC
 from .paths import order_verdict_path, paths, run_verdict_path
 from . import momentum_holdings as MH
 
 IDT = ZoneInfo("Asia/Jerusalem")
-VERSION = "execute-pass-v11-fix8b"
-CASH_FLOOR_USD = 2500.0
+VERSION = "execute-pass-v15-qa3-orders"
+CASH_FLOOR_USD = 1500.0  # Ofer 2026-10-16 (was 2500)
 MIN_POSITION_USD = 400.0
-NAME_CAP = {"etf": 0.30, "stock": 0.15}
+NAME_CAP = {"etf": 0.35, "stock": 0.20, "crypto": 0.15}  # Ofer 2026-10-16 (was etf .30 / stock .15)
 SLEEVE_CAP = 0.45
+CRYPTO_SLEEVE = "crypto"
+CRYPTO_SLEEVE_CAP = 0.15  # BTC+ETH+SOL combined, % of total equity
+
+
+def sleeve_cap(sleeve: Optional[str]) -> float:
+    return CRYPTO_SLEEVE_CAP if sleeve == CRYPTO_SLEEVE else SLEEVE_CAP
 RISK_EXIT_BUFFER_EQUITY_PCT = 0.01  # fix5: sized risk exits overshoot the floor/cap by 1% of equity
+MIN_REWARD_RISK = 1.25  # TP distance >= 1.25x SL distance (ATR 2.0/1.5 default = 1.33)
 SIZED_RISK_EXITS = ("cash_below_floor", "hard_cap_breach")  # full close only via the <$400 residual rule
 UNIT_STEP = 1e-6
 # fix6: GO accepts pack units in [required_now, RISK_EXIT_SIZE_BAND * max(required_at_qa, required_now)]
@@ -99,6 +108,7 @@ DEFAULT_SLEEVES = {
     "XLF": "industrials_financials", "XLI": "industrials_financials",
     "T": "communication_defensive", "VZ": "communication_defensive",
     "XLP": "defensive", "XLU": "defensive", "XLY": "consumer",
+    "BTC": "crypto", "ETH": "crypto", "SOL": "crypto",
 }
 
 
@@ -118,6 +128,16 @@ def cap_denominator(vals: dict[str, float], cash: Optional[float] = None, equity
 def _basis_equity(book: dict, basis: str) -> Optional[float]:
     """Book equity for the market-value basis (None => cost basis uses cost + cash)."""
     return _f(book.get("equity")) if basis == "values" else None
+
+
+_BOOK_IIDS: dict[str, int] = {}  # symbol -> instrumentId from the last loaded book (crypto needs explicit ids)
+
+
+def _rs(symbol: Any, iid: Any = None) -> Optional[dict]:
+    s = str(symbol or "").upper()
+    if iid is None and crypto_major(s):
+        iid = _BOOK_IIDS.get(s)
+    return resolve(s, instrument_id=iid)
 
 
 def _floor_units(x: float) -> float:
@@ -175,6 +195,11 @@ def load_book(now: datetime) -> dict[str, Any]:
     cost_missing = []
     for p in d.get("positions") or []:
         s = str(p.get("symbol")).upper()
+        if p.get("instrumentId") is not None:
+            try:
+                _BOOK_IIDS[s] = int(p.get("instrumentId"))
+            except (TypeError, ValueError):
+                pass
         vals[s] = vals.get(s, 0.0) + float(p.get("value") or 0.0)
         if p.get("invested") is None:
             cost_missing.append(s)
@@ -342,9 +367,11 @@ class _Ctx:
         return bool(ok)
 
 
-def _common_gates(c: _Ctx, hold: bool, book: dict) -> Optional[float]:
-    s = us_session(c.now)
-    c.check("us_regular_session", s["open"], s, s.get("reason") or "MARKET_CLOSED")
+def _common_gates(c: _Ctx, hold: bool, book: dict, asset_class: Optional[str] = "stock",
+                  instrument_is_open: Optional[bool] = None) -> Optional[float]:
+    # 2026-10-16: US stocks/ETFs 24x5 (eToro extended hours), crypto majors 24/7.
+    s = trading_window(asset_class, c.now, instrument_is_open=instrument_is_open)
+    c.check("market_window_open", s["open"], s, s.get("reason") or "MARKET_CLOSED")
     c.check("no_hold", not hold, "explicit Ofer/CoS hold" if hold else None, "HOLD")
     if not c.check("book_loaded", book.get("ok"), book.get("error"), "BOOK_MISSING"):
         return None
@@ -364,12 +391,12 @@ def _common_gates(c: _Ctx, hold: bool, book: dict) -> Optional[float]:
 
 
 def _guard_leg(c: _Ctx, symbol: str, instrument_id: Any, tag: str) -> Optional[dict]:
-    g = guard_symbol(symbol)
+    g = guard_symbol(symbol, instrument_id=instrument_id if crypto_major(symbol) else None)
     ok = (g["ok"] and isinstance(instrument_id, int) and not isinstance(instrument_id, bool)
           and instrument_id == int(g["instrumentId"] or -1))
     c.check(f"instrument_guard{tag}", ok, {"symbol": symbol, "flag": g["flag"], "resolved": g["instrumentId"],
                                            "given": instrument_id}, g["flag"] or "INSTRUMENT_GUARD")
-    return resolve(symbol) if ok else None
+    return _rs(symbol, instrument_id) if ok else None
 
 
 def _momentum_go(c: _Ctx, out: dict, momentum_read: Optional[dict]) -> dict:
@@ -431,10 +458,11 @@ def _caps(c: _Ctx, *, symbol, asset_class, ask, fu, book, sleeve, sleeve_map, ta
         if sleeves_ok:
             sl = smap[symbol]
             scur = sum(v for s, v in vals.items() if smap.get(s) == sl)
-            ks = (1 - SLEEVE_CAP) if CAP_DENOMINATOR == "invested" else 1.0
-            mx = _floor_units(((SLEEVE_CAP * inv - scur) / ks) / ask)
+            scap = sleeve_cap(sl)
+            ks = (1 - scap) if CAP_DENOMINATOR == "invested" else 1.0
+            mx = _floor_units(((scap * inv - scur) / ks) / ask)
             if fu > mx:
-                shrink.append({"reason": f"sleeve_cap_45pct_{basis}", "from_units": fu, "to_units": mx})
+                shrink.append({"reason": f"sleeve_cap_{int(scap * 100)}pct_{basis}", "from_units": fu, "to_units": mx})
                 fu = mx
     notional = fu * ask
     caps = {}
@@ -447,7 +475,7 @@ def _caps(c: _Ctx, *, symbol, asset_class, ask, fu, book, sleeve, sleeve_map, ta
             caps[basis].update(sleeve=sl, sleeve_pct=round((sum(v for s, v in vals.items() if smap.get(s) == sl)
                                                             + notional) / inv_after * 100, 2) if inv_after else None)
     info["caps_after"] = {"market_value": caps["values"], "cost_basis": caps["cost"], "name_cap_pct": cap * 100,
-                          "sleeve_cap_pct": SLEEVE_CAP * 100}
+                          "sleeve_cap_pct": sleeve_cap(smap.get(symbol)) * 100}
     return fu, shrink, info
 
 
@@ -464,7 +492,60 @@ def _cash_checks(c: _Ctx, tag: str, *, cash, fu, sizing_ask, live_ask, open_fee)
     return out
 
 
-def _sl_check(c: _Ctx, tag: str, sl: Any, live_bid: Optional[float]) -> None:
+def _tp_check(c: _Ctx, tag: str, tp: Any, sl: Any, entry: Optional[float]) -> None:
+    """2026-10-16: every new buy MUST carry a calculated take-profit above entry (fail closed)."""
+    tpf, slf = _f(tp), _f(sl)
+    c.check(f"take_profit_required{tag}", tpf is not None and entry is not None and tpf > entry,
+            {"takeProfitRate": tpf, "entry": entry}, "TAKE_PROFIT_MISSING")
+    rr = None if (tpf is None or slf is None or entry is None or entry <= slf) else (tpf - entry) / (entry - slf)
+    c.check(f"reward_risk_min{tag}", rr is not None and rr >= MIN_REWARD_RISK,
+            {"reward_risk": None if rr is None else round(rr, 3), "min": MIN_REWARD_RISK}, "REWARD_RISK_TOO_LOW")
+
+
+def _daily_trade_budget(c: _Ctx, book: dict) -> dict:
+    """Max 4 NEW trades per IDT calendar day (file counter, cross-checked with book opens today)."""
+    hist = load_history(c.now)
+    c.check("trading_history_fresh", hist.get("ok"), {k: hist.get(k) for k in ("path", "asOf", "age_s", "error")},
+            "TRADING_HISTORY_MISSING")
+    from .pre_buy import load_prebuy_state
+    pb = load_prebuy_state(c.now)
+    c.check("pre_buy_fresh", pb.get("ok"), {k: pb.get(k) for k in ("path", "asOf", "age_s", "error", "history_ok",
+                                                                 "rates_ok", "orders_ok")}, "PRE_BUY_NOT_FRESH")
+    ba = book.get("age_s")
+    c.check("book_fresh_for_count", ba is not None and -5 <= ba <= 60, {"age_s": ba, "max_s": 60}, "BOOK_NOT_FRESH_FOR_COUNT")
+    opens = TC.count_opens_today(c.now, positions=(book.get("positions") or []) if book.get("ok") else [])
+    opens |= set(hist.get("opened_today_position_ids") or [])
+    opens |= set(pb.get("opened_today_position_ids") or []) | set(pb.get("pending_order_keys") or [])
+    st = TC.status(c.now, external_position_ids=opens)
+    c.check("daily_new_trade_budget", st["ok"], st, "DAILY_TRADE_LIMIT")
+    return st
+
+
+HISTORY_MAX_AGE_S = 1800
+
+
+def load_history(now: datetime) -> dict[str, Any]:
+    """Saved user-OfersClaw5 get-my-trading-history read for today: {"asOf": ISO, "response": <raw>}.
+    Missing / unreadable / older than 30 min => not ok (new buys fail closed)."""
+    hp = Path(paths()["history"])
+    if not hp.exists():
+        return {"ok": False, "path": str(hp), "error": "history missing"}
+    try:
+        d = json.loads(hp.read_text())
+    except Exception as e:  # noqa: BLE001
+        return {"ok": False, "path": str(hp), "error": f"unreadable: {e}"}
+    if not isinstance(d, dict):
+        return {"ok": False, "path": str(hp), "error": "history file not an object"}
+    a = _age_s(d.get("asOf"), now)
+    if a is None or not (-5 <= a <= HISTORY_MAX_AGE_S):
+        return {"ok": False, "path": str(hp), "asOf": d.get("asOf"), "age_s": a, "error": "history stale/no asOf"}
+    from .pre_buy import parse_history
+    h = parse_history(d.get("response"), now)  # re-validate: must be a recognisable success response
+    return {"ok": h["ok"], "path": str(hp), "asOf": d.get("asOf"), "age_s": a, "error": h.get("error"),
+            "opened_today_position_ids": h.get("opened_today_position_ids") or []}
+
+
+def _sl_check(c: _Ctx, tag: str, sl: Any, live_bid: Optional[float]) -> None:  # noqa: D401
     slf = _f(sl)
     c.check(f"stop_loss_valid{tag}", slf is not None and live_bid is not None and 0 < slf < live_bid,
             {"stopLossRate": slf, "bid": live_bid}, "STOP_LOSS_INVALID")
@@ -533,7 +614,28 @@ def _finish(out: dict, c: _Ctx, lps: Optional[list[Path]], write_lock: bool) -> 
                 p.unlink(missing_ok=True)
             c.check("not_already_go", False, {"race": True}, "ALREADY_GO_LOCKED")
             go = False
+    slot = out.pop("_trade_slot", None)
+    if go and slot and write_lock:
+        # atomic check+reserve of a daily new-trade slot (flock); placer must mark/release it
+        r = TC.reserve(slot["key"], slot["symbol"], now=c.now, external_position_ids=slot.get("external") or [],
+                       instrument_id=slot.get("instrumentId"))
+        out["trade_reservation"] = r
+        if not (r.get("ok") and r.get("reservation")):
+            for p_ in out.get("locks") or []:
+                Path(p_).unlink(missing_ok=True)
+            out["locks"] = []
+            c.check("daily_trade_slot_reserved", False, r, "DAILY_TRADE_LIMIT")
+            go = False
+        else:
+            out["trade_reservation_id"] = r["reservation"]
+            out["after_place"] = (f"on fill: python -m classic_rsi.trade_counter mark --reservation {r['reservation']} "
+                                  f"--position-id <ID>; on failure/abort: ... release --reservation {r['reservation']}")
     out["decision"] = "GO" if go else "NO-GO"
+    # QA WARN fix: a test-mode run (CLASSIC_EXEC_TEST_ROOT set) is never placeable / auto-place eligible
+    out["placeable"] = bool(go and not P["test_mode"])
+    out["auto_place_eligible"] = out["placeable"]
+    if P["test_mode"]:
+        out["test_mode_warning"] = "TEST MODE (CLASSIC_EXEC_TEST_ROOT set): demo paths only - NEVER place from this result"
     out["note"] = ("GO = place with the token of the prepare-trade/prepare-close whose response was verified here "
                    "(payloads were prepared verbatim; sells first). This CLI never places."
                    if go else "NO-GO = do not place. Log the skip with the numbers.")
@@ -552,7 +654,9 @@ def run_checks(*, pack_id: str, mark: Optional[float], bid: Optional[float] = No
                open_fee_usd: Optional[float] = None, close_fee_usd: Optional[float] = None,
                overnight_usd: Optional[float] = None, spread_usd: Optional[float] = None,
                sleeve: Optional[str] = None, sleeve_map: Optional[dict] = None, now: Optional[datetime] = None,
-               hold: bool = False, write_lock: bool = True, momentum_read: Optional[dict] = None) -> dict[str, Any]:
+               hold: bool = False, write_lock: bool = True, momentum_read: Optional[dict] = None,
+               instrument_is_open: Optional[bool] = None) -> dict[str, Any]:
+    """instrument_is_open: live per-instrument isOpen from your eToro read (stocks/ETFs: None => CLOSED)."""
     now = now or datetime.now(IDT)
     c = _Ctx(now)
     P = paths()
@@ -579,7 +683,17 @@ def run_checks(*, pack_id: str, mark: Optional[float], bid: Optional[float] = No
     out.update(instrumentId=iid, etoroSymbol=inst.get("etoroSymbol"))
     run_ids = {run_id, ctx.get("envelope_run_id"), ctx.get("propose_run_id"), pack.get("run_id")}
     book = load_book(now)
-    cash = _common_gates(c, hold, book)
+    if instrument_is_open is None:
+        from .pre_buy import load_open_state
+        instrument_is_open = load_open_state(iid, now) if iid is not None else None
+        out["instrument_open_source"] = "pre_buy state file (<=5 min)" if instrument_is_open is not None else "unknown"
+    else:
+        out["instrument_open_source"] = "caller"
+    cash = _common_gates(c, hold, book, (_rs(symbol, iid) or {}).get("assetClass"), instrument_is_open)
+    c.check("no_xle_adds", not is_no_add_symbol(symbol), symbol, "NO_XLE_ADDS")
+    out["daily_trade_budget"] = _daily_trade_budget(c, book)
+    out["_trade_slot"] = {"key": f"rsi:{pack_id}", "symbol": symbol, "instrumentId": iid,
+                          "external": out["daily_trade_budget"].get("external_position_ids") or []}
     c.check("auto_place_eligible", pack.get("auto_place_eligible") is True, pack.get("auto_place_blockers"),
             "NOT_AUTO_PLACE_ELIGIBLE")
     ok, why = check_verdict(run_verdict_path(run_id), skill=RUN_QA_SKILL, max_age_s=RUN_QA_MAX_AGE_S, now=now,
@@ -634,6 +748,7 @@ def run_checks(*, pack_id: str, mark: Optional[float], bid: Optional[float] = No
                "orderType": "mkt", "stopLossRate": rl.get("stop_loss"), "takeProfitRate": rl.get("take_profit")}
     out["order_payloads"] = [payload]
     _sl_check(c, "", rl.get("stop_loss"), lbid)
+    _tp_check(c, "", rl.get("take_profit"), rl.get("stop_loss"), a_ask)
     anchor_cg = live_cg = None
     if fu > 0 and rl.get("stop_loss") and rl.get("take_profit"):
         kw = dict(units=fu, open_fee_usd=open_fee_usd, close_fee_usd=close_fee_usd, overnight_usd=overnight_usd,
@@ -692,7 +807,7 @@ def _verify_risk_exit(c: _Ctx, reason: Optional[str], *, symbol: str, pos: Optio
         ok = bool(srow) and srow.get("above_200dma") is False
         d.update(above_200dma=(srow or {}).get("above_200dma"))
     elif reason == "hard_cap_breach" and book.get("ok"):
-        ac = (resolve(symbol) or {}).get("assetClass")
+        ac = (_rs(symbol) or {}).get("assetClass")
         cap = NAME_CAP.get(str(ac or ""))
         smap = {**DEFAULT_SLEEVES, **(sleeve_map or {})}
         pcts = {}
@@ -732,7 +847,7 @@ def _risk_exit_size(reason: str, *, symbol: str, pos: dict, book: dict, cash: Op
     if reason == "cash_below_floor":
         need["cash_floor"] = (CASH_FLOOR_USD + B - (cash or 0.0) + close_fee) / bid
     else:
-        ac = (resolve(symbol) or {}).get("assetClass")
+        ac = (_rs(symbol) or {}).get("assetClass")
         cap = NAME_CAP.get(str(ac or ""), 0.0)
         smap = {**DEFAULT_SLEEVES, **(sleeve_map or {})}
         sl = smap.get(symbol)
@@ -823,8 +938,8 @@ def _cap_pcts(vals: dict[str, float], den: float, smap: dict) -> dict[str, float
 def _cap_limit(key: str) -> Optional[float]:
     kind, name = key.split(":", 1)
     if kind == "sleeve":
-        return SLEEVE_CAP
-    return NAME_CAP.get(str((resolve(name) or {}).get("assetClass") or ""))
+        return sleeve_cap(name)
+    return NAME_CAP.get(str((_rs(name) or {}).get("assetClass") or ""))
 
 
 def post_trade_caps(book: dict, *, symbol: str, pos: dict, units: float, bid: float, close_fee: float = 0.0,
@@ -905,6 +1020,13 @@ def _sl_bounds_ok(sl: Optional[float], anchor_ask: float, atr_d: Optional[float]
     if sl is None:
         res["ok"] = False
         return res
+    if str(asset_class or "") == "crypto":
+        # crypto: SL 4%..20% below ask and at least 1x daily ATR away (documented in levels.py)
+        pct = (anchor_ask - sl) / anchor_ask if anchor_ask else -1
+        atr_far = atr_d is None or (anchor_ask - sl) >= atr_d - 1e-9
+        res.update(rule="crypto 4%-20% & >=1x daily ATR", pct_below=round(pct * 100, 3),
+                   ok=CRYPTO_SL_MIN_PCT - 1e-9 <= pct <= CRYPTO_SL_MAX_PCT + 1e-9 and atr_far)
+        return res
     atr_ok = atr_d is not None and anchor_ask - SL_ATR_BOUNDS[1] * atr_d <= sl <= anchor_ask - SL_ATR_BOUNDS[0] * atr_d
     tb = TRAIL_BOUNDS.get(str(asset_class or ""))
     pct_below = (anchor_ask - sl) / anchor_ask
@@ -934,7 +1056,19 @@ def run_rebalance_checks(*, pack: dict[str, Any], live: Optional[dict] = None, s
                    {"kind": kind, "sells": len(sells), "buys": len(buys), "live_legs": len(lives)}, "BAD_REBALANCE_PACK"):
         return _finish(out, c, None, False)
     book = load_book(now)
-    cash = _common_gates(c, hold, book)
+    leg_acs = {str((_rs(l.get("symbol") or "", l.get("instrumentId")) or {}).get("assetClass") or "") for l in legs}
+    # every leg must be tradable now: any stock/ETF leg => 24x5 window; crypto-only => 24/7
+    win_ac = "crypto" if leg_acs == {"crypto"} else ("stock" if leg_acs <= {"stock", "etf", "crypto"} else None)
+    leg_open = [lv_.get("is_open") for lv_ in lives]
+    eq_open = None if any(o is None for o in leg_open) else all(o is True for o in leg_open)
+    cash = _common_gates(c, hold, book, win_ac, eq_open)
+    for i in buys:
+        c.check(f"no_xle_adds_buy{i}", not is_no_add_symbol(legs[i].get("symbol")), legs[i].get("symbol"), "NO_XLE_ADDS")
+    if buys:  # buy legs are NEW trades for the 4/day budget; pure sells/trims/protective exits are not
+        out["daily_trade_budget"] = _daily_trade_budget(c, book)
+        out["_trade_slot"] = {"key": f"rebalance:{pack_id}", "symbol": legs[buys[0]].get("symbol"),
+                              "instrumentId": legs[buys[0]].get("instrumentId"),
+                              "external": out["daily_trade_budget"].get("external_position_ids") or []}
     sc = load_scores(now)
     out["scores"] = {k: sc.get(k) for k in ("ok", "error", "asOf_bars", "path", "sha256", "age_trading_days")}
     # fix4: protective exits that read only the book + live quote (cash_below_floor, stop_hit on the
@@ -1060,9 +1194,7 @@ def run_rebalance_checks(*, pack: dict[str, Any], live: Optional[dict] = None, s
             slb = _sl_bounds_ok(_f(l.get("stop_loss")), a_ask or 0.0, atr_d, ac)
             c.check(f"sl_bounds{tag}", slb["ok"], slb, "SL_OUT_OF_BOUNDS")
             _sl_check(c, tag, l.get("stop_loss"), lbid)
-            if l.get("take_profit") is not None:
-                c.check(f"take_profit_valid{tag}", (_f(l.get("take_profit")) or 0) > (a_ask or 0),
-                        l.get("take_profit"), "TAKE_PROFIT_INVALID")
+            _tp_check(c, tag, l.get("take_profit"), l.get("stop_loss"), a_ask)
             payload = {"account": P["account"], "direction": "buy", "instrumentId": iid, "units": fu, "leverage": 1,
                        "orderType": "mkt", "stopLossRate": _f(l.get("stop_loss")), "takeProfitRate": _f(l.get("take_profit"))}
             base = {"symbol": sym, "units": fu, "spread_usd": l.get("spread_usd"), "open_fee_usd": l.get("open_fee_usd"),
@@ -1148,6 +1280,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--sleeve")
     p.add_argument("--sleeve-map")
     p.add_argument("--hold", action="store_true")
+    p.add_argument("--instrument-open", choices=["true", "false"],
+                   help="RSI buy: live per-instrument isOpen from your eToro read (stocks/ETFs: omitted => CLOSED)")
     p.add_argument("--momentum-response", help="fix8b: YOUR raw user-Momentum-HHHGDTJ get-my-positions-and-orders "
                                                "response saved for this GO (required for any buy)")
     p.add_argument("--momentum-captured-at", help="ISO time (tz) when you received that response (<= 60 s before GO)")
@@ -1172,12 +1306,16 @@ def main(argv: Optional[list[str]] = None) -> int:
                          prepare_response=pr, anchor_ask=a.anchor_ask, anchor_bid=a.anchor_bid, units=a.units,
                          amount_usd=a.amount, open_fee_usd=a.open_fee, close_fee_usd=a.close_fee,
                          overnight_usd=a.overnight, spread_usd=a.spread_usd, sleeve=a.sleeve, sleeve_map=smap,
-                         hold=a.hold, momentum_read=mread)
+                         hold=a.hold, momentum_read=mread,
+                         instrument_is_open=None if a.instrument_open is None else a.instrument_open == "true")
     if not a.no_write:
         res["audit_path"] = str(write_audit(res))
     print(json.dumps(res, indent=2, default=str))
-    print(f"{res['decision']} {res['pack_id']} test_mode={res.get('test_mode')} blockers={res['blockers'] or 'none'}",
-          file=sys.stderr)
+    print(f"{res['decision']} {res['pack_id']} test_mode={res.get('test_mode')} placeable={res.get('placeable')} "
+          f"blockers={res['blockers'] or 'none'}", file=sys.stderr)
+    if res.get("test_mode"):
+        print("TEST MODE: refusing a placeable GO (exit 3). Unset CLASSIC_EXEC_TEST_ROOT for production.", file=sys.stderr)
+        return 3
     return 0 if res["decision"] == "GO" else 2
 
 

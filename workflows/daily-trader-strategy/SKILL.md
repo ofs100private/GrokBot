@@ -7,7 +7,7 @@ description: >-
 ---
 # Daily Trader strategy
 
-Standing playbook for **Daily Trader** — REAL MONEY day-momentum book (~**$2,000** start basis unless Ofer resets). Separate from Classic (×1, no crypto) and Momentum-HHHGDTJ ($8k EOD).
+Standing playbook for **Daily Trader** — REAL MONEY day-momentum book (~**$2,000** start basis unless Ofer resets). Separate from Classic (×1, BTC/ETH/SOL allowed ≤15% sleeve) and Momentum-HHHGDTJ ($8k EOD).
 
 ## FULL AUTO (Ofer 2026-09-30)
 

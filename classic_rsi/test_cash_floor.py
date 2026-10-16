@@ -43,8 +43,10 @@ def run() -> list[tuple[str, bool, str]]:
     t("non-dict summary -> None", c is None, str(c))
 
     # --- mandate_gate
-    o_we, o_rth = A.is_weekend_idt, A.is_us_rth
+    o_we, o_rth, o_eq, o_bud = A.is_weekend_idt, A.is_us_rth, A.is_equity_window_open, A.daily_budget
     A.is_weekend_idt, A.is_us_rth = (lambda: False), (lambda: True)
+    A.is_equity_window_open = lambda *a: True
+    A.daily_budget = lambda: {"ok": True, "count": 0, "remaining": 4, "max": 4}
     try:
         g = A.mandate_gate(force=False, cash=None)
         t("gate blocks on missing cash", "available_cash_missing" in g["blocks"] and not g["allow_new_buys"], str(g))
@@ -52,14 +54,14 @@ def run() -> list[tuple[str, bool, str]]:
         t("--force does not bypass missing cash", "available_cash_missing" in g["blocks"] and not g["allow_new_buys"], str(g))
         g = A.mandate_gate(force=False, cash=3816.07)
         t("gate clear with cash above floor", g["blocks"] == [] and g["allow_new_buys"] and g["available_cash"] == 3816.07, str(g))
-        g = A.mandate_gate(force=False, cash=2400.0)
+        g = A.mandate_gate(force=False, cash=1400.0)
         t("cash below floor still blocks", "cash_below_floor" in g["blocks"], str(g))
 
         # --- run_auto_1h end-to-end with stubs
         o_load, o_stale, o_prop, o_guard = A.load_book_symbols, A.book_snapshot_staleness, A.propose_from_symbols, A.guard_symbol
         A.book_snapshot_staleness = lambda *a, **k: None
         A.propose_from_symbols = lambda **k: {"buy_packs": [dict(PACK)], "risk_off": [], "instrument_dropped": []}
-        A.guard_symbol = lambda s: {"ok": True, "flag": None, "reason": None, "etoroSymbol": s, "instrumentId": 1,
+        A.guard_symbol = lambda s, **_k: {"ok": True, "flag": None, "reason": None, "etoroSymbol": s, "instrumentId": 1,
                                     "assetClass": "stock", "exchangeId": 4}
         o_audit, o_latest = A.append_audit, A.LATEST_AUTO
         A.append_audit = lambda *a, **k: {"skipped": "test"}
@@ -86,7 +88,7 @@ def run() -> list[tuple[str, bool, str]]:
             A.load_book_symbols, A.book_snapshot_staleness, A.propose_from_symbols, A.guard_symbol = o_load, o_stale, o_prop, o_guard
             A.append_audit, A.LATEST_AUTO = o_audit, o_latest
     finally:
-        A.is_weekend_idt, A.is_us_rth = o_we, o_rth
+        A.is_weekend_idt, A.is_us_rth, A.is_equity_window_open, A.daily_budget = o_we, o_rth, o_eq, o_bud
 
     # --- book writer (book_sleeves.ensure_summary)
     b = B.ensure_summary({"cash": 3816.07, "equity": 7243.35, "positions": pos})

@@ -1,0 +1,268 @@
+{
+  "run_id": "classic-rsi-propose-20261016-183920-373160b5",
+  "kind": "propose",
+  "asOfIDT": "2026-10-16 18:39:20 IDT",
+  "portfolio": "OfersClaw5-PRIYN",
+  "mirrorId": 11368142,
+  "timeframe": "1H",
+  "long_only": true,
+  "params": {
+    "rsi_levels": {
+      "over_buy": 79.9,
+      "resistance": 67.9,
+      "support": 34.9,
+      "over_sold": 19.9,
+      "length": 14
+    },
+    "strong_candle": {
+      "body_sma_lookback": 20,
+      "body_mult": 1.2
+    },
+    "atr_levels": {
+      "atr_length": 14,
+      "sl_mult": 1.5,
+      "tp_mult": 2.0
+    },
+    "period": "60d",
+    "symbols": [
+      "XLE"
+    ],
+    "suggested_notional_usd": null,
+    "confirmed_only": true,
+    "instrument_map_sha256": "c09aaed3b62eb7ab91a7c39c400d28ce7ac154178e14d1169d71e8ce87f5b778"
+  },
+  "params_fingerprint": "d8a052c5dffd826c",
+  "symbols": [
+    "XLE"
+  ],
+  "buy_packs_count": 0,
+  "risk_off_count": 0,
+  "qa_gate": "classic-real-money-order-qa-gate",
+  "do_not_place": true,
+  "payload": {
+    "asOfIDT": "2026-10-16 18:39:20 IDT",
+    "portfolio": "OfersClaw5-PRIYN",
+    "mirrorId": 11368142,
+    "timeframe": "1H",
+    "long_only": true,
+    "qa_gate": "classic-real-money-order-qa-gate",
+    "do_not_place": true,
+    "symbols": [
+      "XLE"
+    ],
+    "invocation": {
+      "next": [
+        "run-QA PASS on the run_id first (classic-rsi-1h-run-qa)",
+        "Only auto_place_eligible packs proceed; prepare on user-OfersClaw5",
+        "execute_pass: final cost gate (live spread/fee), cash floor \u2265~$2.5k (auto-shrink), caps, drift \u22640.5\u00d7ATR",
+        "Submit to QA Bot (classic-real-money-order-qa-gate) citing run_id + final cost_gate",
+        "On order-QA PASS + execute_pass GO, Trader_Classic places via MCP (FULL AUTO, no chat auth)"
+      ],
+      "never": [
+        "Do not short from RISK_OFF / Sell triangles",
+        "Do not bypass QA",
+        "Do not use FX pip SL/TP",
+        "Do not touch Momentum from this module",
+        "Do not buy a symbol held in Momentum-HHHGDTJ (cross_book_skipped; Ofer 2026-10-13)"
+      ]
+    },
+    "buy_packs": [],
+    "risk_off": [],
+    "auto_place_doc": "auto_place_eligible=True means the pack may proceed on the FULL AUTO path (prepare \u2192 execute_pass final gate \u2192 order-QA PASS \u2192 Trader_Classic places via MCP). True only if: no hard flags, instrument guard OK (resolved US stock/ETF id or BTC/ETH/SOL major), long-only x1 buy, entry>SL and a calculated TP>entry, book snapshot not stale, soft mandate gates allow new buys (a --force run is never eligible), and the preliminary cost gate verdict is PASS (not COST_GATE_SKIP / COST_GATE_INVALID). It is NOT a place instruction; do_not_place=True still means this script never places. run-QA PASS is still required first.",
+    "auto_place_eligible_count": 0,
+    "cost_gate_skips": [],
+    "cross_book_skipped": [],
+    "momentum_snapshot": {
+      "ok": true,
+      "error": null,
+      "asOf": "2026-10-12T17:59:55+03:00",
+      "xRequestId": "test-xrid",
+      "age_s": 347965.0,
+      "path": "/tmp/tmp8v2f6u1v/momentum.json"
+    },
+    "instrument_map": {
+      "path": "/workspace/classic_rsi/etoro_instrument_map.json",
+      "sha256": "c09aaed3b62eb7ab91a7c39c400d28ce7ac154178e14d1169d71e8ce87f5b778",
+      "asOf": "2026-10-09T19:03:35+03:00",
+      "schema": "classic_rsi.etoro_instrument_map.v1",
+      "resolved": 508,
+      "error": null
+    },
+    "instrument_flags": [],
+    "no_add_dropped": [
+      {
+        "kind": "buy_pack",
+        "symbol": "XLE",
+        "flag": "NO_XLE_ADDS",
+        "reason": "standing rule: no XLE adds"
+      }
+    ],
+    "instrument_dropped": [],
+    "per_symbol": [
+      {
+        "symbol": "XLE",
+        "buy_packs": [
+          {
+            "gate": "classic-real-money-order-qa-gate",
+            "portfolio": "OfersClaw5-PRIYN",
+            "mirrorId": 11368142,
+            "route": "REAL",
+            "side": "buy",
+            "action": "CANDIDATE_LONG",
+            "instrument": {
+              "symbol": "XLE",
+              "etoroSymbol": "XLE",
+              "instrumentId": 3008,
+              "assetClass": "etf",
+              "exchangeId": 5
+            },
+            "leverage": 1,
+            "timeframe": "1H",
+            "bar_confirmed": true,
+            "bar_time": "2026-10-09 13:30:00+00:00",
+            "rsi_rule": {
+              "raw_signal": "BUY_80",
+              "strength_tag": "EXTREME_80",
+              "zone": "OVER_SOLD",
+              "rsi": 18.0,
+              "label_note": "80/70 are rule labels, not win rates"
+            },
+            "levels": {
+              "entry": 95.0,
+              "stop_loss": 92.15,
+              "take_profit": 98.8,
+              "atr": 1.9,
+              "sl_mult": 1.5,
+              "tp_mult": 2.0,
+              "risk_per_share": 2.8499999999999943,
+              "reward_per_share": 3.799999999999997,
+              "r_multiple": 1.333333333333335,
+              "units": "price"
+            },
+            "sizing": {
+              "suggested_notional_usd": null,
+              "note": "Trader_Classic sets size; cash floor \u2265~$1.5k after fill; \u00d71 only"
+            },
+            "thesis": "Classic RSI four-level EXTREME_80 on 1H confirmed bar: Over Sold touch \u2014 candidate long entry/add timing after mandate gates. ATR SL/TP (not pips). Timing overlay only.",
+            "mandate_reminders": [
+              "long-only \u00d71",
+              "crypto: only BTC/ETH/SOL x1 long, crypto sleeve <= 15% of total equity",
+              "cash floor \u2265 ~$1.5k after add",
+              "hours: US stocks/ETFs 24x5 (eToro extended, RTH fallback); crypto 24/7",
+              "max 4 NEW trades per IDT day (SL edits / protective exits excluded)",
+              "TP + SL both required on the order",
+              "Fear / regime gates unchanged \u2014 still apply",
+              "run-QA PASS + order-QA PASS + final cost gate (execute_pass GO) required before place",
+              "caps 35% ETF / 20% stock / 15% crypto sleeve / 45% sleeve of TOTAL equity; sell-before-buy"
+            ],
+            "fee_estimate": {
+              "open_fee": 0.75,
+              "close_fee": 0.75,
+              "spread": 0.75,
+              "stage": "preliminary",
+              "final": "recompute from prepare/getCost (execute_pass)"
+            },
+            "overnight_financing_estimate": {
+              "usd": 0.0,
+              "stage": "preliminary"
+            },
+            "prepared_order": null,
+            "status": "COST_GATE_SKIP",
+            "do_not_place": true,
+            "cost_gate": {
+              "version": "classic-cost-gate-v3-20261012-fix2",
+              "stage": "preliminary",
+              "binding": false,
+              "kind": "rsi_buy",
+              "rule": "total_cost > 0 and EV_after_tax >= 2 x total_cost and EV_after_tax - total_cost > 0",
+              "inputs": {
+                "entry": 95.0,
+                "units": 5.263158,
+                "notional_usd": 500.0,
+                "bid": null,
+                "ask": null,
+                "quote_ts": null,
+                "independent_mark": null,
+                "take_profit": 98.8,
+                "stop_loss": 92.15,
+                "symbol": null,
+                "p_hit": 0.5816,
+                "p_evidence": {
+                  "evidence_id": "classic_rsi_1h_bt_20260919",
+                  "registry": {
+                    "path": "/tmp/tmp8v2f6u1v/evidence/p_registry.json",
+                    "pinned_sha256": "a48eac6194fb025b57bfd522ddfb42a9b73b1abf3543cb25cee55f7ad6adc0c3",
+                    "test_mode": true,
+                    "sha256": "7eaf79e795725fe81b9c21e3286efcc986a58b5f20b511ba199d44c2264d0485"
+                  },
+                  "p": 0.5816333576186576,
+                  "skip": [],
+                  "errors": [],
+                  "wins": 130,
+                  "n": 200,
+                  "out_of_sample": true,
+                  "point": 0.65,
+                  "source": "TEST ONLY fixture"
+                },
+                "p_breakeven": 0.4286,
+                "edge": null,
+                "tax_rate": 0.25,
+                "realized_pnl_usd": null,
+                "risk_exit": false,
+                "risk_exit_reason": null,
+                "risk_exit_verified": false,
+                "sources": {
+                  "notional": "assumed_default",
+                  "spread": "assumed_default",
+                  "open_fee": "assumed_default",
+                  "close_fee": "assumed_default",
+                  "overnight": "x1 long real stock: 0"
+                }
+              },
+              "costs": {
+                "spread": 0.75,
+                "open_fee": 0.75,
+                "close_fee": 0.75,
+                "overnight": 0.0,
+                "tax_est": 0.0,
+                "total_cost": 2.25
+              },
+              "spread": 0.75,
+              "fees": 1.5,
+              "overnight": 0.0,
+              "realized_pnl": null,
+              "tax_est": 0.0,
+              "total_cost": 2.25,
+              "expected_gain_pre_tax": 5.3572,
+              "expected_gain": 4.0179,
+              "expected_net_gain": 1.7679,
+              "ratio": 1.786,
+              "method": "rsi_ev: units x [p x (TP-ask) - (1-p) x (ask-SL)]; p=Wilson95 lower of 130/200 = 0.5816 (registry classic_rsi_1h_bt_20260919, out_of_sample=True); break-even p=0.4286; x(1-0.25) if >0",
+              "verdict": "COST_GATE_SKIP",
+              "assumptions": [
+                "notional assumed $500 (pack unsized)",
+                "spread assumed 0.15% of notional",
+                "open_fee assumed $0.75 (real Classic fills 2026-10-07 (ADBE/GS/CAT $500 each) charged $0.75 per order on keys)",
+                "close_fee assumed $0.75 (real Classic fills 2026-10-07 (ADBE/GS/CAT $500 each) charged $0.75 per order on keys)"
+              ],
+              "errors": [],
+              "skip_reasons": [],
+              "note": "PRELIMINARY: assumed spread/fees (no live eToro access in-script). Binding gate is recomputed by execute_pass at the anchor (QA) quote and at the live quote."
+            }
+          }
+        ],
+        "risk_off": [],
+        "etoroSymbol": "XLE",
+        "instrumentId": 3008,
+        "instrument_guard": {
+          "ok": true,
+          "flag": null,
+          "reason": "ok"
+        }
+      }
+    ],
+    "run_id": "classic-rsi-propose-20261016-183920-373160b5",
+    "audit_dir": "/workspace/classic_rsi/audit"
+  },
+  "qa_cite": "Cite run_id=classic-rsi-propose-20261016-183920-373160b5 in Classic RSI order thesis / QA pack."
+}
