@@ -1,0 +1,167 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20261008-233746-75fd07a0",
+  "slot": "eod_2240_primary (ran late 23:37 IDT; post-close)",
+  "asOf": "2026-10-08",
+  "qaAt": "2026-10-08T23:41:00+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "overall": "PASS",
+  "verdict": "PASS",
+  "fail_codes": [],
+  "deviation_codes": [],
+  "info_flags": [
+    "FULL_DAILY_BAR_POST_CLOSE",
+    "SCHEDULED_2245_LATE",
+    "DUPLICATE_PACK_ALREADY_FILLED",
+    "PM_R_ZERO_AT_BREAKEVEN_COSMETIC",
+    "SCREENER_STDERR_NOT_PERSISTED",
+    "PLACE_ACK_NYSE_OPEN_FIELD_POST_CLOSE"
+  ],
+  "rerun_required": false,
+  "attempt": "1/3",
+  "checks": {
+    "SPX_UNIVERSE_TOO_SMALL": {
+      "result": "OK",
+      "evidence": "TRACE universe universe_n=520 sp500_n=503 (audit line 36); /workspace/sp500_symbols.json count=503 symbols=503 asOf 2026-10-08T20:37:47.617695Z (=23:37:47 IDT, refreshed this run); download_ok valid_n=516"
+    },
+    "SPX_MEGACAP_FALLBACK": {
+      "result": "OK",
+      "evidence": "503-name S&P list, universe_n=520 (S&P + sector/commodity ETFs); momentum_screener.py hard-fails len<400 (lines 71, 393); watch NOW/PANW/CRM=true and all three present in near-miss"
+    },
+    "SPX_FETCH_BROKEN": {
+      "result": "OK",
+      "evidence": "momentum_screener.py uses pd.read_html(io.StringIO(res.text)) (line 69); /workspace/momentum_screener.py identical to GrokBot/momentum copy; cache asOf updated at run start; no FileNotFoundError in audit"
+    },
+    "SPX_SCAN_NOT_FULL": {
+      "result": "OK",
+      "evidence": "HEALTHY session, full scan: valid_n=516 of 520 (drop_short_or_nan=4); drop_counts minervini=447 rs=8 setup=51; near-miss-2026-10-08.json written 23:38:02 IDT (TRACE count 61; file holds top-25 incl. NOW/PANW/CRM by design)"
+    },
+    "SCREENER_RUN_CRASH": {
+      "result": "OK",
+      "evidence": "attempt 1/3 produced 4 BUY ACTION rows with rationale; RUN_END ok=true pack=PASS halt=False"
+    },
+    "SCREENER_AUDIT_INCOMPLETE": {
+      "result": "OK",
+      "evidence": "audit /workspace/momentum_audit/2026-10-08.jsonl lines 33-47, all run_id screener-20261008-233746-75fd07a0: RUN_START 23:37:46.959 -> TRACE(attempt, regime, universe, download_ok, near_misses, event_vol_freeze, pack_done, attempt summary) -> ACTION BUY HPQ/ZBRA/ANET/XLE 23:38:02.421 -> TRACE run_summary_written -> RUN_END 23:38:02.423 IDT; screener-run-screener-20261008-233746-75fd07a0.json present with regime + universe_n"
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "spx_close": 7765.36,
+    "spx_sma50": 7689.44,
+    "spx_pct_vs_sma50": 0.987,
+    "vix_close": 15.41,
+    "hard_halt": false,
+    "soft": false,
+    "note": "Recomputed: 7765.36/7689.44-1 = +0.987%; VIX 15.41 < 25; SPX > 0.98xSMA50 -> HEALTHY. drop_counts regime_*=0, event_freeze=0 consistent."
+  },
+  "event_vol_freeze": {
+    "freeze": false,
+    "screener_reason": "no_event_freeze today=2026-10-08 next_open=2026-10-09 (audit line 39)",
+    "independent_check": "momentum_qa.event_calendar.is_event_vol_freeze() re-run by QA at ~23:40 IDT -> (False, 'no_event_freeze today=2026-10-08 next_open=2026-10-09'). Calendar: NFP 2026-10-02 / 11-06; CPI 10-14; FOMC 10-28.",
+    "external_confirmation": "BLS empsit schedule (bls.gov/schedule/news_release/empsit.htm) + BLS Oct-2026 schedule: Employment Situation for Sep 2026 released Fri 2026-10-02; Oct 2026 report Fri 2026-11-06; nothing on Thu 10-08 or Fri 10-09. CPI Sep 2026 = Wed 10-14. FOMC Oct 27-28 (decision 10-28). Fri 10-09 is NOT an NFP date.",
+    "ruling": "No EVENT_VOL_FREEZE; BUY rows not FAIL on freeze grounds (moot: none placed)."
+  },
+  "bar_check": {
+    "run_ts_il": "2026-10-08T23:37:46+03:00",
+    "et_approx": "16:37 ET (after 16:00 ET close)",
+    "ruling": "Full daily bar - PARTIAL_DAILY_BAR from 22:01 run does not apply. Post-close signals re-confirm the same 4-name pack (HPQ/ZBRA/ANET/XLE)."
+  },
+  "pack": {
+    "buys_screener": ["HPQ", "ZBRA", "ANET", "XLE"],
+    "buys_pre_pack": 10,
+    "buys_packed": 4,
+    "momentum_breakout_count": 0,
+    "etf_buys_screener": 1,
+    "amount_usd_each": 1000,
+    "leverage": 1,
+    "rows": [
+      {"symbol": "HPQ", "setup": "VCP_SETUP", "rs": 93, "rvol": 0.63, "dwm": "0.62/0.90/0.15", "sl": 30.49},
+      {"symbol": "ZBRA", "setup": "VCP_SETUP", "rs": 93, "rvol": 0.57, "dwm": "-1.01/1.78/10.82", "sl": 359.21},
+      {"symbol": "ANET", "setup": "VCP_SETUP", "rs": 90, "rvol": 0.80, "dwm": "-2.25/3.17/9.35", "sl": 198.31},
+      {"symbol": "XLE", "setup": "VOLUME_BREAKOUT", "asset_class": "ETF", "rs": 88, "rvol": 1.67, "dwm": "2.97/4.05/0.49", "sl": 61.28}
+    ],
+    "result": "PASS (run integrity). Pack is a duplicate of the 22:02 pack; disposition below."
+  },
+  "disposition_ruling": {
+    "place_ack": "/workspace/momentum_audit/place_ack/eod-20261008-2240-no-new-orders.json",
+    "status": "NO_NEW_ORDERS - CORRECT",
+    "HPQ": "SKIPPED_ALREADY_HELD correct - live pos 3601762390 opened 2026-10-08T19:09:17Z (22:09:17 IDT); re-buy would be DUPLICATE_HOLD_BUY (hard FAIL)",
+    "ZBRA": "SKIPPED_ALREADY_HELD correct - live pos 3601762588 opened 22:09:34 IDT; re-buy = DUPLICATE_HOLD_BUY",
+    "ANET": "SKIPPED_ALREADY_HELD correct - live pos 3601769086 opened 22:09:59 IDT; re-buy = DUPLICATE_HOLD_BUY",
+    "XLE": "SKIPPED_ETF_FLOOR_ALREADY_MET correct - XLK (pos 3577022318) held; same-day place-QA /workspace/momentum_audit/qa-verdict-place-eod-20261008-manual.json per-name FAIL ETF_FLOOR_ALREADY_MET + ETF_BACKFILL_BLOCKED still governs; no new place-QA requested so no authority to place",
+    "authorize_place": false,
+    "pm_review": {
+      "decision": "/workspace/momentum_audit/pm-2026-10-08-eod-2240-decision.json",
+      "posmgr_run_id": "posmgr-20261008-233830-4a30686d",
+      "actions": "7x HOLD ABOVE_SMA50_UNDER_1R (HPQ NTAP XLK ANET CRWD ZBRA P), new_stop=null for all",
+      "consistency": "OK - all last > SMA50; no unrealized <= -4% (worst ZBRA -1.52%); NTAP R=0.69 recomputed ((231.05-220.84)/(220.84-205.97)=0.69) < 1R so no TRAIL; HPQ/ZBRA/ANET R<0 so no TRAIL; no stop lowered (all live SLs equal 22:11 book).",
+      "note_PM_R_ZERO_AT_BREAKEVEN_COSMETIC": "P/CRWD/XLK show R=0.00 because SL already = entry (r_per_share=0 -> R=0 by code line 124). position_manager TRAIL branch only fires while stop < entry, so HOLD is consistent with coded playbook; R label is cosmetic, not a deviation."
+    }
+  },
+  "live_confirmation": {
+    "mcp": "user-Momentum-HHHGDTJ",
+    "positions_xRequestId": "cf0af0cb-fa9c-4cf7-b649-983f37a470c8",
+    "positions_ts_il": "2026-10-08T23:40:09+03:00",
+    "portfolio_xRequestId": "7b36ddaa-577c-4f48-b0c7-547abe10400d",
+    "portfolio_ts_il": "2026-10-08T23:40:10+03:00",
+    "positionCount": 7,
+    "pending_orders": 0,
+    "mirrors": 0,
+    "newest_open_il": "2026-10-08T22:09:59 (ANET) - no new orders since 22:11 IDT",
+    "availableCash": 2472.02,
+    "frozenCash": 0,
+    "totalValue": 9842.27,
+    "positions": [
+      {"symbol": "P", "positionId": 3587299961, "sl": 122.86, "pnlPct": 22.57},
+      {"symbol": "CRWD", "positionId": 3579391383, "sl": 242.0, "pnlPct": 8.70},
+      {"symbol": "XLK", "positionId": 3577022318, "sl": 187.8, "pnlPct": 5.29},
+      {"symbol": "NTAP", "positionId": 3597307544, "sl": 205.97, "pnlPct": 2.73},
+      {"symbol": "HPQ", "positionId": 3601762390, "sl": 30.53, "pnlPct": -0.70},
+      {"symbol": "ZBRA", "positionId": 3601762588, "sl": 359.81, "pnlPct": -1.52},
+      {"symbol": "ANET", "positionId": 3601769086, "sl": 198.82, "pnlPct": -0.01}
+    ],
+    "match_vs_22_11_book": "EXACT (all 7 SLs unchanged; leverage 1; long)",
+    "trader_claim_cash_2472.02": "CONFIRMED"
+  },
+  "on_time": {
+    "first_ACTION_ts_il": "2026-10-08T22:02:07.344+03:00",
+    "this_run_ACTION_ts_il": "2026-10-08T23:38:02.421+03:00",
+    "deadline": "22:50 IDT",
+    "EOD_SCREENER_MISSED": false,
+    "note": "Gate cleared by 22:02 manual ACTION; 2240 slot ran ~23:37 -> soft SCHEDULED_2245_LATE only (catch-up never clears, but nothing to clear)."
+  },
+  "soft_notes": [
+    "SCREENER_STDERR_NOT_PERSISTED: no stdout/stderr log file for this run on disk; integrity verified from audit TRACE + sp500 cache + code markers instead",
+    "PLACE_ACK_NYSE_OPEN_FIELD_POST_CLOSE: place_ack nyse_open=true written 23:39 IDT (16:39 ET, after close) - cosmetic session-day flag, no impact (no places)",
+    "Screener SLs differ slightly from 22:02 run (HPQ 30.49 vs 30.53 etc.) - irrelevant, not placed; live SLs are the 22:09 placed values"
+  ],
+  "fingerprints_sha256": {
+    "screener_run_summary": "c7e6dd26837562a5db3e5ed472bc0501ffde22fb97e07e39f252031b51f24c68",
+    "near_miss": "b6945d7f25bf3c6523105df46323de7c9f04c74ca80778499559bf310d750866",
+    "audit_lines_33_47_this_run": "5aa5c5c0cdea09bc3abb46b05e7f32c2c988c23b5c3b47bc7d8dab3398f298f1",
+    "audit_file_at_qa": "85c5ed54b791a1a8e7481ff1d897c44f9badfa507c77b76282d13dfee575da96",
+    "pm_decision": "15ba2e9b957969c1b1e856b6e7553cdc62791f96caf1132865c26f6aaab6375b",
+    "place_ack": "9be452cefb2720b4c17d78d3173efd375fb37355a9680dc22a39c06b4f12dc0d",
+    "sp500_cache": "a72bbd5b695d529314c3b1bdf9ddcb7252794923ccb744b96a86bf43fdb42106",
+    "momentum_screener_py": "1907188fed9686ae18426643544a43b9f787ff1eb37aa049c87ced7994562db6"
+  },
+  "evidence_paths": {
+    "run_summary": "/workspace/momentum_audit/screener-run-screener-20261008-233746-75fd07a0.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-10-08.json",
+    "audit": "/workspace/momentum_audit/2026-10-08.jsonl",
+    "sp500_cache": "/workspace/sp500_symbols.json",
+    "screener_code": "/workspace/momentum_screener.py",
+    "event_calendar": "/workspace/momentum_qa/event_calendar.py",
+    "pm_decision": "/workspace/momentum_audit/pm-2026-10-08-eod-2240-decision.json",
+    "pm_positions": "/workspace/momentum_audit/pm-positions-mapped-2026-10-08-eod-2240.json",
+    "place_ack": "/workspace/momentum_audit/place_ack/eod-20261008-2240-no-new-orders.json",
+    "prior_place_qa": "/workspace/momentum_audit/qa-verdict-place-eod-20261008-manual.json",
+    "prior_screener_qa": "/workspace/momentum_audit/qa-verdict-screener-20261008-220151-c07c85b7.json",
+    "miss_check": "/workspace/momentum_audit/eod_miss_check_2026-10-08_2240.json"
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "Run PASS. No places authorized: HPQ/ZBRA/ANET already held (DUPLICATE_HOLD_BUY if re-bought), XLE blocked by ETF floor. NO_NEW_ORDERS disposition correct. QA never places."
+}

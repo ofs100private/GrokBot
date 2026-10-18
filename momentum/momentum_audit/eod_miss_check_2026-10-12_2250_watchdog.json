@@ -1,0 +1,138 @@
+{
+  "job": "Momentum EOD screener watchdog",
+  "day": "2026-10-12",
+  "now_il": "2026-10-12T22:59:22.576490+03:00",
+  "nyse_session": true,
+  "event_vol_freeze": false,
+  "event_vol_freeze_why": "no_event_freeze today=2026-10-12 next_open=2026-10-13",
+  "night_status": {
+    "day": "2026-10-12",
+    "now_il": "2026-10-12T22:59:22.576502+03:00",
+    "screener_miss": false,
+    "pm_miss": false,
+    "any_miss": false,
+    "next_job": null,
+    "screener": {
+      "day": "2026-10-12",
+      "now_il": "2026-10-12T22:59:22.576502+03:00",
+      "has_eod_screener_action": true,
+      "actions": [
+        {
+          "ts_il": "2026-10-12T22:49:14.765875+03:00",
+          "action": "BUY",
+          "symbol": "ZBRA"
+        },
+        {
+          "ts_il": "2026-10-12T22:49:14.765957+03:00",
+          "action": "BUY",
+          "symbol": "ANET"
+        },
+        {
+          "ts_il": "2026-10-12T22:49:14.766010+03:00",
+          "action": "BUY",
+          "symbol": "XOM"
+        },
+        {
+          "ts_il": "2026-10-12T22:49:14.766044+03:00",
+          "action": "BUY",
+          "symbol": "XLE"
+        },
+        {
+          "ts_il": "2026-10-12T22:49:14.766078+03:00",
+          "action": "SKIP",
+          "symbol": "USO"
+        }
+      ],
+      "run_starts": [
+        "2026-10-12T22:49:02.282782+03:00"
+      ],
+      "reason": "screener_already_ran"
+    },
+    "position_manager": {
+      "day": "2026-10-12",
+      "now_il": "2026-10-12T22:59:22.576502+03:00",
+      "has_eod_pm_action": true,
+      "actions": [
+        {
+          "ts_il": "2026-10-12T22:50:17.127103+03:00",
+          "action": "HOLD",
+          "symbol": "NTAP"
+        },
+        {
+          "ts_il": "2026-10-12T22:50:17.338207+03:00",
+          "action": "HOLD",
+          "symbol": "XLK"
+        },
+        {
+          "ts_il": "2026-10-12T22:50:17.441496+03:00",
+          "action": "HOLD",
+          "symbol": "ANET"
+        },
+        {
+          "ts_il": "2026-10-12T22:50:17.540856+03:00",
+          "action": "HOLD",
+          "symbol": "CRWD"
+        },
+        {
+          "ts_il": "2026-10-12T22:50:17.647244+03:00",
+          "action": "HOLD",
+          "symbol": "ZBRA"
+        },
+        {
+          "ts_il": "2026-10-12T22:50:17.785285+03:00",
+          "action": "HOLD",
+          "symbol": "P"
+        }
+      ],
+      "run_starts": [
+        "2026-10-12T22:50:06.736225+03:00",
+        "2026-10-12T22:50:16.904141+03:00"
+      ],
+      "run_ends": [
+        "2026-10-12T22:50:17.785469+03:00"
+      ],
+      "reason": "pm_already_ran"
+    }
+  },
+  "soft_nudge": {
+    "nudge": false,
+    "reason": "within_2m_or_parse",
+    "pm_end": "2026-10-12T22:50:17.785469+03:00",
+    "scr_start": "2026-10-12T22:49:02.282782+03:00"
+  },
+  "verdict": "CLEAN",
+  "screener_miss": false,
+  "pm_miss": false,
+  "any_miss": false,
+  "place_fills_eod_window": [
+    {
+      "ts": "2026-10-12T22:52:06+03:00",
+      "type": "ACTION",
+      "job": "place",
+      "source": "screener",
+      "symbol": "XOM",
+      "status": "FILLED",
+      "positionId": 3604092001,
+      "avgPrice": 171.89,
+      "sl": 161.66
+    },
+    {
+      "ts": "2026-10-12T22:52:13+03:00",
+      "type": "ACTION",
+      "job": "place",
+      "source": "screener",
+      "symbol": "XLE",
+      "status": "FILLED",
+      "positionId": 3604092031,
+      "avgPrice": 65.97,
+      "sl": 62.03
+    }
+  ],
+  "notes": [
+    "Screener ACTION \u226422:50 IDT (run screener-20261012-224902-bcd5cfff) \u2014 not EOD_SCREENER_MISSED",
+    "PM HOLD pack posmgr-20261012-225016-1115878c after one crash+retry \u2014 not EOD_PM_MISSED",
+    "Soft nudge not needed (screener started before PM end)",
+    "Places: XOM+XLE FILLED; ZBRA/ANET already held (duplicate); PM HOLDs need no place",
+    "Stay quiet per watchdog rule 6"
+  ]
+}

@@ -56,3 +56,9 @@ Routines: `x-watch-tier3-preopen`, `x-watch-tier3-preclose`
 Query: `from:RyanDetrick OR from:markminervini OR from:thechartdr OR from:TrendSpider OR from:OptionsPlay OR from:Stocktwits OR from:MarketRebels OR from:BespokeInvest OR from:IncredibleTrade OR from:SpotGamma -is:reply`
 
 Pre-open: levels, setups, and what they're watching into the bell. Pre-close: positioning, late tape, into-the-close tells. Quiet if nothing useful landed in the last window.
+
+## Dedupe + compact in code (2026-10-18e; Ofer rule 2026-10-18: anything deterministic runs in code; the LLM does judgement + prose only)
+1. `python3 /workspace/x_watch/new_posts.py since --tier tier1|tier2|tier3`. Pass the returned `since_id` (or `start_time` on the first run) to the one combined `search_posts_all`, and save the result with `write_to_file`. Do not read the raw output.
+2. `python3 /workspace/x_watch/new_posts.py filter --tier <tier> --raw <file> [<file2>]`. It dedupes against `/workspace/x_watch/state.json`, drops RTs/replies, and returns compact new posts (handle, IDT time, ≤300-char text, likes/views, url).
+   - **Exit 3 = nothing new → send nothing and stop** (no LLM prose).
+   - Exit 0 → the LLM judges materiality and writes the brief from `posts` only.

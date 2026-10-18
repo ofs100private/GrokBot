@@ -92,3 +92,5 @@ AVOID code if skipped: `PLACE_WITHOUT_QA_BOT_RECHECK`.
 ## 2026-10-01 — post place-QA place ACK + sticky pending (CoS analysis)
 
 Incident: Wed EOD place-QA PASS for JNJ CLOSE + CRWD BE never executed (Mirror A cash still $549.77 Oct 1; CRWD SL still 230.85). Fixes in skill + `/workspace/momentum_audit/improvement-2026-10-01.md`. No trades in this doc change.
+
+> **SUPERSEDED 2026-10-05** (playbook-2026-10-05-sleeve-unlimited.md): unlimited stocks per pack, etf_buys <= 1. The old max-3-stock / buy_count>4 rule above is obsolete.

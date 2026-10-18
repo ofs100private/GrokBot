@@ -8,6 +8,7 @@ download, and prepare-trade mcp_order_params (absolute stopLossRate).
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import sys
 from datetime import datetime, timedelta
 
@@ -234,9 +235,9 @@ def _pack_picks(
     buys: list[dict],
     skips: list[dict],
     *,
-    max_stock_picks: int = 3,
-    max_sector_etf: int = 1,
-    max_breakout_stocks: int = 2,
+    max_stock_picks: int | None = None,  # playbook 2026-10-05: unlimited stocks
+    max_sector_etf: int = 1,  # etf_buys <= 1
+    max_breakout_stocks: int | None = None,
 ) -> list[dict]:
     """Pack: up to 2 MOMENTUM_BREAKOUT stocks, fill to 3 with VCP/volume, then 1 ETF.
 
@@ -283,13 +284,13 @@ def _pack_picks(
     picked: list[dict] = []
     picked_syms: set[str] = set()
 
-    for x in breakout_buys[:max_breakout_stocks]:
+    for x in (breakout_buys if max_breakout_stocks is None else breakout_buys[:max_breakout_stocks]):
         sym = x.get("symbol") or x.get("etoro_symbol")
         picked.append(x)
         if sym:
             picked_syms.add(sym)
 
-    slots_left = max_stock_picks - len(picked)
+    slots_left = float("inf") if max_stock_picks is None else max_stock_picks - len(picked)
     for x in vcp_buys:
         if slots_left <= 0:
             break
@@ -308,7 +309,7 @@ def _pack_picks(
     # Commodity only if no sector ETF taken and room remains under pack cap
     if (
         not etf_taken
-        and len(picked) < (max_stock_picks + max_sector_etf)
+        and (max_stock_picks is None or len(picked) < (max_stock_picks + max_sector_etf))
         and commodity_buys
     ):
         picked.append(commodity_buys[0])
@@ -338,7 +339,7 @@ def _write_near_misses(near_misses: list[dict], day: str | None = None) -> str:
 
 def run_screener(
     allocation_usd: float = 1000,
-    max_stock_picks: int = 3,
+    max_stock_picks: int | None = None,  # unlimited (playbook 2026-10-05)
     max_sector_etf: int = 1,
     max_picks: int | None = None,  # legacy alias → total pack size hint
     _trace: list | None = None,
@@ -356,8 +357,7 @@ def run_screener(
         return [{"action": "SKIP", "reason": "INTRADAY_BAN", "mcp_order_params": None}]
 
     if max_picks is not None and max_picks > 0:
-        # Back-compat: old callers passed max_picks=3 meaning total buys
-        max_stock_picks = min(max_stock_picks, 3)
+        # Back-compat: legacy max_picks no longer caps stocks (playbook 2026-10-05: unlimited stocks, etf_buys<=1)
         max_sector_etf = min(max_sector_etf, 1)
 
     start_date = (datetime.now() - timedelta(days=420)).strftime("%Y-%m-%d")
@@ -766,6 +766,12 @@ def run_screener(
                 )
                 row["mcp_order_params"] = None
 
+    # Standing rule (Ofer 2026-10-13): never buy a symbol held in Classic. Fail closed.
+    from classic_book import load_held, apply_cross_book
+    _held, _held_why = load_held()
+    T("cross_book_read", held=sorted(_held) if _held is not None else None, error=_held_why)
+    drop_counts["cross_book_held"] = apply_cross_book(candidates, _held, _held_why, trace=T)
+
     buys = [x for x in candidates if x.get("action") == "BUY"]
     skips = [x for x in candidates if x.get("action") == "SKIP"]
     packed = _pack_picks(
@@ -838,9 +844,40 @@ def run_screener(
 run_screener._last_meta = {}  # type: ignore[attr-defined]
 
 
+STALE_CROSSBOOK_CODE = "STALE_CROSSBOOK_FAIL_CLOSED"
+CROSSBOOK_MAX_AGE_S = 900
+
+
+def _stale_crossbook_row(why) -> dict:
+    return {"action": "SKIP", "reason": STALE_CROSSBOOK_CODE, "gate": "GATE_OK",
+            "rationale": f"{STALE_CROSSBOOK_CODE}: Classic snapshot stale/missing and refresh failed - no pack ({why})",
+            "mcp_order_params": None}
+
+
+def crossbook_precheck(refresh_src: str | None = None, *, max_age_s: float = CROSSBOOK_MAX_AGE_S,
+                       snapshot_path=None) -> tuple[bool, str | None]:
+    """Hard pre-screen check (QA Bot 2026-10-15). Classic snapshot must be <= max_age_s old.
+    If stale/missing: refresh via `classic_book.py save <fresh user-OfersClaw5 get-my-positions-and-orders JSON>`
+    (refresh_src or env MOMENTUM_CLASSIC_MCP_JSON), then re-check. Fail closed."""
+    import os as _os, subprocess as _sp
+    import classic_book as _cb
+    held, why = _cb.load_held(snapshot_path, max_age_s=max_age_s)
+    if held is not None:
+        return True, None
+    src = refresh_src or _os.environ.get("MOMENTUM_CLASSIC_MCP_JSON")
+    if not src:
+        return False, f"{why}; no fresh Classic MCP read supplied (MOMENTUM_CLASSIC_MCP_JSON)"
+    r = _sp.run([sys.executable, str(Path(_cb.__file__).resolve()), "save", str(src)],
+                capture_output=True, text=True, timeout=60)
+    if r.returncode != 0:
+        return False, f"{why}; classic_book save failed: {(r.stderr or r.stdout).strip()[-300:]}"
+    held, why2 = _cb.load_held(snapshot_path, max_age_s=max_age_s)
+    return (True, None) if held is not None else (False, f"after refresh: {why2}")
+
+
 def run_screener_with_qa(
     allocation_usd: float = 1000,
-    max_stock_picks: int = 3,
+    max_stock_picks: int | None = None,  # unlimited (playbook 2026-10-05)
     max_sector_etf: int = 1,
     max_picks: int | None = None,
 ) -> list:
@@ -849,9 +886,16 @@ def run_screener_with_qa(
 
     run_id = new_run_id("screener")
     log = AuditLogger(run_id, "momentum_screener.py")
-    total_cap = (max_stock_picks + max_sector_etf) if max_picks is None else max_picks
+    total_cap = max_picks if max_picks is not None else (10**6 if max_stock_picks is None else max_stock_picks + max_sector_etf)
     max_attempts = 3
     last_err: Exception | None = None
+
+    # HARD pre-screen cross-book freshness gate (QA Bot 2026-10-15)
+    _cb_ok, _cb_why = crossbook_precheck()
+    if not _cb_ok:
+        log.trace(STALE_CROSSBOOK_CODE, details={"reason_code": STALE_CROSSBOOK_CODE, "gate": "GATE_OK", "why": _cb_why})
+        log.end(f"{STALE_CROSSBOOK_CODE}: no pack", details={"why": _cb_why})
+        return [_stale_crossbook_row(_cb_why)]
     signals: list | None = None
     meta: dict = {}
 
@@ -1025,6 +1069,18 @@ def run_screener_with_qa(
             continue
         executable.append(row)
 
+    # Any pack built on a stale cross-book read = FAIL (re-check after the scan)
+    import classic_book as _cb2
+    _h2, _w2 = _cb2.load_held(max_age_s=CROSSBOOK_MAX_AGE_S)
+    if _h2 is None and any(r.get("action") == "BUY" for r in executable):
+        for r in executable:
+            if r.get("action") == "BUY":
+                log.deviation("STALE_CROSSBOOK_PACK_FAIL", rationale=f"Pack FAIL: cross-book read stale at pack time: {_w2}", symbol=r.get("symbol"))
+        pack.ok = False
+        pack.verdict = "FAIL"
+        pack.reasons = list(pack.reasons or []) + [f"STALE_CROSSBOOK_PACK_FAIL: {_w2}"]
+        executable = [r for r in executable if r.get("action") != "BUY"] + [_stale_crossbook_row(_w2)]
+
     buys_syms = [r.get("symbol") for r in executable if r.get("action") == "BUY"]
     skip_syms = [
         {"symbol": r.get("symbol"), "reason": r.get("reason")}
@@ -1060,10 +1116,23 @@ def run_screener_with_qa(
 
 
 if __name__ == "__main__":
+    import argparse as _ap
+    import os as _os2
+    _p = _ap.ArgumentParser(description="Momentum EOD screener + QA gate (rules unchanged)")
+    _p.add_argument("--classic-json", default=None,
+                    help="saved Classic user-OfersClaw5 get-my-positions-and-orders file (= MOMENTUM_CLASSIC_MCP_JSON)")
+    _p.add_argument("--out", default=None, help="also write the JSON result to this file")
+    _a = _p.parse_args()
+    if _a.classic_json:
+        _os2.environ["MOMENTUM_CLASSIC_MCP_JSON"] = _a.classic_json
     print("[info] EOD screener + QA gate…", file=sys.stderr)
     try:
         signals = run_screener_with_qa()
-        print(json.dumps(signals, indent=2, ensure_ascii=False))
+        _txt = json.dumps(signals, indent=2, ensure_ascii=False)
+        if _a.out:
+            Path(_a.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(_a.out).write_text(_txt + "\n")
+        print(_txt)
     except Exception as e:
         print(json.dumps([{"action": "ERROR", "reason": str(e), "mcp_order_params": None}], indent=2))
         sys.exit(1)

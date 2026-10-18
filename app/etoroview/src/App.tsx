@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AccountChoice } from './components/AccountChoice'
+import { BreakoutTa } from './components/BreakoutTa'
+import { ClassicBot } from './components/ClassicBot'
 import { Dashboard } from './components/Dashboard'
 import { Header } from './components/Header'
 import { TradingQa } from './components/TradingQa'
@@ -8,7 +10,7 @@ import { type AccountMode } from './data/portfolio'
 const STORAGE_KEY = 'etoro-view-mode'
 const DEMO_USERNAME = 'Demo'
 
-type AppView = 'portfolio' | 'qa'
+type AppView = 'portfolio' | 'qa' | 'classic-bot' | 'breakout-ta'
 
 function getInitialMode(): AccountMode | null {
   try {
@@ -30,12 +32,36 @@ function saveMode(mode: AccountMode) {
 
 function viewFromHash(): AppView {
   const h = (window.location.hash || '').toLowerCase()
+  if (
+    h === '#/breakout-ta' ||
+    h === '#breakout-ta' ||
+    h.includes('/breakout-ta')
+  ) {
+    return 'breakout-ta'
+  }
+  if (
+    h === '#/classic-bot' ||
+    h === '#classic-bot' ||
+    h.includes('/classic-bot') ||
+    h === '#/classic-rsi' ||
+    h === '#classic-rsi' ||
+    h.includes('/classic-rsi')
+  ) {
+    return 'classic-bot'
+  }
   if (h === '#/qa' || h === '#qa' || h.includes('/qa')) return 'qa'
   return 'portfolio'
 }
 
 function setHashForView(view: AppView) {
-  const next = view === 'qa' ? '#/qa' : '#/'
+  const next =
+    view === 'qa'
+      ? '#/qa'
+      : view === 'classic-bot'
+        ? '#/classic-bot'
+        : view === 'breakout-ta'
+          ? '#/breakout-ta'
+          : '#/'
   if (window.location.hash !== next) {
     window.location.hash = next
   }
@@ -115,6 +141,22 @@ export default function App() {
         >
           QA &amp; Lessons
         </button>
+        <button
+          type="button"
+          className={`app-view-tab ${view === 'classic-bot' ? 'app-view-tab-active' : ''}`}
+          onClick={() => handleViewChange('classic-bot')}
+          aria-current={view === 'classic-bot' ? 'page' : undefined}
+        >
+          Classic Bot
+        </button>
+        <button
+          type="button"
+          className={`app-view-tab ${view === 'breakout-ta' ? 'app-view-tab-active' : ''}`}
+          onClick={() => handleViewChange('breakout-ta')}
+          aria-current={view === 'breakout-ta' ? 'page' : undefined}
+        >
+          Breakout TA
+        </button>
       </nav>
 
       {view === 'qa' ? (
@@ -127,6 +169,30 @@ export default function App() {
           />
           <main className="dashboard-main tqa-main">
             <TradingQa />
+          </main>
+        </div>
+      ) : view === 'classic-bot' ? (
+        <div className={`dashboard ${mode === 'demo' ? 'dashboard-demo' : 'dashboard-real'}`}>
+          <Header
+            mode={mode}
+            username={username}
+            onSwitchMode={handleSwitchMode}
+            onBack={handleBack}
+          />
+          <main className="dashboard-main crsi-main">
+            <ClassicBot />
+          </main>
+        </div>
+      ) : view === 'breakout-ta' ? (
+        <div className={`dashboard ${mode === 'demo' ? 'dashboard-demo' : 'dashboard-real'}`}>
+          <Header
+            mode={mode}
+            username={username}
+            onSwitchMode={handleSwitchMode}
+            onBack={handleBack}
+          />
+          <main className="dashboard-main bta-main">
+            <BreakoutTa />
           </main>
         </div>
       ) : (

@@ -1,0 +1,82 @@
+{
+  "verdict": "FAIL",
+  "checker": "QA Bot",
+  "checked_at": "2026-10-13T07:12:00+03:00",
+  "scope": "ClassicBot.tsx (box), PortfolioSummary.tsx, DailyBrief.tsx, classicLive.ts (box vs repo)",
+  "live_read": {
+    "mcp": "user-OfersClaw5 get-my-portfolio-summary",
+    "timestamp": "2026-10-13T07:09:48+03:00",
+    "totalValue": 7238.86,
+    "availableCash": 3070.28,
+    "invested_cost": 3989.05,
+    "mv": 4168.58,
+    "unrealizedPnl": 179.53,
+    "pnl_pct": 4.5,
+    "deployed_mv_pct": 57.59,
+    "cash_pct": 42.41,
+    "pendingOrders": 0,
+    "symbols": [
+      "QQQ",
+      "XLV",
+      "SMH",
+      "SPY",
+      "XLE",
+      "TMO"
+    ]
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "status": "PASS",
+      "item": "Tile arithmetic",
+      "detail": "Snapshot: 3070.28+4167.30=7237.58; 4167.30/7237.58=57.58%; 3070.28/7237.58=42.42%; 178.25/3989.05=4.47%. Live drift is small: equity +1.28, P/L +1.28 (QQQ tick). Cash, cost and positions match exactly."
+    },
+    {
+      "id": "F2",
+      "status": "PASS",
+      "item": "Label honesty",
+      "detail": "'Invested (cost)' = totalInvested (cost). 'Invested (MV)' = metrics.investedMarketValue. 'Deployed (MV)' = MV/equity. P/L% is shown 'of cost'. Same in PortfolioSummary, DailyBrief and ClassicBot. The DailyBrief MV pill comes from investedMarketValue."
+    },
+    {
+      "id": "F3",
+      "status": "FAIL",
+      "item": "Funded $15,000",
+      "detail": "ClassicBot.tsx:403 labels classic-rsi.json book_summary.totalInvested as 'Funded'. That field is a stale 2026-09-19 snapshot (equity 12733.77, cash 7438.61, P/L -1847.93). It is a totalInvested figure, not a deposit or funding amount. Shown next to live equity of about $7.2k, it implies about 52% drawdown on funding, which the data does not support. The label is misleading and the number is stale."
+    },
+    {
+      "id": "F4",
+      "status": "PASS",
+      "item": "tsc / build / check-classic-live",
+      "detail": "tsc --noEmit OK; npm run build OK; check-classic-live.mjs ALL PASS."
+    },
+    {
+      "id": "F5",
+      "status": "PASS",
+      "item": "JSON sha unchanged",
+      "detail": "classic-portfolio.json 043d5dda...0a64bab and classic-rsi.json 892c3e71...efc1 are identical before and after the build."
+    },
+    {
+      "id": "F6",
+      "status": "PASS",
+      "item": "Copies",
+      "detail": "Box public == dist == public/latest == GrokBot public == dist for classic-portfolio.json; classic-rsi.json matches across all 4 copies. Box and repo copies of PortfolioSummary, DailyBrief and classicLive.ts are identical. ClassicBot.tsx exists in the box only, as stated."
+    },
+    {
+      "id": "F7",
+      "status": "PASS",
+      "item": "Auto-place wording",
+      "detail": "No 'auto-place' or active-placing wording in ClassicBot.tsx, DailyBrief.tsx or classic-rsi.json."
+    },
+    {
+      "id": "N1",
+      "status": "NOTE",
+      "item": "No git repo",
+      "detail": "/workspace/etoroview is not a git repo, so the edits cannot be checked against history."
+    }
+  ],
+  "fixes": [
+    "Remove the 'Funded' tile, or source it from a real deposits/net-funding field and label it with its as-of date. Do not use book_summary.totalInvested from classic-rsi.json.",
+    "If you keep the tile, relabel it something like 'RSI book cost basis (as of 2026-09-19)' and keep it out of the live tile group.",
+    "Refresh or label the stale classic-rsi.json book_summary (asOf 2026-09-19)."
+  ]
+}

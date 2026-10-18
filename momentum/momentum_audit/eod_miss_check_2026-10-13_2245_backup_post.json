@@ -1,0 +1,90 @@
+{
+  "wake": "screener_backup_2245_post",
+  "ts_il": "2026-10-13T22:53:14.285616+03:00",
+  "day": "2026-10-13",
+  "night_status": {
+    "pm_miss": false,
+    "screener_miss": true,
+    "screener_catchup_done": true,
+    "pm_catchup_done": true,
+    "primary_22_40_missed": true,
+    "note": "PM RUN_END 22:49:36; screener ACTION/HALT 22:50:22 (after \u226422:50 gate). Feedback still scores EOD_SCREENER_MISSED; process hygiene complete."
+  },
+  "pm": {
+    "run_id": "posmgr-20261013-224935-def1c247",
+    "run_start_il": "2026-10-13T22:49:35+03:00",
+    "run_end_il": "2026-10-13T22:49:36+03:00",
+    "actions": {
+      "XOM": "HOLD",
+      "NTAP": "TRAIL_SL 205.97\u2192207.5618 PLACED live=207.56",
+      "XLK": "HOLD",
+      "CRWD": "HOLD",
+      "ZBRA": "HOLD",
+      "P": "HOLD"
+    }
+  },
+  "screener": {
+    "run_id": "screener-20261013-225010-051dc5a7",
+    "action_ts_il": "2026-10-13T22:50:22+03:00",
+    "universe_n": 520,
+    "regime": "HEALTHY",
+    "halt": true,
+    "event_vol_freeze": true,
+    "freeze_reason": "EVENT_VOL_FREEZE prior_session today=2026-10-13 next_open=2026-10-14 event=CPI",
+    "buys": [],
+    "executable_n": 6,
+    "near_miss_count": 81,
+    "pack": "PASS (0 buys)"
+  },
+  "places": {
+    "buys": "NONE_EVENT_VOL_FREEZE",
+    "ntap_trail": "PLACED_202 by pm_2242; live stopLossRate=207.56 verified by executor_2245",
+    "duplicate_2245_place": false
+  },
+  "qa_bot": {
+    "executor_has_SendToAgent": false,
+    "requests_written": [
+      "/workspace/momentum_audit/place_qa/place-qa-request-eod-20261013-2245-backup-ntap-trail.json",
+      "/workspace/momentum_audit/place_qa/screener-run-qa-request-eod-20261013-2245-backup.json",
+      "/workspace/momentum_audit/place_qa/place-qa-request-eod-20261013-2242-backup-ntap-trail.json"
+    ],
+    "verdict_on_disk": "/workspace/momentum_audit/place_qa/qa-verdict-eod-20261013-2242-backup.json",
+    "verdict_concern": "Thin shared-box file claims QA Bot PASS; parent should confirm real SendToAgent exchange (forgeability risk). Place already executed by 2242 agent.",
+    "parent_must_SendToAgent": [
+      {
+        "agent_id": "498c78db-a027-4e0b-bc1a-7fc83c47bc82",
+        "priority": true,
+        "skill": "momentum-screener-run-qa",
+        "pack": "place_qa/screener-run-qa-request-eod-20261013-2245-backup.json"
+      },
+      {
+        "agent_id": "498c78db-a027-4e0b-bc1a-7fc83c47bc82",
+        "priority": true,
+        "skill": "momentum-real-money-qa-gate",
+        "pack": "place_qa/place-qa-request-eod-20261013-2245-backup-ntap-trail.json",
+        "note": "post-hoc / confirm \u2014 place already done by 2242"
+      }
+    ]
+  },
+  "cash": {
+    "mirror_A": {
+      "id": 11630170,
+      "availableCash": 2648.37,
+      "value": 7830.91,
+      "path": "mirror-A-cash-2026-10-13-eod.json"
+    },
+    "keys": {
+      "availableCash": 3352.89,
+      "totalValue": 9852.46
+    }
+  },
+  "classic_live": [
+    "QQQ",
+    "SPY",
+    "TMO",
+    "XLE",
+    "XLV"
+  ],
+  "classic_snapshot": "classic_book/classic_holdings_latest.json",
+  "cpi_freeze_confirmed": true
+}

@@ -1,0 +1,37 @@
+{
+  "review": "QA Bot re-review: momentum_rebalance.py v6 (Momentum-HHHGDTJ)",
+  "reviewed_il": "2026-10-12T20:50+03:00",
+  "verdict": "PASS_WITH_CONDITIONS",
+  "scope": {
+    "code_readiness": "PASS_WITH_CONDITIONS: discretionary code paths (CAP_TRIM, REDUCE_WEAK, SET_TP, buys/rotation) are correct and fail closed, and they ship DISABLED.",
+    "live_scope": "EXITS-ONLY (stopclose + PM-owned SL edits), per the v4 PASS_WITH_CONDITIONS. Discretionary trading is NOT authorized live."
+  },
+  "authorize_place": false,
+  "scope_note": "Read-only. No eToro calls, no prepare/place, no messages. Probes ran in /tmp/qa_v6; discretionary paths were exercised by monkeypatching discretionary_enabled() in scratch only.",
+  "tests": "75 passed (reproduced).",
+  "v5_fixes": {
+    "REDUCE_WEAK_UNBOUNDED_FORGE": "FIXED. Forged 10/10 units on a healthy name gives REDUCE_WEAK_SETUP_NOT_BROKEN_LIVE. On a broken name: 10 and 5.0001 give UNITS_EXCEED_CAP; 5.0 and 4.0 pass.",
+    "TP_CAN_BE_LOWERED": "FIXED. Lowering 130 to 118 and post-BE lowering both give EDIT_TP_RAISE_ONLY. R after BE uses the ATR/3% floor (no collapse to 0). Buffer = max(ATR, 3%). Forged 50 gives NOT_EXACT. A short gives MISMATCH. Note: the initial-stop ledger (initial_stop_ledger.json, currently empty) is agent-writable. A forged entry can only move the target up (huge R) or down to the last+max(ATR,3%) floor, and raise-only blocks lowering an existing TP, so harm is bounded.",
+    "ACCEPTANCE_UNVERIFIED_SELF_ATTESTED": "MITIGATED, not solved. The doc-string gate is removed, DISCRETIONARY_ENABLED=False, and the acceptance file is absent. The probe shows discretionary still OFF with a forged file while the flag is False. But acceptance_record() is structural only: a forged file (accepted_by 'Ofer Sasson', message_id 'FAKE-123', channel 'made-up') validates True, and flag True plus the forged file enables discretionary. The message_id is never checked against Teams. Enabling therefore needs a code edit (gap 7) plus an unverified file.",
+    "PENDING_CLOSE_SCHEMA_OPEN": "FIXED in code: {isBuy:false, positionID} and {closePositionsIds:[id]} now give CLOSE_ALREADY_PENDING. Still not verified against a real eToro pending-close order (disclosed).",
+    "BAN_TEST_WEAK": "FIXED: the new test builds everything at ban time and asserts the exact reason. My independent at-ban probe agrees: a VERIFIED verdict still gives INTRADAY_BAN_OR_NYSE_CLOSED_LIVE (ban and Saturday), and stopclose still closes in the ban."
+  },
+  "bootstrap": {
+    "assessment": "Directionally sound and honestly reported. OOS n=736 / 51 weeks, design effect 2.16, n_eff 341, Wilson LB_eff 0.374 (vs 0.389 naive), mean -0.18% with 95% CI [-1.03, +0.62], P(mean>0)=0.31. edge_from_backtest uses the tighter LB, giving edge_used 0 (ev -0.24%).",
+    "caveats": [
+      "Blocks are entry ISO weeks, but trades last up to 15 sessions (about 3 weeks), so cross-week dependence is not captured and n_eff is likely still overstated. Moving-block (2-4 week) or date-clustered resampling would be more conservative. This cannot flip the conclusion, since the interval already spans 0 and the point estimate is negative.",
+      "Survivorship bias (current S&P members) is disclosed and biases results optimistically.",
+      "A caller-fabricated strong backtest file still unlocks buys if discretionary is enabled (probe B3), which is gap 3."
+    ]
+  },
+  "earlier_probes": "No regressions: CAP_TRIM sizing, precision, cost ceiling, drift and overcut, trim-to-BUY forgery fails the gate, real backtest gives COST_GATE_FAIL, rule mismatch gives 0, stopclose retry, 120s positions, ban/weekend/holiday closes, shorts to manual review, SL edits PM-owned.",
+  "conditions": [
+    "1. Live scope stays exits-only. Keep DISCRETIONARY_ENABLED=False and the acceptance file absent.",
+    "2. Before any enablement: QA must independently verify Ofer's acceptance by reading the cited message_id/channel (Teams) and matching quote and timestamp. acceptance_record() should be upgraded to perform or require that verification, not just field presence. A fresh full QA review is required at that time.",
+    "3. Verify the pending-close shapes against a real eToro pending-close order before relying on CLOSE_ALREADY_PENDING; meanwhile treat a 'position already closing' broker reject as success.",
+    "4. Populate initial_stop_ledger.json from open records (read-only from history), and validate entries (initial SL < entry, within max_sl_risk_pct) before TP uses them.",
+    "5. Bootstrap: switch to multi-week moving blocks or trade-overlap clustering; add a point-in-time universe when data exists.",
+    "6. Do a full fresh-input dry-run (all inputs <=120s) before any discretionary go-live."
+  ],
+  "fail_codes": []
+}

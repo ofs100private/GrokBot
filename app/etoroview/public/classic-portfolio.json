@@ -32,6 +32,7 @@
       "openRate": 156.44,
       "currentRate": 176.69,
       "stopLossRate": 169.5,
+      "takeProfitRate": null,
       "positionId": 3498067688,
       "openTime": "2026-06-26T13:30:14.567",
       "pctEquity": 11.05
@@ -47,6 +48,7 @@
       "openRate": 677.9,
       "currentRate": 710.3,
       "stopLossRate": 705.0,
+      "takeProfitRate": null,
       "positionId": 3523504426,
       "openTime": "2026-07-27T17:45:47.613",
       "pctEquity": 10.83
@@ -62,6 +64,7 @@
       "openRate": 65.96,
       "currentRate": 68.25,
       "stopLossRate": 63.01,
+      "takeProfitRate": null,
       "positionId": 3604041447,
       "openTime": "2026-10-12T18:14:28.033",
       "pctEquity": 8.56
@@ -77,36 +80,24 @@
       "openRate": 647.18,
       "currentRate": 690.01,
       "stopLossRate": 657.0,
+      "takeProfitRate": null,
       "positionId": 3601642886,
       "openTime": "2026-10-08T17:36:59.373",
       "pctEquity": 3.67
     }
   ],
   "caps": {
-    "basis": "total_equity",
-    "source": "classic-rebalance/SKILL.md standing rules 2026-10-16",
-    "etfMaxPct": 35,
-    "stockMaxPct": 20,
-    "growthSleeveMaxPct": 45,
-    "cryptoSleeveMaxPct": 15,
-    "minPosition": 400,
+    "stockPct": 20,
+    "etfPct": 35,
+    "sleevePct": 45,
+    "crypto": "removed 2026-10-17",
     "cashFloor": 1500,
-    "maxNewTradesPerIdtDay": 4,
-    "noNewNamesPerMonthCap": true,
-    "growthMvPct": 10.83,
-    "healthcareMvPct": 14.73,
-    "energyMvPct": 8.56,
-    "cashDriftTrigger": true,
-    "namePct": {
-      "XLV": 11.05,
-      "QQQ": 10.83,
-      "XLE": 8.56,
-      "TMO": 3.67
-    }
+    "minPosition": 400,
+    "maxNewTradesPerDay": 4
   },
   "recommendation": {
-    "buy": "No Buy Today \u2014 weekend (equities outside 24x5); XLP/WMT lead candidates for Monday RSI/rebalance runs after run-QA + order-QA + cost gate; cash drift ON 65.9%",
-    "sell": "No Sale (QQQ SL $705 ~0.8% away handles downside)",
+    "buy": "No Buy Today — weekend (equities outside 24x5; crypto blocked). Monday: SPY core add first (core gain gate + order-QA), then XLP/WMT from cash left after core",
+    "sell": "No Sale",
     "hold": [
       "XLV",
       "QQQ",
@@ -117,6 +108,7 @@
       "XLE add NO_XLE_ADDS",
       "XOM/STLD/USO/VTRS CROSS_BOOK_OVERLAP",
       "MSFT conservative block (Momentum keys still holds)",
+      "crypto CRYPTO_BLOCKED",
       "any buy leaving cash < $1,500"
     ]
   },
@@ -126,10 +118,18 @@
     "mirrorId": 11368142,
     "value": 12741.41,
     "availableCash": 8510.13,
-    "note": "UI only, not spendable; symbols align"
+    "note": "UI only, not spendable"
   },
   "xRequestId": "a7ac84b1-9b11-4d93-96c6-8bbcc45f0851",
-  "asOf": "2026-10-17T15:52:00+03:00",
-  "slot": "afternoon_1530",
-  "placeNone": true
+  "asOf": "2026-10-18T05:35:00+03:00",
+  "slot": "morning_0530",
+  "placeNone": true,
+  "core": {
+    "targetPct": "65-70",
+    "targetMidPct": 67.5,
+    "currentPct": 10.83,
+    "deployableAboveFloorPlus110": 3168.2,
+    "reason": "initial_deploy",
+    "note": "core adds need core gain gate + order-QA; SL -11% / TP +25%"
+  }
 }

@@ -186,7 +186,8 @@ def test_pack_3_stocks_plus_1_etf_pass():
     assert sum(1 for r in buys if r["asset_class"] == "ETF") == 1
 
 
-def test_pack_4_stocks_fail():
+def test_pack_4_stocks_pass_unlimited():
+    """Playbook 2026-10-05: unlimited stocks per pack (old max-3 cap obsolete)."""
     signals = [
         _stock_buy("AAPL"),
         _stock_buy("MSFT"),
@@ -194,11 +195,8 @@ def test_pack_4_stocks_fail():
         _stock_buy("AMD"),
     ]
     annotated, pack = validate_screener_output(signals, max_picks=4)
-    assert not pack.ok
-    assert any("STOCK" in r for r in pack.reasons) or any(
-        d.get("code") == "MAX_STOCK_PICKS" for d in pack.deviations
-    )
-
+    assert pack.ok
+    assert not any(d.get("code") == "MAX_STOCK_PICKS" for d in pack.deviations)
 
 def test_soft_regime_breakout_buy_ok():
     """Soft-regime STOCK MOMENTUM_BREAKOUT with RVOL>=2.5 RS>=90 passes QA."""

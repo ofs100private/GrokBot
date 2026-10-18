@@ -1,0 +1,513 @@
+{
+  "op": "qa.verdict.momentum_real_money_place_gate",
+  "job": "eod_manual_early_place_qa_2026-10-08_hpq_zbra_anet_xle",
+  "asOf_il": "2026-10-08T22:08:09+03:00",
+  "run_id": "eod-20261008-manual",
+  "screener_run_id": "screener-20261008-220151-c07c85b7",
+  "screener_run_qa": "PASS",
+  "screener_qa_path": "/workspace/momentum_audit/qa-verdict-screener-20261008-220151-c07c85b7.json",
+  "pm_run_id": "posmgr-20261008-220132-b4e18cb0",
+  "bundle_ref": "/workspace/momentum_audit/place_qa/eod-20261008-manual-qa-bundle.json",
+  "pending_ack_ref": "/workspace/momentum_audit/place_ack/eod-20261008-manual-hpq-zbra-anet-xle-pending-qa.json",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mcp_namespace": "user-Momentum-HHHGDTJ",
+  "qa_places": false,
+  "overall": "PASS",
+  "verdict": "PASS",
+  "hard_fail": false,
+  "authorize_place": true,
+  "authorize_place_scope": "BUY HPQ + ZBRA + ANET only (keys cash sequenced). XLE authorize_place=false (ETF_FLOOR_ALREADY_MET / ETF_BACKFILL_BLOCKED). No PM risk edits.",
+  "authorize_place_now": [
+    {
+      "symbol": "HPQ",
+      "action": "BUY",
+      "instrumentId": 1019,
+      "amount": 1000,
+      "leverage": 1,
+      "stopLossRate": 30.53,
+      "stopLossType": "fixed",
+      "orderType": "mkt"
+    },
+    {
+      "symbol": "ZBRA",
+      "action": "BUY",
+      "instrumentId": 5662,
+      "amount": 1000,
+      "leverage": 1,
+      "stopLossRate": 359.81,
+      "stopLossType": "fixed",
+      "orderType": "mkt"
+    },
+    {
+      "symbol": "ANET",
+      "action": "BUY",
+      "instrumentId": 4294,
+      "amount": 1000,
+      "leverage": 1,
+      "stopLossRate": 198.82,
+      "stopLossType": "fixed",
+      "orderType": "mkt"
+    }
+  ],
+  "fail_codes": [
+    "ETF_FLOOR_ALREADY_MET",
+    "ETF_BACKFILL_BLOCKED"
+  ],
+  "fail_codes_scope": "XLE only \u2014 pack stocks PASS",
+  "deviation_codes": [],
+  "GATE_OK_codes": [],
+  "info_flags": [
+    "PARTIAL_DAILY_BAR",
+    "MANUAL_EARLY_EOD_ALLOWED",
+    "XLE_CHASE_EXTENDED_INFO",
+    "PREPARE_TOKENS_EXPIRED_REPREPARE_REQUIRED",
+    "VTRS_PREMARKET_BE_SL_CONFIRMED",
+    "MRVL_SL_CONFIRMED"
+  ],
+  "playbook_citations": [
+    "2026-09-16 full fix (sleeves, freeze, trail)",
+    "2026-10-05 sleeve unlimited + keys-cash authorize",
+    "2026-10-07 QA ruling: held ETF re-proposed = ETF_ALREADY_HELD drop; no ETF backfill when >=1 ETF already held",
+    "trader-momentum-strategy: add 1 sector ETF only in HEALTHY if missing"
+  ],
+  "keys_ledger": {
+    "mcp": "user-Momentum-HHHGDTJ",
+    "authChannel": "keys",
+    "availableCash": 5476.52,
+    "balance": 5476.52,
+    "frozenCash": 0,
+    "totalValue": 9896.43,
+    "unrealizedPnl": 420.02,
+    "usedMargin": 3999.89,
+    "pending_orders": [],
+    "held": [
+      "P",
+      "CRWD",
+      "XLK",
+      "NTAP"
+    ],
+    "positionCount_direct": 4,
+    "asOf_utc": "2026-10-08T19:05:16.4424803Z",
+    "asOf_il": "2026-10-08T22:05:16+03:00",
+    "xRequestId_portfolio": "416579b2-d173-469e-9628-9e6a95b9e67a",
+    "xRequestId_positions": "77e5a3c8-f296-4482-8d4c-edd002c28aab",
+    "xRequestId_history": "51a11996-bec9-42fe-8dd2-8cd1fcf984b8",
+    "xRequestId_quotes": "4cf748a0-a2ff-419d-b506-14043acea789",
+    "trader_claimed_keys_cash": 5476.52,
+    "cash_match_trader_claim": true,
+    "get_my_balances": "not used (expected 403 missing money.balance scope); portfolio summary authoritative for Trading availableCash",
+    "positions": [
+      {
+        "symbol": "P",
+        "positionId": 3587299961,
+        "openRate": 122.86,
+        "stopLossRate": 122.86,
+        "currentRate": 152.48,
+        "pnlPct": 24.11,
+        "lev": 1
+      },
+      {
+        "symbol": "CRWD",
+        "positionId": 3579391383,
+        "openRate": 242.0,
+        "stopLossRate": 242.0,
+        "currentRate": 263.57,
+        "pnlPct": 8.92,
+        "lev": 1
+      },
+      {
+        "symbol": "XLK",
+        "positionId": 3577022318,
+        "openRate": 187.8,
+        "stopLossRate": 187.8,
+        "currentRate": 196.6,
+        "pnlPct": 4.69,
+        "lev": 1
+      },
+      {
+        "symbol": "NTAP",
+        "positionId": 3597307544,
+        "openRate": 220.84,
+        "stopLossRate": 205.97,
+        "currentRate": 230.32,
+        "pnlPct": 4.3,
+        "lev": 1
+      }
+    ],
+    "duplicate_hold_vs_pack": false,
+    "note": "MRVL/VTRS absent from live positions (confirmed closed via trading history)"
+  },
+  "mirror_A": {
+    "id": 11630170,
+    "role": "REPORTING ONLY \u2014 never authorizes place",
+    "availableCash": 4335.84,
+    "invested": 8000.0,
+    "value": 7866.6,
+    "held_symbols": [
+      "NTAP",
+      "XLK",
+      "CRWD",
+      "P"
+    ],
+    "source": "trader bundle (not re-read via parent SSO this wake)",
+    "xRequestId_bundle": "78bee273-cf69-4cf3-bd75-5d602c69ea4d"
+  },
+  "closed_fills_verified": [
+    {
+      "symbol": "MRVL",
+      "positionId": 3599509752,
+      "closeTime_utc": "2026-10-08T17:26:48.71Z",
+      "closeTime_il": "2026-10-08T20:26:48+03:00",
+      "closeTime_et": "2026-10-08T13:26:48-04:00",
+      "session": "NYSE regular hours",
+      "closeRate": 265.88,
+      "stopLossRate": 266.0,
+      "openRate": 287.1,
+      "netProfit": -36.96,
+      "fees": 0.0,
+      "investment": 500.0,
+      "cause": "STOP_LOSS_HIT (closeRate\u2248SL; not agent-initiated)",
+      "xRequestId_history": "51a11996-bec9-42fe-8dd2-8cd1fcf984b8",
+      "matches_trader_claim": true
+    },
+    {
+      "symbol": "VTRS",
+      "positionId": 3580194334,
+      "closeTime_utc": "2026-10-08T11:47:27.2Z",
+      "closeTime_il": "2026-10-08T14:47:27+03:00",
+      "closeTime_et": "2026-10-08T07:47:27-04:00",
+      "session": "PRE_MARKET / extended hours (NYSE regular open 09:30 ET) \u2014 CONFIRMED",
+      "closeRate": 16.96,
+      "stopLossRate": 16.96,
+      "openRate": 16.96,
+      "netProfit": 0.0,
+      "fees": 0.0,
+      "investment": 1000.0,
+      "cause": "BREAKEVEN_SL_HIT (closeRate==SL==entry; platform SL, not agent close)",
+      "xRequestId_history": "51a11996-bec9-42fe-8dd2-8cd1fcf984b8",
+      "matches_trader_claim": true,
+      "finding": "Trader ask verified: VTRS DID close at 14:47 IL = 07:47 ET pre-market at exactly 16.96 (BE SL). eToro CFD/ETF extended-hours SL execution."
+    }
+  ],
+  "cash_reconciliation": {
+    "prior_brief_cash": 4015.67,
+    "MRVL_proceeds": 463.04,
+    "VTRS_proceeds": 1000.0,
+    "expected": 5478.71,
+    "live": 5476.52,
+    "diff": -2.19,
+    "diff_note": "likely overnight/rollover fees; within tolerance"
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "event_vol_freeze": false,
+    "hard_halt": false,
+    "soft": false,
+    "spx_close": 7756.18,
+    "spx_sma50": 7689.26,
+    "vix_close": 15.7,
+    "source": "screener-run + independent event_calendar check"
+  },
+  "sleeve": {
+    "rule_citation": "2026-10-05 unlimited stocks + >=1 sector ETF; add ETF only if missing",
+    "stocks_held_keys": [
+      "P",
+      "CRWD",
+      "NTAP"
+    ],
+    "etf_held_keys": [
+      "XLK"
+    ],
+    "etf_n": 1,
+    "etf_floor_ok": true,
+    "stock_cap": "unlimited",
+    "max_etf_buys_per_pack": 1,
+    "max_momentum_breakout_per_pack": 2,
+    "etf_buys_requested": 1,
+    "etf_buys_authorized": 0,
+    "note": "XLK held \u2192 ETF floor already satisfied. Playbook: add 1 sector ETF only if missing. 2026-10-07 ruling: no ETF backfill when >=1 ETF already held. XLE is a second sector ETF (not XLK re-propose) but still blocked as new ETF while floor met. Oct-6/Oct-7 place-QA set etf_buys_new=0 when XLK held."
+  },
+  "cash_plan": {
+    "keys_availableCash": 5476.52,
+    "mirror_A_availableCash_reporting_only": 4335.84,
+    "per_name_cap": 1000,
+    "sequenced_authorized": [
+      {
+        "symbol": "HPQ",
+        "need": 1001.81,
+        "keys_before": 5476.52,
+        "covers": true,
+        "authorize_place": true
+      },
+      {
+        "symbol": "ZBRA",
+        "need": 1002.8,
+        "keys_before": 4474.71,
+        "covers": true,
+        "authorize_place": true
+      },
+      {
+        "symbol": "ANET",
+        "need": 1002.11,
+        "keys_before": 3471.91,
+        "covers": true,
+        "authorize_place": true
+      }
+    ],
+    "sequenced_blocked": [
+      {
+        "symbol": "XLE",
+        "need": 1001.65,
+        "covers_cash": true,
+        "authorize_place": false,
+        "code": "ETF_FLOOR_ALREADY_MET"
+      }
+    ],
+    "pack_required_authorized_incl_costs": 3006.72,
+    "keys_cash_after_authorized_pack": 2469.8,
+    "thin_cash_floor_skill": "~$1000 (CASH_RECYCLE_REQUIRED if keys <~$1000 before buys)",
+    "cash_after_pack_vs_floor": "2469.80 >= 1000 OK \u2014 no CASH_RECYCLE_REQUIRED",
+    "INSUFFICIENT_CASH": false,
+    "authorize_place": true,
+    "note": "Keys cover HPQ\u2192ZBRA\u2192ANET sequence with fees. XLE blocked on sleeve rule not cash. Mirror A never authorizes."
+  },
+  "quotes_vs_prepare": {
+    "asOf_utc": "2026-10-08T19:05:17Z",
+    "xRequestId": "4cf748a0-a2ff-419d-b506-14043acea789",
+    "rows": [
+      {
+        "symbol": "HPQ",
+        "prepare_ask": 32.47,
+        "live_ask": 32.48,
+        "sl": 30.53,
+        "sl_dist_pct_live": -6.0,
+        "drift_pct": 0.03,
+        "ok": true
+      },
+      {
+        "symbol": "ZBRA",
+        "prepare_ask": 383.28,
+        "live_ask": 382.75,
+        "sl": 359.81,
+        "sl_dist_pct_live": -5.99,
+        "drift_pct": -0.14,
+        "ok": true
+      },
+      {
+        "symbol": "ANET",
+        "prepare_ask": 211.54,
+        "live_ask": 211.26,
+        "sl": 198.82,
+        "sl_dist_pct_live": -5.89,
+        "drift_pct": -0.13,
+        "ok": true
+      },
+      {
+        "symbol": "XLE",
+        "prepare_ask": 65.27,
+        "live_ask": 65.29,
+        "sl": 61.28,
+        "sl_dist_pct_live": -6.14,
+        "drift_pct": 0.03,
+        "ok": true,
+        "note": "quote OK but sleeve FAIL"
+      }
+    ],
+    "stale_cache_suspect": false,
+    "note": "Live quotes within ~0.15% of prepare asks; SLs ~6% below ask (sensible). Tokens expired \u2014 must re-prepare identical params at place."
+  },
+  "pm_items": [
+    {
+      "symbols_hold": [
+        "P",
+        "CRWD",
+        "XLK",
+        "NTAP"
+      ],
+      "verdict": "OK",
+      "authorize_place": false,
+      "notes": "All HOLD ABOVE_SMA50_UNDER_1R; NTAP R=0.66 < 1R trigger 235.71; P/CRWD/XLK already BE SL=entry; no CLOSE/BE/TRAIL"
+    }
+  ],
+  "items": [
+    {
+      "symbol": "HPQ",
+      "action": "BUY",
+      "verdict": "PASS",
+      "authorize_place": true,
+      "codes": [],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "instrumentId": 1019,
+      "stopLossRate": 30.53,
+      "setup": "VCP_SETUP",
+      "rs_rating": 93,
+      "rvol": 0.34,
+      "dwm": {
+        "day_pct": 0.73,
+        "week_pct": 1.01,
+        "month_pct": 0.26
+      },
+      "dwm_ok": true,
+      "held_on_keys": false,
+      "held_on_mirror_A": false,
+      "live_ask": 32.48,
+      "sl_below_ask": true,
+      "conditions": [
+        "re-prepare-trade identical: account=real direction=buy symbol=HPQ amount=1000 leverage=1 orderType=mkt stopLossRate=30.53 stopLossType=fixed",
+        "quote freshness: live ask within drift limit vs prepare (suggest <=1%); if ask drifts >2% or SL would be >=ask STOP and re-QA",
+        "PARTIAL_DAILY_BAR info: early EOD unconfirmed bar \u2014 Ofer-approved early run; place OK under FULL AUTO after this PASS",
+        "after fill: write place_ack + fill audit back to QA"
+      ],
+      "notes": "VCP HEALTHY PASS; keys cash covers as #1 in sequence; no duplicate hold"
+    },
+    {
+      "symbol": "ZBRA",
+      "action": "BUY",
+      "verdict": "PASS",
+      "authorize_place": true,
+      "codes": [],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "instrumentId": 5662,
+      "stopLossRate": 359.81,
+      "setup": "VCP_SETUP",
+      "rs_rating": 93,
+      "rvol": 0.32,
+      "dwm": {
+        "day_pct": -0.85,
+        "week_pct": 1.95,
+        "month_pct": 11.01
+      },
+      "dwm_ok": true,
+      "held_on_keys": false,
+      "held_on_mirror_A": false,
+      "live_ask": 382.75,
+      "sl_below_ask": true,
+      "conditions": [
+        "re-prepare-trade identical: account=real direction=buy symbol=ZBRA amount=1000 leverage=1 orderType=mkt stopLossRate=359.81 stopLossType=fixed",
+        "quote freshness / drift <=2% or re-QA",
+        "day red OK for VCP (week+month green)",
+        "after fill: place_ack + fill audit to QA"
+      ],
+      "notes": "VCP HEALTHY PASS; sequenced after HPQ"
+    },
+    {
+      "symbol": "ANET",
+      "action": "BUY",
+      "verdict": "PASS",
+      "authorize_place": true,
+      "codes": [],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "instrumentId": 4294,
+      "stopLossRate": 198.82,
+      "setup": "VCP_SETUP",
+      "rs_rating": 91,
+      "rvol": 0.54,
+      "dwm": {
+        "day_pct": -2.0,
+        "week_pct": 3.43,
+        "month_pct": 9.63
+      },
+      "dwm_ok": true,
+      "held_on_keys": false,
+      "held_on_mirror_A": false,
+      "live_ask": 211.26,
+      "sl_below_ask": true,
+      "conditions": [
+        "re-prepare-trade identical: account=real direction=buy symbol=ANET amount=1000 leverage=1 orderType=mkt stopLossRate=198.82 stopLossType=fixed",
+        "quote freshness / drift <=2% or re-QA",
+        "day red OK for VCP",
+        "after fill: place_ack + fill audit to QA"
+      ],
+      "notes": "VCP HEALTHY PASS; sequenced after ZBRA; keys residual after 3 stocks ~$2469.80"
+    },
+    {
+      "symbol": "XLE",
+      "action": "BUY",
+      "verdict": "FAIL",
+      "authorize_place": false,
+      "codes": [
+        "ETF_FLOOR_ALREADY_MET",
+        "ETF_BACKFILL_BLOCKED"
+      ],
+      "info_codes": [
+        "XLE_CHASE_EXTENDED_INFO",
+        "PARTIAL_DAILY_BAR"
+      ],
+      "amount": 1000,
+      "leverage": 1,
+      "orderType": "mkt",
+      "direction": "buy",
+      "account": "real",
+      "instrumentId": 3008,
+      "stopLossRate": 61.28,
+      "setup": "VOLUME_BREAKOUT",
+      "asset_class": "ETF",
+      "rs_rating": 88,
+      "rvol": 1.36,
+      "dwm": {
+        "day_pct": 3.01,
+        "week_pct": 4.09,
+        "month_pct": 0.53
+      },
+      "dwm_ok": true,
+      "held_on_keys": false,
+      "held_on_mirror_A": false,
+      "sector_etf_already_held": "XLK",
+      "etf_buys_in_pack_count_ok": true,
+      "live_ask": 65.29,
+      "dailyChangePercent_approx": 3.03,
+      "conditions": [],
+      "notes": "HARD FAIL authorize. XLK already held \u2192 ETF floor >=1 satisfied. Playbook adds sector ETF only if missing. 2026-10-07 ruling: no ETF backfill when >=1 ETF already held (Oct-6/7 place-QA set etf_buys_new=0 with XLK held). XLE is a genuine screener VOLUME_BREAKOUT (close>pivot), not XLK re-propose, but still a new ETF while floor met \u2192 drop. etf_buys=1 count alone would pass MAX_ETF_PICKS; sleeve floor rule overrides. Soft: +~3% oil-shock day (Classic chase flag); ETF RVOL 1.36 (ETF path has no RVOL>=1.5 gate). W-8BEN warning info only (XLK already held implies form likely on file). Do NOT place XLE. Do NOT FAIL pack stocks for this."
+    }
+  ],
+  "order_hygiene": {
+    "no_shorts": true,
+    "all_leverage_1": true,
+    "all_amount_le_1000": true,
+    "all_long_buy_mkt": true,
+    "account_real_not_demo": true,
+    "stops_present": true,
+    "event_vol_freeze_blocks_buy": false,
+    "soft_regime_vcp_block": false,
+    "duplicate_hold_buy": false,
+    "pending_orders_blocking": false,
+    "momentum_breakout_in_pack": 0,
+    "etf_buys_authorized": 0,
+    "qa_places": false
+  },
+  "conditions_global": {
+    "re_prepare": "All prior prepare tokens expired (~120s TTL). At place time: prepare-trade per authorized symbol with IDENTICAL params (amount 1000, lev 1, fixed SL rates above, mkt, real). Any param change \u2192 STOP and fresh place-QA.",
+    "quote_freshness": "Use live prepare ask; if ask drifts >2% from this QA live snapshot or SL would sit >= ask, STOP and re-QA.",
+    "drift_limits": "soft warn >1%; hard stop/re-QA >2% or SL geometry broken",
+    "fill_audit_back_to_qa": "After each place: write place_ack (PLACED|WAITING_FOR_MARKET|BLOCKED_KEYS_MCP|SKIPPED_REASON) with keys positionId + xRequestId; sticky until Mirror A confirms; send fill summary back to QA Bot",
+    "full_auto": "After this PASS, Trader_momentum places authorized BUYs in same wake \u2014 no user/CoS chat confirm. QA never places.",
+    "do_not_place": [
+      "XLE"
+    ],
+    "partial_daily_bar": "INFO only \u2014 early EOD with NYSE still open; Ofer requested; skills allow; not a hard FAIL"
+  },
+  "full_auto": "Trader_momentum: re-prepare then place HPQ \u2192 ZBRA \u2192 ANET (FULL AUTO). Skip XLE. Write place_ack. No PM SL edits. Report fills after the fact.",
+  "evidence_paths": {
+    "bundle": "/workspace/momentum_audit/place_qa/eod-20261008-manual-qa-bundle.json",
+    "ack": "/workspace/momentum_audit/place_ack/eod-20261008-manual-hpq-zbra-anet-xle-pending-qa.json",
+    "audit": "/workspace/momentum_audit/2026-10-08.jsonl",
+    "screener_verdict": "/workspace/momentum_audit/qa-verdict-screener-20261008-220151-c07c85b7.json",
+    "pm_decision": "/workspace/momentum_audit/pm-2026-10-08-eod-manual-decision.json",
+    "precedent_etf_drop": "/workspace/momentum_audit/qa-verdict-place-eod-20261006-2240-mrvl-apa-zbra.json",
+    "precedent_early_eod": "/workspace/momentum_audit/qa-verdict-screener-20261005-160452-88488e84.json"
+  },
+  "draft_message_trader_momentum": "QA Bot place-QA \u2014 eod-20261008-manual (Ofer early EOD ~22:00 IL / ~15:04 ET, market still open)\n\nSCREENER screener-20261008-220151-c07c85b7: PASS (universe 520/516, HEALTHY VIX15.7 SPX+0.87%vsSMA50, no EVENT_VOL_FREEZE, audit complete). INFO: PARTIAL_DAILY_BAR \u2014 yfinance daily iloc[-1] is today's still-forming bar; early/manual allowed by skill + Oct-5 precedent; not a hard FAIL.\n\nPLACE overall: PASS \u2014 authorize_place HPQ / ZBRA / ANET only. XLE FAIL.\n\nPer-symbol:\n\u2022 HPQ BUY VCP $1000 SL30.53 \u2014 authorize_place=true (codes none)\n\u2022 ZBRA BUY VCP $1000 SL359.81 \u2014 authorize_place=true (codes none; day red OK for VCP)\n\u2022 ANET BUY VCP $1000 SL198.82 \u2014 authorize_place=true (codes none)\n\u2022 XLE BUY VOLUME_BREAKOUT ETF $1000 SL61.28 \u2014 authorize_place=false codes ETF_FLOOR_ALREADY_MET + ETF_BACKFILL_BLOCKED (XLK already held \u2192 floor \u22651 met; playbook adds ETF only if missing; 2026-10-07 no-backfill ruling). Soft: +~3% oil-shock chase info. Do NOT place XLE.\n\nKeys live (xRequestId portfolio 416579b2-d173-469e-9628-9e6a95b9e67a; positions 77e5a3c8-f296-4482-8d4c-edd002c28aab): availableCash $5476.52; held P/CRWD/XLK/NTAP with SLs 122.86/242.00/187.80/205.97; pending orders []. Cash after 3 authorized ~$2469.80 (\u2265~$1000 floor). Mirror A $4335.84 reporting only.\n\nVTRS finding (history xRequestId 51a11996-bec9-42fe-8dd2-8cd1fcf984b8): CONFIRMED close 2026-10-08T11:47:27.2Z = 14:47 IL = 07:47 ET PRE-MARKET @16.96 (=SL=entry), net $0 \u2014 BE-SL hit in extended hours. MRVL CONFIRMED SL @265.88 20:26 IL / 13:26 ET regular hours, net \u2212$36.96.\n\nPM: 4 HOLD OK \u2014 no CLOSE/BE/TRAIL.\n\nFULL AUTO conditions: re-prepare identical params (tokens expired); quote drift \u22642% else re-QA; place HPQ\u2192ZBRA\u2192ANET; write place_ack + fill audit back to QA. Skip XLE. QA never places.\n\nVerdicts: /workspace/momentum_audit/qa-verdict-screener-20261008-220151-c07c85b7.json ; /workspace/momentum_audit/qa-verdict-place-eod-20261008-manual.json",
+  "draft_message_cos": "Momentum early-EOD QA 2026-10-08 ~22:05 IL: screener PASS (partial-bar INFO only). Place PASS authorize HPQ/ZBRA/ANET; XLE FAIL ETF_FLOOR_ALREADY_MET (XLK held \u2014 no new ETF). VTRS BE-SL confirmed pre-market 07:47 ET @16.96. Keys cash $5476.52. FULL AUTO trader places 3 stocks; QA did not place."
+}

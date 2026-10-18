@@ -1,0 +1,64 @@
+{
+  "op": "momentum.fcx.monday_relevance",
+  "mode": "READ_ONLY (no prepare/place/close)",
+  "ts_il": "2026-10-10T23:05:00+03:00",
+  "source_run": "screener-20261009-224716-e471b45c",
+  "verdict": "RECHECK_MONDAY",
+  "verdict_summary": "Setup still intact as of Friday's close, but the setup and stop are tied to Friday's bar, so Monday's EOD screener must re-qualify FCX before any buy. Fresh place-QA from QA Bot is also required (the Fri approval expired).",
+  "friday_signal_screener": {
+    "sleeve": "VCP_SETUP", "setup_type": "VCP_READY", "price_at_scan_1547ET": 73.72,
+    "rs": 88, "rvol": 0.40, "vcp": "24.0% -> 14.8% -> 8.4%", "dwm_pct": [3.63, 2.34, 3.53],
+    "stop_loss": 69.3, "order": "BUY real mkt x1 $1000 SL 69.3 fixed no TP",
+    "regime": {"mode": "HEALTHY", "spx": 7812.94, "spx_sma50": 7696.95, "vix": 14.85},
+    "note": "NOT a MOMENTUM_BREAKOUT. Breakout rules (RS>=90, RVOL>=2, 20d high) do not apply. VCP sleeve needs RS>=80, DWM week/month green, and a VCP contraction (d3<=8.5% with dry volume)."
+  },
+  "friday_final_recomputed": {
+    "close": 73.69, "open": 73.02, "high": 74.00, "low": 72.505, "day_pct": 3.58,
+    "after_hours": 73.56, "after_hours_time_il": "2026-10-10 01:00",
+    "etoro_quote": {"bid": 73.69, "ask": 73.6901, "asOf_il": "2026-10-09 22:59:56", "xRequestId": "9ab4a682-afff-46b7-ae3a-1e2b9b52ab78"},
+    "volume": 6979900, "vol_sma50": 12788754, "rvol50": 0.55, "vol_avg20": 10982515, "rvol20": 0.64,
+    "sma50": 71.56, "pct_above_sma50": 2.97, "sma150": 65.33, "sma200": 64.04,
+    "prior20_close_high": 74.35, "pct_below_20d_close_high": -0.89,
+    "pivot_15d_high": 74.90, "pct_below_pivot": -1.62,
+    "range_position": 0.79, "upper_third": true,
+    "vcp": "24.0% -> 14.8% -> 8.4% (True)", "dwm_pct": [3.58, 2.29, 3.48],
+    "52w_high_close": 79.91, "pct_below_52w_high": -7.8,
+    "breakout_sleeve_check": "FAIL (RS 88<90, RVOL 0.55<2, not at 20d close high). Expected, because this is a VCP entry."
+  },
+  "risk": {
+    "sl": 69.3, "sl_dist_from_close_pct": -5.96, "max_loss_at_sl_usd": 59.6,
+    "close_rule_minus4_level": 70.74, "effective_risk_usd_via_close_rule": 40,
+    "notes": "The SL sits below SMA50 (71.56) and above the base low of 68.20 (Oct 1). The -4% CLOSE rule would trigger about $1.44 before the SL."
+  },
+  "account_keys_readonly": {
+    "availableCash": 3410.76, "totalValue": 9973.49, "pendingOrders": 0,
+    "holdings": ["P", "CRWD", "NTAP", "XLK", "ANET", "ZBRA"], "fcx_held": false,
+    "xRequestIds": {"portfolio": "43b80221-545a-43d7-b50e-366529d411a1"}
+  },
+  "events": {
+    "earnings": "Q3 2026 BMO Tue 2026-10-27 (call 10:00 ET = 17:00 IL), 15 days out, outside the 2-week window",
+    "monday_2026-10-12": "Columbus Day: NYSE/Nasdaq OPEN with normal hours (session 16:30-23:00 IL). SIFMA full close for bonds. Fed and banks closed, so no federal data and thinner liquidity.",
+    "tuesday_2026-10-13": "CPI freeze at EOD, so 0 buys. Monday EOD (~22:40 IL) is the only window before CPI.",
+    "copper": "COMEX Oct 9 settlement $6.6425/lb (+1.89% d, +2.32% wk, 2.4% below the Sep 9 record of $6.8035). LME 3M $14,540 (+1.61%). LME stocks at a 6-week low of 233kt; COMEX stocks at a record 711.6kt (tariff flow).",
+    "news": "Oct 2 Q3 ops update in line or slightly better (Cu 830Mlb; Grasberg 67% of normalized; smelter restarted). PT raises: UBS 88, Citi 84, GS 81, JPM up, one firm 92. Zacks trimmed EPS estimates slightly. Cobre Panama closure recommendation and Centinela union risk support copper. Macro: Iran risk and elevated yields. No FCX-specific weekend news found."
+  },
+  "monday_requalification_band": {
+    "dwm_week_green_needs_close_ge": 72.60,
+    "dwm_month_green_needs_close_ge": 71.07,
+    "vcp_d3_stays_le_8.5_needs_monday_high_le": 74.54,
+    "explanation": "Monday's 10-bar window still contains the Sep 30 high of 74.45 and the Oct 1 low of 68.20. Any Monday high above ~74.54 pushes d3 above 8.5%, which voids VCP_SETUP. FCX would then qualify only as VOLUME_BREAKOUT, which needs RVOL>=1.5, close>pivot 74.90 and close>open.",
+    "scenarios": [
+      {"mon_close": 73.69, "high": 74.4, "low": 72.8, "result": "Week +1.5%, so VCP_SETUP still qualifies. SL recalculates to ~69.27."},
+      {"mon_close": 72.3, "result": "DWM week -0.41%, so DWM_STRENGTH_FAIL. STALE."},
+      {"mon_close": 75.3, "high": 75.6, "rvol": 1.43, "result": "d3 9.8% voids VCP and RVOL<1.5 blocks VOLUME_BREAKOUT, so FCX is dropped."},
+      {"mon_close": 76.5, "high": 77.0, "rvol": 1.74, "result": "Qualifies as VOLUME_BREAKOUT (pivot clear). SL recalculates to ~71.16, i.e. 0.95*pivot or 6% from close."}
+    ]
+  },
+  "monday_entry_template_if_requalified": {
+    "window_il": "Mon 2026-10-12 EOD screener ~22:40-22:50 IL, before the 23:00 close. Not 16:30-18:30.",
+    "order": "BUY FCX (instrumentId 1555) real mkt x1 $1000, SL = Monday screener value (≈69.3 if VCP path; ≈71.2 if volume-breakout path), fixed, no TP",
+    "cash_check": "3410.76 available, which covers $1000",
+    "gates": ["Monday screener BUY row for FCX", "QA Bot screener-run PASS", "fresh QA Bot place-QA (Fri approval expired, do not reuse)", "Mirror A cash check per standard flow", "SL distance <= ~6%"],
+    "do_not": "Do not place using Friday's pack or SL without Monday re-qualification."
+  }
+}

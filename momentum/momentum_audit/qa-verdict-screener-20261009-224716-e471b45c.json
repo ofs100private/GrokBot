@@ -1,0 +1,192 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20261009-224716-e471b45c",
+  "slot": "eod_2240_primary (RUN_START 22:47:16 IDT = 15:47 ET, pre-close)",
+  "asOf": "2026-10-09",
+  "qaAt": "2026-10-09T22:49:30+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "overall": "PASS",
+  "verdict": "PASS",
+  "screener_run_verdict": "PASS",
+  "pack_verdict_post_drop": "PASS",
+  "authorize_place": true,
+  "authorize_place_scope": "FCX only: BUY real mkt x1 $1000 SL 69.3 fixed, no TP. ZBRA/ANET NOT authorized (DUPLICATE_HOLD_BUY if re-bought).",
+  "fail_codes": [],
+  "deviation_codes": [],
+  "info_flags": [
+    "PARTIAL_DAILY_BAR",
+    "HPQ_CLOSED_BY_SL_INTRADAY",
+    "DUPLICATE_HOLD_ROWS_IN_PACK_DROPPED",
+    "MISS_CHECK_FLAG_INCONSISTENT",
+    "POSMGR_DOUBLE_RUN_PREMAP",
+    "NEXT_EVENT_FREEZE_TUE_1013_EOD"
+  ],
+  "rerun_required": false,
+  "attempt": "1/3",
+  "checks": {
+    "SPX_UNIVERSE_TOO_SMALL": {
+      "result": "OK",
+      "evidence": "TRACE universe universe_n=520 sp500_n=503 (audit line 12); stdout '[info] S&P 500 live list: 503 symbols'; /workspace/sp500_symbols.json count=503 symbols=503 asOf 2026-10-09T19:47:16.59Z (=22:47:16 IDT, refreshed this run)"
+    },
+    "SPX_MEGACAP_FALLBACK": {
+      "result": "OK",
+      "evidence": "503-name live list, universe 520 = S&P 503 + 11 sector + 6 commodity ETFs; momentum_screener.py hard-fails len<400 (lines 71, 393); watch NOW/PANW/CRM=true, all three present in near-miss file"
+    },
+    "SPX_FETCH_BROKEN": {
+      "result": "OK",
+      "evidence": "pd.read_html(io.StringIO(res.text)) at line 69; momentum_screener.py sha256 1907188f... identical to 10-08 PASS run; no FileNotFoundError/read_html error in stdout log (only a utcnow DeprecationWarning)"
+    },
+    "SPX_SCAN_NOT_FULL": {
+      "result": "OK",
+      "evidence": "HEALTHY, full scan: download_ok valid_n=516 of 520 (drop_short_or_nan=4); drop_counts minervini=440 rs=15 setup=49 dwm_fail=1 -> 505 dropped + 11 buys_pre = 516 (reconciles); near-miss-2026-10-09.json written 22:47 (TRACE count 67; file holds top-25 incl. NOW/PANW/CRM by design, same as 10-08 PASS)"
+    },
+    "SCREENER_RUN_CRASH": {
+      "result": "OK",
+      "evidence": "attempt 1/3 produced 4 ACTION rows (BUY ZBRA/ANET/FCX, SKIP USO DWM_STRENGTH_FAIL) all with rationale; RUN_END ok=true pack=PASS halt=False"
+    },
+    "SCREENER_AUDIT_INCOMPLETE": {
+      "result": "OK",
+      "evidence": "/workspace/momentum_audit/2026-10-09.jsonl lines 9-23, run_id screener-20261009-224716-e471b45c: RUN_START 22:47:16.005 -> TRACE(attempt, regime, universe, download_ok, near_misses, event_vol_freeze, pack_done, attempt summary) -> ACTION x4 22:47:29.521 -> TRACE run_summary_written -> RUN_END 22:47:29.522 IDT; screener-run json present with regime + universe_n; stdout persisted (screener-stdout-20261009-2240.log)"
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "spx_close": 7812.94,
+    "spx_sma50": 7696.95,
+    "spx_pct_vs_sma50": 1.507,
+    "vix_close": 14.85,
+    "hard_halt": false,
+    "soft": false,
+    "note": "Recomputed 7812.94/7696.95-1 = +1.507%; VIX 14.85 < 25 -> HEALTHY. regime_* and event_freeze drop counts 0, consistent. No soft-regime VCP issue (regime not SOFT)."
+  },
+  "event_vol_freeze": {
+    "freeze": false,
+    "screener_reason": "no_event_freeze today=2026-10-09 next_open=2026-10-12 (audit line 15)",
+    "independent_check": "momentum_qa.event_calendar.is_event_vol_freeze() re-run by QA at 22:49 IDT -> (False, 'no_event_freeze today=2026-10-09 next_open=2026-10-12')",
+    "calendar": "NFP 10-02 / 11-06; CPI 10-14 (Wed); FOMC 10-28. Fri 10-09 and Mon 10-12 are neither.",
+    "columbus_day": "Mon 2026-10-12 Columbus/Indigenous Peoples' Day: NYSE/Nasdaq OPEN (only bond market/SIFMA closed). Next NYSE session = Mon 10-12 is correct; no event on it.",
+    "ruling": "No EVENT_VOL_FREEZE. Advisory: Tue 10-13 EOD WILL freeze (next session Wed 10-14 = CPI)."
+  },
+  "bar_check": {
+    "run_ts_il": "2026-10-09T22:47:16+03:00",
+    "et_approx": "15:47 ET (13 min before 16:00 ET close)",
+    "ruling": "PARTIAL_DAILY_BAR (info): signals from ~97% complete session bar. FCX live 73.63/73.64 at 22:49 IDT vs screener 73.72 - setup unchanged. RVOL 0.40 is partial-day volume (5.21M vs 20d avg ~10.98M) - irrelevant for VCP sleeve."
+  },
+  "pack_screener": {
+    "buys": ["ZBRA", "ANET", "FCX"],
+    "skips": [{"symbol": "USO", "reason": "DWM_STRENGTH_FAIL", "dwm": "0.20/0.35/-6.63", "ruling": "correct - month red"}],
+    "buys_pre_pack": 11,
+    "buys_packed": 3,
+    "momentum_breakout_count": 0,
+    "etf_buys": 0,
+    "amount_usd_each": 1000,
+    "leverage": 1,
+    "rows": [
+      {"symbol": "ZBRA", "setup": "VCP_SETUP (VCP_READY)", "rs": 93, "rvol": 0.36, "dwm": "1.76/3.46/13.04", "sl": 365.55, "disposition": "DROP - already held (pos 3601762588)"},
+      {"symbol": "ANET", "setup": "VCP_SETUP (VCP_READY)", "rs": 91, "rvol": 0.55, "dwm": "2.74/4.53/14.69", "sl": 203.74, "disposition": "DROP - already held (pos 3601769086)"},
+      {"symbol": "FCX", "setup": "VCP_SETUP (VCP_READY)", "rs": 88, "rvol": 0.40, "vcp": "24.0% -> 14.8% -> 8.4%", "dwm": "3.63/2.34/3.53", "sl": 69.3, "disposition": "CANDIDATE"}
+    ],
+    "note": "Screener does not filter already-held names, so ZBRA/ANET re-appear; placing them would be DUPLICATE_HOLD_BUY. Trader drop is correct."
+  },
+  "pack_post_drop": {
+    "verdict": "PASS",
+    "authorize_place": true,
+    "order": {"account": "real", "direction": "buy", "symbol": "FCX", "instrumentId": 1555, "orderType": "mkt", "leverage": 1, "amount": 1000, "stopLossRate": 69.3, "stopLossType": "fixed", "takeProfit": null},
+    "checks": {
+      "etf_buys": "0 (<=1) OK",
+      "momentum_breakout_count": "0 (<=2) OK",
+      "breakout_rvol_rule": "N/A - FCX is VCP_SETUP not MOMENTUM_BREAKOUT; RVOL>=2 does not apply. VCP sleeve: RS 88 >= 80 OK, VCP contraction 24.0->14.8->8.4 OK",
+      "soft_regime_vcp": "N/A - HEALTHY",
+      "event_vol_freeze": "none OK",
+      "hard_halt": "false OK",
+      "dwm": "day 3.63 / week 2.34 / month 3.53 all green OK (eToro live: +3.50 / +2.21 / +5.19)",
+      "leverage_amount": "x1, $1000 (<=1000), real, long OK",
+      "duplicate_hold_buy": "FCX NOT held (live positions xRequestId f9fd526f...) OK",
+      "etf_floor": "XLK held (pos 3577022318) -> floor met; pack adds no ETF -> no ETF_FLOOR_ALREADY_MET / ETF_BACKFILL_BLOCKED issue",
+      "stock_count": "not gated (unlimited stocks, playbook 2026-10-05); book goes 6 -> 7",
+      "keys_cash": "availableCash 3410.76 >= 1000 + buffer OK (remaining ~2410.76)",
+      "pending_orders": "0 OK",
+      "fcx_tradable": "eToro allowOpenPosition=true, fractional, lev 1 allowed, minExposure 10 (xRequestId 42f3d51d...)"
+    },
+    "sl_sanity": {
+      "entry_ref": "eToro ask 73.64 / bid 73.63 at 22:49:15 IDT; screener price 73.72",
+      "sl": 69.3,
+      "sl_formula": "min(pivot_high*0.95, price*0.94) = 73.72*0.94 = 69.30 (momentum_screener.py line 594)",
+      "distance": "4.34 = 5.89% below ask",
+      "atr14_sma": 2.53,
+      "atr14_wilder": 2.65,
+      "distance_in_atr": "1.71x (SMA ATR) / 1.64x (Wilder)",
+      "context": "SMA50 71.56 (SL ~3.2% below SMA50), 10d low 68.20, 20d low 67.01 (yfinance daily, partial 10-09 bar)",
+      "risk_usd": "~$58.9 on $1000",
+      "ruling": "SANE - long stop below price, ~1.6-1.7 ATR, inside 10d-low range; not too tight, not >-8%. Note SL sits below SMA50, so a BELOW_SMA50 CLOSE by position_manager could fire before the stop."
+    }
+  },
+  "live_confirmation": {
+    "mcp": "user-Momentum-HHHGDTJ",
+    "positions_xRequestId": "f9fd526f-e918-4e73-b60b-ae1beacc44b3",
+    "positions_ts_il": "2026-10-09T22:48:56+03:00",
+    "portfolio_xRequestId": "0b60a37a-a596-41de-9660-37ff0b12d8fb",
+    "portfolio_ts_il": "2026-10-09T22:48:56+03:00",
+    "history_xRequestId": "77f1ffba-71ee-4bfb-ae1d-45d4e2b8e519",
+    "fcx_quote_xRequestId": "42f3d51d-f672-4122-b826-0b7d405473fd",
+    "positionCount": 6,
+    "pending_orders": 0,
+    "mirrors": 0,
+    "availableCash": 3410.76,
+    "frozenCash": 0,
+    "totalValue": 9975.19,
+    "positions": [
+      {"symbol": "P", "positionId": 3587299961, "sl": 122.86, "pnlPct": 25.73},
+      {"symbol": "CRWD", "positionId": 3579391383, "sl": 242.0, "pnlPct": 13.37},
+      {"symbol": "NTAP", "positionId": 3597307544, "sl": 205.97, "pnlPct": 7.44},
+      {"symbol": "XLK", "positionId": 3577022318, "sl": 187.8, "pnlPct": 5.81},
+      {"symbol": "ANET", "positionId": 3601769086, "sl": 198.82, "pnlPct": 2.62},
+      {"symbol": "ZBRA", "positionId": 3601762588, "sl": 359.81, "pnlPct": 1.42}
+    ],
+    "vs_prior_book": "Prior 10-08 book P/CRWD/XLK/NTAP/HPQ/ZBRA/ANET (7). HPQ is GONE: closed by stop 2026-10-09 17:30:15 IDT (14:30:15Z) at 30.52 (SL 30.53, open 32.52), netProfit -61.50, pos 3601762390. Cash 2472.02 + 938.50 = 3410.52 ~ 3410.76 (diff $0.24, immaterial). Remaining 6 SLs unchanged vs 10-08.",
+    "trader_claims": "ZBRA/ANET held CONFIRMED; FCX not held CONFIRMED; XLK held (ETF floor met) CONFIRMED; cash ~3410.76 CONFIRMED; 0 pending CONFIRMED"
+  },
+  "on_time": {
+    "first_ACTION_ts_il": "2026-10-09T22:47:29.521+03:00",
+    "deadline": "22:50 IDT",
+    "EOD_SCREENER_MISSED": false,
+    "note": "Screener ACTION inside 22:50 gate. Market closes 23:00 IDT - FCX mkt order must go in before then to fill at today's price; if placed after close it fills at Monday's open (re-check gap vs SL)."
+  },
+  "soft_notes": [
+    "PARTIAL_DAILY_BAR: run at 15:47 ET; signals on partial bar - FCX setup confirmed against live quote.",
+    "HPQ_CLOSED_BY_SL_INTRADAY: trader's 'previous book' still listed HPQ; live book is 6 names. Stop worked as designed (-$61.50); not a deviation. Trader should update book notes/journal.",
+    "DUPLICATE_HOLD_ROWS_IN_PACK_DROPPED: screener emitted BUY for held ZBRA/ANET; drop is required. Suggest screener/pack step filter held symbols to avoid accidental DUPLICATE_HOLD_BUY.",
+    "MISS_CHECK_FLAG_INCONSISTENT: eod_miss_check_2026-10-09_2240.json has screener_miss=false, pm_miss=false, any_miss=false but top-level is_miss=true, is_pm_miss=true - cosmetic scorer bug; do not score a miss.",
+    "POSMGR_DOUBLE_RUN_PREMAP: two position_manager runs 22:47:03 and 22:47:59; first showed R=0.00 for all (pre-remap), second is authoritative (NTAP R=1.09 TRAIL_NO_RAISE). All HOLD, nothing executable.",
+    "NEXT_EVENT_FREEZE_TUE_1013_EOD: Tue 10-13 EOD must be EVENT_VOL_FREEZE (CPI Wed 10-14) - 0 BUY, still full scan + near-miss.",
+    "Fresh place-QA required if keys cash/book changes before the FCX place."
+  ],
+  "fingerprints_sha256": {
+    "screener_run_summary": "308d7224e3c78d09a01f32709831369a5e36a0cb4416d6b4f51e8e7430db4a10",
+    "near_miss": "2105da71fe8a6eb4020d75cb26f0398af8dd46f28a361b01d7062b37514fb491",
+    "screener_stdout": "38bfe51e17acaa81b28bfb1a2130af5d28fe665d334867430592ab510d4a4477",
+    "audit_lines_9_23_this_run": "c4431c62eb67c5fe3fd34ddc51a202f4ea33bc7526ccb2fa02f797fa286dd866",
+    "audit_file_at_qa": "dbc7174266761b7f1c00bc220a2a131e15dad6569d2f1d72953a61403e711301",
+    "sp500_cache": "e036bd75e9e63bcc84a050ad549ea4efa0a102cf75c67b0a70cfe75540d46c4e",
+    "pm_decision": "7ac851295d3c3e83ed5c58a018573d107b45c3c01c3404cc93320015a91d3e1f",
+    "positions_keys_snapshot": "e40259011974da784cad69bf23a2edcc18fd114e2648783f4ba2d0c0c5a32dda",
+    "momentum_screener_py": "1907188fed9686ae18426643544a43b9f787ff1eb37aa049c87ced7994562db6"
+  },
+  "evidence_paths": {
+    "run_summary": "/workspace/momentum_audit/screener-run-screener-20261009-224716-e471b45c.json",
+    "stdout": "/workspace/momentum_audit/screener-stdout-20261009-2240.log",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-10-09.json",
+    "audit": "/workspace/momentum_audit/2026-10-09.jsonl",
+    "sp500_cache": "/workspace/sp500_symbols.json",
+    "screener_code": "/workspace/momentum_screener.py",
+    "event_calendar": "/workspace/momentum_qa/event_calendar.py",
+    "pm_decision": "/workspace/momentum_audit/pm-2026-10-09-eod-2240-decision.json",
+    "positions_keys": "/workspace/momentum_audit/positions-keys-20261009-2240.json",
+    "miss_check": "/workspace/momentum_audit/eod_miss_check_2026-10-09_2240.json",
+    "prior_screener_qa": "/workspace/momentum_audit/qa-verdict-screener-20261008-233746-75fd07a0.json"
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "Run PASS. Post-drop pack FCX-only PASS, authorize_place=true for FCX BUY real mkt x1 $1000 SL 69.3 (keys cash 3410.76 verified). ZBRA/ANET must NOT be placed (DUPLICATE_HOLD_BUY). QA never places."
+}

@@ -1,0 +1,33 @@
+{
+  "review": "QA Bot re-review: momentum_rebalance.py v4 (Momentum-HHHGDTJ)",
+  "reviewed_il": "2026-10-12T18:00+03:00",
+  "verdict": "PASS_WITH_CONDITIONS",
+  "scope": "PASS covers EXITS-ONLY: `stopclose` protective full closes (BELOW_SMA50 / LOSS_PCT_GE_4) and strictly re-derived PM stop moves (TRAIL_SL / MOVE_SL_BREAKEVEN) via preplace. It does NOT cover discretionary BUY / DEPLOY / ROTATION / TRIM. Those stay disabled (DISCRETIONARY_ENABLED=False) pending a written Ofer/Security decision and a fresh QA review.",
+  "go_live": "exits-only",
+  "authorize_place": false,
+  "scope_note": "Read-only. No eToro calls, no prepare/place/close, no messages. Probes ran in /tmp/qa_v4 with tmp PACK_DIR/AUDIT_DIR.",
+  "tests": "56 passed (reproduced).",
+  "v3_fixes": {
+    "FORGED_EDIT_SL_UNGATED": "FIXED. Forged near-bid 107.5 gives EDIT_SL_NOT_EXACT_COMPUTED_STOP. Exact computed 97 passes. BE at only 1R gives TRIGGER_NOT_MET_LIVE. last 101 gives TRIGGER_NOT_MET:HOLD. Short gives POSITION_MISMATCH. A PM_CLOSE kind is forced to stopclose. The v3 F4 forgery now fails closed (no price context). Formula is identical to position_manager (max(prior, min(entry, 10d low)), capped at last-eps; BE = entry).",
+    "EDIT_SL_NULL_CRASH": "FIXED (EDIT_SL_NEW_STOP_MISSING).",
+    "STOPCLOSE_SINGLE_USE_BLOCKS_RETRY": "FIXED. Retry after a failed place passes again. A working close order gives CLOSE_ALREADY_PENDING. A gone position gives POSITION_GONE.",
+    "CALLER_SUPPLIED_LIVE_INPUTS": "MITIGATED and DISCLOSED: xRequestId, statusCode and lastUpdated <=120s are required and recorded; the rotation re-gate uses live buy quote and cost. Origin is still unprovable (doc gaps 3, 4, 6). Irrelevant to exits-only except gap 8.",
+    "ACCEPTED_RISK_DOC_NOT_HONEST_COMPLETE": "FIXED. The v3 text is marked superseded. The new section is 'PENDING OFER/SECURITY DECISION (NOT ACCEPTED)' and lists 8 gaps, including forged SL edits, fabricated files, deletable markers, code edits, and the ungated stopclose. Honest and complete for the scope reviewed."
+  },
+  "discretionary_flag": "NOT BYPASSABLE except by code edit (disclosed gap 7). It is a module constant: no CLI flag, no env var, the config key is rejected (CONFIG_UNKNOWN_KEY), and a pack-injected flag gives PACK_CONFIG_OUT_OF_BOUNDS. The planner emits 0 buys with good history; preplace refuses non-EDIT_SL.",
+  "exits_only_checks": {
+    "forger_forces_harmful_close_or_stop": "Not via pack or verdict: stop moves are re-derived live and must be exact. Possible only with fabricated positions files, i.e. a fake openRate or stopLossRate (doc gaps 2 and 8). The price context comes from code (Yahoo), not the caller, in the CLI. Harm is bounded to a full close of an existing long, or a stop raised to <= entry and below bid x 0.998.",
+    "close_sized_to_held_units": "YES: units = live position units (full close). Executor should omit UnitsToDeduct (full close by positionId) so a fabricated units field cannot mis-size.",
+    "shorts": "Not auto-exited: stopclose and EDIT_SL return NOT_LONG_MANUAL_REVIEW / POSITION_MISMATCH, and the planner FLAGS them HIGH. Acceptable for a long-only book; a short needs manual handling.",
+    "ban_weekend_holiday": "stopclose OK in the ban, on Saturday, and on 2026-11-26 (Thanksgiving), with a 'WaitingForMarket = leave working order' note. Leverage-2 longs also close (protective).",
+    "collision_with_position_manager": "Same CLOSE/BE/TRAIL formulas, so no conflicting stops. A duplicate SL edit fails SL_NOT_RAISED. Duplicate closes are prevented only by a fresh positions read plus pending-order detection (see condition 2). position_manager SKIPs in the ban while stopclose acts, which is by design."
+  },
+  "earlier_probes": "v1/v2/v3 probes re-run: freeze, playbook, SL, timestamp, config, Wilson (p=0.0099), live-book binding and planner PM_CLOSE with negative edge all still behave. Buy-path probes now return DISCRETIONARY_DISABLED / NO_ACTION_AUTHORIZED, as expected.",
+  "conditions": [
+    "1. Executor must call stopclose and preplace with a FRESH keys positions read (<=120s) taken immediately before each prepare-close or edit, and place-close by positionId with no UnitsToDeduct.",
+    "2. Pending-close dedupe only recognizes orders with action=='close' or transaction=='sell' (positionId or symbol match). A probe order shaped {isBuy:false, positionID} was NOT detected (S3b). The live snapshot had no orders to confirm the real schema. Before relying on it, verify against a real pending close order's shape from get-my-positions-and-orders, and also match closePositionsIds/positionID. Until then, the executor must treat a 'position already closing' broker reject as success, not retry-loop.",
+    "3. Run a single exit executor per session (stopclose OR position_manager place path, not both concurrently) to avoid double-close attempts.",
+    "4. Discretionary flag stays False. Flipping it needs Ofer's written acceptance of gaps 1-7 plus a fresh QA review."
+  ],
+  "fail_codes": []
+}

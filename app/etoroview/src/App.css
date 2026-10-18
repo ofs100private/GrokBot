@@ -1805,3 +1805,854 @@
     padding: 10px 16px 0;
   }
 }
+
+/* —— Classic Bot / Classic RSI —— */
+.crsi-main {
+  display: block !important;
+  grid-template-columns: none !important;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.crsi-root {
+  width: 100%;
+  padding: 8px 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.crsi-page-header {
+  margin-bottom: 2px;
+}
+
+.crsi-page-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--etoro-text);
+}
+
+.crsi-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crsi-asof {
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+}
+
+.crsi-truth-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-muted);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--etoro-elevated);
+  border: 1px dashed var(--etoro-border);
+}
+
+.crsi-reminders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.crsi-reminder-chip {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(19, 198, 54, 0.08);
+  border: 1px solid rgba(19, 198, 54, 0.28);
+  color: var(--etoro-text-muted);
+}
+
+.crsi-card {
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border);
+  border-radius: var(--radius);
+  padding: 16px 18px 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.crsi-auto-card {
+  border-top: 3px solid var(--etoro-green);
+}
+
+.crsi-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.crsi-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  color: var(--etoro-text-muted);
+}
+
+.crsi-status-badge {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 4px 12px;
+  border-radius: 100px;
+}
+
+.crsi-badge-pass {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+}
+
+.crsi-badge-gated {
+  color: #1a1200;
+  background: #f9a825;
+}
+
+.crsi-badge-fail {
+  color: #fff;
+  background: var(--etoro-red, #c45c5c);
+}
+
+.crsi-badge-unknown {
+  color: var(--etoro-text-muted);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border);
+}
+
+.crsi-kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 16px;
+  margin: 0;
+}
+
+.crsi-kv-dense {
+  margin-bottom: 14px;
+}
+
+.crsi-kv > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crsi-kv-wide {
+  grid-column: 1 / -1;
+}
+
+.crsi-kv dt {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-dim);
+}
+
+.crsi-kv dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--etoro-text);
+  word-break: break-word;
+}
+
+.crsi-kv code,
+.crsi-run-id,
+.crsi-block-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--etoro-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--etoro-green-light);
+}
+
+.crsi-subblock {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--etoro-border-subtle);
+}
+
+.crsi-subheading {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-muted);
+}
+
+.crsi-gate-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.crsi-gate-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--etoro-border);
+}
+
+.crsi-gate-on {
+  color: #1a1200;
+  background: rgba(249, 168, 37, 0.25);
+  border-color: rgba(249, 168, 37, 0.5);
+}
+
+.crsi-gate-off {
+  color: var(--etoro-green-light);
+  background: rgba(19, 198, 54, 0.1);
+  border-color: rgba(19, 198, 54, 0.3);
+}
+
+.crsi-gate-neutral {
+  color: var(--etoro-text-muted);
+  background: var(--etoro-elevated);
+}
+
+.crsi-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.crsi-gate-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--etoro-text-muted);
+  line-height: 1.45;
+}
+
+.crsi-book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.crsi-book-stat {
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.crsi-book-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-dim);
+}
+
+.crsi-book-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--etoro-text);
+}
+
+.crsi-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crsi-pack-row {
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.crsi-pack-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crsi-action-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 100px;
+  border: 1px solid transparent;
+}
+
+.crsi-action-buy {
+  background: var(--etoro-real-soft);
+  color: var(--etoro-green-light);
+  border-color: rgba(19, 198, 54, 0.35);
+}
+
+.crsi-action-riskoff {
+  background: rgba(249, 168, 37, 0.15);
+  color: #f9a825;
+  border-color: rgba(249, 168, 37, 0.4);
+}
+
+.crsi-symbol {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--etoro-text);
+}
+
+.crsi-size {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--etoro-text-muted);
+}
+
+.crsi-meta-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border-subtle);
+  color: var(--etoro-text-muted);
+}
+
+.crsi-thesis,
+.crsi-suggested {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-muted);
+}
+
+.crsi-timestamps {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--etoro-text-dim);
+}
+
+.crsi-empty {
+  font-size: 13px;
+  color: var(--etoro-text-dim);
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--etoro-elevated);
+  border: 1px dashed var(--etoro-border-subtle);
+}
+
+.crsi-pointer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.crsi-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.crsi-metric {
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border-subtle);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+.crsi-metric-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-dim);
+  margin-bottom: 6px;
+}
+
+.crsi-metric-value {
+  font-size: 22px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--etoro-green-light);
+}
+
+.crsi-bt-meta {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--etoro-text-muted);
+}
+
+.crsi-notes {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-dim);
+}
+
+.crsi-table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.crsi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.crsi-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-dim);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--etoro-border);
+}
+
+.crsi-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--etoro-border-subtle);
+  color: var(--etoro-text);
+  vertical-align: middle;
+}
+
+.crsi-table tbody tr:hover {
+  background: var(--etoro-elevated);
+}
+
+.crsi-footer-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--etoro-text-dim);
+}
+
+@media (max-width: 960px) {
+  .crsi-pointer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* —— Breakout TA —— */
+.bta-main {
+  display: block !important;
+  grid-template-columns: none !important;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.bta-root {
+  width: 100%;
+  padding: 8px 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bta-page-header {
+  margin-bottom: 2px;
+}
+
+.bta-page-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--etoro-text);
+}
+
+.bta-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.bta-asof {
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+}
+
+.bta-do-not-place {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 100px;
+  color: #1a1200;
+  background: #f9a825;
+  border: 1px solid rgba(249, 168, 37, 0.55);
+}
+
+.bta-reminders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bta-reminder-chip {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(19, 198, 54, 0.08);
+  border: 1px solid rgba(19, 198, 54, 0.28);
+  color: var(--etoro-text-muted);
+}
+
+.bta-summary-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bta-summary-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border);
+  color: var(--etoro-text-muted);
+  box-shadow: var(--shadow-card);
+}
+
+.bta-summary-chip strong {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 800;
+  margin-left: 4px;
+  color: var(--etoro-text);
+}
+
+.bta-chip-confirmed {
+  border-color: rgba(19, 198, 54, 0.4);
+}
+
+.bta-chip-confirmed strong {
+  color: var(--etoro-green-light);
+}
+
+.bta-chip-watch {
+  border-color: rgba(249, 168, 37, 0.45);
+}
+
+.bta-chip-watch strong {
+  color: #f9a825;
+}
+
+.bta-chip-failed {
+  border-color: rgba(196, 92, 92, 0.45);
+}
+
+.bta-chip-failed strong {
+  color: var(--etoro-red, #c45c5c);
+}
+
+.bta-card {
+  background: var(--etoro-card);
+  border: 1px solid var(--etoro-border);
+  border-radius: var(--radius);
+  padding: 16px 18px 18px;
+  box-shadow: var(--shadow-card);
+}
+
+.bta-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bta-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--etoro-text);
+}
+
+.bta-empty {
+  font-size: 13px;
+  color: var(--etoro-text-dim);
+  padding: 10px 0;
+}
+
+.bta-empty-inline {
+  font-size: 12px;
+  color: var(--etoro-text-dim);
+  font-style: italic;
+}
+
+.bta-table-wrap {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+
+.bta-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.bta-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-dim);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--etoro-border);
+}
+
+.bta-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--etoro-border-subtle);
+  color: var(--etoro-text);
+  vertical-align: middle;
+}
+
+.bta-table tbody tr:hover {
+  background: var(--etoro-elevated);
+}
+
+.bta-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.bta-symbol {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.bta-signal-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.bta-signal-confirmed {
+  color: #0b1a0f;
+  background: var(--etoro-green);
+}
+
+.bta-signal-watch {
+  color: #1a1200;
+  background: #f9a825;
+}
+
+.bta-signal-failed {
+  color: #fff;
+  background: var(--etoro-red, #c45c5c);
+}
+
+.bta-signal-unknown {
+  color: var(--etoro-text-muted);
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border);
+}
+
+.bta-meta-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 100px;
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border);
+  color: var(--etoro-text-muted);
+}
+
+.bta-meta-pill code {
+  font-size: 10px;
+  color: var(--etoro-text);
+}
+
+.bta-pill-confirmed {
+  color: #0b1a0f;
+  background: rgba(19, 198, 54, 0.85);
+  border-color: transparent;
+}
+
+.bta-pill-watch {
+  color: #1a1200;
+  background: rgba(249, 168, 37, 0.9);
+  border-color: transparent;
+}
+
+.bta-compare-note {
+  margin: 0 0 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-muted);
+}
+
+.bta-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bta-method-card {
+  background: var(--etoro-elevated);
+  border: 1px solid var(--etoro-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bta-method-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--etoro-text);
+}
+
+.bta-method-core {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-dim);
+}
+
+.bta-kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.bta-kv-dense {
+  gap: 4px 10px;
+}
+
+.bta-kv > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bta-kv dt {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--etoro-text-dim);
+}
+
+.bta-kv dd {
+  margin: 0;
+  font-size: 12px;
+  color: var(--etoro-text);
+}
+
+.bta-kv code {
+  font-size: 11px;
+  color: var(--etoro-text);
+}
+
+.bta-symbol-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.bta-chip-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--etoro-text-dim);
+  margin-right: 2px;
+}
+
+.bta-subblock {
+  margin-top: 16px;
+}
+
+.bta-subheading {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--etoro-text-muted);
+}
+
+.bta-overlap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bta-overlap-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px 12px;
+}
+
+.bta-overlap-key {
+  flex: 0 0 220px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--etoro-text-dim);
+  text-transform: lowercase;
+}
+
+.bta-notes {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--etoro-text-dim);
+}
+
+.bta-footer-note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--etoro-text-dim);
+  word-break: break-all;
+}
+
+@media (max-width: 960px) {
+  .bta-methods-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bta-overlap-key {
+    flex-basis: 100%;
+  }
+}

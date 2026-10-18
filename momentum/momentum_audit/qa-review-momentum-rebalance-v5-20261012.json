@@ -1,0 +1,44 @@
+{
+  "review": "QA Bot re-review: momentum_rebalance.py v5 (Momentum-HHHGDTJ)",
+  "reviewed_il": "2026-10-12T20:45+03:00",
+  "verdict": "FAIL",
+  "scope": "FAIL applies to the v5 DISCRETIONARY scope (CAP_TRIM, REDUCE_WEAK, SET_TP edits; buys/rotation, which are inert while the edge is 0). The v4 EXITS-ONLY PASS_WITH_CONDITIONS (stopclose + PM-owned SL edits via pmsl) remains in force; condition 2 is still open.",
+  "go_live": "exits-only; discretionary NOT approved",
+  "authorize_place": false,
+  "scope_note": "Read-only. No eToro calls, no prepare/place, no messages. One read-only Teams search_messages to look for Ofer's acceptance. Probes ran in /tmp/qa_v5.",
+  "tests": "62 passed (reproduced).",
+  "ofer_acceptance": {
+    "status": "UNVERIFIED",
+    "evidence": "The only record is the design doc itself (and its backup): 'status: ACCEPTED_BY_OFER 2026-10-12 17:53 IL', plus a quote 'All real money, all real trading positions. 100% auto.' The doc says the quote is 'interpreted as' acceptance of gaps 1-7. No Teams record was found (search '100% auto'), and no other box file contains it. The quoted text confirms scope; it does not explicitly accept the listed gaps.",
+    "gate_weakness": "discretionary_enabled() = code flag AND that marker string present in a shared, writable doc. Probe A2: any agent writing the line enables discretionary trading. The gate is a self-attestation."
+  },
+  "v4_conditions": {
+    "positions_le_120s": "PRESERVED (130s gives STALE_INPUT).",
+    "pending_close_schema": "NOT ADDRESSED: orders shaped {isBuy:false, positionID} or {closePositionsIds:[id]} are still not detected (C3/C4). Still unverified against a real eToro pending-close order.",
+    "one_exit_executor": "PRESERVED by design: PM (22:40) owns exits and SL; the planner's PM rows are PM_OWNED, so preplace refuses SL edits (PM_OWNED_USE_PM_EXECUTOR). The rebalance runs at 22:47. Trims and stopclose could still overlap; the 7-min gap is procedural, not enforced.",
+    "stopclose_retry": "PRESERVED (retry passes, works in ban/weekend/holiday, shorts go to manual review)."
+  },
+  "edge_and_buys": {
+    "backtest_honesty": "Largely honest: rule fixed a priori, OOS = last 12 months, n=736, win 42.4%, Wilson LB 0.389, mean net -0.18% (t -0.65). Survivorship bias (current S&P members, universe 351) is disclosed and biases results optimistically, so the 'no edge' conclusion is robust. Caveats: overlapping trades are not independent (effective n smaller, Wilson LB too tight); single OOS period; 15 bps/leg + 5 bps spread is reasonable vs the live 15 bps fee.",
+    "edge_zero_blocks_buys": "CONFIRMED. Real backtest: ev_haircut -0.145%, mean +0.085%, min gives edge_used 0, no_edge=True; plan gives COST_GATE_FAIL; rule mismatch gives 0 edge. Not robust to fabrication: a caller-supplied strong backtest file proposes a buy (B3). This is gap 3 class, accepted only if Ofer's acceptance is real."
+  },
+  "trims": "CAP_TRIM is sound: sized back to $1000, floored to precision (2.9989u), live cost 0.023% vs 0.5% ceiling, high fee gives TRIM_COST_TOO_HIGH, live drift recheck (DRIFT_GONE_LIVE), overcut guard catches forged 12.9/13 units, and a trim forged into a BUY still COST_GATE_FAILs. REDUCE_WEAK is NOT sound (see fail codes).",
+  "take_profit": "TP = max(entry+3R, last+ATR14). It cannot be set below the bid or near the ask (exact recompute plus > ask x 1.01; forged 50 gives NOT_EXACT; stale Yahoo last vs live ask gives NOT_ABOVE_ASK_BUFFER). It CAN lower an existing TP: 130 to 118 passes (TP2); after BE, R collapses from 6 to 3, so TP drops 118 to 114 (TP3b). A 1% buffer above ask means a TP can sit about 1% from market, close to a forced sale. 3R has no resistance or volatility basis (disclosed).",
+  "ban_test_strengthened": "My version builds the pack, verdict and live inputs AT ban time (17:00 IL) so that only the ban can block. Verdict VERIFIED; preplace SET_TP gives INTRADAY_BAN_OR_NYSE_CLOSED_LIVE; Saturday gives the same; plan in ban proposes no discretionary rows; stopclose in ban still closes. The ban gate works. The shipped test is weak because it can pass via the PLACE_WITHOUT_QA_BOT_RECHECK path (verdict ts is after the ban instant).",
+  "earlier_probes": "v4 exits probes all still pass. SL edits now refused in preplace (PM_OWNED). Config/flag injection rejected. No v1-v3 regressions observed.",
+  "fail_codes": [
+    {"code": "REDUCE_WEAK_UNBOUNDED_FORGE", "severity": "HIGH", "evidence": "RW1: a forged REDUCE_WEAK for the full 10/10 units on a HEALTHY name passes preplace (SELL_RECHECK_PASS). Preplace checks only units <= live and cost <= 0.5%. It does not re-check that the setup is broken live, does not cap at 50%, and has no overcut guard. A forger can liquidate any position via a discretionary sell."},
+    {"code": "TP_CAN_BE_LOWERED", "severity": "MEDIUM", "evidence": "TP2/TP3b: there is no raise-only rule and the target falls when SL trails or moves to BE (R shrinks). With only a 1% above-ask buffer this can cap or near-force exits. Not below bid, so no immediate forced sale."},
+    {"code": "ACCEPTANCE_UNVERIFIED_SELF_ATTESTED", "severity": "HIGH", "evidence": "Ofer's acceptance cannot be verified (no Teams or other record; the quote doesn't explicitly accept gaps). The enable gate is a marker string anyone can write (A2). Flagged UNVERIFIED per instruction, but discretionary go-live cannot be approved on it."},
+    {"code": "PENDING_CLOSE_SCHEMA_OPEN", "severity": "MEDIUM", "evidence": "v4 condition 2 not fixed: closePositionsIds / positionID / isBuy shapes not recognized (C3/C4)."},
+    {"code": "BAN_TEST_WEAK", "severity": "LOW", "evidence": "The shipped test_v5_freeze_and_ban_block_discretionary accepts PLACE_WITHOUT_QA_BOT_RECHECK, so it can pass without ever reaching the ban check."}
+  ],
+  "fixes": [
+    "1. REDUCE_WEAK in preplace: re-run the score/broken_setup check on live data (must still be broken and not rotated), cap units at floor(reduce_weak_frac x live units) to precision, and reject anything larger. Add a forged full-liquidation test.",
+    "2. TP: raise-only (new_tp >= current TP when one exists, unless current is a placeholder >3x price). Compute R from the ORIGINAL entry risk (stored at open), not the trailed SL. Raise the above-ask buffer to at least 1 x ATR or 3%.",
+    "3. Acceptance: get Ofer's explicit written acceptance of gaps 1-7 through a channel the trader can't write (e.g. a direct Teams message from Ofer, referenced by message id), and gate on that id rather than a doc string. Until then, set DISCRETIONARY_ENABLED=False.",
+    "4. Pending-close dedupe: match closePositionsIds, positionID/positionId, and isBuy==false / transaction=='sell' / action=='close'. Verify against a real pending close order.",
+    "5. Replace the ban test with the at-ban-time construction above, asserting exactly INTRADAY_BAN_OR_NYSE_CLOSED_LIVE.",
+    "6. Backtest: report effective n (non-overlapping or block-bootstrap CI) and add a point-in-time S&P universe when available."
+  ]
+}

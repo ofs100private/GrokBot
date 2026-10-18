@@ -11,6 +11,19 @@ Standing playbook for **Trader_momentum** on portfolio **Momentum-HHHGDTJ** (REA
 
 Changelog: `/workspace/momentum_audit/playbook-2026-09-16-full-fix.md` (supersedes 2026-09-15 sleeve/regime notes where they conflict). Sleeve capacity updated **2026-10-05** (Ofer): unlimited stocks + at least 1 ETF.
 
+## Code-first (2026-10-18)
+
+Ofer rule: Momentum runs code-first like Classic. Trading rules are unchanged; only the mechanics changed.
+
+- **Scripts do all deterministic work** (session/holiday, cash, positions, SL checks, overlap, PM, screener, QA). The agent only does MCP reads/places and relays results.
+- **MCP reads go to files:** call with `write_to_file=true`, then pass the file path to a script. Never paste raw JSON into a command or reason over it by hand.
+- **Step 0 = precheck** (from `/workspace`):
+  `./screener-venv/bin/python -m momentum_qa.precheck --raw <mkeys get-my-positions-and-orders file> [--classic-raw <OfersClaw5 read file>] [--cash-json <user-etoro portfolio-summary file> | --cash N]`
+  Exit **10** = silent SKIP (NYSE closed/holiday, or free cash < min order with nothing to manage): end the wake, no message. Exit **0** = PROCEED (open positions, pending orders, missing SL, risk action, or cash for a new order; any unreadable/stale input also proceeds). On a closed day `--raw` can be omitted, so the MCP read can wait until after the session check. Summary: `/workspace/momentum_audit/precheck/precheck-latest.json` (cash, positions, `pm_positions`, pending orders, overlap, Classic `buy_blocklist`). Audit: `/workspace/momentum_audit/precheck-YYYY-MM-DD.jsonl`. Keys balance may 403: take cash from the mirror 11630170 read (`--cash-json`).
+- **Then:** `./screener-venv/bin/python position_manager.py --positions-file /workspace/momentum_audit/precheck/precheck-latest.json --out <pm.json>` and `./screener-venv/bin/python momentum_screener.py --classic-json <Classic positions file> --out <screener.json>`.
+- **Fixed, tested scripts only** (`momentum_qa/precheck.py`, `position_manager.py`, `momentum_screener.py`, `momentum_qa/*`; tests `tests/test_momentum_precheck.py`). Never write ad-hoc per-run scripts; a gap means a tested fix to the fixed script.
+- **Silent when nothing changed:** no message to Ofer on SKIP, HOLD-only, or HALT-without-change days. Report only fills, QA FAILs, deviations, or errors.
+
 ## FULL AUTO (Ofer)
 
 **Buy and sell without waiting for the user in chat.** After [Momentum screener run QA](sand-workflow:momentum-screener-run-qa) PASS and [Momentum real-money QA gate](sand-workflow:momentum-real-money-qa-gate) PASS **from QA Bot**, **prepare then place immediately**. No confirm widget. No waiting for CoS/Ofer “go.” Report fills after the fact.

@@ -32,9 +32,84 @@ def load_day(day: str) -> list[dict]:
     return rows
 
 
+# QA Bot 2026-10-13: protective gate rejects → KEEP/GATE_OK (never playbook AVOID)
+GATE_OK_CODES = {
+    "ETF_BACKFILL_BLOCKED": "ETF backfill blocked by gate (protective)",
+    "DUPLICATE_HOLD_BUY": "buy rejected: symbol already held/pending on keys book",
+    "ETF_FLOOR_ALREADY_MET": "ETF floor already met — no extra ETF buy",
+    "CROSS_BOOK_HELD": "buy rejected: symbol held in Classic book (Ofer rule 2026-10-13)",
+    # QA Bot 2026-10-15: stale cross-book fail-closed is protective -> GATE_OK, never deviation
+    "STALE_CROSSBOOK_FAIL_CLOSED": "no pack: Classic snapshot stale and refresh failed (fail closed)",
+    "CROSS_BOOK_READ_MISSING_OR_STALE": "buy blocked: Classic snapshot missing/stale (fail closed)",
+}
+
+# QA Bot 2026-10-15: HIGH deviation + day hard FAIL. Ofer KEEP on such positions is a
+# position decision only and never clears the deviation.
+HARD_FAIL_CODES = {
+    "DUPLICATE_PLACE": "same QA verdict placed twice / duplicate position for one name",
+    "AMOUNT_GT_1000_PER_NAME": "exposure > $1000 per name",
+}
+PLACE_QA_DIR = AUDIT_DIR / "place_qa"
+
+
+def qa_verdict_hard_fails(day: str, qa_dir: Path | None = None) -> list[dict]:
+    """HIGH AVOID rows from QA Bot FAIL verdict files for the day carrying HARD_FAIL_CODES."""
+    import re
+    out, seen = [], set()
+    ymd = day.replace("-", "")
+    for f in sorted(Path(qa_dir or PLACE_QA_DIR).glob(f"qa-verdict-*{ymd}*.json")):
+        try:
+            v = json.loads(f.read_text())
+        except Exception:
+            continue
+        if str(v.get("verdict", "")).upper() != "FAIL":
+            continue
+        codes = [c for c in (v.get("codes") or []) if c in HARD_FAIL_CODES]
+        live = str(v.get("live") or "")
+        syms = v.get("symbols") or re.findall(r"\b([A-Z]{1,6}) \d{6,}\+\d{6,}", live)
+        for c in codes:
+            for sym in (syms or [None]):
+                if (c, sym) in seen:
+                    continue
+                seen.add((c, sym))
+                out.append({"tag": "AVOID", "action": "PLACE", "symbol": sym, "deviation_code": c,
+                            "severity": "HIGH", "hard_fail": True, "source": str(f),
+                            "rationale": f"{c}: {HARD_FAIL_CODES[c]} (QA Bot {v.get('phase') or ''} FAIL {f.name}: {live})"
+                                         + (" | Ofer KEEP = position decision only; deviation stands" if c == "DUPLICATE_PLACE" else "")})
+    return out
+
+
+def _row_codes(r: dict) -> set[str]:
+    d = r.get("details") or {}
+    out = {r.get("deviation_code"), d.get("reason_code"), d.get("reason"), r.get("reason")}
+    for q in (r.get("qa_reasons") or []):
+        out.add(q)
+    return {str(c) for c in out if c}
+
+
+def gate_ok_code(r: dict) -> str | None:
+    for c in _row_codes(r):
+        for k in GATE_OK_CODES:
+            if c == k or c.startswith(k):
+                return k
+    return None
+
+
+def is_rebalance_dry_run(r: dict) -> bool:
+    d = r.get("details") or {}
+    src = d.get("source") or r.get("source")
+    if src != "rebalance" and r.get("script") != "momentum_rebalance.py":
+        return False
+    mode = d.get("mode")
+    return bool(d.get("dry_run")) or mode in (None, "dryrun")
+
+
 def build_report(day: str) -> dict:
     rows = load_day(day)
-    actions = [r for r in rows if r.get("event") == "ACTION"]
+    all_actions = [r for r in rows if r.get("event") == "ACTION"]
+    rebalance_dry = [r for r in all_actions if is_rebalance_dry_run(r)]
+    actions = [r for r in all_actions if not is_rebalance_dry_run(r)]
+    gate_ok_counts = Counter()
     deviations = [r for r in rows if r.get("event") == "DEVIATION" or r.get("deviation")]
     errors = [r for r in rows if r.get("event") == "ERROR"]
     qa_fail = [r for r in actions if r.get("qa_verdict") == "FAIL"]
@@ -45,6 +120,15 @@ def build_report(day: str) -> dict:
     gate_ok_seen = set()  # collapse duplicate INSUFFICIENT_CASH SKIP+DEVIATION
     for a in actions:
         code = a.get("deviation_code")
+        g = gate_ok_code(a)
+        if g:
+            gate_ok_counts[g] += 1
+            key = (g, a.get("symbol"))
+            if key not in gate_ok_seen:
+                gate_ok_seen.add(key)
+                keep.append({"tag": "KEEP", "action": a.get("action") or "SKIP", "symbol": a.get("symbol"),
+                             "rationale": a.get("rationale") or GATE_OK_CODES[g], "deviation_code": g, "gate": "GATE_OK"})
+            continue
         intentional_dwm_skip = (
             a.get("action") == "SKIP"
             and code == "DWM_STRENGTH_FAIL"
@@ -101,6 +185,16 @@ def build_report(day: str) -> dict:
             )
 
     for d in deviations:
+        if is_rebalance_dry_run(d):
+            continue
+        g = gate_ok_code(d)
+        if g:
+            key = (g, d.get("symbol"))
+            if key not in gate_ok_seen:
+                gate_ok_seen.add(key); gate_ok_counts[g] += 1
+                keep.append({"tag": "KEEP", "action": "DEVIATION", "symbol": d.get("symbol"), "rationale": d.get("rationale"),
+                             "deviation_code": g, "gate": "GATE_OK"})
+            continue
         if d.get("deviation_code") == "DWM_STRENGTH_FAIL" and (
             "blocked before place" in str(d.get("rationale") or "").lower()
             or "SKIP" in str(d.get("rationale") or "")
@@ -148,6 +242,8 @@ def build_report(day: str) -> dict:
         "counts": {
             "audit_rows": len(rows),
             "actions": len(actions),
+            "rebalance_dry_run_rows": len(rebalance_dry),
+            "gate_ok_codes": dict(gate_ok_counts),
             "qa_pass_actions": len(qa_pass),
             "qa_fail_actions": len(qa_fail),
             "deviations": len(deviations),
@@ -306,6 +402,29 @@ def build_report(day: str) -> dict:
     else:
         report["eod_screener_miss"]["scheduled_miss_avoid"] = False
 
+    # Hard-fail codes from audit rows + QA verdict files (QA Bot 2026-10-15)
+    have = {(x.get("deviation_code"), x.get("symbol")) for x in report["deviations_clear"]}
+    for x in report["deviations_clear"]:
+        if x.get("deviation_code") in HARD_FAIL_CODES:
+            x["severity"], x["hard_fail"] = "HIGH", True
+    qa_hf = qa_verdict_hard_fails(day)
+    for x in qa_hf:
+        if (x["deviation_code"], x["symbol"]) not in have:
+            report["deviations_clear"].append(x)
+    qa_fail_files = sorted({x["source"] for x in qa_hf})
+    report["counts"]["qa_fail_verdicts"] = len(qa_fail_files)
+    report["counts"]["qa_fail_actions"] = report["counts"].get("qa_fail_actions", 0) + len(qa_fail_files)
+    hard = [x for x in report["deviations_clear"] if x.get("hard_fail")]
+    report["hard_fail"] = bool(hard)
+    report["day_verdict"] = "FAIL" if hard else "PASS"
+    report["counts"]["hard_fail_deviations"] = len(hard)
+    if hard:
+        report["lessons"] = [L for L in report["lessons"] if L.get("tag") != "KEEP" or "QA PASS" not in L.get("text", "")]
+        report["lessons"].insert(0, {"tag": "AVOID", "text": "HARD FAIL: " + ", ".join(sorted({f"{x['deviation_code']}:{x.get('symbol')}" for x in hard}))
+                                    + " — never reuse a QA verdict; place_lock acquire before every place-trade. Ofer KEEP is a position decision only."})
+        for k in report["strategy_aligned"]:
+            if k.get("action") == "BUY" and any(k.get("symbol") == x.get("symbol") for x in hard):
+                k["note"] = "first fill KEEP; duplicate fill scored as HIGH deviation"
     from collections import Counter as _Counter
     report["top_deviation_codes"] = _Counter(
         (x.get("deviation_code") or "UNKNOWN")
@@ -332,7 +451,8 @@ def main(day: str | None = None) -> int:
         f"# Momentum daily feedback | {day}",
         "",
         f"- Actions: {report['counts']['actions']} | QA PASS: {report['counts']['qa_pass_actions']} | QA FAIL: {report['counts']['qa_fail_actions']}",
-        f"- Deviations: {report['counts']['deviations']} | Errors: {report['counts']['errors']}",
+        f"- Deviations: {report['counts']['deviations']} (HIGH hard-fail: {report['counts'].get('hard_fail_deviations', 0)}) | Errors: {report['counts']['errors']}",
+        f"- Day verdict: **{report.get('day_verdict', 'PASS')}**",
         "",
         "## KEEP (aligned)",
     ]

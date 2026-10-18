@@ -1,0 +1,682 @@
+{
+  "run_id": "rebalance-20261012-172215-5f6f759b",
+  "generated_il": "2026-10-12T17:22:15.374177+03:00",
+  "portfolio": "Momentum-HHHGDTJ",
+  "mode": "dryrun",
+  "planner_only": true,
+  "authorize_place": false,
+  "qa_required": "QA Bot place-QA explicit PASS with authorize_place=true",
+  "context": {
+    "keys_available_cash": 3410.76,
+    "mirror_a_available_cash": 2694.47,
+    "keys_held": [
+      "ANET",
+      "CRWD",
+      "NTAP",
+      "P",
+      "XLK",
+      "ZBRA"
+    ],
+    "mirror_a_held": [
+      "ANET",
+      "CRWD",
+      "NTAP",
+      "P",
+      "XLK",
+      "ZBRA"
+    ],
+    "regime": "HEALTHY",
+    "screener_run_id": "screener-20261009-224716-e471b45c",
+    "event_freeze": "no_event_freeze today=2026-10-12 next_open=2026-10-13",
+    "hard_halt": false,
+    "intraday_ban": true,
+    "buys_blocked": [
+      "INTRADAY_BAN_1630_1830_IL"
+    ],
+    "held_sector_etf": true
+  },
+  "edge_model": {
+    "n_trades": 18,
+    "empirical_mean_net_pct": -3.35,
+    "win_rate": 0.056,
+    "shrunk_pct": 1.0,
+    "edge_used_pct": 0.5,
+    "method": "shrink(empirical Momentum closed trades, prior) \u00d7 haircut, floored 0, capped"
+  },
+  "config": {
+    "max_quote_age_s": 60,
+    "max_spread_bps_stock": 25,
+    "max_spread_bps_etf": 15,
+    "max_amount_per_name": 1000.0,
+    "target_amount_per_name": 1000.0,
+    "min_order_usd": 50.0,
+    "cash_buffer_usd": 5.0,
+    "drift_material_pct": 25.0,
+    "fee_open_usd_fallback": 1.5,
+    "fee_close_usd": 1.5,
+    "overnight_fee_per_night_usd_fallback": 0.0,
+    "fx_fee_bps": 0.0,
+    "holding_nights": 15,
+    "tax_mode": "off",
+    "tax_rate_on_realized_gain": 0.25,
+    "prior_edge_pct": 1.0,
+    "prior_weight_trades": 1000000,
+    "edge_haircut": 0.5,
+    "edge_cap_pct": 2.0,
+    "history_extra_fee_usd": 3.0,
+    "cost_margin_mult": 2.0,
+    "rotation_min_score_gap": 15.0
+  },
+  "execution_order": [],
+  "execution_rules": [
+    "SELL_BEFORE_BUY: PM_CLOSE \u2192 SL moves \u2192 ROTATION_OUT/TRIM \u2192 re-read keys availableCash \u2192 buys",
+    "Re-read keys availableCash (get-my-portfolio-summary) immediately before EACH prepare/place; abort buy if < amount+fee+buffer",
+    "Re-quote before each place: abort if STALE_QUOTE (>60s) or WIDE_SPREAD; re-run cost gate on fresh quote",
+    "PROPOSED_CONDITIONAL buys need a fresh QA Bot place-QA after sell fills (PLACE_WITHOUT_QA_BOT_RECHECK)",
+    "Protective exits are never cost-gated; ban/freeze never block closes"
+  ],
+  "proposed_actions": [],
+  "rejected_or_blocked": [
+    {
+      "symbol": "NTAP",
+      "pm_reason": "TRAIL_NO_RAISE",
+      "pm": {
+        "symbol": "NTAP",
+        "action": "HOLD",
+        "reason": "TRAIL_NO_RAISE",
+        "rationale": "Hold NTAP: \u22651R but trail would not raise stop (prior=205.97, floor=200.3381)",
+        "last": 237.275,
+        "sma50": 199.0154,
+        "r_multiple": 1.11
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "TRAIL_NO_RAISE",
+      "rationale": "Hold NTAP: \u22651R but trail would not raise stop (prior=205.97, floor=200.3381)"
+    },
+    {
+      "symbol": "XLK",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "XLK",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold XLK: last 196.3300 > SMA50 189.3208, R=0.00 \u2014 no risk action",
+        "last": 196.33,
+        "sma50": 189.3208,
+        "r_multiple": 0
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold XLK: last 196.3300 > SMA50 189.3208, R=0.00 \u2014 no risk action"
+    },
+    {
+      "symbol": "ANET",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "ANET",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold ANET: last 213.0800 > SMA50 198.5184, R=0.17 \u2014 no risk action",
+        "last": 213.08,
+        "sma50": 198.5184,
+        "r_multiple": 0.17
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold ANET: last 213.0800 > SMA50 198.5184, R=0.17 \u2014 no risk action"
+    },
+    {
+      "symbol": "CRWD",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "CRWD",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold CRWD: last 268.3950 > SMA50 230.2527, R=0.00 \u2014 no risk action",
+        "last": 268.395,
+        "sma50": 230.2527,
+        "r_multiple": 0
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold CRWD: last 268.3950 > SMA50 230.2527, R=0.00 \u2014 no risk action"
+    },
+    {
+      "symbol": "ZBRA",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "ZBRA",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold ZBRA: last 386.2246 > SMA50 363.4511, R=0.14 \u2014 no risk action",
+        "last": 386.2246,
+        "sma50": 363.4511,
+        "r_multiple": 0.14
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold ZBRA: last 386.2246 > SMA50 363.4511, R=0.14 \u2014 no risk action"
+    },
+    {
+      "symbol": "P",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "P",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold P: last 154.4900 > SMA50 111.2482, R=0.00 \u2014 no risk action",
+        "last": 154.49,
+        "sma50": 111.2482,
+        "r_multiple": 0
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold P: last 154.4900 > SMA50 111.2482, R=0.00 \u2014 no risk action"
+    },
+    {
+      "kind": "BUY_CANDIDATE",
+      "symbol": "ZBRA",
+      "status": "REJECTED",
+      "reason_code": "DUPLICATE_HOLD_BUY",
+      "rationale": "ZBRA already held on keys book \u2014 never duplicate"
+    },
+    {
+      "kind": "BUY_CANDIDATE",
+      "symbol": "ANET",
+      "status": "REJECTED",
+      "reason_code": "DUPLICATE_HOLD_BUY",
+      "rationale": "ANET already held on keys book \u2014 never duplicate"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "XLK",
+      "status": "REJECTED",
+      "reason_code": "ETF_FLOOR_KEEP",
+      "rationale": "XLK is the only sector ETF \u2014 keep \u22651 ETF"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "ANET",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 72.7,
+      "rationale": "ANET setup intact (score 72.7) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "CRWD",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 88.3,
+      "rationale": "CRWD setup intact (score 88.3) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "NTAP",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 89.5,
+      "rationale": "NTAP setup intact (score 89.5) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "ZBRA",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 93.2,
+      "rationale": "ZBRA setup intact (score 93.2) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "P",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 143.3,
+      "rationale": "P setup intact (score 143.3) \u2014 no rotation"
+    },
+    {
+      "symbol": "NTAP",
+      "value_est": 1072.18,
+      "invested": 1000.0,
+      "drift_pct": 7.22,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "NTAP drift 7.2% < 25.0%"
+    },
+    {
+      "symbol": "XLK",
+      "value_est": 1046.16,
+      "invested": 999.89,
+      "drift_pct": 4.62,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "XLK drift 4.6% < 25.0%"
+    },
+    {
+      "symbol": "ANET",
+      "value_est": 1008.81,
+      "invested": 1000.0,
+      "drift_pct": 0.88,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "ANET drift 0.9% < 25.0%"
+    },
+    {
+      "symbol": "CRWD",
+      "value_est": 1108.97,
+      "invested": 1000.0,
+      "drift_pct": 10.9,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "CRWD drift 10.9% < 25.0%"
+    },
+    {
+      "symbol": "ZBRA",
+      "value_est": 1005.46,
+      "invested": 1000.0,
+      "drift_pct": 0.55,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "ZBRA drift 0.5% < 25.0%"
+    },
+    {
+      "symbol": "P",
+      "value_est": 1256.31,
+      "invested": 1000.0,
+      "drift_pct": 25.63,
+      "kind": "TRIM",
+      "status": "REJECTED",
+      "reason_code": "COST_GATE_FAIL",
+      "trim_usd": 256.31,
+      "unitsToDeduct": 1.660563,
+      "sell_cost": {
+        "half_spread": 0.158,
+        "fee_close": 1.5,
+        "realized_gain_est": 52.29,
+        "tax_drag": 0.0,
+        "tax_mode": "off",
+        "total": 1.658,
+        "proceeds_est": 254.81
+      },
+      "gate": {
+        "benefit": 0.0,
+        "cost": 1.658,
+        "expected_net": -1.658,
+        "margin_mult_required": 2.0,
+        "benefit_over_cost": 0.0,
+        "breakeven_edge_pct_required": 1.294
+      },
+      "rationale": "COST_GATE_FAIL trim P: equal-weight trim credits $0 expected benefit vs cost $1.658"
+    },
+    {
+      "kind": "DEPLOY_CASH",
+      "symbol": "FCX",
+      "amount": 1000.0,
+      "quote": {
+        "symbol": "FCX",
+        "bid": 73.72,
+        "ask": 73.76,
+        "as_of": "2026-10-12T14:22:02.4213281Z",
+        "age_s": 13.0,
+        "spread_bps": 5.42,
+        "ok": true,
+        "reason": null,
+        "allow_open": true
+      },
+      "sleeve": "VCP_SETUP",
+      "rs_rating": 88,
+      "stop_loss": 69.3,
+      "score": 73.1,
+      "linked_sell": null,
+      "shadow_cost": {
+        "round_trip_spread": 0.542,
+        "fee_open": 1.5,
+        "fee_close_future": 1.5,
+        "markup": 0.0,
+        "overnight": 0.0,
+        "fx": 0.0,
+        "total": 3.542,
+        "fee_source": "VERIFIED_costs_route lastUpdated=2026-10-12T14:18:13.7783377Z"
+      },
+      "shadow_gate": {
+        "benefit": 5.0,
+        "cost": 3.542,
+        "expected_net": 1.458,
+        "margin_mult_required": 2.0,
+        "benefit_over_cost": 1.412,
+        "breakeven_edge_pct_required": 0.708
+      },
+      "shadow_gate_verdict": "COST_GATE_FAIL",
+      "status": "BLOCKED",
+      "reason_code": "INTRADAY_BAN_1630_1830_IL",
+      "rationale": "0 new buys: INTRADAY_BAN_1630_1830_IL (no_event_freeze today=2026-10-12 next_open=2026-10-13); shadow gate=COST_GATE_FAIL"
+    }
+  ],
+  "trace": [
+    {
+      "symbol": "NTAP",
+      "pm_reason": "TRAIL_NO_RAISE",
+      "pm": {
+        "symbol": "NTAP",
+        "action": "HOLD",
+        "reason": "TRAIL_NO_RAISE",
+        "rationale": "Hold NTAP: \u22651R but trail would not raise stop (prior=205.97, floor=200.3381)",
+        "last": 237.275,
+        "sma50": 199.0154,
+        "r_multiple": 1.11
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "TRAIL_NO_RAISE",
+      "rationale": "Hold NTAP: \u22651R but trail would not raise stop (prior=205.97, floor=200.3381)"
+    },
+    {
+      "symbol": "XLK",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "XLK",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold XLK: last 196.3300 > SMA50 189.3208, R=0.00 \u2014 no risk action",
+        "last": 196.33,
+        "sma50": 189.3208,
+        "r_multiple": 0
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold XLK: last 196.3300 > SMA50 189.3208, R=0.00 \u2014 no risk action"
+    },
+    {
+      "symbol": "ANET",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "ANET",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold ANET: last 213.0800 > SMA50 198.5184, R=0.17 \u2014 no risk action",
+        "last": 213.08,
+        "sma50": 198.5184,
+        "r_multiple": 0.17
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold ANET: last 213.0800 > SMA50 198.5184, R=0.17 \u2014 no risk action"
+    },
+    {
+      "symbol": "CRWD",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "CRWD",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold CRWD: last 268.3950 > SMA50 230.2527, R=0.00 \u2014 no risk action",
+        "last": 268.395,
+        "sma50": 230.2527,
+        "r_multiple": 0
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold CRWD: last 268.3950 > SMA50 230.2527, R=0.00 \u2014 no risk action"
+    },
+    {
+      "symbol": "ZBRA",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "ZBRA",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold ZBRA: last 386.2246 > SMA50 363.4511, R=0.14 \u2014 no risk action",
+        "last": 386.2246,
+        "sma50": 363.4511,
+        "r_multiple": 0.14
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold ZBRA: last 386.2246 > SMA50 363.4511, R=0.14 \u2014 no risk action"
+    },
+    {
+      "symbol": "P",
+      "pm_reason": "ABOVE_SMA50_UNDER_1R",
+      "pm": {
+        "symbol": "P",
+        "action": "HOLD",
+        "reason": "ABOVE_SMA50_UNDER_1R",
+        "rationale": "Hold P: last 154.4900 > SMA50 111.2482, R=0.00 \u2014 no risk action",
+        "last": 154.49,
+        "sma50": 111.2482,
+        "r_multiple": 0
+      },
+      "pm_qa": "PASS",
+      "eval_in_ban": true,
+      "kind": "PM_HOLD",
+      "status": "NO_ACTION",
+      "reason_code": "ABOVE_SMA50_UNDER_1R",
+      "rationale": "Hold P: last 154.4900 > SMA50 111.2482, R=0.00 \u2014 no risk action"
+    },
+    {
+      "kind": "BUY_CANDIDATE",
+      "symbol": "ZBRA",
+      "status": "REJECTED",
+      "reason_code": "DUPLICATE_HOLD_BUY",
+      "rationale": "ZBRA already held on keys book \u2014 never duplicate"
+    },
+    {
+      "kind": "BUY_CANDIDATE",
+      "symbol": "ANET",
+      "status": "REJECTED",
+      "reason_code": "DUPLICATE_HOLD_BUY",
+      "rationale": "ANET already held on keys book \u2014 never duplicate"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "XLK",
+      "status": "REJECTED",
+      "reason_code": "ETF_FLOOR_KEEP",
+      "rationale": "XLK is the only sector ETF \u2014 keep \u22651 ETF"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "ANET",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 72.7,
+      "rationale": "ANET setup intact (score 72.7) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "CRWD",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 88.3,
+      "rationale": "CRWD setup intact (score 88.3) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "NTAP",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 89.5,
+      "rationale": "NTAP setup intact (score 89.5) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "ZBRA",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 93.2,
+      "rationale": "ZBRA setup intact (score 93.2) \u2014 no rotation"
+    },
+    {
+      "kind": "ROTATION_OUT",
+      "symbol": "P",
+      "status": "NO_ACTION",
+      "reason_code": "SETUP_INTACT",
+      "score": 143.3,
+      "rationale": "P setup intact (score 143.3) \u2014 no rotation"
+    },
+    {
+      "symbol": "NTAP",
+      "value_est": 1072.18,
+      "invested": 1000.0,
+      "drift_pct": 7.22,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "NTAP drift 7.2% < 25.0%"
+    },
+    {
+      "symbol": "XLK",
+      "value_est": 1046.16,
+      "invested": 999.89,
+      "drift_pct": 4.62,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "XLK drift 4.6% < 25.0%"
+    },
+    {
+      "symbol": "ANET",
+      "value_est": 1008.81,
+      "invested": 1000.0,
+      "drift_pct": 0.88,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "ANET drift 0.9% < 25.0%"
+    },
+    {
+      "symbol": "CRWD",
+      "value_est": 1108.97,
+      "invested": 1000.0,
+      "drift_pct": 10.9,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "CRWD drift 10.9% < 25.0%"
+    },
+    {
+      "symbol": "ZBRA",
+      "value_est": 1005.46,
+      "invested": 1000.0,
+      "drift_pct": 0.55,
+      "kind": "TRIM_TOPUP",
+      "status": "NO_ACTION",
+      "reason_code": "DRIFT_IMMATERIAL",
+      "rationale": "ZBRA drift 0.5% < 25.0%"
+    },
+    {
+      "symbol": "P",
+      "value_est": 1256.31,
+      "invested": 1000.0,
+      "drift_pct": 25.63,
+      "kind": "TRIM",
+      "status": "REJECTED",
+      "reason_code": "COST_GATE_FAIL",
+      "trim_usd": 256.31,
+      "unitsToDeduct": 1.660563,
+      "sell_cost": {
+        "half_spread": 0.158,
+        "fee_close": 1.5,
+        "realized_gain_est": 52.29,
+        "tax_drag": 0.0,
+        "tax_mode": "off",
+        "total": 1.658,
+        "proceeds_est": 254.81
+      },
+      "gate": {
+        "benefit": 0.0,
+        "cost": 1.658,
+        "expected_net": -1.658,
+        "margin_mult_required": 2.0,
+        "benefit_over_cost": 0.0,
+        "breakeven_edge_pct_required": 1.294
+      },
+      "rationale": "COST_GATE_FAIL trim P: equal-weight trim credits $0 expected benefit vs cost $1.658"
+    },
+    {
+      "kind": "DEPLOY_CASH",
+      "symbol": "FCX",
+      "amount": 1000.0,
+      "quote": {
+        "symbol": "FCX",
+        "bid": 73.72,
+        "ask": 73.76,
+        "as_of": "2026-10-12T14:22:02.4213281Z",
+        "age_s": 13.0,
+        "spread_bps": 5.42,
+        "ok": true,
+        "reason": null,
+        "allow_open": true
+      },
+      "sleeve": "VCP_SETUP",
+      "rs_rating": 88,
+      "stop_loss": 69.3,
+      "score": 73.1,
+      "linked_sell": null,
+      "shadow_cost": {
+        "round_trip_spread": 0.542,
+        "fee_open": 1.5,
+        "fee_close_future": 1.5,
+        "markup": 0.0,
+        "overnight": 0.0,
+        "fx": 0.0,
+        "total": 3.542,
+        "fee_source": "VERIFIED_costs_route lastUpdated=2026-10-12T14:18:13.7783377Z"
+      },
+      "shadow_gate": {
+        "benefit": 5.0,
+        "cost": 3.542,
+        "expected_net": 1.458,
+        "margin_mult_required": 2.0,
+        "benefit_over_cost": 1.412,
+        "breakeven_edge_pct_required": 0.708
+      },
+      "shadow_gate_verdict": "COST_GATE_FAIL",
+      "status": "BLOCKED",
+      "reason_code": "INTRADAY_BAN_1630_1830_IL",
+      "rationale": "0 new buys: INTRADAY_BAN_1630_1830_IL (no_event_freeze today=2026-10-12 next_open=2026-10-13); shadow gate=COST_GATE_FAIL"
+    }
+  ],
+  "counts": {
+    "proposed": 0,
+    "rejected_or_blocked": 21,
+    "cost_gate_fail": 1
+  }
+}

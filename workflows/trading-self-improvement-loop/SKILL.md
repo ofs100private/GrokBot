@@ -221,3 +221,12 @@ Playbook patch: … | none
 ## Success criteria
 
 A run of this skill is done only when: (1) sources listed, (2) all applicable scores filled with evidence, (3) momentum pre-id one-liner written, (4) ≥1 KEEP or AVOID lesson saved, (5) forward hook stated for the next daily research loop.
+
+## Weekly rollup scan in code (2026-10-18e; Ofer rule 2026-10-18: anything deterministic runs in code; the LLM does judgement + prose only)
+The Obsidian weekly rollup starts with `cd /workspace/obsidian-trading-kb && python3 Scripts/rollup_scan.py --days 14`. It reads frontmatter only and returns:
+- Job-Runs counts by folder/status, fails/blocked/partial in the window, open Improvement tickets, and audit paths that do not exist;
+- `top3_candidates`, ranked P0 tickets → repeated fails;
+- `skip_llm`.
+It also saves `_raw/rollup-scan-<date>.json`.
+**If `skip_llm` is true:** write a short success Job-Run (`Scripts/write_job_run.py`) and stop.
+**Otherwise:** the LLM words the top-3 (title, owner, evidence link) and writes the rollup note from the JSON. Do not rescan the vault with tools.

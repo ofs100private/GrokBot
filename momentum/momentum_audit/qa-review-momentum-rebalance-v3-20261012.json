@@ -1,0 +1,39 @@
+{
+  "review": "QA Bot re-review: momentum_rebalance.py v3 (Momentum-HHHGDTJ)",
+  "reviewed_il": "2026-10-12T17:55+03:00",
+  "verdict": "FAIL",
+  "go_live": false,
+  "authorize_place": false,
+  "scope_note": "Read-only. No eToro calls, no prepare/place/close, no messages. Probes ran in /tmp/qa_v3 (pytest with tmp PACK_DIR/AUDIT_DIR).",
+  "tests": "48 passed (reproduced). The v3 tests are substantive. Gaps: no forged EDIT_SL, no EDIT_SL with null stop, no stopclose retry after a failed place, no marker-deletion replay, no caller-fabricated history/cost files.",
+  "dryrun_v3": "OK, 0 proposed, 21 rejected/blocked, p_win 0.0099 (Wilson LB), edge_used 0. Consistent.",
+  "v2_codes": {
+    "VERDICT_FORGEABLE_UNKEYED_HASH": "NOT FIXED, documented as accepted risk. Forged re-hashed pack plus self-written verdict: verify ok=True (probe F1). Damage-bounding claims are only partly true (see below).",
+    "PREPLACE_CONFIG_FROM_PACK": "FIXED: code_config at place time, out-of-bounds pack.config rejected, edge recomputed, forged $5000 amount gives AMOUNT_OUT_OF_CODE_BOUNDS.",
+    "PREPLACE_REPLAY_NO_SINGLE_USE": "FIXED in-process: O_EXCL nonce, symbol+session marker, flock; concurrency test 1/6 wins. Markers are deletable files: replay works after deleting /consumed (F6). This falls under the shared-box accepted risk, but the doc overstates it.",
+    "PREPLACE_DUP_CHECK_OPTIONAL": "FIXED (required, <=120s, account real).",
+    "PREPLACE_CASH_SOURCE_UNBOUND": "FIXED structurally (real account, xRequestId present, cash<=totalValue). The values are still caller-supplied files.",
+    "VERDICT_TS_PRECEDENCE": "FIXED: 299s ok, 301s stale, a +03:00 offset in ts_utc rejected, nonce required, ts_il disagreement rejected, amount/SL binding enforced.",
+    "SELL_LEG_NOT_RECHECKED": "FIXED for TRIM/ROTATION_OUT. Residual: the rotation re-gate still uses the pack's buy quote.ask and cost.total. EDIT_SL is not re-checked against playbook rules (see new codes).",
+    "SL_CLOSE_WITHOUT_FRESH_VERDICT": "FIXED: the stopclose path needs no verdict, edge, history or costs. Works in the ban and on Saturday; re-evaluates live (S1, S3). Planner PM_CLOSE is proposed with negative edge and no cost data (S6). One defect: single-use (see STOPCLOSE_SINGLE_USE_BLOCKS_RETRY).",
+    "P_WIN_NOT_CONSERVATIVE": "FIXED: p=min(0.5, Wilson95 LB) = 0.0099 on the real book; no prior win rate.",
+    "PRIOR_WEIGHT_BOUND_WRONG_DIRECTION": "FIXED: weight <=20, prior_win_rate key rejected, prior edge effective = min(prior, max(0, mean)) = 0 on the real book."
+  },
+  "v1_regressions": "None. A (RVOL low), A2 (max 2 breakouts), D (no SL), P (SL above), M (dup row), O (lev 5), Q2 (ETF type), E (CPI eve freeze, 10-13), J (short flagged), I (closes in ban/Saturday) all still behave.",
+  "no_discretionary_buy_can_pass": "CORRECT and fail-safe on genuine inputs. Real history plus the live 15 bps fee gives COST_GATE_FAIL in both the planner and preplace (F2). Missing history or costs gives edge 0 / cost None, which fails closed. Risk exits do not depend on edge (stopclose and planner PM_CLOSE are independent of edge_model). It is not robust to fabricated inputs: preplace takes live_history and live_cost as caller files, and a 1 bps cost file plus a strong history file gives LIVE_RECHECK_PASS (F3).",
+  "fail_codes": [
+    {"code": "FORGED_EDIT_SL_UNGATED", "severity": "HIGH", "evidence": "F4: a forged pack adds TRAIL_SL HOLD1 new_stop 99.9 (bid ~99.99). Verify passes and preplace returns SL_EDIT_RECHECK_PASS. The preplace EDIT_SL branch only checks raised and below bid. It does not check the >=1R/2R trigger, stop <= entry, the 10d-low floor, or that the planner's risk_eval still says TRAIL/BE on live data. A forgery can therefore force a near-certain stop-out. This contradicts accepted-risk mitigation 4 ('nothing it can unlock')."},
+    {"code": "EDIT_SL_NULL_CRASH", "severity": "MEDIUM", "evidence": "F5: new_stop_loss=None raises TypeError in preplace (num(None) <= float). It must fail closed with a reason code."},
+    {"code": "STOPCLOSE_SINGLE_USE_BLOCKS_RETRY", "severity": "HIGH", "evidence": "S2: the STOPCLOSE|session|positionId marker is consumed BEFORE the place. If prepare/place-close then fails (422, timeout, mixed-auth, the 2026-09-30 JNJ pattern) or is cancelled, a second stopclose the same session returns ALREADY_CONSUMED_REPLAY. A risk exit is then blocked until the next session, which breaks 'risk exits must never be blocked'. Duplicate-close protection should come from the live position check (POSITION_GONE / pending close order), not a pre-place marker."},
+    {"code": "CALLER_SUPPLIED_LIVE_INPUTS", "severity": "MEDIUM", "evidence": "F3: preplace trusts caller-provided history and cost files. The xRequestId is only checked for presence and the timestamp is self-declared. Fabricated 1 bps fees plus a strong history unlock a buy. This is in the same trust domain as the accepted risk, but the doc claims 'place-time numbers come from ... live reads only' and does not disclose it."},
+    {"code": "ACCEPTED_RISK_DOC_NOT_HONEST_COMPLETE", "severity": "HIGH", "evidence": "(a) It says 'Ofer accepts this residual risk' without any recorded decision from Ofer; it should be PENDING_OFER_DECISION, with discretionary trades disabled by default until he decides. (b) Mitigation 1 claims a forgery cannot loosen SL rules, which is false for EDIT_SL (F4). (c) Mitigation 2 claims single-use limits a forger, but markers and PLACE_ACK rows are deletable on the shared box (F6). (d) Mitigation 4 claims nothing is unlockable, which is false for EDIT_SL and for fabricated history/cost files (F3). (e) The stopclose single-use risk is not listed. (f) The rotation re-gate reading pack-supplied buy quote and cost is not listed."}
+  ],
+  "fixes": [
+    "1. EDIT_SL in preplace: require num(new_stop) is not None, re-run risk_eval on live price context and require the action to still be TRAIL_SL/MOVE_SL_BREAKEVEN, check new_stop == the risk_eval computed stop (max(prior, min(entry, 10d low)), or entry for BE), and enforce new_stop <= entry for TRAIL. Reject anything else. Add tests for a forged SL and a null SL.",
+    "2. stopclose: drop the pre-place session marker. Gate duplicates on live state (position present, no pending close order in positions/orders), or write the marker only after a confirmed close-order id, with an expiry so a failed or cancelled place can retry. Add a test that retries after a simulated failure.",
+    "3. Rotation re-gate: use the live quote and live cost for the buy leg, not the pack's buy.quote and buy.cost.",
+    "4. Bind 'live' inputs: record and recheck xRequestIds and timestamps, and fetch history and cost in the same executor wake (document that these remain forgeable on the shared box).",
+    "5. Rewrite ACCEPTED RISK honestly: mark it PENDING Ofer/Security decision (not accepted), list the EDIT_SL, fabricated-input, marker-deletion and rotation-input gaps, and set the default to discretionary rebalance trades DISABLED (a code flag, off by default) until a QA-only signing channel exists. Protective stopclose stays enabled."
+  ],
+  "go_live_recommendation": "Risk-exit path: OK to use once fix 2 is done. Discretionary rebalance (buys/trims/rotations/SL edits from packs): keep disabled. It currently cannot pass on genuine data anyway, and the authorization layer remains forgeable."
+}

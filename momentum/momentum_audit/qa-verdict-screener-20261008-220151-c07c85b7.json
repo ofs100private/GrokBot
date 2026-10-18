@@ -1,0 +1,148 @@
+{
+  "op": "qa.verdict.momentum_screener_run",
+  "run_id": "screener-20261008-220151-c07c85b7",
+  "slot": "manual_early_eod_2200",
+  "asOf": "2026-10-08",
+  "qaAt": "2026-10-08T22:08:09+03:00",
+  "book": "Momentum-HHHGDTJ",
+  "mirrorId": 11630170,
+  "overall": "PASS",
+  "verdict": "PASS",
+  "fail_codes": [],
+  "deviation_codes": [],
+  "info_flags": [
+    "PARTIAL_DAILY_BAR",
+    "MANUAL_EARLY_EOD_ALLOWED"
+  ],
+  "rerun_required": false,
+  "checks": {
+    "SPX_UNIVERSE_TOO_SMALL": {
+      "result": "OK",
+      "evidence": "TRACE universe_n=520; /workspace/sp500_symbols.json count=503 asOf 2026-10-08T19:01:52.173701Z; valid_n=516"
+    },
+    "SPX_MEGACAP_FALLBACK": {
+      "result": "OK",
+      "evidence": "503-name S&P cache; universe_n=520 (S&P+sector/commodity ETFs); momentum_screener.py hard-fails <400 and refuses mega-cap stub"
+    },
+    "SPX_FETCH_BROKEN": {
+      "result": "OK",
+      "evidence": "io.StringIO Wikipedia path in screener; cache refreshed this run; no FileNotFoundError"
+    },
+    "SPX_SCAN_NOT_FULL": {
+      "result": "OK",
+      "evidence": "download_ok valid_n=516; near-miss written; full S&P+ETF scan under HEALTHY; attempt 1/3"
+    },
+    "SCREENER_RUN_CRASH": {
+      "result": "OK",
+      "evidence": "attempt 1 produced 4 BUY ACTION rows; RUN_END pack=PASS halt=False"
+    },
+    "SCREENER_AUDIT_INCOMPLETE": {
+      "result": "OK",
+      "evidence": "RUN_START 22:01:51.525 -> TRACE(attempt,regime,universe,download_ok,near_misses,event_vol_freeze,pack_done,run_summary_written) -> ACTION BUY x4 22:02:07.344 -> RUN_END 22:02:07.345; screener-run-screener-20261008-220151-c07c85b7.json present"
+    }
+  },
+  "regime": {
+    "mode": "HEALTHY",
+    "spx_close": 7756.18,
+    "spx_sma50": 7689.26,
+    "spx_pct_vs_sma50": 0.87,
+    "vix_close": 15.7,
+    "hard_halt": false,
+    "soft": false,
+    "note": "HEALTHY: SPX > SMA50 (+0.87%), VIX 15.7 < 25. VCP_SETUP + ETF VOLUME_BREAKOUT allowed under HEALTHY (soft VCP block N/A)."
+  },
+  "event_vol_freeze": {
+    "freeze": false,
+    "screener_reason": "no_event_freeze today=2026-10-08 next_open=2026-10-09 (next CPI 10-14, FOMC 10-28, NFP 11-06)",
+    "independent_check": "momentum_qa.event_calendar.is_event_vol_freeze(now_il)=False; next CPI 2026-10-14 is not today/next NYSE session"
+  },
+  "early_eod_bar_check": {
+    "nyse_open_at_run": true,
+    "intraday_ban_at_run": false,
+    "intraday_ban_window_il": "16:30-18:30",
+    "run_ts_il": "2026-10-08T22:01:51+03:00",
+    "et_approx": "15:01 ET (regular session still open; close 16:00 ET)",
+    "skills_allow_early_manual": true,
+    "precedent": "qa-verdict-screener-20261005-160452-88488e84 PASS at ~16:05 IDT / ~09:05 ET with market open",
+    "bar_source": "yfinance daily download; screener uses Close/Volume/High/Low iloc[-1] = today's still-forming daily bar",
+    "signal_impact": "VCP contractions, ETF pivot breakout (close>pivot & close>open), RVOL (curr_vol/vol_sma50), DWM day_pct, and regime SPX/VIX all use unconfirmed intraday print",
+    "ruling": "INFO flag PARTIAL_DAILY_BAR only \u2014 NOT hard FAIL. Early/manual EOD is allowed (trader-momentum-strategy + eod_miss_check: early ACTION counts <=22:50). Ofer requested manual early EOD ~22:00 IL. Place conditions require re-prepare at place time; optional true-EOD reconfirm is advisory not blocking."
+  },
+  "pack": {
+    "buys_screener": [
+      "HPQ",
+      "ZBRA",
+      "ANET",
+      "XLE"
+    ],
+    "buys_pre_pack": 11,
+    "buys_packed": 4,
+    "momentum_breakout_count": 0,
+    "etf_buys_screener": 1,
+    "amount_usd_each": 1000,
+    "leverage": 1,
+    "rows": [
+      {
+        "symbol": "HPQ",
+        "setup": "VCP_SETUP",
+        "rs": 93,
+        "rvol": 0.34,
+        "dwm": "0.73/1.01/0.26",
+        "sl": 30.53
+      },
+      {
+        "symbol": "ZBRA",
+        "setup": "VCP_SETUP",
+        "rs": 93,
+        "rvol": 0.32,
+        "dwm": "-0.85/1.95/11.01",
+        "sl": 359.81,
+        "note": "day red OK for VCP (week+month green)"
+      },
+      {
+        "symbol": "ANET",
+        "setup": "VCP_SETUP",
+        "rs": 91,
+        "rvol": 0.54,
+        "dwm": "-2.00/3.43/9.63",
+        "sl": 198.82,
+        "note": "day red OK for VCP"
+      },
+      {
+        "symbol": "XLE",
+        "setup": "VOLUME_BREAKOUT",
+        "asset_class": "ETF",
+        "rs": 88,
+        "rvol": 1.36,
+        "dwm": "3.01/4.09/0.53",
+        "sl": 61.28,
+        "note": "ETF path: breakout=close>pivot&close>open (no RVOL>=1.5 gate). Place-QA must apply ETF floor / no-backfill when XLK held."
+      }
+    ],
+    "pack_rules": "breakout 0<=2; etf_buys<=1; VCP in HEALTHY OK; unlimited stocks; amount<=1000; lev1",
+    "result": "PASS (run integrity) -> place-QA applies held-ETF / cash / hygiene gates"
+  },
+  "on_time": {
+    "ACTION_ts_il": "2026-10-08T22:02:07.344+03:00",
+    "deadline": "22:50 IDT",
+    "EOD_SCREENER_MISSED": false,
+    "note": "Manual early EOD ACTION ~22:02 IDT counts; not EOD_SCREENER_MISSED"
+  },
+  "soft_notes": [
+    "PARTIAL_DAILY_BAR: market still open (~15:04 ET at request); signals use today's forming Yahoo daily bar \u2014 flagged, not FAIL (Ofer early EOD + Oct-5 early PASS precedent)",
+    "near-miss TRACE count 58 vs near-miss-2026-10-08.json top-N (by design)",
+    "XLE in pack with XLK already held on book \u2014 place-QA must drop / block new ETF (ETF_FLOOR_ALREADY_MET / no backfill 2026-10-07 ruling); not a screener-universe FAIL",
+    "drop_counts event_freeze=0 regime_soft_vcp=0 regime_hard=0 consistent with HEALTHY/no freeze"
+  ],
+  "evidence_paths": {
+    "run_summary": "/workspace/momentum_audit/screener-run-screener-20261008-220151-c07c85b7.json",
+    "near_miss": "/workspace/momentum_audit/near-miss-2026-10-08.json",
+    "audit": "/workspace/momentum_audit/2026-10-08.jsonl",
+    "stdout": "/workspace/momentum_audit/screener-2026-10-08-eod-manual.stdout",
+    "sp500_cache": "/workspace/sp500_symbols.json",
+    "bundle": "/workspace/momentum_audit/place_qa/eod-20261008-manual-qa-bundle.json"
+  },
+  "hard_fail": false,
+  "qa_places": false,
+  "next": "Gate A PASS \u2014 proceed to place-QA. Expect XLE blocked (XLK already holds ETF floor). QA never places."
+}

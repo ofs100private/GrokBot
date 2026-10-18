@@ -15,14 +15,14 @@ After each nightly `breakout_ta.auto_daily` run, and before calling the Breakout
 
 ## Scope
 
-- Feed: `/workspace/etoroview/public/breakout-ta.json` (+ dist + GrokBot public/dist) must be byte-identical  
+- Feed: App-served copies `/workspace/etoroview/public/breakout-ta.json` + `/workspace/etoroview/dist/breakout-ta.json` must be byte-identical (single list: `breakout_ta/feed_paths.py`). latest/ and GrokBot/app copies are not served and are not checked.  
 - Audit: `/workspace/breakout_ta/audit/{run_id}.json` and `latest-auto.json`  
 - Comparison block vs Classic RSI / Momentum methods  
 - Live books only for overlap checks: **Classic** = Classic account (OfersClaw5-PRIYN / `user-OfersClaw5`; mirror `11368142` optional), **Momentum** = mirror `11630170` ($8k reporting truth from a live `user-etoro` read < 60 min old; `user-Momentum-HHHGDTJ` keys book as cross-check). Do **not** reject OfersClaw5 Classic figures as keys-B. A Momentum sidecar older than 60 minutes is a **FAIL**.  
 
 ## Gates
 
-**G1 Dual-write** — public == dist == GrokBot copies for `breakout-ta.json`; `run_id` matches audit latest  
+**G1 Dual-write** — public == dist for `breakout-ta.json`; `run_id` matches audit latest. **G6** — both copies parse with the real App loader (`parseBreakoutTaPayload`)  
 
 **G2 Audit integrity** — `latest-auto.json` critical fields (run_id, confirmed/watch/failed counts, do_not_place) match `{run_id}.json`; index.jsonl has the run  
 
@@ -44,3 +44,21 @@ After each nightly `breakout_ta.auto_daily` run, and before calling the Breakout
 ## PASS delivery
 
 Send PASS/FAIL + evidence to Chief of Staff and App. QA never places.
+
+## Shared book snapshot + cards (Ofer 2026-10-18c; token saver)
+
+Deterministic book work lives in Python: `/workspace/books/snapshot.py` (normalised cache `/workspace/books/latest/<book>.json`, history under `books/history/`) and `/workspace/books/cards.py` (card facts). Books: `classic` (user-OfersClaw5), `momentum_mirror` (mirror 11630170 in user-etoro = Momentum reporting truth), `momentum_keys` (user-Momentum-HHHGDTJ, ledger/cross-check only), `parent` (mirror 11368142, Classic copy, UI only).
+
+1. **Check freshness first:** `cd /workspace && python3 -m books.snapshot fresh --book <book> --max-age-min <N>`. Exit 0 prints the path, so use that JSON and do not re-read. Exit 2 means stale or missing.
+2. **If stale, do ONE read per book:** run `python3 -m books.snapshot agent-read-hint --book <book>`, then make exactly the MCP call(s) it prints with `write_to_file=true`. Next run `python3 -m books.snapshot ingest --book <book> --raw <file> [--raw <file2>]`. The same two user-etoro files feed both `momentum_mirror` and `parent`. If ingest refuses with `SOURCE_MISMATCH`, `MIRROR_MISSING` or `OLDER_THAN_CACHE`, that is a real data problem: stop and report it, and never hand-edit the cache.
+3. **Cards:** `python3 -m books.cards --max-age-min <N> --json <out.json> --md <out.md>` gives Classic caps/core/deployable/drift/blocked/changes and Momentum stops/blocked/divergence. The LLM writes only the Buy and Sell/Rotation judgement lines (the `<LLM judgement>` placeholders) and never recomputes these facts.
+4. `python3 -m books.snapshot overlap` lists cross-book symbols and keys-vs-mirror divergence.
+
+The snapshot never changes trading rules. Caps and floors are imported from `classic_rsi` and are not redefined.
+
+**QA usage:** for the overlap/comparison gate you may use the `classic` and `momentum_mirror` snapshots **plus one independent live read** (user-etoro for the mirror, or user-OfersClaw5). Compare symbols with the comparison block and the read. A Momentum snapshot older than 60 min is still a FAIL, as are a missing read and any mismatch.
+
+## Scripted gate — run first (2026-10-18e; Ofer rule 2026-10-18: anything deterministic runs in code; the LLM does judgement + prose only)
+`cd /workspace && python3 -m qa_gates breakout-tab` → one verdict JSON (also saved to `/workspace/qa_gates/verdicts/latest-breakout-ta-tab.json`). Exit 0 = PASS, 1 = FAIL.
+It runs G1–G6 mechanically: copy sha equality across the App-served paths, App-loader parse, feed run_id = latest-auto = run file = index row, row/summary counts, confirmed-row completeness (1D, stop < entry < target, volume ratio, do_not_place, no shorts), method set + signals run id, overlap recomputed per book, Momentum book ≤60 min (books snapshot compare is soft).
+**LLM:** do not re-open the feeds or recompute anything. Read `verdict`, `hard_fail_codes` and `soft_flags`; judge only the soft flags and `llm_todo`; write the PASS/FAIL message from them. A hard fail in the script is a FAIL; you may not override it.
