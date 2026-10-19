@@ -21,7 +21,7 @@ Ofer rule: Momentum runs code-first like Classic. Trading rules are unchanged; o
   `./screener-venv/bin/python -m momentum_qa.precheck --raw <mkeys get-my-positions-and-orders file> [--classic-raw <OfersClaw5 read file>] [--cash-json <user-etoro portfolio-summary file> | --cash N]`
   Exit **10** = silent SKIP (NYSE closed/holiday, or free cash < min order with nothing to manage): end the wake, no message. Exit **0** = PROCEED (open positions, pending orders, missing SL, risk action, or cash for a new order; any unreadable/stale input also proceeds). On a closed day `--raw` can be omitted, so the MCP read can wait until after the session check. Summary: `/workspace/momentum_audit/precheck/precheck-latest.json` (cash, positions, `pm_positions`, pending orders, overlap, Classic `buy_blocklist`). Audit: `/workspace/momentum_audit/precheck-YYYY-MM-DD.jsonl`. Keys balance may 403: take cash from the mirror 11630170 read (`--cash-json`).
 - **Then:** `./screener-venv/bin/python position_manager.py --positions-file /workspace/momentum_audit/precheck/precheck-latest.json --out <pm.json>` and `./screener-venv/bin/python momentum_screener.py --classic-json <Classic positions file> --out <screener.json>`.
-- **Fixed, tested scripts only** (`momentum_qa/precheck.py`, `position_manager.py`, `momentum_screener.py`, `momentum_qa/*`; tests `tests/test_momentum_precheck.py`). Never write ad-hoc per-run scripts; a gap means a tested fix to the fixed script.
+- **Fixed, tested scripts only** (`momentum_qa/precheck.py`, `momentum_qa/open_gap_check.py`, `position_manager.py`, `momentum_screener.py`, `momentum_qa/*`; tests `tests/test_momentum_precheck.py`). Never write ad-hoc per-run scripts; a gap means a tested fix to the fixed script.
 - **Silent when nothing changed:** no message to Ofer on SKIP, HOLD-only, or HALT-without-change days. Report only fills, QA FAILs, deviations, or errors.
 
 ## FULL AUTO (Ofer)
@@ -91,6 +91,16 @@ Near-miss high-RS names that fail both sleeves: `NO_BREAKOUT_NO_VCP`.
 ## Exits (EOD position manager)
 
 Priority per name: **CLOSE** (last < SMA50 **or** unrealized PnL% ≤ −4 vs avg open → `LOSS_PCT_GE_4`) → **MOVE_SL_BREAKEVEN** (≥ 2R to entry) → **TRAIL_SL** (≥ 1R: trail to max(prior stop, min(entry, 10-day low)); never lower stop) → **HOLD**
+
+## Open gap check 16:45 IL (2026-10-19)
+
+Ofer 2026-10-19: risk-only check **weekdays 16:45 IL** (shortly after the US open). **SELL ONLY — never buy, never move SL.** Closes any position that gapped **below its SL** (`GAP_BELOW_SL`; broker SL may already have fired) or **below its 50-day SMA** (SMA from daily closes up to yesterday). **Two-read rule (Ofer 2026-10-19 13:01 IDT):** an SL breach closes **immediately**; an SMA50-only break closes only after a **second confirming read 3–30 min later** (`GAP_BELOW_SMA50_CONFIRMED`). Explicit exception to the 16:30–18:30 intraday ban, for these closes only.
+
+1. MCP read `user-Momentum-HHHGDTJ get-my-positions-and-orders {account:"real"}` with `write_to_file=true` (on a closed day the read can be skipped; the script exits 10 with no input).
+2. `./screener-venv/bin/python -m momentum_qa.open_gap_check --raw <file> --out /workspace/momentum_audit/open_gap-YYYYMMDD.json` (or `--positions-file <precheck summary>`). Confirm pass: fresh positions read → same command with a new `--out` plus `--confirm-from <first run's --out>`.
+3. Exit **10** = NYSE closed/holiday, not in regular session, no positions, or all HOLD → **silent**, end the wake. Exit **3** = bad/stale (>15 min) input or missing market data → report the reason, do **not** act, do not skip silently. Exit **0** = CLOSE rows in `closes[]` (SL breaches, or confirmed SMA50 breaks; any unconfirmed ones are listed in `pending_confirm[]`). Exit **11** = only `PENDING_CONFIRM` (`GAP_BELOW_SMA50_UNCONFIRMED`): do **not** close; wait ~5 min, re-read positions, re-run with `--confirm-from`. On the confirm pass: CLOSE only if the same positionId was below SMA50 in the previous file and that run was 3–30 min earlier; back above SMA50 → HOLD `SMA50_RECOVERED` (silent); previous read too fresh/old/missing → still PENDING (exit 11, re-run again within the window). Also report anything listed in `errors[]`.
+4. For **each** CLOSE: QA Bot place-QA **PASS** (cite the row's `qa` block) → fresh positions read (<120s) → `place_lock acquire ... --allow-held` exit 0 → `prepare-close` → `place-close` → `place_lock mark`. If the position is already gone (SL fired), record it and do not re-close.
+5. Report only closes, QA FAILs, or errors. Audit: `/workspace/momentum_audit/YYYY-MM-DD.jsonl` (`source=open_gap_check`). Tests: `tests/test_open_gap_check.py`.
 
 ## EOD chain
 

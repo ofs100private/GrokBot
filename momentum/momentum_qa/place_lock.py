@@ -83,7 +83,15 @@ def _load_positions(src):
         return src
     if src == "-":
         return json.load(sys.stdin)
-    return json.loads(Path(src).read_text())
+    if isinstance(src, str) and src.startswith("@"):
+        src = src[1:]
+    try:
+        return json.loads(Path(src).read_text())
+    except json.JSONDecodeError:
+        # raw MCP write_to_file output may carry wrapper text; reuse precheck's tolerant loader
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from momentum_qa.precheck import load_json_file, _unwrap
+        return _unwrap(load_json_file(src))
 
 
 def _parse_ts(ts: str) -> datetime:
