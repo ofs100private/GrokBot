@@ -71,12 +71,28 @@ def get_sp500_symbols() -> list[str]:
         syms = _normalize(tables[0]["Symbol"].tolist())
         if len(syms) < 400:
             raise RuntimeError(f"Wikipedia returned only {len(syms)} symbols")
+        # GICS sector per symbol (soft review flags only; QA Bot 2026-10-19). Never affects symbols.
+        sectors: dict = {}
+        try:
+            if "GICS Sector" in tables[0].columns:
+                for t, sec in zip(tables[0]["Symbol"].tolist(), tables[0]["GICS Sector"].tolist()):
+                    k = str(t).replace(".", "-").strip().upper()
+                    if k and isinstance(sec, str) and sec.strip():
+                        sectors[k] = sec.strip()
+        except Exception:
+            sectors = {}
+        if not sectors and cache.exists():
+            try:
+                sectors = json.loads(cache.read_text()).get("sectors") or {}
+            except Exception:
+                sectors = {}
         cache.write_text(
             json.dumps(
                 {
                     "asOf": datetime.utcnow().isoformat() + "Z",
                     "count": len(syms),
                     "symbols": syms,
+                    "sectors": sectors,
                 },
                 indent=2,
             )
@@ -395,6 +411,11 @@ def run_screener(
             f"S&P 500 universe too small ({len(sp500_tickers)}); expected ~500"
         )
     universe = {sym: "STOCK" for sym in sp500_tickers}
+    try:
+        from momentum_qa.soft_flags import make_sector_of as _mk_sector_of
+        _sector_of = _mk_sector_of()
+    except Exception:
+        _sector_of = lambda _s: None  # noqa: E731  (sector is a soft-flag annotation only)
     universe.update({sym: "ETF" for sym in SECTOR_ETFS})
     universe.update({sym: "COMMODITY" for sym in COMMODITY_ETFS})
 
@@ -616,6 +637,7 @@ def run_screener(
                 "month_pct": round(month_pct, 2),
                 "regime_mode": regime["mode"],
                 "sleeve": reason,
+                "sector": _sector_of(sym),
             }
 
             if dwm_fail:
@@ -875,6 +897,19 @@ def crossbook_precheck(refresh_src: str | None = None, *, max_age_s: float = CRO
     return (True, None) if held is not None else (False, f"after refresh: {why2}")
 
 
+def pack_soft_flags(rows: list, *, held=None, sector_of=None) -> list[dict]:
+    """Soft review flags (QA Bot 2026-10-19): LOW_RVOL_PACK / SECTOR_CONCENTRATION. Not gates:
+    computed on the final rows, never mutates them. Any error -> [] (with a SOFT_FLAGS_ERROR note)."""
+    try:
+        from momentum_qa import soft_flags as _sf
+        herr = None
+        if held is None:
+            held, herr = _sf.held_symbols()
+        return _sf.compute_soft_flags(rows, held, sector_of or _sf.make_sector_of(), held_error=herr)
+    except Exception as e:  # noqa: BLE001
+        return [{"code": "SOFT_FLAGS_ERROR", "severity": "SOFT", "gate": False, "error": str(e)}]
+
+
 def run_screener_with_qa(
     allocation_usd: float = 1000,
     max_stock_picks: int | None = None,  # unlimited (playbook 2026-10-05)
@@ -1081,6 +1116,10 @@ def run_screener_with_qa(
         pack.reasons = list(pack.reasons or []) + [f"STALE_CROSSBOOK_PACK_FAIL: {_w2}"]
         executable = [r for r in executable if r.get("action") != "BUY"] + [_stale_crossbook_row(_w2)]
 
+    soft_flags = pack_soft_flags(executable)
+    if soft_flags:
+        log.trace("soft_flags", details={"soft_flags": soft_flags, "gate": False})
+
     buys_syms = [r.get("symbol") for r in executable if r.get("action") == "BUY"]
     skip_syms = [
         {"symbol": r.get("symbol"), "reason": r.get("reason")}
@@ -1099,9 +1138,11 @@ def run_screener_with_qa(
         "buys": buys_syms,
         "skips": skip_syms,
         "halt": halt,
-        "pack": pack.to_dict(),
+        "pack": {**pack.to_dict(), "soft_flags": soft_flags},
+        "soft_flags": soft_flags,
         "executable_n": len(executable),
     }
+    run_screener_with_qa._last_summary = summary  # type: ignore[attr-defined]
     _P("/workspace/momentum_audit").mkdir(parents=True, exist_ok=True)
     (_P("/workspace/momentum_audit") / f"screener-run-{run_id}.json").write_text(
         json.dumps(summary, indent=2, default=str)
