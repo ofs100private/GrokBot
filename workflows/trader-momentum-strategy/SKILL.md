@@ -40,7 +40,7 @@ Same auto rule for position_manager **CLOSE**, **MOVE_SL_BREAKEVEN**, and **TRAI
 Before **every** `prepare-trade` (EOD routine **and** parent chat):
 
 1. Live `get-my-positions-and-orders` → JSON with top-level `timestamp`/`asOf` **<120s**.
-2. `python -m momentum_qa.place_lock acquire --verdict <qa-verdict.json> --symbol SYM --caller <eod-routine|parent-chat> --positions-json <live.json>`
+2. `cd /workspace && ./screener-venv/bin/python -m momentum_qa.place_lock acquire --verdict <qa-verdict.json> --symbol SYM --caller <eod-routine|parent-chat> --positions-json <live.json>`
 3. Exit **0** only → prepare-trade → place-trade → `place_lock mark --status PLACED|FAILED|EXPIRED`.
 4. Refuse place on **LOCK_HELD** (2), **ALREADY_HELD** (3), **POSITIONS_STALE** (4; missing/stale timestamp). Same verdict sha never re-places. PM trail/close: `--allow-held`.
 

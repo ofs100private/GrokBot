@@ -33,7 +33,7 @@
   - **30% per ETF or fund**
   - **15% per single stock**
   - **45% for the growth sleeve** (and for any other sleeve)
-- **Cash floor of $2,500** after any buy batch. If a pack would breach it, cut each order's size or buy fewer names. The floor is overridden only if Ofer explicitly sizes an order knowing it will go under.
+- **Cash floor of $1,500 measured in Ofer's copy mirror** (Ofer 2026-10-20 23:14 IDT) after any buy batch. Agent floor = ceil_cent($1,500 / mirror ratio), ratio = round-down min(config, live equity, live cash) from `classic_rsi/floor.py` + `mirror_floor_config.json` (≈ $854 agent at ratio 1.756). If a pack would breach it, cut each order's size or buy fewer names. The floor is overridden only if Ofer explicitly sizes an order knowing it will go under.
 - **Minimum order of $400.**
 - Long-only ×1. No crypto. Never go all-in.
 - If cash is above 50% of equity, deploy it toward target weights. If no candidate passes, park it in SPY (only if SPY passes the cost gate).
@@ -54,7 +54,7 @@
 - **Hourly RSI run:** weekdays during US market hours, at :35 past each hour from 9:35 to 15:35 New York time (16:35–22:35 Israel time). The script only proposes trades and never places them itself.
 - **Daily rebalance check:** each US weekday after the close (Israel evening). It reviews weights, drift flags, sell rules, the RS table, and performance against SPY.
 - **Monthly full rebalance:** first full US trading week. It scores the book, sets target weights, and sells first.
-- **Ad hoc:** whenever a drift trigger fires: a cap breach, cash under $2,500 or over 50%, a 50DMA plus negative-RS break, a 200DMA break, or a trailing stop.
+- **Ad hoc:** whenever a drift trigger fires: a cap breach, cash under the floor ($1,500 mirror ≈ $854 agent) or over 50%, a 50DMA plus negative-RS break, a 200DMA break, or a trailing stop.
 - No new positions on weekends unless Ofer overrides.
 
 ## Gates
@@ -86,6 +86,7 @@
 | 2026-10-05 | QA told not to fail Classic packs only because of Fear or a Fear-driven "No Buy". |
 | 2026-10-06 | Account renamed "Classic account (OfersClaw5-PRIYN)" and made the source of truth for execution and reporting. The parent mirror became optional. |
 | 2026-10-07 | $2,500 cash floor sizing (cut size or names), plus the sell/rotate-before-buy check. |
+| 2026-10-20 | Cash floor → $1,500 measured in Ofer's copy mirror (agent floor = 1500 / mirror ratio ≈ $854); fix10b. |
 | 2026-10-08 | Rebalance playbook created after a review: the account was −26.75% vs SPY +9.6% (04-30 to 10-07), and 71% of losses came from holds under 7 days. Moved to fewer, longer, trend-aligned positions, trailing stops instead of 1-hour-ATR stops, and RSI as timing only. A stale-snapshot fail-safe was added to the hourly run. The fixed 6-name list was replaced by a dynamic S&P screen. |
 | 2026-10-11 | Full auto approved. Rebalance cadence moved from weekly to daily. Trade-count limit and the "≤2 new names per month" cap removed. Mandatory cost/benefit gate (≥2× cost) added. |
 | 2026-10-12 | Approval confirmed and the code gate passed QA, but auto-place kept OFF pending Ofer's acceptance of residual risks and out-of-sample evidence. Caps clarified as % of total equity (30% ETF / 15% stock / 45% sleeve). |

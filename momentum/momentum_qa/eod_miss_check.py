@@ -224,8 +224,65 @@ def soft_nudge_after_pm(now: datetime | None = None) -> dict:
     }
 
 
-if __name__ == "__main__":
-    status = night_status()
-    # Keep exit 2 if either miss (watchdog should catch up)
+def _first_ts(info: dict) -> str | None:
+    ts = [a.get("ts_il") for a in (info.get("actions") or []) if a.get("ts_il")]
+    ts += [t for t in (info.get("run_starts") or []) if t]
+    return min(ts) if ts else None
+
+
+def audit_row(status: dict, caller: str = "unknown") -> dict:
+    """EOD_MISS_CHECK payload (QA Bot 2026-10-20): one row per run."""
+    scr, pm = status.get("screener") or {}, status.get("position_manager") or {}
+    if status.get("pm_miss") and status.get("screener_miss"):
+        verdict = "PM_AND_SCREENER_MISSED"
+    elif status.get("pm_miss"):
+        verdict = "EOD_PM_MISSED"
+    elif status.get("screener_miss"):
+        verdict = "EOD_SCREENER_MISSED"
+    else:
+        verdict = "OK:" + str(scr.get("reason") or "no_miss")
+    return {
+        "ts": datetime.now(tz=IL).isoformat(),
+        "event": "EOD_MISS_CHECK",
+        "caller": caller or "unknown",
+        "pm_ran": bool(pm.get("has_eod_pm_action")),
+        "pm_first_ts": _first_ts(pm),
+        "screener_ran": bool(scr.get("has_eod_screener_action")),
+        "screener_first_ts": _first_ts(scr),
+        "next_job": status.get("next_job"),
+        "verdict": verdict,
+        "rationale": f"eod_miss_check by {caller or 'unknown'}: {verdict}",
+    }
+
+
+def write_audit(status: dict, caller: str = "unknown", audit_dir: Path | None = None) -> Path:
+    try:
+        from momentum_qa.audit import append_row, build_record, new_run_id
+    except ImportError:  # run as a plain script: python momentum_qa/eod_miss_check.py
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from momentum_qa.audit import append_row, build_record, new_run_id
+
+    rec = build_record(new_run_id("eodmiss"), "momentum_qa/eod_miss_check.py", audit_row(status, caller))
+    return append_row(rec, audit_dir or AUDIT)
+
+
+def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(prog="momentum_qa.eod_miss_check", description="EOD screener/PM miss check")
+    ap.add_argument("--caller", default="unknown", help="who ran this check (logged in audit row)")
+    ap.add_argument("--no-audit", action="store_true", help="do not append EOD_MISS_CHECK audit row")
+    a = ap.parse_args(argv)
+    status = night_status(now)
+    if not a.no_audit:
+        try:
+            write_audit(status, a.caller)
+        except Exception as e:  # never break the check on audit I/O
+            print(f"audit write failed: {e}", file=sys.stderr)
     print(json.dumps(status, indent=2, ensure_ascii=False))
-    sys.exit(2 if status["any_miss"] else 0)
+    # Keep exit 2 if either miss (watchdog should catch up)
+    return 2 if status["any_miss"] else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

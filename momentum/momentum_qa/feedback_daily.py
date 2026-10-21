@@ -87,6 +87,94 @@ def _row_codes(r: dict) -> set[str]:
     return {str(c) for c in out if c}
 
 
+def is_protective_reject(r: dict) -> bool:
+    """QA Bot 2026-10-20: INSUFFICIENT_CASH (+GATE_OK) or any GATE_OK code, in the single
+    code field OR in qa_reasons list -> protective reject, never a QA FAIL headline."""
+    codes = _row_codes(r)
+    return "INSUFFICIENT_CASH" in codes or "GATE_OK" in codes or gate_ok_code(r) is not None
+
+
+RVOL_BUCKETS = ("<0.7", "0.7-1.0", ">1.0", "unknown")
+
+
+def rvol_bucket(v) -> str:
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return "unknown"
+    return "<0.7" if x < 0.7 else ("0.7-1.0" if x <= 1.0 else ">1.0")
+
+
+def _all_rows(audit_dir: Path | None = None) -> list[dict]:
+    rows = []
+    for f in sorted(Path(audit_dir or AUDIT_DIR).glob("*.jsonl")):
+        for line in f.read_text(encoding="utf-8").splitlines():
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return rows
+
+
+def _pnl(r: dict):
+    for k in ("netProfit", "pnl", "realized_pnl", "pnl_est"):
+        v = r.get(k, (r.get("details") or {}).get(k))
+        if v is not None:
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                pass
+    return None
+
+
+def rvol_outcome_scoring(day_rows: list[dict], history: list[dict] | None = None) -> dict:
+    """Aggregate-only outcome scoring of the day's VCP fills by entry RVOL bucket (no gate).
+
+    Entry RVOL = FILL.rvol_at_entry, else same-day screener BUY pack row details.rvol.
+    Outcome = later close FILL/ACTION rows (same positionId) netProfit, if any.
+    """
+    pack_rvol = {}
+    for r in day_rows:
+        if r.get("script") == "momentum_screener.py" and r.get("event") == "ACTION" and r.get("action") == "BUY":
+            d = r.get("details") or {}
+            pack_rvol[r.get("symbol")] = (d.get("rvol"), d.get("setup"))
+    closes = {}
+    for r in history or []:
+        pid = r.get("positionId") or (r.get("details") or {}).get("positionId")
+        is_close = (r.get("type") == "FILL" and r.get("job") in ("close", "stop_loss", "take_profit")) or (
+            r.get("event") in ("ACTION", "FILL") and str(r.get("action") or "").startswith("CLOSE"))
+        p = _pnl(r)
+        if pid and is_close and p is not None:
+            closes[str(pid)] = closes.get(str(pid), 0.0) + p
+    out = {b: {"fills": 0, "symbols": [], "closed": 0, "wins": 0, "losses": 0, "net_pnl": 0.0} for b in RVOL_BUCKETS}
+    for r in day_rows:
+        if not (r.get("event") == "FILL" and (r.get("action") or "BUY") == "BUY"):
+            continue
+        d = r.get("details") or {}
+        rv = r.get("rvol_at_entry", d.get("rvol_at_entry"))
+        setup = d.get("setup")
+        if rv is None or setup is None:
+            prv, pset = pack_rvol.get(r.get("symbol"), (None, None))
+            rv = prv if rv is None else rv
+            setup = setup or pset
+        if setup and setup != "VCP_SETUP":
+            continue
+        if setup is None and "VCP" not in str(r.get("rationale") or ""):
+            continue
+        b = out[rvol_bucket(rv)]
+        b["fills"] += 1
+        b["symbols"].append(r.get("symbol"))
+        pid = d.get("positionId") or r.get("positionId")
+        if pid is not None and str(pid) in closes:
+            p = closes[str(pid)]
+            b["closed"] += 1
+            b["wins" if p > 0 else "losses"] += 1
+            b["net_pnl"] = round(b["net_pnl"] + p, 2)
+    for b in out.values():
+        b["win_rate"] = round(b["wins"] / b["closed"], 4) if b["closed"] else None
+    return {"buckets": out, "note": "aggregate only; no gate (QA Bot 2026-10-20)"}
+
+
 def gate_ok_code(r: dict) -> str | None:
     for c in _row_codes(r):
         for k in GATE_OK_CODES:
@@ -112,7 +200,8 @@ def build_report(day: str) -> dict:
     gate_ok_counts = Counter()
     deviations = [r for r in rows if r.get("event") == "DEVIATION" or r.get("deviation")]
     errors = [r for r in rows if r.get("event") == "ERROR"]
-    qa_fail = [r for r in actions if r.get("qa_verdict") == "FAIL"]
+    protective = [r for r in actions if r.get("qa_verdict") == "FAIL" and is_protective_reject(r)]
+    qa_fail = [r for r in actions if r.get("qa_verdict") == "FAIL" and not is_protective_reject(r)]
     qa_pass = [r for r in actions if r.get("qa_verdict") == "PASS"]
 
     keep = []
@@ -135,15 +224,13 @@ def build_report(day: str) -> dict:
             and a.get("qa_verdict") == "PASS"
         )
         # QA Bot 2026-09-22: INSUFFICIENT_CASH = GATE_OK protective reject, not AVOID
-        cash_gate_ok = code == "INSUFFICIENT_CASH" or (
-            a.get("qa_verdict") == "FAIL"
-            and "INSUFFICIENT_CASH" in str(a.get("qa_reasons") or "")
-        )
+        cash_gate_ok = code == "INSUFFICIENT_CASH" or "INSUFFICIENT_CASH" in _row_codes(a)
         # Intentional DWM SKIP (no place) = KEEP per QA Bot 2026-09-11
         if intentional_dwm_skip or cash_gate_ok or (
             a.get("qa_verdict") == "PASS" and not a.get("deviation")
         ):
             if cash_gate_ok:
+                gate_ok_counts["INSUFFICIENT_CASH"] += 1
                 key = ("INSUFFICIENT_CASH", a.get("symbol"))
                 if key in gate_ok_seen:
                     continue
@@ -246,6 +333,7 @@ def build_report(day: str) -> dict:
             "gate_ok_codes": dict(gate_ok_counts),
             "qa_pass_actions": len(qa_pass),
             "qa_fail_actions": len(qa_fail),
+            "protective_reject": len(protective),
             "deviations": len(deviations),
             "errors": len(errors),
             "keep": len(keep),
@@ -435,6 +523,10 @@ def build_report(day: str) -> dict:
         [x for x in report["deviations_clear"] if x.get("tag") == "AVOID"]
     )
     report["counts"]["deviations"] = len(report["deviations_clear"])
+    try:
+        report["vcp_rvol_outcomes"] = rvol_outcome_scoring(rows, _all_rows())
+    except Exception as e:  # aggregate only; never break feedback
+        report["vcp_rvol_outcomes"] = {"error": str(e)}
     return report
 
 
@@ -450,7 +542,7 @@ def main(day: str | None = None) -> int:
     md = [
         f"# Momentum daily feedback | {day}",
         "",
-        f"- Actions: {report['counts']['actions']} | QA PASS: {report['counts']['qa_pass_actions']} | QA FAIL: {report['counts']['qa_fail_actions']}",
+        f"- Actions: {report['counts']['actions']} | QA PASS: {report['counts']['qa_pass_actions']} | QA FAIL: {report['counts']['qa_fail_actions']} | protective_reject: {report['counts'].get('protective_reject', 0)}",
         f"- Deviations: {report['counts']['deviations']} (HIGH hard-fail: {report['counts'].get('hard_fail_deviations', 0)}) | Errors: {report['counts']['errors']}",
         f"- Day verdict: **{report.get('day_verdict', 'PASS')}**",
         "",

@@ -3,7 +3,7 @@ name: Classic rebalance
 description: >-
   use this when running the daily (weekday) rebalance check or monthly full
   rebalance of the Classic account (OfersClaw5-PRIYN via user-OfersClaw5), or
-  when a drift trigger fires (name >35% ETF / >20% stock of total equity, sleeve >45%, cash <$1.5k or
+  when a drift trigger fires (name >35% ETF / >20% stock of total equity, sleeve >45%, cash < agent floor (≈$854; $1,500 mirror) or
   >50% of equity, holding below 50DMA with negative 3M RS, or a trailing stop) —
   sell/rotate before buy, size to target weights, RSI 1H only as entry timing,
   cost/benefit gate, then FULL AUTO place after QA PASS (no Ofer chat auth,
@@ -36,7 +36,7 @@ Applies only to the **Classic account (OfersClaw5-PRIYN)** (REAL MONEY). It comp
 - An explicit Ofer/CoS hold still blocks.
 
 ## Mandate locks — confirmed Ofer 2026-10-16 01:27 IDT
-Confirmed (was pending since 2026-10-11): long ×1 only; crypto only BTC/ETH/SOL (watch for eToro traps: `CVX` = Convex, use `CVX.US` id 1014; `T` and `DIA` are crypto tokens); liquid large caps and sector ETFs, then commodity ETFs; cash ≥ ~$1,500 after any batch (cut size or drop names rather than breach); name caps (35% fund/ETF / 20% single stock of **total equity**) and the 45% sleeve/growth cap (of **total equity**, not invested); crypto sleeve ≤ 15%; stops (drift triggers 3–5); sell/rotate-before-buy check; equities 24x5 (no new equity size outside that window / weekends); crypto 24/7; **QA PASS is mandatory before every place.** **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
+Confirmed (was pending since 2026-10-11): long ×1 only; crypto only BTC/ETH/SOL (watch for eToro traps: `CVX` = Convex, use `CVX.US` id 1014; `T` and `DIA` are crypto tokens); liquid large caps and sector ETFs, then commodity ETFs; cash ≥ agent floor (≈$854; $1,500 mirror) after any batch (cut size or drop names rather than breach); name caps (35% fund/ETF / 20% single stock of **total equity**) and the 45% sleeve/growth cap (of **total equity**, not invested); crypto sleeve ≤ 15%; stops (drift triggers 3–5); sell/rotate-before-buy check; equities 24x5 (no new equity size outside that window / weekends); crypto 24/7; **QA PASS is mandatory before every place.** **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
 
 ## Cadence
 | When | What | Output |
@@ -48,13 +48,13 @@ Confirmed (was pending since 2026-10-11): long ×1 only; crypto only BTC/ETH/SOL
 ## Targets and caps (confirmed Ofer 2026-10-16 01:27 IDT)
 - Invested sleeves: growth/tech · healthcare · industrials/financials · energy/hard assets · broad core (SPY/RSP). Cash is its own sleeve.
 - **Caps are % of TOTAL EQUITY, not invested capital** (Ofer 2026-10-12 17:56 IDT): name ≤ 35% of total equity (fund/ETF) or ≤ 20% (single stock); crypto sleeve ≤ 15%; growth sleeve (and any sleeve) ≤ 45% of total equity. Check **both** cost and market-value numerators over total equity — a breach on either counts.
-- Cash: floor $1,500. If cash is above 50% of equity and passing candidates exist, deploy toward target. If nothing passes, park it in SPY rather than sit idle (only if SPY passes the cost gate).
+- Cash: cash floor = $1,500 in Ofer's copy mirror (agent floor from the config-pinned `python -m classic_rsi.floor`, ≈$854 at ratio ~1.756; fail closed if the config is stale/invalid). If cash is above 50% of equity and passing candidates exist, deploy toward target. If nothing passes, park it in SPY rather than sit idle (only if SPY passes the cost gate).
 - **Floor-vs-cap exit precedence undecided** (Ofer): when cash-floor and cap-breach exits conflict, do **not** auto-pick an order. Any exit pack that depends on that precedence is **held** until Ofer decides.
 - **No new-name cap; max 4 NEW trades per IDT day** (Ofer 2026-10-16). Minimum position $400 (smaller positions are not worth the fees).
 
 ## Drift triggers (any one starts an ad-hoc rebalance)
 1. A name above 35% of **total equity** (fund/ETF) or 20% (single stock), crypto sleeve above 15%, or a sleeve (incl. growth) above 45% of **total equity** — using either cost or market-value over total equity.
-2. Cash below $1,500, or above 50% of equity.
+2. Cash below the agent floor (≈$854 = $1,500 mirror floor via the config-pinned `python -m classic_rsi.floor`), or above 50% of equity.
 3. A holding has a **confirmed daily close below its 50DMA AND negative 3M RS** vs SPY.
 4. A holding has a confirmed daily close below its 200DMA.
 5. A trailing stop is hit: ETFs ~8% below the high since entry; single stocks ~10–12%, or 2.5–3× daily ATR(14), whichever is wider.
@@ -81,7 +81,7 @@ For each holding and each candidate (sector ETFs XLK/XLV/XLF/XLI/XLE/XLP/XLU/XLB
 
 ## Step 4: Buy list and sizing
 - Only trend-OK names with positive 3M RS, preferring gap sleeves. **Fear = dip window** means a pullback in a trend-OK name (above its 200DMA). It does **not** mean buying a sector below its 50/200DMA (the September rotations into CAT/XLI/CVX/XOM/NEM/GE lost −$304 with 0 wins).
-- Size to target weights. Re-check cash after the batch is ≥ $1.5k; if not, cut notional or drop the weakest name.
+- Size to target weights. Re-check cash after the batch is ≥ the agent floor (≈$854 = $1,500 mirror floor via the config-pinned `python -m classic_rsi.floor`); if not, cut notional or drop the weakest name.
 - Do not chase: if a candidate is up more than 2% on the day, stage it (half now, half on the next RSI Support or a red day) or wait.
 
 ## Step 5: RSI 1H as timing only
@@ -104,9 +104,17 @@ Applies to every buy, sell, trim, and rotation. For each action compute and reco
 2. Trader_Classic prepares closes and trades on `user-OfersClaw5` (sells sequenced first).
 3. Cost/benefit gate (Step 6) per action; drop failures.
 4. QA Bot runs [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) and must PASS each pack, including the cost-gate numbers.
-5. On PASS, Trader_Classic places automatically, one call per PASSed pack (no Ofer/CoS chat authorization needed since 2026-10-11). Re-check cash ≥ ~$1.5k between sequenced places. An explicit Ofer/CoS hold still blocks.
+5. On PASS, Trader_Classic places automatically, one call per PASSed pack (no Ofer/CoS chat authorization needed since 2026-10-11); token from `prepare_token split`, then `prepare_token wipe` after every place (fix11 section below). Re-check cash ≥ agent floor (≈$854) between sequenced places. An explicit Ofer/CoS hold still blocks.
 6. Fill audit to QA, then report to CoS (and Ofer on fills).
 7. Run the self-improvement loop (KEEP/AVOID).
+
+## execute_pass GO pin + prepare/place token handling (fix11, deployed 2026-10-21 19:17 IDT)
+
+- **GO version:** `classic_rsi/execute_pass.py` **v16.11 fix11** (`execute-pass-v16.11-token-sleeves-20261021-fix11`, package 1.1.7), sha256 `394e53a769e93f8ddf26f152e87c3d1351549e56d1c49c9e69700a6762dfdeb8`. Any other sha is not the QA GO version → NO-GO. The daily `build_daily.py` `EP_OK` pins the same sha.
+- **Cash floor:** always the config-pinned floor (`python -m classic_rsi.floor`, or `resolve(expected_sha256=<pinned config sha>)`; a bare `resolve()` is not config-pinned) (= execute_pass `cash_floor.agent_floor_usd`, ≈$854 = $1,500 mirror); never `floor_now()` or a hard-coded number.
+- **After every `prepare-trade` / `prepare-close`** (saved with write_to_file): `cd /workspace && ./screener-venv/bin/python -m classic_rsi.prepare_token split --response <raw> --stripped-out <pack-dir>/prepare-tokenstripped.json --token-out /tmp/<unique>-token`. It accepts `token` or `confirmationToken`, writes the token-free copy to disk first, writes the token ONLY to a 0600 file, deletes the raw read and prints metadata only. Exit 2 (`PREPARE_TOKEN_MISSING` / `AMBIGUOUS` / `INVALID` / `NOT_READY` / `VALUE_LEAK`) = do not place; re-prepare. Never read the token field by hand and never print it. Build live.json / execute_pass inputs from the stripped copy only.
+- **Place:** one `place-trade` / `place-close` call with `token = "$file:/tmp/<unique>-token"`. Then ALWAYS `./screener-venv/bin/python -m classic_rsi.prepare_token wipe --token-out /tmp/<unique>-token` (after a fill, a failure or an abandon), and save the place result with `prepare_token strip --response <raw> --out <pack-dir>/place-result.json`. Before any re-place, live-read to check whether the first place already went through.
+- **Deploy / rollback of classic_rsi packages:** `apply_fixNN.sh` (check only) → `--apply --external`; roll back ALWAYS with `--rollback <backup-dir> --external` (without `--external` the external scripts stay on the new code and fail on import).
 
 ## Documentation (every run, every movement)
 - Every daily/monthly/ad-hoc run writes a run log `/workspace/classic-rebalance/daily/<YYYY-MM-DD>-daily-check.md` (monthly: `.../monthly/<YYYY-MM>-rebalance.md`) with the report, actions taken or "no action", and the reason.
@@ -128,6 +136,6 @@ RS top/bottom: … | Actions: none | <side sym $ — QA PASS, cost ratio x.x, pl
 - Buy trend-failing sectors because they are "cheap".
 - Use leverage above ×1, crypto other than BTC/ETH/SOL, a buy without TP, or bare `CVX`/`T`/`DIA`.
 - Place without QA PASS or without a passing, recorded cost/benefit gate.
-- Place a batch that leaves cash under ~$1,500.
+- Place a batch that leaves cash under the agent floor (≈$854 = $1,500 mirror floor via the config-pinned `python -m classic_rsi.floor`).
 - Buy a symbol held in Momentum (mirror 11630170) — cross-book no-overlap (`CROSS_BOOK_OVERLAP`).
 - Invent expected returns: the cost-gate expected gain must come from TP distance / ATR math with the method recorded. Report realized vs SPY only.

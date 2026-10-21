@@ -28,7 +28,7 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 
 **Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place ON — Ofer accepted QA's residual risks 2026-10-16 01:27 IDT (see standing rules update).
 
-- **Every `classic-rsi-1h-auto` run (every 3 hours weekdays) searches for a new opportunity.** If a valid buy pack exists, passes [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) and [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate), passes the **cost/benefit gate**, and free cash after the buy stays ≥ ~$1,500 (cut size or the number of names rather than breach), **Trader_Classic places it automatically** — no chat authorization from Ofer or CoS.
+- **Every `classic-rsi-1h-auto` run (every 3 hours weekdays) searches for a new opportunity.** If a valid buy pack exists, passes [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) and [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate), passes the **cost/benefit gate**, and free cash after the buy stays ≥ the agent floor (≈$854; $1,500 mirror) (cut size or the number of names rather than breach), **Trader_Classic places it automatically** — no chat authorization from Ofer or CoS.
 - **No opportunity → do nothing** (the run is still logged and run-QA'd).
 - **Max 4 NEW trades per IDT calendar day**; **no monthly new-name cap**.
 - An explicit Ofer/CoS hold still blocks.
@@ -37,7 +37,7 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 
 - Long-only ×1; **no shorts** from Sell triangles
 - Crypto opens only BTC/ETH/SOL ×1 (crypto sleeve ≤ 15% of total equity)
-- **Cash floor ≥ ~$1.5k after adds** (see sizing rule below); equities 24x5 (extended hours), crypto 24/7; max 4 new trades/day
+- **Cash ≥ agent floor after adds**: cash floor = $1,500 in Ofer's copy mirror (agent floor from the config-pinned `python -m classic_rsi.floor`, ≈$854 at ratio ~1.756; fail closed if the config is stale/invalid) (see sizing rule below); equities 24x5 (extended hours), crypto 24/7; max 4 new trades/day
 - **Classic account truth:** Classic account (OfersClaw5-PRIYN) via `user-OfersClaw5` (execution + reporting). Parent SSO mirror `11368142` is optional copy/UI corroboration only — never required, never the rejection reason
 - **QA Bot PASS** (run-QA, then order-QA) required before any place ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) or standing Classic order gate)
 - **Fear is the dip window (Ofer 2026-10-04):** CNN Fear or Extreme Fear is when Support / Over Sold longs are most in play. Do **not** block a pack only because F&G is Fear or the brief says No Buy for that reason. Still block on cash floor, weekend, explicit Ofer/CoS hold, and risk-off (no add) on that same name.
@@ -45,7 +45,7 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 
 ## Cash floor sizing (Ofer 2026-10-07)
 
-If a buy pack would leave Classic cash **under ~$1,500**:
+If a buy pack would leave Classic cash **under the agent floor (≈$854; $1,500 mirror)**:
 1. **Lower** notional per name, and/or
 2. **Trade fewer symbols** (keep best sleeve-fit / conviction),
 3. Re-check cash-after ≥ floor before prepare / order-QA.
@@ -125,17 +125,25 @@ Routine **classic-rsi-1h-auto**: weekdays every 3 hours `CRON_TZ=Asia/Jerusalem 
 - Soft gates: equity window closed (weekend/holiday outside 24x5; crypto still scanned) / daily 4-trade limit / cash floor → `GATED` (buys suppressed). Fear / brief No-Buy-from-Fear is **not** a soft gate.
 - **Every run** → QA Bot [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) citing `run_id` (0 packs and GATED still validated). A slot the pre-check SKIPs (exit 10) produces no run, so it has no run-QA; its audit line is the record.
 - On run-QA **FAIL** → QA messages Trader_Classic to **rerun** `auto_1h` (max 2/hour) → re-validate new `run_id`
-- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/sell-first check/explicit hold; Fear = dip, not a block; cut size or drop names to keep ~$1.5k cash) → prepare → cost/benefit gate → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → **auto place on PASS** (no Ofer chat auth) → fill audit
+- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/sell-first check/explicit hold; Fear = dip, not a block; cut size or drop names to keep cash ≥ agent floor ≈$854) → prepare → cost/benefit gate → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → **auto place on PASS** (no Ofer chat auth) → fill audit
 - On run-QA **PASS** with 0 packs → do nothing; the run log is the record
 
 ## Automation flow (manual or auto)
 
 1. `auto_1h` or `propose` on confirmed 1H bars
 2. Mandate filter — RSI cannot override cash, weekend, or an explicit hold. It **should** be used in Fear.
-3. Sell/rotate check + size so cash-after ≥ ~$1.5k
+3. Sell/rotate check + size so cash-after ≥ agent floor (≈$854)
 4. QA Bot **run QA** with `run_id` (FAIL → Classic rerun → re-QA)
-5. If packs remain after run PASS → pre-buy refresh → prepare → cost/benefit gate → order QA → **auto place after PASS** (no Ofer chat auth; max 4 new trades/IDT day; no monthly new-name cap)
+5. If packs remain after run PASS → pre-buy refresh → prepare → `prepare_token split` → cost/benefit gate → order QA → **auto place after PASS** → `prepare_token wipe` (no Ofer chat auth; max 4 new trades/IDT day; no monthly new-name cap)
 6. Post-fill audit
+
+## execute_pass GO pin + prepare/place token handling (fix11, deployed 2026-10-21 19:17 IDT)
+
+- **GO version:** `classic_rsi/execute_pass.py` **v16.11 fix11** (`execute-pass-v16.11-token-sleeves-20261021-fix11`, package 1.1.7), sha256 `394e53a769e93f8ddf26f152e87c3d1351549e56d1c49c9e69700a6762dfdeb8`. Any other sha is not the QA GO version → NO-GO. The daily `build_daily.py` `EP_OK` pins the same sha.
+- **Cash floor:** always the config-pinned floor (`python -m classic_rsi.floor`, or `resolve(expected_sha256=<pinned config sha>)`; a bare `resolve()` is not config-pinned) (= execute_pass `cash_floor.agent_floor_usd`, ≈$854 = $1,500 mirror); never `floor_now()` or a hard-coded number.
+- **After every `prepare-trade` / `prepare-close`** (saved with write_to_file): `cd /workspace && ./screener-venv/bin/python -m classic_rsi.prepare_token split --response <raw> --stripped-out <pack-dir>/prepare-tokenstripped.json --token-out /tmp/<unique>-token`. It accepts `token` or `confirmationToken`, writes the token-free copy to disk first, writes the token ONLY to a 0600 file, deletes the raw read and prints metadata only. Exit 2 (`PREPARE_TOKEN_MISSING` / `AMBIGUOUS` / `INVALID` / `NOT_READY` / `VALUE_LEAK`) = do not place; re-prepare. Never read the token field by hand and never print it. Build live.json / execute_pass inputs from the stripped copy only.
+- **Place:** one `place-trade` / `place-close` call with `token = "$file:/tmp/<unique>-token"`. Then ALWAYS `./screener-venv/bin/python -m classic_rsi.prepare_token wipe --token-out /tmp/<unique>-token` (after a fill, a failure or an abandon), and save the place result with `prepare_token strip --response <raw> --out <pack-dir>/place-result.json`. Before any re-place, live-read to check whether the first place already went through.
+- **Deploy / rollback of classic_rsi packages:** `apply_fixNN.sh` (check only) → `--apply --external`; roll back ALWAYS with `--rollback <backup-dir> --external` (without `--external` the external scripts stay on the new code and fail on import).
 
 ## Documentation (every run, every movement)
 

@@ -14,7 +14,7 @@ description: >-
 
 ## Standing rules update — Ofer 2026-10-17 18:44 IDT (supersedes the 2026-10-16 crypto text and any conflicting text below)
 Source: Ofer approved the backtest recommendation (`/workspace/classic_rsi/research/backtest-20261016.md`: current rules −13% vs SPY +67% over 2.8 y; crypto lost −$1,951 on 88 trades; a SPY/QQQ core + equity dip-buys scored Sharpe ~1.4).
-- **Core (strategic, new):** SPY + QQQ held at **65–70% of total equity**, each ≤ 35% (ETF cap); default targets SPY 33.5% / QQQ 33.5%. It is funded from cash above the ~$1,500 floor and, if needed, by funding sells (`core_rotation`). The core does not use the RSI p-registry. It **does** pass Ofer's mandatory net-positive cost/benefit rule (QA fix1 2026-10-17) through the **core gain gate** `cost_gate.evaluate_core`:
+- **Core (strategic, new):** SPY + QQQ held at **65–70% of total equity**, each ≤ 35% (ETF cap); default targets SPY 33.5% / QQQ 33.5%. It is funded from cash above the agent floor (≈$854; $1,500 mirror) and, if needed, by funding sells (`core_rotation`). The core does not use the RSI p-registry. It **does** pass Ofer's mandatory net-positive cost/benefit rule (QA fix1 2026-10-17) through the **core gain gate** `cost_gate.evaluate_core`:
   - **Expected gain:** EG = Σ buy notional × annual drift × horizon/252 × (1 − 25% tax).
   - **Drift:** SPY 10.05% a year and QQQ 11.6% a year. That is a 50% haircut of the buy-and-hold CAGRs 20.1% / 23.2% in `/workspace/classic_rsi/research/backtest-20261016.md` (2024-01-01→2026-10-16, a bull window).
   - **Horizon:** 252 trading days (strategic hold carried through monthly rebalances). Every block reports a 21-day sensitivity.
@@ -33,13 +33,13 @@ Source: Ofer approved the backtest recommendation (`/workspace/classic_rsi/resea
     - Only the main agent writes a record, and only after Ofer's explicit message approving those exact legs.
   - **Fail-closed sources (QA fix2):** every `evaluate_core` call re-hashes the drift source `backtest-20261016.md` (and, for core_rotation, the held table). A missing file or sha256 mismatch → `CORE_DRIFT_SOURCE_*` / `CORE_HELD_TABLE_*` input error → INVALID, never PASS.
   - **core_trim** has no gain term, so it always SKIPs. A core cap breach exits through the regular trim kind as a verified risk exit.
-  - Order-QA is still required. Planner: `classic_rsi/core.py` (targets cash after ≥ floor + $110 ≈ $1,610).
+  - Order-QA is still required. Planner: `classic_rsi/core.py` (targets cash after ≥ agent floor + $110 ≈ $964).
 - **Core levels:** **SL 11% below entry** (band 10–12%; use 1% under the 200DMA only when that lands inside the band). The SL is trailed up monthly to max(SL, 11% below the highest close since entry) and never lowered. **TP +25%** (band 20–30%): a far TP, required by rule, that rarely binds; if it fills, the next monthly rebalance re-buys. R:R 2.27.
 - **Core rebalance:** monthly (first US trading day) **or** on drift > 5 pp: core vs the 67.5% mid, or SPY/QQQ vs its own target. execute_pass kinds: `core_add` (1 buy), `core_trim` (1 SPY/QQQ sell), `core_rotation` (1 funding sell + 1 SPY/QQQ buy; sale proceeds count toward the floor). The funding sell must be a **non-core satellite/legacy holding** (never SPY/QQQ → `CORE_FUNDING_SELL_NOT_ALLOWED`) held **≥ 20 US trading days** (`FUNDING_SELL_UNDER_MIN_HOLD`), carry a `funding_reason` (`FUNDING_REASON_MISSING`), and pass the rotation benefit test above. Each pack needs `core_reason` ∈ {initial_deploy, monthly_rebalance, drift_gt_5pp}. Blocks: `CORE_SYMBOL_REQUIRED`, `CORE_WEIGHT_ABOVE_70PCT`, `CORE_REASON_MISSING`, `SL_OUT_OF_BOUNDS` (core SL/TP bands). Core buy legs use daily slots.
-- **RSI dip-buys (satellite):** **equities only** (US stocks/ETFs). Default RSI levels (79.9/67.9/34.9/19.9) on 1H, confirmed close. **SL = entry − 2.5×ATR(1H), TP = entry + 2R (= 5×ATR)** (`LevelsConfig` 2.5/5.0). They use only cash above the ~$1,500 floor that is left after the core. Max 4 new trades/IDT day. FULL AUTO after run-QA + order-QA + the RSI cost gate (unchanged; it SKIPs while the p-registry has no qualifying out-of-sample entry).
+- **RSI dip-buys (satellite):** **equities only** (US stocks/ETFs). Default RSI levels (79.9/67.9/34.9/19.9) on 1H, confirmed close. **SL = entry − 2.5×ATR(1H), TP = entry + 2R (= 5×ATR)** (`LevelsConfig` 2.5/5.0). They use only cash above the agent floor (≈$854; $1,500 mirror) that is left after the core. Max 4 new trades/IDT day. FULL AUTO after run-QA + order-QA + the RSI cost gate (unchanged; it SKIPs while the p-registry has no qualifying out-of-sample entry).
 - **Crypto REMOVED entirely (hard flag):** BTC/ETH/SOL and all crypto are blocked, by name and by id (100000/100001/100063 included): guard `INSTRUMENT_CRYPTO`, execute_pass `CRYPTO_BLOCKED`, trading window `CRYPTO_BLOCKED`. Crypto is removed from the auto_1h universe, from the crypto sleeve/15% cap logic, and from the crypto SL/cost-floor code. Weekends/holidays therefore mean **no buys at all**. A legacy crypto holding may only be sold. The **T vs T.US guard stays** (bare `T` = Threshold crypto 100528 is blocked; AT&T is `T.US` 1030).
 - **Cost/benefit rule (Ofer 2026-10-11) still applies to EVERY place:** RSI buys use the p-registry gate (unchanged). Rebalance adds/trims/rotations use the edge-registry gate (unchanged). Core packs use the core gain gate above (documented drift term, same 2× / net-positive rule, plus tax).
-- **Unchanged:** ×1 long only; caps 20% stock / 35% ETF / 45% sleeve of total equity; cash floor ~$1,500 after every buy; no XLE adds; cross-book block vs Momentum live holdings; pre-buy refresh sequence; trade_counter daily slot protocol; 24x5 equities with live `isOpen=true`; TP + SL on every new buy.
+- **Unchanged:** ×1 long only; caps 20% stock / 35% ETF / 45% sleeve of total equity; cash ≥ agent floor (≈$854; $1,500 mirror) after every buy; no XLE adds; cross-book block vs Momentum live holdings; pre-buy refresh sequence; trade_counter daily slot protocol; 24x5 equities with live `isOpen=true`; TP + SL on every new buy.
 - **Trader_Classic:** run the core first (classic-rebalance core path), then RSI satellites with whatever cash is left above the floor. Mandate text below that allows crypto majors, a crypto sleeve, or crypto 24/7 is void.
 
 ## Standing rules update — Ofer 2026-10-16 01:27 IDT (supersedes any conflicting text below)
@@ -50,7 +50,7 @@ Source: Ofer approved the backtest recommendation (`/workspace/classic_rsi/resea
 - **Live open check:** stocks/ETFs need an explicit live per-instrument `isOpen=true` (`--instrument-open true` for RSI buys; `is_open: true` on every rebalance live leg). Unknown → CLOSED (`INSTRUMENT_OPEN_UNKNOWN`). ~~Crypto majors are open 24/7 unless the read says closed.~~ (crypto removed 2026-10-17)
 - **No XLE adds is hard-enforced:** any XLE buy/add → `NO_XLE_ADDS` (execute_pass and propose). Sells/trims of XLE are allowed.
 - ~~**Crypto specifics:** crypto packs must carry the explicit instrumentId (100000/100001/100063); a bare BTC/ETH/SOL symbol never resolves to crypto. Crypto SL = max(2.5×ATR(1H), 4%) capped at 20% below entry, TP = entry + 1.5×SL distance; rebalance crypto SL must be 4–20% below ask and ≥ 1× daily ATR. Preliminary crypto cost floor: 1% spread + 1% fee per side.~~ **[SUPERSEDED 2026-10-17: crypto removed from Classic]**
-- **Caps of TOTAL equity:** single stock ≤ 20%, ETF/fund ≤ 35%, any sleeve ≤ 45%. ~~crypto sleeve ≤ 15%~~ (removed 2026-10-17). **Cash floor ~$1,500** after every buy (sequenced across a batch).
+- **Caps of TOTAL equity:** single stock ≤ 20%, ETF/fund ≤ 35%, any sleeve ≤ 45%. ~~crypto sleeve ≤ 15%~~ (removed 2026-10-17). **Cash floor = $1,500 in Ofer's copy mirror (agent floor from the config-pinned `python -m classic_rsi.floor`, ≈$854 at ratio ~1.756; fail closed if the config is stale/invalid)** after every buy (sequenced across a batch).
 - ~~**Crypto:** only BTC (instrumentId 100000), ETH (100001), SOL (100063); ×1 long; SL+TP required. Every other crypto stays blocked. Symbol traps: bare `T` = Threshold crypto (100528), AT&T is `T.US` (1030); `CVX` → `CVX.US`; never resolve by bare ticker alone.~~ **[SUPERSEDED 2026-10-17: crypto removed from Classic]**
 - **Every new buy MUST carry a calculated take-profit AND a stop-loss on the order.** TP from ATR/R-multiple (RSI default since 2026-10-17: SL = entry − 2.5×ATR, TP = entry + 2R = 5×ATR, re-based on live ask; reward:risk ≥ 1.25; core: SL −11% / TP +25%) and the trade must satisfy the cost gate (expected gain ≥ 2× round-trip cost). For RSI buys that is the TP distance × p; for core buys it is the documented drift gain term, since the far +25% TP is a cap, not the gain estimate. A buy without TP (takeProfitRate null) is a hard fail.
 - **Unchanged:** ×1 long only, no leverage/shorts, stops required, sell/rotate before buy, cost gate (expected gain ≥ 2× round-trip cost; for core packs via the 2026-10-17 core gain term), cross-book block vs Momentum-HHHGDTJ live holdings, no XLE adds.
@@ -69,7 +69,7 @@ Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PR
 
 **Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place ON — Ofer accepted QA's residual risks 2026-10-16 01:27 IDT (see standing rules update).
 
-- **Look for a new opportunity every run** (`classic-rsi-1h-auto` every 3 hours weekdays `CRON_TZ=Asia/Jerusalem 35 */3 * * 1-5`, plus the daily rebalance check). If a valid pack exists, it passes run-QA ([Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa)) and order-QA ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate)), passes the **cost/benefit gate**, and cash after stays ≥ ~$1,500, then **Trader_Classic places automatically — no chat authorization from Ofer or CoS**.
+- **Look for a new opportunity every run** (`classic-rsi-1h-auto` every 3 hours weekdays `CRON_TZ=Asia/Jerusalem 35 */3 * * 1-5`, plus the daily rebalance check). If a valid pack exists, it passes run-QA ([Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa)) and order-QA ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate)), passes the **cost/benefit gate**, and cash after stays ≥ the agent floor (≈$854; $1,500 mirror), then **Trader_Classic places automatically — no chat authorization from Ofer or CoS**.
 - **No opportunity → do nothing** (log the run).
 - **Rebalance is DAILY** (weekdays), not weekly — see [Classic rebalance](sand-workflow:classic-rebalance). Daily trims/rotations/sells/adds are also full auto after QA PASS + cost gate.
 - **Max 4 NEW trades per IDT calendar day** across all Classic runners; **no monthly new-name cap**.
@@ -79,7 +79,7 @@ Standing playbook for **Trader_Classic** on the **Classic account (OfersClaw5-PR
 
 - Long-only, leverage **×1**; crypto only BTC/ETH/SOL ×1 (crypto sleeve ≤ 15%)
 - Prefer large liquid US companies / sector ETFs, then commodities
-- Prefer leaving cash uninvested; never all-in; cash floor ~$1,500
+- Prefer leaving cash uninvested; never all-in; cash ≥ agent floor (≈$854; $1,500 mirror)
 - Name caps 35% fund/ETF / 20% single stock of **total equity**; growth/sleeve cap 45% of **total equity** (not invested capital; check cost and market-value numerators over total equity — Ofer 2026-10-12 17:56 IDT); stops per [Classic rebalance](sand-workflow:classic-rebalance)
 - **Floor-vs-cap exit precedence undecided** (Ofer): any exit pack that depends on choosing cash-floor vs cap-breach first is **held** until Ofer decides
 - REAL only; QA PASS + cost gate → auto place → fill audit → CoS
@@ -99,16 +99,16 @@ Before every buy, sell, trim, or rotation, estimate the round-trip cost against 
 
 Follow the existing audit conventions and add the cost-gate numbers: `run_id` audit JSON + `index.jsonl` (`/workspace/classic_rsi/audit/`), run-QA and order-QA verdict files, Job-Runs notes for every run (including "no opportunity — no action" and skips), and for every place: prepare snapshot, `cost_gate` block, QA verdict ref, fill vs prepare, fees, cash after. Daily rebalance runs also write the daily run log per [Classic rebalance](sand-workflow:classic-rebalance).
 
-## Cash floor sizing (Ofer 2026-10-07; confirmed 2026-10-16 — floor ~$1,500)
+## Cash floor sizing (Ofer 2026-10-07; confirmed 2026-10-16; 2026-10-20 23:14 IDT — $1,500 measured in Ofer's copy mirror)
 
-**Hard preference:** leave **~$1,500+** residual cash on the Classic account after any buy batch.
+**Hard preference:** cash floor = $1,500 in Ofer's copy mirror (agent floor from the config-pinned `python -m classic_rsi.floor`, ≈$854 at ratio ~1.756; fail closed if the config is stale/invalid); leave at least the agent floor as residual cash on the Classic account after any buy batch.
 
-If a proposed pack would leave cash **below ~$1,500**:
+If a proposed pack would leave cash **below the agent floor (≈$854)**:
 1. **Lower** each trade’s notional, and/or
 2. **Buy fewer symbols** (keep the best sleeve-fit / highest-conviction names),
 3. Re-check cash-after ≥ floor, then prepare / order-QA.
 
-Do **not** propose a floor override unless Ofer **explicitly** sizes knowing cash will go under ~$1.5k. Never auto-place a pack that breaches the floor without that explicit override.
+Do **not** propose a floor override unless Ofer **explicitly** sizes knowing cash will go under the agent floor (≈$854). Never auto-place a pack that breaches the floor without that explicit override.
 
 ## Sell / rotate before buy (Ofer 2026-10-07; confirmed 2026-10-16)
 
@@ -147,7 +147,7 @@ Sleeves: growth/tech · industrial · healthcare/pharma · hard assets · cash. 
 5. X Tier-1 (small cost; X MCP guide first)
 6. Event calendar (~48h CPI/FOMC/NFP)
 7. Timing overlay: [Classic RSI four-level 1H](sand-workflow:classic-rsi-four-level-1h) (`/workspace/classic_rsi/`) — Buy = long timing, Sell = risk-off only; ATR SL/TP; confirmed 1H close. **In Fear, Support/Over Sold buys are the dip.** RSI still does not bypass weekend or an explicit hold.
-8. Size so cash-after ≥ ~$1.5k (cut notional or drop symbols first)
+8. Size so cash-after ≥ agent floor (≈$854; $1,500 mirror) (cut notional or drop symbols first)
 9. prepare on **Classic account** (`user-OfersClaw5`) — fees + tax haircut
 10. Read latest **KEEP / AVOID** from [Trading self-improvement loop](sand-workflow:trading-self-improvement-loop) before proposing size
 11. **Cost/benefit gate** (above) — skip if net expected gain is not clearly positive
@@ -163,15 +163,15 @@ Hold cash if the dip is not clean; event-vol freeze; in Fear lean into quality d
 
 ## Do not
 
-Non-major crypto/shorts/lev>1; buys without TP; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA PASS or without a passing, recorded cost/benefit gate; churn trades whose expected gain does not clearly beat round-trip cost + tax; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy); auto-place packs that leave cash under ~$1.5k without Ofer’s explicit override; skip the sell/rotate check before new buys; buy a symbol held in Momentum (mirror 11630170) — cross-book no-overlap.
+Non-major crypto/shorts/lev>1; buys without TP; exclusive ticker lists; break caps; chase parabolic into event-vol; treat high Fear as an automatic no-buy; ignore fees/tax; duplicate pending closes; place without QA PASS or without a passing, recorded cost/benefit gate; churn trades whose expected gain does not clearly beat round-trip cost + tax; use 1h heatmap when 1D was set; treat RSI Sell tags as shorts; prepare on parent SSO expecting a `mirrorId` (parent cannot target the copy); auto-place packs that leave cash under the agent floor (≈$854) without Ofer’s explicit override; skip the sell/rotate check before new buys; buy a symbol held in Momentum (mirror 11630170) — cross-book no-overlap.
 
 ## Slot pre-check — first step of every classic-rsi-1h-auto slot (Ofer 2026-10-18, token saving; no trading-rule change)
 
 Before the book refresh, `auto_1h` or any QA handoff:
 1. ONE fresh live read of OfersClaw5-PRIYN: MCP `user-OfersClaw5` `get-my-portfolio-summary` with `{"account":"real","includePositions":true,"includeOrders":true,"includeCopiedTraders":false}`. Save the raw output to `/workspace/classic_rsi/state/precheck-live.json`.
 2. `cd /workspace && ./screener-venv/bin/python -m classic_rsi.precheck --live-json /workspace/classic_rsi/state/precheck-live.json`
-   - It reads the existing `trade_counter` for today's IDT day (plus positions opened today in that live read) and imports every threshold from `execute_pass` / `trade_counter` (floor $1,500, min order $400, 4 trades/day). It never calls eToro and never places.
-   - **Exit 10 = SKIP the whole slot**: no book refresh, no `auto_1h`, no run-QA handoff, no message. Stay quiet. This happens only when no stop/rebalance action is pending AND either (a) `0 ≤ availableCash − $1,500 < $400` (`NO_CASH_FOR_MIN_ORDER`) or (b) 4 new trades are already used today (`DAILY_BUDGET_USED`).
+   - It reads the existing `trade_counter` for today's IDT day (plus positions opened today in that live read) and imports every threshold from `execute_pass` / `trade_counter` (agent floor from the config-pinned `python -m classic_rsi.floor` ≈$854 = $1,500 mirror, min order $400, 4 trades/day). It never calls eToro and never places.
+   - **Exit 10 = SKIP the whole slot**: no book refresh, no `auto_1h`, no run-QA handoff, no message. Stay quiet. This happens only when no stop/rebalance action is pending AND either (a) `0 ≤ availableCash − agent floor (≈$854) < $400` (`NO_CASH_FOR_MIN_ORDER`) or (b) 4 new trades are already used today (`DAILY_BUDGET_USED`).
    - **Exit 0 = PROCEED** with the normal slot, unchanged. The pre-check fails open: a stale (>15 min), unsuccessful or unparseable live read, or a counter error, always means PROCEED.
    - **Pending stop/rebalance means never skip.** That covers pending orders, a position at or through its SL, TP or trailing level (`scores-latest.json`), a missing SL, cash below the floor (`cash_below_floor`), a name or sleeve over its cap of total equity (`hard_cap_breach`), and an open entry in `/workspace/classic_rsi/state/pending-actions.json` (`{"actions":[{"kind":..,"symbol":..,"note":..,"done":false}]}`). Any agent can set that manual flag.
 3. Each decision (SKIP or PROCEED) appends one JSON line to `/workspace/classic_rsi/audit/precheck/precheck-YYYYMMDD.jsonl`. A skipped slot has no `run_id` and no run-QA. The audit line is its record, and this replaces "every run → run-QA" for skipped slots only.
@@ -196,8 +196,16 @@ Test: `./screener-venv/bin/python -m classic_rsi.test_precheck_20261018` (offlin
    - writes `state/trading-history-today.json`, `state/instrument-open.json` (isOpen = last quote ≤ 300 s old and bid/ask > 0) and `state/prebuy-state.json`.
    - daily count = unmarked reservations + |placed positionIds ∪ positions opened today (book + history) ∪ today's pending (unfilled) orders|.
    - releases unmarked reservations older than 30 min ONLY if there's no pending order for that instrumentId and no position/trade for it opened after the reservation (otherwise it stays reserved with `release_blocked`).
-3. Within 5 minutes: `execute_pass` (it refuses with `PRE_BUY_NOT_FRESH` if prebuy-state is missing, > 5 min old or incomplete, and `BOOK_NOT_FRESH_FOR_COUNT` if the book is > 60 s old). Pass `--instrument-open` from the printed `instrument_open_flags`. Then order-QA → place → `trade_counter mark --reservation <ID> --position-id <POS>` (or `release --reservation <ID> --reason ...` on failure).
+3. Within 5 minutes: `execute_pass` (it refuses with `PRE_BUY_NOT_FRESH` if prebuy-state is missing, > 5 min old or incomplete, and `BOOK_NOT_FRESH_FOR_COUNT` if the book is > 60 s old). Pass `--instrument-open` from the printed `instrument_open_flags`. Then order-QA → `prepare_token split` → place (token via `$file:`) → `prepare_token wipe` → `trade_counter mark --reservation <ID> --position-id <POS>` (or `release --reservation <ID> --reason ...` on failure). See the fix11 section below.
 - Never run production with `CLASSIC_EXEC_TEST_ROOT` set: test-mode results are labelled `test_mode`, `placeable=false`, the CLI exits 3, and auto_1h envelopes get a `TEST_MODE` hard flag.
+
+## execute_pass GO pin + prepare/place token handling (fix11, deployed 2026-10-21 19:17 IDT)
+
+- **GO version:** `classic_rsi/execute_pass.py` **v16.11 fix11** (`execute-pass-v16.11-token-sleeves-20261021-fix11`, package 1.1.7), sha256 `394e53a769e93f8ddf26f152e87c3d1351549e56d1c49c9e69700a6762dfdeb8`. Any other sha is not the QA GO version → NO-GO. The daily `build_daily.py` `EP_OK` pins the same sha.
+- **Cash floor:** always the config-pinned floor (`python -m classic_rsi.floor`, or `resolve(expected_sha256=<pinned config sha>)`; a bare `resolve()` is not config-pinned) (= execute_pass `cash_floor.agent_floor_usd`, ≈$854 = $1,500 mirror); never `floor_now()` or a hard-coded number.
+- **After every `prepare-trade` / `prepare-close`** (saved with write_to_file): `cd /workspace && ./screener-venv/bin/python -m classic_rsi.prepare_token split --response <raw> --stripped-out <pack-dir>/prepare-tokenstripped.json --token-out /tmp/<unique>-token`. It accepts `token` or `confirmationToken`, writes the token-free copy to disk first, writes the token ONLY to a 0600 file, deletes the raw read and prints metadata only. Exit 2 (`PREPARE_TOKEN_MISSING` / `AMBIGUOUS` / `INVALID` / `NOT_READY` / `VALUE_LEAK`) = do not place; re-prepare. Never read the token field by hand and never print it. Build live.json / execute_pass inputs from the stripped copy only.
+- **Place:** one `place-trade` / `place-close` call with `token = "$file:/tmp/<unique>-token"`. Then ALWAYS `./screener-venv/bin/python -m classic_rsi.prepare_token wipe --token-out /tmp/<unique>-token` (after a fill, a failure or an abandon), and save the place result with `prepare_token strip --response <raw> --out <pack-dir>/place-result.json`. Before any re-place, live-read to check whether the first place already went through.
+- **Deploy / rollback of classic_rsi packages:** `apply_fixNN.sh` (check only) → `--apply --external`; roll back ALWAYS with `--rollback <backup-dir> --external` (without `--external` the external scripts stay on the new code and fail on import).
 
 ## Shared book snapshot + cards (Ofer 2026-10-18c; token saver)
 
@@ -210,7 +218,7 @@ Deterministic book work lives in Python: `/workspace/books/snapshot.py` (normali
 
 The snapshot never changes trading rules. Caps and floors are imported from `classic_rsi` and are not redefined.
 
-**Usage:** Classic card facts (caps 20/35/45%, $1,500 floor, $400 min order, SPY/QQQ core 65-70% each ≤35%, crypto blocked, XLE no-add, cross-book blocked list, deployable cash, cash-drift trigger, changes vs previous) come from `books.cards`. Pre-check: `classic_rsi.precheck --from-books` after a fresh `classic` snapshot (≤15 min). Order gates keep their own live reads, unchanged.
+**Usage:** Classic card facts (caps 20/35/45%, $1,500 mirror floor (agent ≈$854), $400 min order, SPY/QQQ core 65-70% each ≤35%, crypto blocked, XLE no-add, cross-book blocked list, deployable cash, cash-drift trigger, changes vs previous) come from `books.cards`. Pre-check: `classic_rsi.precheck --from-books` after a fresh `classic` snapshot (≤15 min). Order gates keep their own live reads, unchanged.
 
 ## Book refresh = one script (2026-10-18e; Ofer rule 2026-10-18: anything deterministic runs in code; the LLM does judgement + prose only; no trading-rule change)
 The `classic-portfolio-for-app.json` refresh is fully scripted. Per run:
