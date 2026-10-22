@@ -26,6 +26,21 @@ Ofer rule: Momentum runs code-first like Classic. Trading rules are unchanged; o
   `./screener-venv/bin/python -m momentum_qa.postfill_check --raw <keys positions file> --expect '[{"symbol":"SYM","positionId":ID,"authorized_amount":1000}]' --out momentum_audit/postfill/postfill-YYYYMMDD.json`
   (`--expect` = JSON file or inline list; match by positionId, else instrumentId/symbol; `--no-audit` for dry runs). fill = max(invested, units×openRate) / authorized. Exit **0** all PASS (≥98%); **12** PARTIAL_FILL (50–98%, soft: log, no same-day top-up, reconcile next EOD); **13** FILL_MISSING (<50% or no live lot, hard: alert, never re-place without a new place-QA); **3** bad input. The place API outcome label alone never fails. Audit row → `momentum_audit/<date>.jsonl`.
 - **Soft pack flags (review notes, not gates):** screener run summary (`momentum_audit/screener-run-*.json`) carries `soft_flags` (also under `pack.soft_flags`): `LOW_RVOL_PACK` = every pack buy RVOL<0.6; `SECTOR_CONCENTRATION` = one sector ≥50% of held Momentum names (books/latest/momentum_keys.json) + pack buys (GICS sector from the S&P universe table, fallback sector_cache). They are review notes only and never change which buys are packed.
+- **Place audit + pack skips (QA Bot 2026-10-21).** Never hand-write audit JSON. Run every command from `/workspace`; all are idempotent. Full steps: `momentum_qa/place_flow.md` §8–9.
+  - **Run id rule:** on SKIP, PLACE_RUN_START, FILL and PLACE_RUN_END rows, `run_id` = the pack's `screener_run_id`, and each row also carries a top-level `screener_run_id`.
+  1. `./screener-venv/bin/python -m momentum_qa.place_audit start --screener-run-id <id> --verdict <qa-verdict.json> --symbols SYM,...`
+  2. Per symbol, before prepare-trade: `./screener-venv/bin/python -m momentum_qa.instrument_map guard --symbol SYM --quote <live ask> --ref-close <screener price> [--instrument-id N]`
+     - Exit 3 = refuse the place (>20% from close or wrong instrumentId).
+     - Place with the screener's `etoro_place_symbol` (Agilent = `A.US` / 1764, never bare `A` = VAULTA).
+  3. place_lock acquire (`--instrument-id` when known), then prepare-trade and place-trade.
+  4. After each fill: `./screener-venv/bin/python -m momentum_qa.place_audit fill --screener-run-id <id> --verdict <qa-verdict.json> --symbol SYM --position-id N --order-id N --units X --open-rate X --amount 1000 --fee <USD from orders:lookup> --sl X`
+     - rvol_at_entry comes from the pack row.
+     - `place_audit amend-fee` only fills in a fee missing from an older FILL row.
+  5. Every unplaced pack BUY: `./screener-venv/bin/python -m momentum_qa.pack_skips --screener momentum_audit/screener-run-<id>.json --verdict <qa-verdict.json> [--placed SYM,...]`
+     - Writes SKIP rows with the verdict sha and reason code.
+  6. Last: `./screener-venv/bin/python -m momentum_qa.place_audit end --screener-run-id <id> --verdict <qa-verdict.json> --placed ... --skipped ...`
+  - **Feedback:** from 2026-10-21, a pack BUY with neither a fill row nor a SKIP row = `MISSING_SKIP_ROW`.
+  - **Symbols:** held/duplicate checks match base tickers (`A.US` / `X.RTH` = `A` / `X`) and instrumentIds: held = id match OR symbol match; an id known as another ticker = `ID_SYMBOL_MISMATCH` (guard exit 3, place_lock exit 5). The guard requires `--instrument-id <screener row etoro_instrument_id>` plus `--quote-symbol` / `--quote-instrument-id` from the live quote (`market.symbol` / `market.instrumentId`); all three ids must agree and map to the symbol in `instrument_ids.json` (exit 3 otherwise); per-symbol order is in place_flow.md step 8.2. Run `momentum_qa.precheck classic-fresh --classic-raw F --max-age 900` right before each place (exit 2 = do not place).
 - **Silent when nothing changed:** no message to Ofer on SKIP, HOLD-only, or HALT-without-change days. Report only fills, QA FAILs, deviations, or errors.
 
 ## FULL AUTO (Ofer)

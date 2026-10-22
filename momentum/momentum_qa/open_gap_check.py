@@ -58,6 +58,7 @@ if str(_ROOT) not in sys.path:
 import nyse_session  # noqa: E402
 from momentum_qa import precheck as PC  # noqa: E402  (raw loader / keys parser / timestamp parser reused)
 from momentum_qa.audit import AuditLogger, new_run_id  # noqa: E402
+from momentum_qa.instrument_map import base_symbol  # noqa: E402
 
 IDT = ZoneInfo("Asia/Jerusalem")
 NY = ZoneInfo("America/New_York")
@@ -183,7 +184,7 @@ def sma50_before(closes: list[tuple[date, float]], today: date) -> tuple[Optiona
 
 
 def evaluate_lot(lot: dict, today: date, md: MarketData, closes_cache: dict) -> dict:
-    sym = str(lot["symbol"]).upper()
+    sym = base_symbol(lot["symbol"], lot.get("instrumentId"))  # A.US / X.RTH -> base ticker for Yahoo + audit
     row: dict[str, Any] = {"symbol": sym, "positionId": lot["positionId"], "side": "SELL"}
     sl = PC._num(lot.get("stop_loss"))
     price, psrc = PC._num(lot.get("current_rate")), "raw.currentRate"

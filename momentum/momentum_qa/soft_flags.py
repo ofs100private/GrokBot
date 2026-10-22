@@ -48,7 +48,8 @@ def norm_sector(s: Any) -> Optional[str]:
 
 
 def _sym(s: Any) -> str:
-    return str(s or "").upper().replace("-", ".")
+    from momentum_qa.instrument_map import base_symbol
+    return base_symbol(str(s or "").upper().replace("-", "."))
 
 
 def _read_json(p: Path) -> Any:
@@ -77,8 +78,11 @@ def held_symbols(path: Path = HELD_SNAPSHOT) -> tuple[list[str], Optional[str]]:
     d = _read_json(path)
     if not isinstance(d, dict):
         return [], f"HELD_SNAPSHOT_UNREADABLE: {path}"
-    syms = d.get("symbols") or [p.get("symbol") for p in d.get("positions") or []]
-    return sorted({_sym(s) for s in syms if s}), None
+    from momentum_qa.instrument_map import base_symbol
+    if d.get("symbols"):
+        return sorted({_sym(s) for s in d["symbols"] if s}), None
+    return sorted({base_symbol(_sym(p.get("symbol")), p.get("instrumentId"))
+                   for p in d.get("positions") or [] if p.get("symbol")}), None
 
 
 def compute_soft_flags(pack_rows: Iterable[dict], held: Iterable[str], sector_of: Callable[[str], Optional[str]],

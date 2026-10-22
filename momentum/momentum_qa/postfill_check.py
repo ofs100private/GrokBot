@@ -38,6 +38,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from momentum_qa.precheck import _num, _unwrap, load_json_file  # noqa: E402
+from momentum_qa.instrument_map import base_symbol, held_id_mismatch, id_symbol_mismatch, mapped_instrument_ids  # noqa: E402
 
 IDT = ZoneInfo("Asia/Jerusalem")
 PASS_MIN, PARTIAL_MIN = 0.98, 0.50
@@ -77,8 +78,10 @@ def parse_raw(raw: Any) -> dict:
         raise BadInput("RAW_UNKNOWN_SHAPE: no direct.positions / holdings")
     lots = []
     for p, m in rows:
-        lots.append({"positionId": p.get("positionId"), "symbol": str(m.get("symbol") or p.get("symbol") or "").upper(),
-                     "instrumentId": m.get("instrumentId") or p.get("instrumentId"), "openTime": p.get("openTime"),
+        iid = m.get("instrumentId") or p.get("instrumentId")
+        raw_sym = str(m.get("symbol") or p.get("symbol") or "").upper()
+        lots.append({"positionId": p.get("positionId"), "symbol": base_symbol(raw_sym, iid), "etoro_symbol": raw_sym,
+                     "instrumentId": iid, "id_symbol_mismatch": held_id_mismatch(raw_sym, iid), "openTime": p.get("openTime"),
                      "invested": _num(p.get("invested")), "amount": _num(p.get("amount")),
                      "units": _num(p.get("units")), "openRate": _num(p.get("openRate") or p.get("avgOpenRate"))})
     return {"timestamp": d.get("timestamp"), "xRequestId": d.get("xRequestId"), "lots": lots}
@@ -108,7 +111,9 @@ def load_expect(arg: str) -> list[dict]:
             pid = int(pid) if pid not in (None, "") else None
         except (TypeError, ValueError) as ex:
             raise BadInput(f"EXPECT[{i}]_BAD_POSITIONID: {pid!r}") from ex
-        out.append({"symbol": str(sym).upper() if sym else None, "positionId": pid,
+        if sym and id_symbol_mismatch(sym, iid):  # mismatched id never overrides the symbol
+            raise BadInput(f"EXPECT[{i}]_{id_symbol_mismatch(sym, iid)}")
+        out.append({"symbol": base_symbol(sym) if sym else None, "positionId": pid,
                     "instrumentId": iid, "authorized_amount": auth,
                     "api_outcome": e.get("api_outcome", e.get("status"))})
     return out
@@ -138,9 +143,11 @@ def check(raw: Any, expect: list[dict]) -> dict:
         if e["positionId"] is not None:
             lot, how = by_pid.get(e["positionId"]), "positionId"
         else:
+            want_ids = {str(e["instrumentId"])} if e["instrumentId"] not in (None, "") else \
+                {str(i) for i in mapped_instrument_ids(e["symbol"] or "")}
             cands = [x for x in lots if x.get("positionId") not in claimed and (
-                (e["instrumentId"] not in (None, "") and str(x.get("instrumentId")) == str(e["instrumentId"]))
-                or (e["symbol"] and x["symbol"] == e["symbol"]))]
+                (want_ids and str(x.get("instrumentId")) in want_ids)
+                or (e["symbol"] and base_symbol(x["symbol"], x.get("instrumentId")) == e["symbol"]))]
             cands.sort(key=lambda x: str(x.get("openTime") or ""), reverse=True)
             if cands:
                 lot, how = cands[0], "instrumentId" if e["instrumentId"] not in (None, "") else "symbol"
@@ -151,6 +158,7 @@ def check(raw: Any, expect: list[dict]) -> dict:
         results.append({
             "symbol": (lot or {}).get("symbol") or e["symbol"], "expected_symbol": e["symbol"],
             "positionId": (lot or {}).get("positionId", e["positionId"]), "matched_by": how if lot else None,
+            "instrumentId": (lot or {}).get("instrumentId", e["instrumentId"]),
             "found": lot is not None, "authorized_amount": e["authorized_amount"], "filled_usd": f,
             "fill_pct": round(pct * 100, 2) if pct is not None else None, "verdict": v,
             "severity": {"PASS": "OK", "PARTIAL_FILL": "SOFT", "FILL_MISSING": "HARD"}[v], "action": ACTIONS[v],

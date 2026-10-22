@@ -2,6 +2,7 @@
 """Daily feedback loop: what matched strategy vs clear deviations."""
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from collections import Counter
@@ -10,6 +11,11 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from momentum_qa.eod_miss_check import is_miss, screener_actions_by_deadline
+from momentum_qa.audit import PROTECTIVE_REJECT_CODES, base_symbol_of, classify_skip_code, placed_symbols, row_screener_run_id
+
+# QA Bot 2026-10-21: from this IL date every pack BUY name needs a FILL/placed row or a SKIP
+# row for its screener run; gate_ok_codes / protective_reject counts come from SKIP rows.
+SKIP_ROWS_FROM = "2026-10-21"  # QA Bot 2026-10-21: moved from 10-22 so backfilled rows count
 
 IL = ZoneInfo("Asia/Jerusalem")
 AUDIT_DIR = Path("/workspace/momentum_audit")
@@ -88,10 +94,31 @@ def _row_codes(r: dict) -> set[str]:
 
 
 def is_protective_reject(r: dict) -> bool:
-    """QA Bot 2026-10-20: INSUFFICIENT_CASH (+GATE_OK) or any GATE_OK code, in the single
-    code field OR in qa_reasons list -> protective reject, never a QA FAIL headline."""
+    """QA Bot 2026-10-21 re-review: ONLY true protective refusals (instrument guard refusal,
+    ID_SYMBOL_MISMATCH, stale cross-book fail-closed). GATE_OK codes are NOT protective."""
+    return protective_code(r) is not None
+
+
+def protective_code(r: dict) -> str | None:
+    for c in _row_codes(r):
+        for k in PROTECTIVE_REJECT_CODES:
+            if c.upper() == k or c.upper().startswith(k):
+                return k
+    return None
+
+
+def is_gate_ok_reject(r: dict) -> bool:
+    """QA Bot 2026-10-20: INSUFFICIENT_CASH / GATE_OK / any GATE_OK code -> gate said no (KEEP),
+    never a QA FAIL headline, never protective_reject."""
     codes = _row_codes(r)
-    return "INSUFFICIENT_CASH" in codes or "GATE_OK" in codes or gate_ok_code(r) is not None
+    known = "INSUFFICIENT_CASH" in codes or gate_ok_code(r) is not None or any(
+        classify_skip_code(c) == "GATE_OK" for c in codes if str(c).upper() != "GATE_OK")
+    return not is_protective_reject(r) and known   # a bare self-declared 'GATE_OK' label is not enough
+
+
+def gate_only_code(r: dict) -> str | None:
+    """gate_ok_code minus true protective codes (those count in protective_reject instead)."""
+    return None if is_protective_reject(r) else gate_ok_code(r)
 
 
 RVOL_BUCKETS = ("<0.7", "0.7-1.0", ">1.0", "unknown")
@@ -192,6 +219,53 @@ def is_rebalance_dry_run(r: dict) -> bool:
     return bool(d.get("dry_run")) or mode in (None, "dryrun")
 
 
+def skip_row_audit(rows: list[dict]) -> dict:
+    """SKIP-row accounting (QA Bot 2026-10-21). Returns gate_ok counts, protective count,
+    KEEP entries, AVOID entries (MISSING_SKIP_ROW + ungated SKIPs)."""
+    packs: dict[str, list[str]] = {}
+    for r in rows:
+        if r.get("script") == "momentum_screener.py" and r.get("event") == "ACTION" and r.get("action") == "BUY":
+            lst = packs.setdefault(r.get("run_id"), [])
+            if r.get("symbol") and r["symbol"] not in lst:
+                lst.append(r["symbol"])
+    skips = [r for r in rows if r.get("event") == "SKIP"]
+    skip_keys = {(row_screener_run_id(r), base_symbol_of(r.get("symbol"))) for r in skips}
+    placed = placed_symbols(rows)  # base tickers
+    gate_ok, protective, keep, avoid, seen = Counter(), 0, [], [], set()
+    for r in skips:
+        code = str(r.get("reason_code") or (r.get("details") or {}).get("reason_code") or "").upper()
+        # QA fixes3: only the reason code decides; a self-declared gate label on an unknown
+        # code never counts (-> SKIP_UNGATED)
+        cls = classify_skip_code(code)
+        key = (row_screener_run_id(r), base_symbol_of(r.get("symbol")))
+        if key in seen:
+            continue
+        seen.add(key)
+        if cls == "GATE_OK":
+            gate_ok[code] += 1
+        elif cls == "PROTECTIVE_REJECT":  # QA 2026-10-21: separate from GATE_OK, never double-counted
+            protective += 1
+        if cls in ("GATE_OK", "PROTECTIVE_REJECT", "INTENTIONAL_SKIP"):
+            keep.append({"tag": "KEEP", "action": "SKIP", "symbol": r.get("symbol"), "rationale": r.get("rationale"),
+                         "deviation_code": code, "gate": cls, "run_id": r.get("run_id")})
+        else:
+            avoid.append({"tag": "AVOID", "action": "SKIP", "symbol": r.get("symbol"), "deviation_code": "SKIP_UNGATED",
+                          "severity": "MEDIUM", "run_id": r.get("run_id"),
+                          "rationale": f"SKIP {r.get('symbol')} reason {code or '?'} is not a known GATE_OK / protective / intentional code: "
+                                       f"{r.get('rationale')}"})
+    missing = []
+    for rid, syms in packs.items():
+        for s in syms:
+            if base_symbol_of(s) in placed or (rid, base_symbol_of(s)) in skip_keys:
+                continue
+            missing.append({"run_id": rid, "symbol": s})
+            avoid.append({"tag": "AVOID", "action": "PACK_BUY", "symbol": s, "deviation_code": "MISSING_SKIP_ROW",
+                          "severity": "MEDIUM", "run_id": rid,
+                          "rationale": f"pack BUY {s} (run {rid}) has neither a FILL/placed row nor a SKIP row"})
+    return {"gate_ok_codes": dict(gate_ok), "protective_reject": protective, "keep": keep, "avoid": avoid,
+            "missing": missing, "skip_rows": len(skips), "packs": packs}
+
+
 def build_report(day: str) -> dict:
     rows = load_day(day)
     all_actions = [r for r in rows if r.get("event") == "ACTION"]
@@ -201,7 +275,8 @@ def build_report(day: str) -> dict:
     deviations = [r for r in rows if r.get("event") == "DEVIATION" or r.get("deviation")]
     errors = [r for r in rows if r.get("event") == "ERROR"]
     protective = [r for r in actions if r.get("qa_verdict") == "FAIL" and is_protective_reject(r)]
-    qa_fail = [r for r in actions if r.get("qa_verdict") == "FAIL" and not is_protective_reject(r)]
+    qa_fail = [r for r in actions if r.get("qa_verdict") == "FAIL"
+               and not is_protective_reject(r) and not is_gate_ok_reject(r)]
     qa_pass = [r for r in actions if r.get("qa_verdict") == "PASS"]
 
     keep = []
@@ -209,7 +284,7 @@ def build_report(day: str) -> dict:
     gate_ok_seen = set()  # collapse duplicate INSUFFICIENT_CASH SKIP+DEVIATION
     for a in actions:
         code = a.get("deviation_code")
-        g = gate_ok_code(a)
+        g = gate_only_code(a)
         if g:
             gate_ok_counts[g] += 1
             key = (g, a.get("symbol"))
@@ -274,7 +349,7 @@ def build_report(day: str) -> dict:
     for d in deviations:
         if is_rebalance_dry_run(d):
             continue
-        g = gate_ok_code(d)
+        g = gate_only_code(d)
         if g:
             key = (g, d.get("symbol"))
             if key not in gate_ok_seen:
@@ -315,6 +390,16 @@ def build_report(day: str) -> dict:
             }
         )
 
+    skip_mode = day >= SKIP_ROWS_FROM
+    skip_info = None
+    if skip_mode:
+        skip_info = skip_row_audit(rows)
+        gate_ok_counts = Counter(skip_info["gate_ok_codes"])
+        protective = [None] * skip_info["protective_reject"]
+        have_keep = {(k.get("deviation_code"), k.get("symbol")) for k in keep}
+        keep.extend(k for k in skip_info["keep"] if (k["deviation_code"], k["symbol"]) not in have_keep)
+        avoid.extend(skip_info["avoid"])
+
     codes = Counter(
         (x.get("deviation_code") or "UNKNOWN")
         for x in avoid
@@ -345,6 +430,12 @@ def build_report(day: str) -> dict:
         "lessons": [],
         "qa_bot": "498c78db-a027-4f2c-8126-3c2be6f0a4bb",
     }
+    report["skip_rows"] = (
+        {"mode": "skip_rows", "from": SKIP_ROWS_FROM, "skip_rows": skip_info["skip_rows"],
+         "missing_skip_rows": skip_info["missing"], "packs": skip_info["packs"]}
+        if skip_mode else {"mode": "legacy_actions", "from": SKIP_ROWS_FROM}
+    )
+    report["counts"]["missing_skip_rows"] = len(skip_info["missing"]) if skip_mode else 0
 
     # ≤3 lessons
     if keep:
@@ -530,10 +621,31 @@ def build_report(day: str) -> dict:
     return report
 
 
-def main(day: str | None = None) -> int:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    ap = argparse.ArgumentParser(
+        prog="python -m momentum_qa.feedback_daily",
+        description="Momentum daily feedback (KEEP vs AVOID) from momentum_audit/<day>.jsonl. "
+                    f"From {SKIP_ROWS_FROM} gate_ok_codes / protective_reject come from SKIP rows and a pack "
+                    "BUY with neither FILL/placed nor SKIP row is MISSING_SKIP_ROW.")
+    ap.add_argument("day", nargs="?", help="IL date YYYY-MM-DD (default: today IL)")
+    ap.add_argument("--out-dir", type=Path, default=None, help=f"output root (default {OUT_DIR})")
+    ap.add_argument("--stdout", action="store_true", help="print the report JSON only; write no files")
+    a = ap.parse_args(argv)
+    if a.day:
+        try:
+            datetime.strptime(a.day, "%Y-%m-%d")
+        except ValueError:
+            ap.error(f"day must be YYYY-MM-DD, got {a.day!r}")
+    return a
+
+
+def main(day: str | None = None, *, out_root: Path | None = None, stdout_only: bool = False) -> int:
     day = day or datetime.now(tz=IL).strftime("%Y-%m-%d")
     report = build_report(day)
-    out_dir = OUT_DIR / day
+    if stdout_only:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return 0
+    out_dir = Path(out_root or OUT_DIR) / day
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "daily_feedback.json"
     out_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -571,5 +683,5 @@ def main(day: str | None = None) -> int:
 
 
 if __name__ == "__main__":
-    day = sys.argv[1] if len(sys.argv) > 1 else None
-    raise SystemExit(main(day))
+    _a = parse_args()
+    raise SystemExit(main(_a.day, out_root=_a.out_dir, stdout_only=_a.stdout))

@@ -33,6 +33,14 @@ CLI (run from /workspace):
       [--classic-raw <classic.json>] [--cash-json <etoro-summary.json> | --cash N] [--pm-json <pm-out.json>] \
       [--out <summary.json>] [--min-order 50] [--no-audit] [--no-ingest]
   Holiday short-circuit: --raw may be omitted; a closed NYSE day exits 10 before any file is needed.
+
+classic-fresh (QA 2026-10-21; run right before EACH place-trade, after a fresh user-OfersClaw5 read):
+  ./screener-venv/bin/python -m momentum_qa.precheck classic-fresh --classic-raw <classic.json> \
+      [--max-age 900] [--save]
+  exit 0 FRESH; 2 STALE / MISSING / UNREADABLE / unsuccessful read / --max-age > 900 (MAX_AGE_TOO_HIGH)
+  (fail closed: do NOT place);
+  --save (only when fresh) writes the cross-book snapshot via classic_book.save_snapshot
+  (symbols + instrumentIds, also classic_holdings_latest.json).
 """
 from __future__ import annotations
 
@@ -50,6 +58,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 import nyse_session  # noqa: E402
+from momentum_qa.instrument_map import base_symbol, held_id_mismatch
 
 IDT = ZoneInfo("Asia/Jerusalem")
 EXIT_PROCEED, EXIT_SKIP = 0, 10
@@ -153,7 +162,9 @@ def parse_keys_raw(raw: Any, now: datetime) -> dict[str, Any]:
         if str(o.get("status", "")).lower() in TERMINAL_ORDER:
             continue
         m = o.get("market") or {}
-        orders.append({"orderId": o.get("orderId"), "symbol": str(m.get("symbol") or o.get("symbol") or "").upper(),
+        orders.append({"orderId": o.get("orderId"),
+                       "symbol": base_symbol(m.get("symbol") or o.get("symbol"), m.get("instrumentId") or o.get("instrumentId")),
+                       "instrumentId": m.get("instrumentId") or o.get("instrumentId"),
                        "action": o.get("action"), "type": o.get("type"), "status": o.get("status"),
                        "amount": _num(o.get("amount") or o.get("requestedAmount"))})
     return {"ok": True, "error": None, "shape": shape, "timestamp": d.get("timestamp"), "age_s": round(age, 1),
@@ -165,7 +176,8 @@ def _lot(p: dict, sym: Any, iid: Any) -> dict:
     pct = _num(p.get("pnlPercent"))
     if pct is None and inv and pnl is not None:
         pct = round(pnl / inv * 100, 2)
-    return {"positionId": p.get("positionId"), "symbol": str(sym or "").upper(), "instrumentId": iid,
+    return {"positionId": p.get("positionId"), "symbol": base_symbol(sym, iid), "etoro_symbol": str(sym or "").upper(),
+            "instrumentId": iid, "id_symbol_mismatch": held_id_mismatch(sym, iid),
             "openTime": p.get("openTime"), "avg_price": _num(p.get("openRate") or p.get("avgOpenRate")),
             "current_rate": _num(p.get("currentRate")), "units": _num(p.get("units")), "invested": inv, "pnl": pnl,
             "pnl_pct": pct, "leverage": p.get("leverage"), "direction": p.get("direction", "long"),
@@ -232,8 +244,8 @@ def run_books(raw: Optional[str], classic_raw: Optional[str]) -> dict[str, Any]:
     try:
         res["overlap"] = S.overlap()
         c = S.fresh("classic", 60)
-        res["classic_symbols"] = sorted({p["norm_symbol"] for p in c["positions"]} |
-                                        {S.norm_symbol(o["symbol"]) for o in c.get("pending_orders") or []
+        res["classic_symbols"] = sorted({base_symbol(p["norm_symbol"], p.get("instrumentId")) for p in c["positions"]} |
+                                        {base_symbol(o["symbol"], o.get("instrumentId")) for o in c.get("pending_orders") or []
                                          if o.get("action") != "close"}) if c else None
     except Exception as e:  # noqa: BLE001
         res["errors"].append(f"overlap: {e}")
@@ -342,7 +354,60 @@ def _atomic_write(path: Path, obj: Any) -> None:
     os.replace(tmp, path)
 
 
+CLASSIC_MAX_AGE_S = 900.0
+EXIT_CLASSIC_FRESH, EXIT_CLASSIC_STALE = 0, 2
+
+
+def classic_freshness(raw: Any, now: datetime, max_age_s: float = CLASSIC_MAX_AGE_S) -> dict:
+    """FRESH only if the Classic read is successful and its timestamp is <= max_age_s old."""
+    if not isinstance(raw, dict):
+        return {"fresh": False, "code": "CLASSIC_READ_UNREADABLE", "age_s": None}
+    if raw.get("error") or raw.get("statusCode") not in (200, None):
+        return {"fresh": False, "code": "CLASSIC_READ_FAILED", "age_s": None,
+                "error": raw.get("error") or raw.get("statusCode")}
+    ts = _ts(raw)
+    if ts is None:
+        return {"fresh": False, "code": "CLASSIC_READ_NO_TIMESTAMP", "age_s": None}
+    age = (now - ts).total_seconds()
+    if age < -5 or age > max_age_s:
+        return {"fresh": False, "code": "CLASSIC_READ_STALE", "age_s": round(age, 1), "max_age_s": max_age_s}
+    return {"fresh": True, "code": "CLASSIC_READ_FRESH", "age_s": round(age, 1), "max_age_s": max_age_s}
+
+
+def classic_fresh_main(argv: list[str], now: Optional[datetime] = None) -> int:
+    ap = argparse.ArgumentParser(prog="momentum_qa.precheck classic-fresh",
+                                 description="Fail closed unless the Classic read is fresh (run right before each place)")
+    ap.add_argument("--classic-raw", required=True, help="saved user-OfersClaw5 get-my-positions-and-orders output")
+    ap.add_argument("--max-age", type=float, default=CLASSIC_MAX_AGE_S,
+                    help="max age in seconds (default and hard limit 900; >900 -> exit 2 MAX_AGE_TOO_HIGH)")
+    ap.add_argument("--save", action="store_true", help="when fresh, save the cross-book snapshot (+instrumentIds)")
+    a = ap.parse_args(argv)
+    now = now or datetime.now(timezone.utc)
+    if not (0 < a.max_age <= CLASSIC_MAX_AGE_S):  # QA fixes4: callers cannot widen the window
+        print(json.dumps({"fresh": False, "code": "MAX_AGE_TOO_HIGH" if a.max_age > CLASSIC_MAX_AGE_S else "MAX_AGE_INVALID",
+                          "max_age_s": min(a.max_age, CLASSIC_MAX_AGE_S), "requested_max_age_s": a.max_age,
+                          "limit_s": CLASSIC_MAX_AGE_S}))
+        return EXIT_CLASSIC_STALE
+    try:
+        raw = load_json_file(a.classic_raw)
+    except Exception as e:  # noqa: BLE001
+        print(json.dumps({"fresh": False, "code": "CLASSIC_READ_UNREADABLE", "error": str(e)}))
+        return EXIT_CLASSIC_STALE
+    res = classic_freshness(raw, now, a.max_age)
+    if res["fresh"] and a.save:
+        import classic_book
+        try:
+            res["snapshot"] = str(classic_book.save_snapshot(raw))
+        except Exception as e:  # noqa: BLE001
+            res.update(fresh=False, code="CLASSIC_SNAPSHOT_SAVE_FAILED", error=str(e))
+    print(json.dumps(res, default=str))
+    return EXIT_CLASSIC_FRESH if res["fresh"] else EXIT_CLASSIC_STALE
+
+
 def main(argv: Optional[list[str]] = None, now: Optional[datetime] = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "classic-fresh":
+        return classic_fresh_main(argv[1:], now)
     ap = argparse.ArgumentParser(prog="momentum_qa.precheck", description="Momentum EOD step 0 (exit 10 = silent SKIP)")
     ap.add_argument("--raw", help="saved Momentum keys get-my-positions-and-orders (or portfolio-summary) MCP output")
     ap.add_argument("--classic-raw", help="optional saved Classic user-OfersClaw5 read (summary or positions)")

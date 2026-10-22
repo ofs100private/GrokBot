@@ -11,8 +11,11 @@ retried with retry_after_fail=True AND a *different* (fresh) verdict file sha.
 CLI:
   python -m momentum_qa.place_lock acquire --verdict V.json --symbol VTRS --caller eod-routine \
         --positions-json live_positions.json   (or '-' for stdin)  [--allow-held] [--retry-after-fail]
+        [--instrument-id N]   (held = id match OR base-ticker match; A.US/A.RTH == A;
+                              an id known as another ticker -> ID_SYMBOL_MISMATCH exit 5, no lock)
   python -m momentum_qa.place_lock mark --lock <path> --status PLACED --order-id 123 --position-id 456
-Exit codes: 0 OK, 2 LOCK_HELD, 3 ALREADY_HELD, 4 RETRY_NOT_ALLOWED / POSITIONS_STALE / bad input.
+Exit codes: 0 OK, 2 LOCK_HELD, 3 ALREADY_HELD, 4 RETRY_NOT_ALLOWED / POSITIONS_STALE / bad input,
+            5 ID_SYMBOL_MISMATCH.
 """
 from __future__ import annotations
 
@@ -24,10 +27,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from momentum_qa.instrument_map import base_symbol, id_symbol_mismatch, instrument_id as mapped_instrument_id, is_held
+
 LOCK_DIR = Path("/workspace/momentum_audit/place_locks")
 DEFAULT_ACCOUNT = "Momentum-HHHGDTJ"
 STATUSES = ("ACQUIRED", "PLACED", "FAILED", "EXPIRED")
 EXIT_OK, EXIT_LOCK_HELD, EXIT_ALREADY_HELD, EXIT_RETRY_NOT_ALLOWED = 0, 2, 3, 4
+EXIT_ID_SYMBOL_MISMATCH = 5  # --instrument-id is a different instrument than the symbol: never acquire
 POSITIONS_MAX_AGE_S = 120  # live get-my-positions-and-orders must be this fresh
 
 
@@ -50,11 +56,44 @@ def _now() -> str:
 
 
 def _norm(sym: str) -> str:
-    return str(sym or "").strip().upper()
+    """Base ticker: eToro 'A.US' / 'X.RTH' -> 'A' / 'X' (QA Bot 2026-10-21 SYMBOL_MAP_A)."""
+    return base_symbol(sym)
+
+
+def held_index(positions_obj) -> tuple[set[str], set[int]]:
+    """(base symbols, instrumentIds) held in a get-my-positions-and-orders JSON."""
+    syms: set[str] = set()
+    ids: set[int] = set()
+
+    def walk(o, in_positions=False, iid=None):
+        if isinstance(o, dict):
+            if in_positions:
+                v_iid = o.get("instrumentId", iid)
+                try:
+                    if v_iid not in (None, ""):
+                        ids.add(int(v_iid))
+                        iid = int(v_iid)
+                except (TypeError, ValueError):
+                    pass
+                for k in ("symbol", "symbolFull", "instrumentSymbol", "ticker", "internalSymbolFull"):
+                    v = o.get(k)
+                    if isinstance(v, str) and v.strip():
+                        mk = o.get("market") if isinstance(o.get("market"), dict) else {}
+                        syms.add(base_symbol(v, o.get("instrumentId", mk.get("instrumentId", iid))))
+                        break
+            for k, v in o.items():
+                kl = k.lower()
+                walk(v, in_positions or kl in ("positions", "openpositions", "clientportfolio_positions"), iid)
+        elif isinstance(o, list):
+            for v in o:
+                walk(v, in_positions, None)
+
+    walk(positions_obj)
+    return syms, ids
 
 
 def held_symbols(positions_obj) -> set[str]:
-    """Extract held symbols from a get-my-positions-and-orders JSON (tolerant of shapes)."""
+    """Extract held symbols (base tickers) from a get-my-positions-and-orders JSON (tolerant of shapes)."""
     out: set[str] = set()
 
     def walk(o, in_positions=False):
@@ -63,7 +102,8 @@ def held_symbols(positions_obj) -> set[str]:
                 for k in ("symbol", "symbolFull", "instrumentSymbol", "ticker", "internalSymbolFull"):
                     v = o.get(k)
                     if isinstance(v, str) and v.strip():
-                        out.add(_norm(v))
+                        mk = o.get("market") if isinstance(o.get("market"), dict) else {}
+                        out.add(base_symbol(v, o.get("instrumentId", mk.get("instrumentId"))))
                         break
             for k, v in o.items():
                 kl = k.lower()
@@ -161,13 +201,16 @@ def _same_symbol_locks(symbol: str, lock_dir: Path) -> list[tuple[Path, dict]]:
 
 def acquire(verdict_path, symbol, account: str = DEFAULT_ACCOUNT, *, caller: str = "unknown",
             positions=None, allow_held: bool = False, retry_after_fail: bool = False,
-            lock_dir: Path | None = None) -> dict:
+            lock_dir: Path | None = None, instrument_id: int | None = None) -> dict:
     """Atomically take the single-use lock for (verdict sha, symbol). Raises PlaceLockError."""
     lock_dir = Path(lock_dir or LOCK_DIR)
     lock_dir.mkdir(parents=True, exist_ok=True)
     sym = _norm(symbol)
     if not sym:
         raise PlaceLockError("BAD_INPUT", EXIT_RETRY_NOT_ALLOWED, "empty symbol")
+    mm = id_symbol_mismatch(sym, instrument_id)
+    if mm:  # QA 2026-10-21 HIGH: a mismatched id never overrides the symbol -> refuse, no lock
+        raise PlaceLockError("ID_SYMBOL_MISMATCH", EXIT_ID_SYMBOL_MISMATCH, mm)
     sha = sha256_file(verdict_path)
     lp = lock_path_for(sha, sym, lock_dir)
 
@@ -178,8 +221,12 @@ def acquire(verdict_path, symbol, account: str = DEFAULT_ACCOUNT, *, caller: str
     # Freshness: any provided positions JSON must carry timestamp/asOf <120s (missing = refuse)
     if pos is not None:
         require_fresh_positions(pos)
-    if pos is not None and not allow_held and sym in held_symbols(pos):
-        raise PlaceLockError("ALREADY_HELD", EXIT_ALREADY_HELD, f"{sym} already held on {account}")
+    if pos is not None and not allow_held:
+        h_syms, h_ids = held_index(pos)
+        h_syms |= held_symbols(pos)
+        iid = instrument_id if instrument_id is not None else mapped_instrument_id(sym)
+        if is_held(sym, h_syms, h_ids, iid):
+            raise PlaceLockError("ALREADY_HELD", EXIT_ALREADY_HELD, f"{sym} already held on {account}")
 
     # 2) other locks for this symbol under different verdicts
     for p, d in _same_symbol_locks(sym, lock_dir):
@@ -248,6 +295,7 @@ def main(argv=None) -> int:
     a.add_argument("--positions-json", help="file path or '-' for stdin")
     a.add_argument("--allow-held", action="store_true", help="PM actions only (trail/close)")
     a.add_argument("--retry-after-fail", action="store_true")
+    a.add_argument("--instrument-id", type=int, help="eToro instrumentId of the buy (held = id OR symbol match; an id of another ticker -> exit 5)")
     a.add_argument("--lock-dir")
     m = sub.add_parser("mark")
     m.add_argument("--lock", required=True)
@@ -261,7 +309,8 @@ def main(argv=None) -> int:
             r = acquire(args.verdict, args.symbol, args.account, caller=args.caller,
                         positions=args.positions_json, allow_held=args.allow_held,
                         retry_after_fail=args.retry_after_fail,
-                        lock_dir=Path(args.lock_dir) if args.lock_dir else None)
+                        lock_dir=Path(args.lock_dir) if args.lock_dir else None,
+                        instrument_id=args.instrument_id)
         else:
             r = mark(args.lock, args.status, order_id=args.order_id, position_id=args.position_id, note=args.note)
         print(json.dumps({"ok": True, **r}))

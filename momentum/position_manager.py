@@ -38,7 +38,8 @@ ETORO_TO_YAHOO = {
 def to_yahoo(symbol: str) -> str:
     if symbol in ETORO_TO_YAHOO:
         return ETORO_TO_YAHOO[symbol]
-    return symbol.replace(".", "-")
+    from momentum_qa.instrument_map import base_symbol  # eToro 'A.US' / 'X.RTH' -> base ticker
+    return base_symbol(symbol).replace(".", "-")
 
 
 def price_context(symbol: str) -> dict | None:

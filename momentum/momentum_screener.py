@@ -20,6 +20,7 @@ import yfinance as yf
 from nyse_session import in_intraday_ban, nyse_today_is_open
 from momentum_qa.audit import AuditLogger, new_run_id
 from momentum_qa.event_calendar import is_event_vol_freeze
+from momentum_qa.instrument_map import resolve_instrument_id as etoro_instrument_id, place_symbol as etoro_place_symbol
 from momentum_qa.validate import validate_screener_output
 
 # ==========================================
@@ -123,6 +124,25 @@ def get_sp500_symbols() -> list[str]:
 
 def to_etoro_symbol(yahoo_ticker: str) -> str:
     return YAHOO_TO_ETORO_MAP.get(yahoo_ticker, yahoo_ticker.replace("-", "."))
+
+
+def enforce_instrument_ids(rows: list[dict], trace=None) -> int:
+    """Fill etoro_instrument_id on BUY rows; a BUY whose id cannot be resolved becomes SKIP
+    INSTRUMENT_ID_UNRESOLVED. Returns the number blocked."""
+    n = 0
+    for row in rows:
+        if row.get("action") != "BUY":
+            continue
+        if row.get("etoro_instrument_id") is None:
+            row["etoro_instrument_id"] = etoro_instrument_id(row.get("symbol") or row.get("etoro_symbol") or "")
+        if row["etoro_instrument_id"] is None:
+            msg = (f"INSTRUMENT_ID_UNRESOLVED blocked {row.get('symbol')}: no eToro instrumentId in the map/cache "
+                   f"(refresh: instrument_map cache-missing -> read-only overview -> build-cache)")
+            row.update(action="SKIP", reason="INSTRUMENT_ID_UNRESOLVED", rationale=msg, mcp_order_params=None)
+            n += 1
+            if trace:
+                trace("INSTRUMENT_ID_UNRESOLVED", symbol=row.get("symbol"), why=msg)
+    return n
 
 
 def dwm_returns(close: pd.Series) -> tuple[float, float, float] | None:
@@ -622,6 +642,9 @@ def run_screener(
             base = {
                 "symbol": etoro_sym,
                 "etoro_symbol": etoro_sym,
+                # QA Bot 2026-10-21 SYMBOL_MAP_A: eToro 'A' = VAULTA crypto; place via override
+                "etoro_place_symbol": etoro_place_symbol(etoro_sym),
+                "etoro_instrument_id": etoro_instrument_id(etoro_sym),
                 "yahoo_symbol": sym,
                 "asset_class": asset_class,
                 "price": round(curr_price, 2),
@@ -750,7 +773,7 @@ def run_screener(
                     "mcp_order_params": {
                         "account": "real",
                         "direction": "buy",
-                        "symbol": etoro_sym,
+                        "symbol": etoro_place_symbol(etoro_sym),
                         "orderType": "mkt",
                         "leverage": 1,
                         "amount": allocation_usd,
@@ -788,11 +811,16 @@ def run_screener(
                 )
                 row["mcp_order_params"] = None
 
+    # QA 2026-10-21 fixes3: every BUY row carries etoro_instrument_id (override -> offline cache
+    # momentum_qa/instrument_ids.json). Unresolved -> SKIP (fail closed; the place guard needs it).
+    drop_counts["instrument_id_unresolved"] = enforce_instrument_ids(candidates, trace=T)
+
     # Standing rule (Ofer 2026-10-13): never buy a symbol held in Classic. Fail closed.
-    from classic_book import load_held, apply_cross_book
+    from classic_book import load_held, load_held_ids, apply_cross_book
     _held, _held_why = load_held()
     T("cross_book_read", held=sorted(_held) if _held is not None else None, error=_held_why)
-    drop_counts["cross_book_held"] = apply_cross_book(candidates, _held, _held_why, trace=T)
+    drop_counts["cross_book_held"] = apply_cross_book(candidates, _held, _held_why, trace=T,
+                                                      held_ids=load_held_ids() if _held is not None else None)
 
     buys = [x for x in candidates if x.get("action") == "BUY"]
     skips = [x for x in candidates if x.get("action") == "SKIP"]
@@ -1075,6 +1103,9 @@ def run_screener_with_qa(
                 "stop_loss": row.get("stop_loss"),
                 "amount_usd": row.get("amount_usd") or allocation_usd,
                 "setup": row.get("reason") or row.get("setup_type"),
+                "last_close": row.get("price"),
+                "etoro_place_symbol": row.get("etoro_place_symbol"),
+                "etoro_instrument_id": row.get("etoro_instrument_id"),
                 "day_pct": row.get("day_pct"),
                 "week_pct": row.get("week_pct"),
                 "month_pct": row.get("month_pct"),
