@@ -28,6 +28,16 @@ export interface ClassicFlatMetrics {
   symbols?: string[]
   /** Market value of open positions, when the writer provides it. */
   investedMarketValue?: number
+  /** Current (live-rule) agent cash floor in USD, as written by Trader_Classic. */
+  cashFloor?: number
+  /** Current (live-rule) mirror cash floor in USD (caps.cashFloor / cashFloorMirror). */
+  cashFloorMirror?: number
+  /** Cash above the current floor, as written by Trader_Classic. */
+  cashAboveFloor?: number
+  /** Current (live-rule) cap on new trades per day; null = no cap. */
+  maxNewTradesPerDay?: number | null
+  /** Current blocked list (recommendation.blocked), verbatim strings. */
+  blocked?: string[]
 }
 
 export interface ClassicLiveSnapshot {
@@ -347,6 +357,22 @@ function parseFlatClassicPayload(raw: Record<string, unknown>): ClassicLiveSnaps
   if (investedMV !== undefined) metrics.investedMarketValue = investedMV
   if (Array.isArray(raw.symbols)) {
     metrics.symbols = (raw.symbols as unknown[]).filter((s): s is string => typeof s === 'string')
+  }
+  const caps = isRecord(raw.caps) ? raw.caps : {}
+  const cashFloor = optNumber(raw.cashFloor, caps.cashFloorAgent)
+  if (cashFloor !== undefined) metrics.cashFloor = cashFloor
+  const cashFloorMirror = optNumber(raw.cashFloorMirror, caps.cashFloor)
+  if (cashFloorMirror !== undefined) metrics.cashFloorMirror = cashFloorMirror
+  const cashAboveFloor = optNumber(raw.cashAboveFloor)
+  if (cashAboveFloor !== undefined) metrics.cashAboveFloor = cashAboveFloor
+  if ('maxNewTradesPerDay' in caps) {
+    const cap = caps.maxNewTradesPerDay
+    if (cap === null) metrics.maxNewTradesPerDay = null
+    else if (typeof cap === 'number' && Number.isFinite(cap)) metrics.maxNewTradesPerDay = cap
+  }
+  const rec = isRecord(raw.recommendation) ? raw.recommendation : {}
+  if (Array.isArray(rec.blocked)) {
+    metrics.blocked = (rec.blocked as unknown[]).filter((s): s is string => typeof s === 'string')
   }
 
   return {

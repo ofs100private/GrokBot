@@ -1,0 +1,632 @@
+{
+  "schemaVersion": "1.0",
+  "asOf": "2026-09-19T10:57:06.115000+03:00",
+  "portfolio": {
+    "key": "classic",
+    "name": "Classic · OfersClaw5-PRIYN",
+    "mirrorId": 11368142,
+    "agentPortfolioId": "OfersClaw5-PRIYN",
+    "truthNote": "mirror A 11368142 only — never Momentum / never keys-B"
+  },
+  "mandate": {
+    "timeframe": "1H",
+    "confirmedCloseOnly": true,
+    "longOnly": true,
+    "sellMeansRiskOffOnly": true,
+    "atrSlMult": 1.5,
+    "atrTpMult": 2,
+    "qaBeforePlace": true,
+    "weekendGate": true,
+    "doNotPlaceFromThisUi": true,
+    "reminders": [
+      "1H confirmed close only (forming bar dropped)",
+      "ATR(14) SL 1.5× / TP 2.0× (price, never FX pips)",
+      "Long-only — Sell triangles = RISK_OFF only (never short)",
+      "QA PASS (classic-real-money-order-qa-gate) before any place",
+      "Weekend / Fear / cash-floor gates stay with Trader_Classic",
+      "This tab never places trades"
+    ]
+  },
+  "latestAuto": {
+    "run_id": "classic-rsi-auto-20260919-105450-f4dc67b5",
+    "kind": "auto",
+    "status": "GATED",
+    "asOfIDT": "2026-09-19 10:54:51 IDT",
+    "asOfET": "2026-09-19 03:54:51 ET",
+    "portfolio": "OfersClaw5-PRIYN",
+    "mirrorId": 11368142,
+    "timeframe": "1H",
+    "confirmed_close": true,
+    "long_only": true,
+    "qa_gate": "classic-real-money-order-qa-gate",
+    "do_not_place": true,
+    "place": false,
+    "symbols": [
+      "SMH",
+      "QQQ",
+      "XLV",
+      "AAPL",
+      "MSFT",
+      "JNJ"
+    ],
+    "book_symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "book_summary": {
+      "equity": 12733.77,
+      "availableCash": 7438.61,
+      "totalInvested": 15000,
+      "profitLoss": -1847.93,
+      "profitLossPercent": -12.32,
+      "closedPnl": -2019.54,
+      "credit": null,
+      "stopLossPercentage": 5,
+      "currency": "USD",
+      "cashPct": 58.4,
+      "deploymentPct": 41.6
+    },
+    "mandate_gates": {
+      "weekend": true,
+      "us_rth": false,
+      "available_cash": 7438.61,
+      "cash_floor_usd": 2500,
+      "blocks": [
+        "weekend_no_new_opens"
+      ],
+      "allow_new_buys": false,
+      "force": false,
+      "note": "Fear / live cash / sleeve caps still enforced by Trader_Classic before QA"
+    },
+    "buy_packs": [],
+    "risk_off": [],
+    "propose_run_id": "classic-rsi-propose-20260919-105451-78cbdfca",
+    "propose": {
+      "asOfIDT": "2026-09-19 10:54:51 IDT",
+      "portfolio": "OfersClaw5-PRIYN",
+      "mirrorId": 11368142,
+      "timeframe": "1H",
+      "long_only": true,
+      "qa_gate": "classic-real-money-order-qa-gate",
+      "do_not_place": true,
+      "symbols": [
+        "SMH",
+        "QQQ",
+        "XLV"
+      ],
+      "invocation": {
+        "next": [
+          "Attach fee_estimate + overnight_financing_estimate via prepare/getCost",
+          "Set size respecting cash floor ≥~$2.5k and sleeve caps",
+          "Submit each buy_pack to QA Bot (classic-real-money-order-qa-gate) citing run_id",
+          "Place only after QA PASS + mandate gates clear"
+        ],
+        "never": [
+          "Do not short from RISK_OFF / Sell triangles",
+          "Do not bypass QA",
+          "Do not use FX pip SL/TP",
+          "Do not touch Momentum from this module"
+        ]
+      },
+      "buy_packs": [],
+      "risk_off": [],
+      "per_symbol": [
+        {
+          "symbol": "SMH",
+          "timeframe": "1H",
+          "confirmed_only": true,
+          "last_bar_time": "2026-09-18 18:30:00+00:00",
+          "last_close": 565.72998046875,
+          "last_rsi": 63.96509134254444,
+          "last_zone": "NEUTRAL",
+          "buy_packs": [],
+          "risk_off": [],
+          "recent_signals": [
+            {
+              "bar_time": "2026-07-27 15:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 31.07720804806314,
+              "zone": "SUPPORT",
+              "close": 544.4299926757812,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-07-28 14:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 33.44387247111058,
+              "zone": "SUPPORT",
+              "close": 529.5900268554688,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-08-24 15:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 33.36172312170234,
+              "zone": "SUPPORT",
+              "close": 548.469970703125,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-09-08 13:30:00+00:00",
+              "action": "RISK_OFF",
+              "raw_signal": "SELL_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 72.01899982295237,
+              "zone": "RESISTANCE",
+              "close": 575.5700073242188,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-09-14 13:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 28.39017030676898,
+              "zone": "SUPPORT",
+              "close": 543.33251953125,
+              "is_latest_bar": false
+            }
+          ],
+          "qa_gate": "classic-real-money-order-qa-gate",
+          "place": false,
+          "notes": [
+            "Never emit shorts; Sell tags → RISK_OFF only.",
+            "Trader_Classic must still clear Fear/cash/weekend/×1/no-crypto before QA.",
+            "QA Bot must PASS before any place."
+          ]
+        },
+        {
+          "symbol": "QQQ",
+          "timeframe": "1H",
+          "confirmed_only": true,
+          "last_bar_time": "2026-09-18 18:30:00+00:00",
+          "last_close": 719.1199951171875,
+          "last_rsi": 63.794142563978845,
+          "last_zone": "NEUTRAL",
+          "buy_packs": [],
+          "risk_off": [],
+          "recent_signals": [
+            {
+              "bar_time": "2026-08-05 14:30:00+00:00",
+              "action": "RISK_OFF",
+              "raw_signal": "SELL_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 75.82788781598043,
+              "zone": "RESISTANCE",
+              "close": 722.0850219726562,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-08-20 18:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 30.115496884051268,
+              "zone": "SUPPORT",
+              "close": 710.9299926757812,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-08-24 14:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 33.249500947801906,
+              "zone": "SUPPORT",
+              "close": 706.8300170898438,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-09-10 13:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 32.87306298728484,
+              "zone": "SUPPORT",
+              "close": 710.4099731445312,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-09-14 13:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 33.496235300784406,
+              "zone": "SUPPORT",
+              "close": 705.780029296875,
+              "is_latest_bar": false
+            }
+          ],
+          "qa_gate": "classic-real-money-order-qa-gate",
+          "place": false,
+          "notes": [
+            "Never emit shorts; Sell tags → RISK_OFF only.",
+            "Trader_Classic must still clear Fear/cash/weekend/×1/no-crypto before QA.",
+            "QA Bot must PASS before any place."
+          ]
+        },
+        {
+          "symbol": "XLV",
+          "timeframe": "1H",
+          "confirmed_only": true,
+          "last_bar_time": "2026-09-18 18:30:00+00:00",
+          "last_close": 168.4600067138672,
+          "last_rsi": 54.40537762960126,
+          "last_zone": "NEUTRAL",
+          "buy_packs": [],
+          "risk_off": [],
+          "recent_signals": [
+            {
+              "bar_time": "2026-08-19 13:30:00+00:00",
+              "action": "RISK_OFF",
+              "raw_signal": "SELL_80",
+              "strength_tag": "EXTREME_80",
+              "rsi": 86.63947805907071,
+              "zone": "OVER_BUY",
+              "close": 176.29010009765625,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-08-19 14:30:00+00:00",
+              "action": "RISK_OFF",
+              "raw_signal": "SELL_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 75.09042082121114,
+              "zone": "RESISTANCE",
+              "close": 174.75999450683594,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-08-28 14:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 33.28215999400787,
+              "zone": "SUPPORT",
+              "close": 171.27000427246094,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-08-31 14:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 34.87853846157935,
+              "zone": "SUPPORT",
+              "close": 170.46580505371094,
+              "is_latest_bar": false
+            },
+            {
+              "bar_time": "2026-09-08 15:30:00+00:00",
+              "action": "CANDIDATE_LONG",
+              "raw_signal": "BUY_70",
+              "strength_tag": "ZONE_70",
+              "rsi": 28.515521659455487,
+              "zone": "SUPPORT",
+              "close": 167.74989318847656,
+              "is_latest_bar": false
+            }
+          ],
+          "qa_gate": "classic-real-money-order-qa-gate",
+          "place": false,
+          "notes": [
+            "Never emit shorts; Sell tags → RISK_OFF only.",
+            "Trader_Classic must still clear Fear/cash/weekend/×1/no-crypto before QA.",
+            "QA Bot must PASS before any place."
+          ]
+        }
+      ],
+      "run_id": "classic-rsi-propose-20260919-105451-78cbdfca",
+      "audit_dir": "/workspace/classic_rsi/audit",
+      "audit": {
+        "run_id": "classic-rsi-propose-20260919-105451-78cbdfca",
+        "path": "/workspace/classic_rsi/audit/classic-rsi-propose-20260919-105451-78cbdfca.json",
+        "asOfIDT": "2026-09-19 10:54:51 IDT",
+        "params_fingerprint": "91363d6045eee351",
+        "kind": "propose"
+      },
+      "gated_buy_packs_suppressed": [],
+      "status": "GATED"
+    },
+    "handoff": {
+      "to": "Trader_Classic",
+      "then": "QA Bot (classic-real-money-order-qa-gate)",
+      "cite": "run_id=classic-rsi-auto-20260919-105450-f4dc67b5 propose_run_id=classic-rsi-propose-20260919-105451-78cbdfca",
+      "never": [
+        "shorts from Sell tags",
+        "bypass QA",
+        "Momentum",
+        "place from this script"
+      ]
+    },
+    "audit": {
+      "run_id": "classic-rsi-auto-20260919-105450-f4dc67b5",
+      "path": "/workspace/classic_rsi/audit/classic-rsi-auto-20260919-105450-f4dc67b5.json",
+      "asOfIDT": "2026-09-19 10:54:51 IDT",
+      "params_fingerprint": "48338a2c730082d8",
+      "kind": "auto"
+    }
+  },
+  "latestPropose": {
+    "run_id": "classic-rsi-propose-20260919-105451-78cbdfca",
+    "kind": "propose",
+    "asOfIDT": "2026-09-19 10:54:51 IDT",
+    "mirrorId": 11368142,
+    "timeframe": "1H",
+    "buy_packs_count": 0,
+    "risk_off_count": 0,
+    "params_fingerprint": "91363d6045eee351",
+    "symbols": [
+      "SMH",
+      "QQQ",
+      "XLV"
+    ],
+    "qa_gate": "classic-real-money-order-qa-gate",
+    "do_not_place": true
+  },
+  "latestBacktest": {
+    "run_id": "classic-rsi-backtest-20260919-105319-1ac97f09",
+    "kind": "backtest",
+    "asOfIDT": "2026-09-19 10:53:19 IDT",
+    "mirrorId": 11368142,
+    "timeframe": "1H",
+    "symbols": [
+      "QQQ"
+    ],
+    "params_fingerprint": "80c40b4d45345455"
+  },
+  "backtestSummary": {
+    "timeframe": "1H",
+    "asOfIDT": "2026-09-19 10:44:45 IDT",
+    "period": "60d",
+    "symbols": [
+      "AAPL",
+      "MSFT",
+      "QQQ",
+      "SMH",
+      "XLV",
+      "JNJ"
+    ],
+    "aggregate": {
+      "n_trades": 19,
+      "win_rate": 0.631578947368421,
+      "expectancy_R": 0.473684210526316,
+      "total_R": null,
+      "profit_factor": 2.278414515114846
+    },
+    "notes": [
+      "TF=1H only (same as live Classic RSI timing).",
+      "Sell triangles remapped to RISK_OFF (no shorts).",
+      "Mandate gates (Fear/cash/weekend) NOT simulated here.",
+      "Strength tags 80/70 are rule labels, not win rates."
+    ]
+  },
+  "auditIndex": [
+    {
+      "run_id": "classic-rsi-auto-20260919-105450-f4dc67b5",
+      "kind": "auto",
+      "asOfIDT": "2026-09-19 10:54:51 IDT",
+      "path": "/workspace/classic_rsi/audit/classic-rsi-auto-20260919-105450-f4dc67b5.json",
+      "symbols": [
+        "SMH",
+        "QQQ",
+        "XLV",
+        "AAPL",
+        "MSFT",
+        "JNJ"
+      ],
+      "buy_packs_count": 0,
+      "risk_off_count": 0,
+      "params_fingerprint": "48338a2c730082d8",
+      "aggregate": null
+    },
+    {
+      "run_id": "classic-rsi-propose-20260919-105451-78cbdfca",
+      "kind": "propose",
+      "asOfIDT": "2026-09-19 10:54:51 IDT",
+      "path": "/workspace/classic_rsi/audit/classic-rsi-propose-20260919-105451-78cbdfca.json",
+      "symbols": [
+        "SMH",
+        "QQQ",
+        "XLV"
+      ],
+      "buy_packs_count": 0,
+      "risk_off_count": 0,
+      "params_fingerprint": "91363d6045eee351",
+      "aggregate": null
+    },
+    {
+      "run_id": "classic-rsi-backtest-20260919-105319-1ac97f09",
+      "kind": "backtest",
+      "asOfIDT": "2026-09-19 10:53:19 IDT",
+      "path": "/workspace/classic_rsi/audit/classic-rsi-backtest-20260919-105319-1ac97f09.json",
+      "symbols": [
+        "QQQ"
+      ],
+      "buy_packs_count": 0,
+      "risk_off_count": 0,
+      "params_fingerprint": "80c40b4d45345455",
+      "aggregate": {
+        "n_trades": 5,
+        "wins": 4,
+        "losses": 1,
+        "win_rate": 0.8,
+        "expectancy_pnl": 87.73083591111143,
+        "expectancy_R": 0.8666666666666698,
+        "avg_pnl": 87.73083591111143,
+        "total_pnl": 438.6541795555571,
+        "max_drawdown_pct": -1.000000000000006,
+        "profit_factor": 5.328824140350893,
+        "profit_factor_inf": false,
+        "return_pct": 4.386541795555554
+      }
+    },
+    {
+      "run_id": "classic-rsi-propose-20260919-105315-1205a162",
+      "kind": "propose",
+      "asOfIDT": "2026-09-19 10:53:15 IDT",
+      "path": "/workspace/classic_rsi/audit/classic-rsi-propose-20260919-105315-1205a162.json",
+      "symbols": [
+        "QQQ",
+        "SMH"
+      ],
+      "buy_packs_count": 0,
+      "risk_off_count": 0,
+      "params_fingerprint": "9f52f6b2cf62622c",
+      "aggregate": null
+    }
+  ],
+  "sourcePaths": {
+    "latestAuto": "/workspace/classic_rsi/audit/latest-auto.json",
+    "latestPropose": "/workspace/classic_rsi/audit/latest-propose.json",
+    "latestBacktest": "/workspace/classic_rsi/audit/latest-backtest.json",
+    "backtestSummary": "/workspace/classic_rsi/backtest-summary-1h.json",
+    "auditIndex": "/workspace/classic_rsi/audit/index.jsonl"
+  },
+  "classicRules": {
+    "updatedAtIDT": "2026-10-23 13:35 IDT",
+    "pending": {
+      "id": "fix14",
+      "status": "PENDING_QA",
+      "label": "pending QA (fix14)",
+      "live": false,
+      "via": "Trader_Classic fix14",
+      "effectiveWhen": "LIVE changes come through Trader_Classic fix14 and take effect ONLY after QA PASS. Until then the current rules (left column) are what the live engine enforces.",
+      "decidedBy": "Ofer",
+      "decidedAtIDT": "2026-10-23 13:11 IDT",
+      "relayedBy": "Chief of Staff",
+      "stagingPackage": "/workspace/staging/fix14-live-rule-release-20261023",
+      "cashFloorPctOfEquity": 1,
+      "cashFloorRounding": "ceil_cent (same as fix14 floor.py)",
+      "maxNewTradesPerDay": null,
+      "switchOverNote": "Single source: /classic-portfolio.json. When fix14 is applied, Trader_Classic updates its floor, trade-cap and blocked fields; the tab then drops the pending tags on its own. `live` here is never flipped by hand.",
+      "hardBlocks": [
+        "CROSS_BOOK_OVERLAP: no symbol held in both Classic and Momentum"
+      ],
+      "rows": [
+        {
+          "rule": "XLE adds",
+          "current": "blocked (XLE NO_XLE_ADDS)",
+          "pending": "allowed (no-add block lifted)"
+        },
+        {
+          "rule": "QQQ core rebuy",
+          "current": "on hold (core re-buy pending Ofer)",
+          "pending": "released (SL + TP required; levels pending Ofer — Trader_Classic default SL -11% / TP +25%)"
+        }
+      ],
+      "notes": [
+        "Not changed by the 13:11 rule text: sizing caps (ETF 35% / stock 20% / sleeve 45% of equity, min position $400.00) and the crypto exclusion. The fix14 staging code keeps both, so a cap can still stop a buy.",
+        "The fixed mirror floor and the agent-floor ratio become reporting only once fix14 is live."
+      ],
+      "momentumBlocked": {
+        "symbols": [
+          "USO",
+          "XOM",
+          "WST",
+          "AAPL",
+          "VTRS",
+          "TRGP",
+          "RVTY",
+          "CRL",
+          "DVN"
+        ],
+        "source": "/momentum-portfolio.json",
+        "sourceAsOf": "2026-10-23T05:26:00+03:00",
+        "sourceSha256": "0062771729be30ec2af95ea7493ca3e4023c69bd2065ec31ae077b5f016f76c8",
+        "liveCrossCheck": {
+          "source": "user-Momentum-HHHGDTJ get-my-positions-and-orders (real, direct)",
+          "readAtIDT": "2026-10-23 13:13:41 IDT",
+          "symbols": [
+            "AAPL",
+            "CRL",
+            "DVN",
+            "RVTY",
+            "TRGP",
+            "USO",
+            "VTRS",
+            "WST",
+            "XOM"
+          ],
+          "match": true,
+          "parentMirror": {
+            "source": "user-etoro mirror 11630170",
+            "symbols": [
+              "AAPL",
+              "CRL",
+              "DVN",
+              "RVTY",
+              "TRGP",
+              "USO",
+              "VTRS",
+              "WST",
+              "XOM"
+            ],
+            "match": true
+          }
+        }
+      },
+      "snapshot": {
+        "source": "/classic-portfolio.json",
+        "sourceAsOf": "2026-10-23T06:26:25+03:00",
+        "sourceSha256": "4fab4a242ed9c41a1e04d1dc8d064c1fa0ddab436674f82f428260c2212bd7bb",
+        "equity": 7228.06,
+        "cash": 3382.93,
+        "currentFloorAgent": 853.73,
+        "currentFloorMirror": 1500,
+        "currentDeployable": 2529.2,
+        "currentMaxNewTradesPerDay": 4,
+        "currentBlocked": [
+          "AAPL CROSS_BOOK_OVERLAP",
+          "CRL CROSS_BOOK_OVERLAP",
+          "DVN CROSS_BOOK_OVERLAP",
+          "RVTY CROSS_BOOK_OVERLAP",
+          "TRGP CROSS_BOOK_OVERLAP",
+          "USO CROSS_BOOK_OVERLAP",
+          "VTRS CROSS_BOOK_OVERLAP",
+          "WST CROSS_BOOK_OVERLAP",
+          "XOM CROSS_BOOK_OVERLAP",
+          "XLE NO_XLE_ADDS",
+          "*crypto* CRYPTO_BLOCKED",
+          "SPY CAP_NO_HEADROOM",
+          "any buy leaving cash < ≈$853.73 agent floor ($1,500 in the copy mirror, ratio 1.757)"
+        ],
+        "pendingFloor": 72.29,
+        "pendingDeployable": 3310.64
+      }
+    },
+    "rulesetV2": {
+      "status": "STAGING",
+      "label": "Ruleset v2: STAGING, not live",
+      "live": false,
+      "summary": [
+        "Core 55%: SPY + QQQ combined 55% of equity, WITH stop-loss and take-profit on the core lots (levels pending Ofer; Trader_Classic's proposed default SL -11% / TP +25%). QA fails any package that removes SL/TP from the core.",
+        "Satellite: the remaining equity after the core and 0–3% cash; S&P 500 names ranked by 6-1M momentum and above their 200-day MA. Slots: set by Trader_Classic's re-package.",
+        "Satellite exit: 3×ATR20 trailing stop on the daily close; no take-profit.",
+        "No RSI engine: RSI is not an entry trigger.",
+        "Cash 0–3% (fix14 floor: 1% of equity once fix14 is live; pending QA)."
+      ],
+      "specNotes": [
+        "Amendment 2026-10-23 13:21 IDT (Ofer, confirmed via QA Bot) supersedes R1 and the core deletions: approved for staging, then QA, then the paper week, then cutover.",
+        "R3: pool excludes ETFs, crypto, CFDs, non-US names and anything Momentum holds; ADV20 ≥ $100M, price ≥ $10, close > SMA200.",
+        "R5: eToro native SL only as a disaster stop at entry × 0.75; trailing stop evaluated on the regular-session close.",
+        "R10: max 8 orders on rebalance days, 4 on other days (stops only); min order $400 agent.",
+        "R11: pause new satellite buys if drawdown from peak > 20% or the satellite trails SPY by > 10 pp over 6 months.",
+        "XLV and XLE: sell both at cutover stage 1 (via order-QA) and move the proceeds into the momentum satellite. Ofer decided 13:34 IDT.",
+        "Caps (20% stock / 35% ETF / 45% sleeve) and the crypto block stay unchanged until Ofer says otherwise."
+      ],
+      "paperWeekStart": "2026-10-26",
+      "paperWeekEnd": "2026-11-02",
+      "cutoverTarget": "~2026-11-03",
+      "spec": "/workspace/analysis/classic-leak-20261023/strategic_plan_ruleset.md",
+      "planPage": "https://cursor.com/canvas/store-f9f48114-505f-45df-8287-98f6e7a6184c/415f1c1e-eded-419e-b3d4-eb29e0b0ed9d"
+    }
+  }
+}

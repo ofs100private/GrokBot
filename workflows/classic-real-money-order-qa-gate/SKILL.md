@@ -15,7 +15,7 @@ description: >-
 
 - **Order-QA:**
   - For core packs, recompute the core gain gate block (method `core_drift_gain`): spread, fees, tax_est, total_cost, expected_gain (= notional × drift × horizon/252 × 0.75), and ratio. Verify EG ≥ 2× cost and net > 0. For core_rotation, verify `rotation_benefit.ok` and that `held_return_annual` = max(floor ≥ 10.05%, SPY drift + registry excess), with any `registry_evidence_id` tied to the held symbol. For packs flagged `requires_explicit_ofer_approval`, verify `ofer_approval.why == "verified"` and that the record's legs equal the pack legs. Verify `inputs.drift_source.sha256_verified_at_runtime` is true, that the funding sell is non-core and held ≥ 20 trading days, and that `funding_reason` is present.
-  - Check SPY/QQQ only, core weight after ≤ 70%, each ETF ≤ 35%, SL 10–12% below and TP 20–30% above the anchor ask, and cash after ≥ agent floor = execute_pass `cash_floor.agent_floor_usd` (≈$854; $1,500 mirror) (rotation: including funding proceeds).
+  - Check SPY/QQQ only, combined SPY+QQQ core weight after ≈55% as a TARGET (Ofer 2026-10-23 13:53: not binding; above 55% = soft flag `CORE_WEIGHT_ABOVE_55PCT`, never FAIL, never trim), each ETF ≤ 35% (hard), SL −11% / TP +25% off the fill ask (Ofer confirmed 2026-10-23 13:55; FAIL any core buy without SL below and TP above, and FAIL any removal/edit of SL/TP on existing core lots), and cash after ≥ agent floor = execute_pass `cash_floor.agent_floor_usd` (= ceil(1% of equity), ≈$72 since fix14b) (rotation: including funding proceeds).
   - Any crypto leg → FAIL `CRYPTO_BLOCKED` (replaces `CRYPTO_NOT_ALLOWED` / `CRYPTO_SLEEVE_CAP`).
   - RSI buys: SL must be 2.5×ATR(1H) and TP 2R from the anchor ask.
 
@@ -37,7 +37,7 @@ Also covers **Classic RSI 1H** packs (ATR SL/TP, confirmed close, long-only) pro
 
 **Order-QA field spec (cost-gate contract):** see `order_qa_cost_gate_contract` in `/workspace/classic_rsi/audit/qa-review-classic-full-auto-20261012.json` (`must_be_present`, `recompute`, `also_verify`) — use that as the authoritative field checklist for cost-gate verification until the code gate passes QA.
 
-For Classic, **order-QA PASS (this gate, including a verified cost/benefit gate) is sufficient authorization** for Trader_Classic to place automatically — buys, sells, trims, and rotations, from the every-3h RSI auto or the daily rebalance. **No Ofer or CoS chat authorization is required**. **Max 4 NEW trades per IDT day** (FAIL `DAILY_TRADE_LIMIT` when exhausted); **no monthly new-name cap** (do not FAIL on new-name count). An explicit Ofer/CoS hold still blocks. Because PASS now triggers a real-money place, PASS only with complete evidence.
+For Classic, **order-QA PASS (this gate, including a verified cost/benefit gate) is sufficient authorization** for Trader_Classic to place automatically — buys, sells, trims, and rotations, from the every-3h RSI auto or the daily rebalance. **No Ofer or CoS chat authorization is required**. **No daily trade cap** (Ofer 2026-10-23: removed; the counter is logging only, never FAIL on it); **no monthly new-name cap** (do not FAIL on new-name count). An explicit Ofer/CoS hold still blocks. Because PASS now triggers a real-money place, PASS only with complete evidence.
 
 ## When to run
 
@@ -66,20 +66,20 @@ From Trader_Classic (redact secrets):
 9. Thesis (one clear reason tied to Classic mandate; RSI packs: RSI 1H + ATR SL/TP + confirmed close + **cite `run_id`** like `classic-rsi-propose-YYYYMMDD-…`)
 10. Prepared order snapshot (immutable after prepare; prepare on **Classic account** `user-OfersClaw5`)
 11. Route: must be REAL, never demo
-12. Cash after ≥ agent floor (Classic account cash, sequenced across the batch): cash floor = $1,500 in Ofer's copy mirror (agent floor from the config-pinned `python -m classic_rsi.floor`, ≈$854 at ratio ~1.756; fail closed if the config is stale/invalid); use execute_pass `cash_floor.agent_floor_usd`
+12. Cash after ≥ agent floor (Classic account cash, sequenced across the batch): cash floor = ceil(1% of live equity) in agent dollars (fix14b, Ofer 2026-10-23; ≈$72 at $7.2k equity) from the config-pinned `python -m classic_rsi.floor`; fail closed if equity is missing/stale or the config is invalid; use execute_pass `cash_floor.agent_floor_usd`
 13. Post-execution audit: fill vs prepare, fees, cash left, cost_gate echoed, QA verdict ref
 
 For RSI packs, also expect an append-only trail under `/workspace/classic_rsi/audit/` (`index.jsonl`) matching the cited `run_id`.
 
-## execute_pass GO pin + prepare/place token handling (fix11, deployed 2026-10-21 19:17 IDT)
+## execute_pass GO pin + prepare/place token handling (pin updated for fix14b, deployed 2026-10-23 14:35 IDT)
 
-- **GO version:** `classic_rsi/execute_pass.py` **v16.11 fix11** (`execute-pass-v16.11-token-sleeves-20261021-fix11`, package 1.1.7), sha256 `394e53a769e93f8ddf26f152e87c3d1351549e56d1c49c9e69700a6762dfdeb8`. Any other sha is not the QA GO version → NO-GO. The daily `build_daily.py` `EP_OK` pins the same sha.
-- **Cash floor:** always the config-pinned floor (`python -m classic_rsi.floor`, or `resolve(expected_sha256=<pinned config sha>)`; a bare `resolve()` is not config-pinned) (= execute_pass `cash_floor.agent_floor_usd`, ≈$854 = $1,500 mirror); never `floor_now()` or a hard-coded number.
+- **GO version:** `classic_rsi/execute_pass.py` `execute-pass-v16.12-rule-release-20261023-fix14` (fix14b package d0a9a2a9…20fa), sha256 `1fa6ffdd75c3a8699c99d8997bf61bd5d8a00c30bfb832cff6bf105700230bc5`. Any other sha is not the QA GO version → NO-GO. The daily `build_daily.py` `EP_OK` pins the same sha. If fix14b is rolled back to fix13h1 (`394e53a7…dfdeb8`), this pin must be reverted too.
+- **Cash floor:** always the config-pinned floor (`python -m classic_rsi.floor`, or `resolve(expected_sha256=<pinned config sha>)`; a bare `resolve()` is not config-pinned) (= execute_pass `cash_floor.agent_floor_usd`, = ceil(1% of equity) since fix14b); never `floor_now()` or a hard-coded number.
 - **After every `prepare-trade` / `prepare-close`** (saved with write_to_file): `cd /workspace && ./screener-venv/bin/python -m classic_rsi.prepare_token split --response <raw> --stripped-out <pack-dir>/prepare-tokenstripped.json --token-out /tmp/<unique>-token`. It accepts `token` or `confirmationToken`, writes the token-free copy to disk first, writes the token ONLY to a 0600 file, deletes the raw read and prints metadata only. Exit 2 (`PREPARE_TOKEN_MISSING` / `AMBIGUOUS` / `INVALID` / `NOT_READY` / `VALUE_LEAK`) = do not place; re-prepare. Never read the token field by hand and never print it. Build live.json / execute_pass inputs from the stripped copy only.
 - **Place:** one `place-trade` / `place-close` call with `token = "$file:/tmp/<unique>-token"`. Then ALWAYS `./screener-venv/bin/python -m classic_rsi.prepare_token wipe --token-out /tmp/<unique>-token` (after a fill, a failure or an abandon), and save the place result with `prepare_token strip --response <raw> --out <pack-dir>/place-result.json`. Before any re-place, live-read to check whether the first place already went through.
 - **Deploy / rollback of classic_rsi packages:** `apply_fixNN.sh` (check only) → `--apply --external`; roll back ALWAYS with `--rollback <backup-dir> --external` (without `--external` the external scripts stay on the new code and fail on import).
 
-- **Order-QA check (fix11):** the execute_pass output `version` must be `execute-pass-v16.11-token-sleeves-20261021-fix11` and live `execute_pass.py` sha256 `394e53a7…dfdeb8`; otherwise no PASS. The prepare snapshot in the pack must be the `prepare_token split` stripped copy (no token-named field, no token value).
+- **Order-QA check (fix14b):** the execute_pass output `version` must be `execute-pass-v16.12-rule-release-20261023-fix14` and live `execute_pass.py` sha256 `1fa6ffdd…0bc5`; otherwise no PASS. The prepare snapshot in the pack must be the `prepare_token split` stripped copy (no token-named field, no token value).
 
 ## Cost/benefit gate verification (mandatory)
 
@@ -87,7 +87,7 @@ Independently recompute from the prepare snapshot / live quote: spread and fees 
 
 ## Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT)
 
-**Cross-book no-overlap:** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
+**Cross-book no-overlap:** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. The XLE no-add rule is lifted (Ofer 2026-10-23); XLE adds are allowed only if Momentum does not hold XLE at the live read.
 
 ## Hard FAIL (any one fails the gate)
 
@@ -95,10 +95,9 @@ Independently recompute from the prepare snapshot / live quote: spread and fees 
 - short / sell-to-open
 - crypto other than BTC/ETH/SOL majors → `CRYPTO_NOT_ALLOWED`
 - buy without a calculated takeProfitRate (null/≤ entry) or reward:risk < 1.25 → `TAKE_PROFIT_MISSING`
-- daily new-trade budget exhausted (4/IDT day) → `DAILY_TRADE_LIMIT`
 - crypto sleeve > 15% of total equity after the buy → `CRYPTO_SLEEVE_CAP`
 - missing `cost_gate` block, numbers that do not reconcile with prepare/getCost, or expected net gain not clearly positive (non-risk-exit) → `COST_GATE_FAIL`
-- cash after the place (or sequenced batch) below the agent floor (≈$854; `cash_floor.ok` false ⇒ `FLOOR_CONFIG_INVALID`) without an explicit Ofer sizing override → `CASH_FLOOR`
+- cash after the place (or sequenced batch) below the agent floor (1% of equity, ≈$72; `cash_floor.ok` false ⇒ `FLOOR_CONFIG_INVALID`) without an explicit Ofer sizing override → `CASH_FLOOR`
 - name cap (35% fund/ETF / 20% single stock of **total equity**) or sleeve/growth cap (45% of **total equity**) breached after the buy — denominator is total equity, not invested capital; check both cost and market-value numerators over total equity (Ofer 2026-10-12 17:56 IDT; mandate confirmed 2026-10-16 01:27 IDT)
 - exit pack that depends on **floor-vs-cap exit precedence** (undecided by Ofer) → hold; do not PASS a pack that assumes one precedence over the other
 - buy placed without the sell/rotate-before-buy check recorded
@@ -112,15 +111,15 @@ Independently recompute from the prepare snapshot / live quote: spread and fees 
 - **RSI / signal “sell” tags that imply shorting** — sell tags authorize **risk-off / no-add / long-reducing close only**, NEVER shorts
 - RSI pack missing `run_id` in thesis / propose, or no matching audit trail row when required
 - prepare on **parent SSO** claiming to hit mirror `11368142` (parent cannot target the copy)
-- buy of a symbol already held in the other book (Classic vs Momentum mirror 11630170) → `CROSS_BOOK_OVERLAP` (Ofer 2026-10-13 01:44 IDT); live-read the other book before PASS; existing overlap XLE kept in both books per Ofer 2026-10-13 — never add to it
+- buy of a symbol already held in the other book (Classic vs Momentum mirror 11630170) → `CROSS_BOOK_OVERLAP` (Ofer 2026-10-13 01:44 IDT); live-read the other book before PASS; cross-book is the only hard symbol block (Ofer 2026-10-23)
 
 ## Not a Hard FAIL (Classic)
 
 - Fear / Extreme Fear alone, or daily_brief No Buy that exists only because of Fear (2026-10-05 buy-the-dip mandate)
 - Using **Classic account (OfersClaw5-PRIYN)** / `user-OfersClaw5` as Classic cash/execution/reporting truth (Ofer 2026-10-06)
-- Sub-agent-floor (≈$854) residual Classic account cash when Ofer explicitly sized the order knowing Classic account cash
+- Sub-agent-floor (1% of equity) residual Classic account cash when Ofer explicitly sized the order knowing Classic account cash
 - **No Ofer/CoS chat authorization** on the pack (Classic is full auto since 2026-10-11)
-- Number of new names this month (no monthly new-name cap). **Do** FAIL when the daily new-trade budget (max 4/IDT day) is exhausted — see `DAILY_TRADE_LIMIT`
+- Number of new names this month (no monthly new-name cap). Number of trades per day (no daily cap since 2026-10-23); `CORE_WEIGHT_ABOVE_55PCT` (soft flag only); W-8BEN status
 
 ## PASS
 

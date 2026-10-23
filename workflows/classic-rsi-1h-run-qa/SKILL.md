@@ -27,7 +27,7 @@ Independent **per-run** gate for Classic RSI 1H (`auto_1h` / `propose`). Complem
 
 ## Skipped slots need no run-QA — lever 3 (Ofer 2026-10-18 16:44 IDT; 2026-10-18g)
 
-A classic-rsi-1h-auto slot that exits at step 0 has no `run_id` and needs no run-QA. That covers the precheck SKIP (`NO_CASH_FOR_MIN_ORDER` / `DAILY_BUDGET_USED`) and, new, the RSI pre-scan SKIP `NO_RSI_CANDIDATES`. It is audited instead:
+A classic-rsi-1h-auto slot that exits at step 0 has no `run_id` and needs no run-QA. That covers the precheck SKIP (`NO_CASH_FOR_MIN_ORDER`; `DAILY_BUDGET_USED` is legacy, since 2026-10-23 there is no daily cap) and, new, the RSI pre-scan SKIP `NO_RSI_CANDIDATES`. It is audited instead:
 - the decision line in `/workspace/classic_rsi/audit/precheck/precheck-YYYYMMDD.jsonl`;
 - for `NO_RSI_CANDIDATES`, also `prescan-*.json` with the per-symbol RSI states, last bar times and `fail_open` list.
 A `NO_RSI_CANDIDATES` SKIP is valid only if `prescan.n_candidates == 0`, `prescan.fail_open` is empty and the line has no pending/force reason. The pre-scan fails open on any data error or staleness, so those cases always produce a normal `run_id` that this gate validates as before. QA may spot-check any skipped slot from those files. Every run that does happen (`auto_1h` `run_id`) still gets the full run-QA; nothing here relaxes a Hard FAIL.
@@ -58,7 +58,6 @@ A `NO_RSI_CANDIDATES` SKIP is valid only if `prescan.n_candidates == 0`, `presca
 | `RSI_SHORT_OR_PIP` | Any pack implies short / sell-to-open, or uses FX pip SL/TP instead of ATR/% equity |
 | `RSI_CRYPTO` | Any crypto other than BTC (100000) / ETH (100001) / SOL (100063) in buy_packs, or a crypto pack that resolves by bare ticker (e.g. `T`) |
 | `RSI_TP_MISSING` | Any buy pack without a calculated take_profit > entry > stop_loss (or reward:risk < 1.25) |
-| `RSI_DAILY_LIMIT` | Envelope proposes eligible buys when the daily new-trade budget (max 4/IDT day) is exhausted |
 | `RSI_WRONG_BOOK` | Book dollars from Momentum / wrong book, or invented — **not** a fail when from Classic account (`user-OfersClaw5`). Do not require mirror `11368142` |
 | `RSI_PLACE_FROM_AUTO` | Auto script or envelope set `place=true` / bypassed QA |
 | `RSI_RUN_CRASH` | Exception / empty / corrupt audit with no coherent PROPOSE or GATED status |

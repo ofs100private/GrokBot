@@ -1,5 +1,40 @@
 # Momentum place flow (FULL AUTO)
 
+0. **EOD chain ownership — STEP 0 (2026-10-22 backup-wins-race incident; QA Bot reviews F1–F4, N1–N4).** Primary `eod-pm-2240` (22:35–22:40 IL), backup `eod-pm-2242-backup` (22:42–22:52), 22:45 screener cron `eod-screener-2245`, and watchdog `eod-watchdog-2250` (routine 59709ac8) all gate on `momentum_qa.eod_miss_check`. `--caller` is **required** (no `unknown`).
+   - **Two locks under `momentum_audit/locks/`.** Both are created with O_CREAT|O_EXCL, and every decide+write runs under an `fcntl.flock` on the sibling `.guard` file:
+     - `eod-owner-YYYYMMDD.lock`: one PM→screener→place chain per night.
+     - `eod-screener-YYYYMMDD.lock`: one `momentum_screener.py` run per night, taken by every screener caller. It is separate from the owner lock, so a screener-only caller never blocks the PM risk pass.
+     - Lock JSON: `kind, caller, date, acquired_ts, refreshed_ts, run_tag, ttl_s, stolen_from`.
+   - **Identity is the run, not the routine (N1).** The first ownership call returns `run_tag` (top level of the stdout JSON). Only a call passing that `--run-tag` refreshes or keeps the lock. Any other run, including a duplicate or retried wake of the same routine, gets exit 3 while the lock is live. Once the owner's PM RUN_START exists, even its own tag gets exit 3 (`CHAIN_ALREADY_STARTED`).
+   - **Live vs stale (F2, N4).** A lock is live while `0 ≤ now − refreshed_ts ≤ 180s`.
+     - Owner lock: live all night once a PM RUN_START appears at or after `acquired_ts`.
+     - Screener lock: live while its screener run has been active in the last 300s.
+     - Otherwise it is stale, and another run may steal it. The steal is recorded as `stale_steal` in the row and `stolen_from` in the lock: `{from_caller, from_run_tag, acquired_ts, refreshed_ts, age_s, corrupt, future_dated}`.
+     - A lock dated more than 5s in the future, unparsable, or without a `run_tag` counts as corrupt, so stale.
+   - **Exit codes:** **0/2 = proceed** (2 = a miss exists, same meaning as before). **3 = do NOT run** (end silently, or skip the stage). **4 = `--place-watch` alert.** Any exception while writing the row also returns 3 (4 for `--place-watch`), failing closed.
+   - **Primary:** `./screener-venv/bin/python -m momentum_qa.eod_miss_check --caller eod-pm-2240 --no-audit --defer-reason BACKUP_OWNS` → keep `run_tag`.
+     - **PRIMARY_PROCEEDS** (`OWNER_LOCK_ACQUIRED` | `STALE_LOCK_STOLEN`), exit 0/2: continue.
+     - **PRIMARY_DEFERRED** (`BACKUP_OWNS` | `DUPLICATE_WAKE` | `CHAIN_ALREADY_STARTED` | `OWNER_LOCK_LOST`), exit 3: end silently.
+     - Immediately before `position_manager.py`, run the same command with `--run-tag <run_tag>`: `ALREADY_RECORDED` (refresh, no row) with exit 0/2 → start PM; exit 3 → do not.
+     - Each wake writes exactly one row.
+   - **Backup:** (a) `--caller eod-pm-2242-backup` (EOD_MISS_CHECK row). (c) `./screener-venv/bin/python -m momentum_qa.eod_miss_check --caller eod-pm-2242-backup --no-audit --takeover-reason PRIMARY_NO_RUN_START` → keep `run_tag`.
+     - **BACKUP_TAKEOVER** (`TAKEOVER_RECORDED`): proceed.
+     - Exit 3 `TAKEOVER_REFUSED_LOCK_HELD` (any other run holds a live lock, including another backup run) or `TAKEOVER_REFUSED_PM_ALREADY_STARTED`: end silently.
+   - **Screener lock (N2), every screener run, immediately before `momentum_screener.py`:** `./screener-venv/bin/python -m momentum_qa.eod_miss_check --caller <caller> --no-audit --screener-lock [--run-tag <owner run_tag>]`.
+     - Primary chain: `--caller eod-pm-2240 --run-tag <tag>`. Backup chain: `--caller eod-pm-2242-backup --run-tag <tag>`. 22:45 cron: `--caller eod-screener-2245`. Watchdog, if it runs the screener: `--caller eod-watchdog-2250`.
+     - **SCREENER_LOCK** row (`SCREENER_LOCK_ACQUIRED` | `STALE_LOCK_STOLEN`) or `ALREADY_HELD` (same tag), exit 0/2: run the screener.
+     - Exit 3 `SCREENER_LOCK_HELD` | `SCREENER_ALREADY_RAN` | `SCREENER_IN_PROGRESS` | `SCREENER_ALREADY_STARTED`: skip the screener **and** the place flow. The PM risk pass already done still stands.
+   - **22:45 screener cron (F3):** `--caller eod-screener-2245 --screener-gate` first. It writes the EOD_MISS_CHECK row with `screener_gate` and only reads the locks.
+     - Exit 3 `STOP_ALREADY_RAN` | `STOP_OWNER_ACTIVE` (live owner chain or live screener lock).
+     - Exit 0/2 `PROCEED` (`NO_LIVE_OWNER` | `OWNER_CHAIN_STALLED`): then take the screener lock before `momentum_screener.py`.
+   - **Owner died before place (N3), watchdog:** `./screener-venv/bin/python -m momentum_qa.eod_miss_check --caller eod-watchdog-2250 --no-audit --place-watch [--place-grace-min 10]`.
+     - Exit 4 + **EOD_PLACE_WATCH** row (one per run/code): `OWNER_DIED_BEFORE_PLACE` (a screener RUN_END with BUY rows and no place trace after 10 min; trace = PLACE_RUN_START/FILL/SKIP/PLACE_RUN_END for that `screener_run_id`, or POSTFILL_CHECK / place_lock file after the RUN_END) or `PLACE_RUN_INCOMPLETE` (PLACE_RUN_START without PLACE_RUN_END after 10 min). Message Ofer + QA Bot with `place_watch.alerts[]`; never re-place without a fresh QA Bot place-QA.
+     - Exit 0/2: no alert.
+   - **feedback_daily:**
+     - `counts.eod_ownership_codes` maps every `EVENT:REASON` in `OWNERSHIP_CODES` (`BACKUP_TAKEOVER`, `PRIMARY_PROCEEDS`, `PRIMARY_DEFERRED`, `SCREENER_LOCK`, `EOD_PLACE_WATCH`).
+     - Also reports `backup_takeover / primary_proceeds / primary_deferred / eod_owner_stale_steals / eod_owner_conflicts / screener_locks / screener_lock_conflicts / eod_place_watch_alerts`. Place-watch is recomputed from the day's rows as well.
+     - WATCH lessons: takeover, stale steal, owner conflict (now including a same-routine double proceed, since rows carry `run_tag`), screener-lock conflict, `OWNER_DIED_BEFORE_PLACE` / `PLACE_RUN_INCOMPLETE`.
+     - Never an AVOID, never a change to `day_verdict`, never UNSPECIFIED.
 1. Screener-run QA Bot PASS required before any BUY pack is accepted.
 2. Place-QA via QA Bot (mirror A cash truth) before prepare/place.
 3. `INSUFFICIENT_CASH` → GATE_OK; log FAIL; do not place; do not score as playbook AVOID.

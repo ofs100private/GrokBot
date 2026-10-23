@@ -11,8 +11,11 @@ Independent QA for **App Classic Bot tab** and **Classic RSI** surfaces. **Class
 
 **Naming (Ofer 2026-10-06):** Use **Classic account (OfersClaw5-PRIYN)** — stop calling it keys-B or ledger B for Classic.
 
+## Standing rules update — fix14, Ofer 2026-10-23 (supersedes the 2026-10-16 line below where they conflict)
+Cash floor = **1% of total equity** (config-pinned `classic_rsi.floor`). **No daily trade cap** (trade count from the strategy plan; the counter is audit only). **XLE no-add lifted**; the only symbol hard block is cross-book overlap with Momentum. **Core = SPY + QQQ at 55% of total equity combined, a target (not binding)** (each ≤ 35%) with **SL −11% / TP +25% on every core lot** (confirmed by Ofer 2026-10-23 13:55 IDT). Crypto removed (2026-10-17). Everything else unchanged. This gate still never places.
+
 ## Standing rules update — Ofer 2026-10-16 01:27 IDT
-Classic FULL AUTO ON (run-QA + order-QA + cost-gate PASS → auto-place, no chat auth; residual risks accepted). Caps of total equity: stock ≤20%, ETF ≤35%, sleeve ≤45%, crypto ≤15%. Cash floor ~$1,500. Max 4 new trades/IDT day. Equities 24x5 extended hours; BTC/ETH/SOL 24/7. Long ×1; SL+TP mandatory. RSI scan every 3h weekdays (`CRON_TZ=Asia/Jerusalem 35 */3 * * 1-5`) with `classic_rsi.pre_buy` before buys. Unchanged: cross-book no-overlap; no XLE adds. This gate still never places.
+Classic FULL AUTO ON (run-QA + order-QA + cost-gate PASS → auto-place, no chat auth; residual risks accepted). Caps of total equity: stock ≤20%, ETF ≤35%, sleeve ≤45%. Long ×1; SL+TP mandatory. RSI scan every 3h weekdays (`CRON_TZ=Asia/Jerusalem 35 */3 * * 1-5`) with `classic_rsi.pre_buy` before buys. Equities 24x5 extended hours. Unchanged: cross-book no-overlap. This gate still never places.
 
 
 Companion gates (still required):
@@ -66,6 +69,7 @@ Before Classic Bot tab go-live, on every App refresh of Classic Bot / RSI JSON, 
 - FAIL hardcoded / stale / invented fields.
 - FAIL Momentum data on Classic tab (negation text like “never Momentum” is OK; Momentum numbers/ids/books are not).
 - Tab must not imply place authority (`do_not_place` / `doNotPlaceFromThisUi` true).
+- **Rule facts (fix14):** once fix14 is deployed (package proof `deploy-apply.txt` + `verify-live-postdeploy.json` ok=true), any Classic rule text on the tab must show the fix14 rules: floor 1% of equity, SPY+QQQ core 55% combined target (not binding) with SL/TP, no daily trade cap, no XLE no-add. Stale rule text (floor ≈$854 / $1,500, core 65–70%, 4 trades/day, XLE no-add) → FAIL `STALE_RULE_TEXT`. Before deploy, fix14 text must be labelled pending.
 
 ## Hard FAIL (any one)
 

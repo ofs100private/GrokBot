@@ -10,7 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from momentum_qa.eod_miss_check import is_miss, screener_actions_by_deadline
+from momentum_qa.eod_miss_check import (OWNER_EVENTS, OWNERSHIP_CODES, OWNERSHIP_EVENTS, is_miss, ownership_code,
+                                        place_watch, screener_actions_by_deadline)
 from momentum_qa.audit import PROTECTIVE_REJECT_CODES, base_symbol_of, classify_skip_code, placed_symbols, row_screener_run_id
 
 # QA Bot 2026-10-21: from this IL date every pack BUY name needs a FILL/placed row or a SKIP
@@ -264,6 +265,102 @@ def skip_row_audit(rows: list[dict]) -> dict:
                           "rationale": f"pack BUY {s} (run {rid}) has neither a FILL/placed row nor a SKIP row"})
     return {"gate_ok_codes": dict(gate_ok), "protective_reject": protective, "keep": keep, "avoid": avoid,
             "missing": missing, "skip_rows": len(skips), "packs": packs}
+
+
+def eod_ownership_report(rows: list[dict], report: dict) -> dict:
+    """BACKUP_TAKEOVER / PRIMARY_DEFERRED rows (2026-10-22) -> counts + WATCH lesson.
+
+    Codes are 'EVENT:REASON' from eod_miss_check.OWNERSHIP_CODES. A legitimate failover is not a
+    deviation (no AVOID, no change to day_verdict); a row with an unmapped reason is counted under
+    'EVENT:UNMAPPED_REASON' and flagged WATCH, never folded into UNSPECIFIED.
+    """
+    own = [r for r in rows if r.get("event") in OWNERSHIP_EVENTS]
+    codes: Counter = Counter()
+    unmapped = []
+    for r in own:
+        c = ownership_code(r)
+        if c is None:
+            c = f"{r.get('event')}:UNMAPPED_REASON"
+            unmapped.append({"ts_il": r.get("ts_il"), "event": r.get("event"), "reason": r.get("reason"),
+                             "caller": r.get("caller")})
+        codes[c] += 1
+    takeovers = [r for r in own if r.get("event") == "BACKUP_TAKEOVER"]
+    deferred = [r for r in own if r.get("event") == "PRIMARY_DEFERRED"]
+    proceeds = [r for r in own if r.get("event") == "PRIMARY_PROCEEDS"]
+    steals = [r for r in own if r.get("stale_steal")]
+    # Owner rows = rows whose writer went on to run the chain. With the owner lock (QA F1) a second
+    # owner row is only legitimate when it records a stale-lock steal (F2); anything else = conflict.
+    owner_rows = sorted((r for r in own if r.get("event") in OWNER_EVENTS), key=lambda r: str(r.get("ts_il") or ""))
+    conflicts = [r for r in owner_rows[1:] if not r.get("stale_steal")]
+    # N1: rows carry run_tag, so a double proceed by the SAME routine is a conflict too.
+    scr_rows = sorted((r for r in own if r.get("event") == "SCREENER_LOCK"), key=lambda r: str(r.get("ts_il") or ""))
+    scr_conflicts = [r for r in scr_rows[1:] if not r.get("stale_steal")]
+    # N3: owner died before place — recorded watchdog rows + recomputed from tonight's rows.
+    pw_rows = [r for r in own if r.get("event") == "EOD_PLACE_WATCH"]
+    try:
+        day = next((str(r.get("ts_il"))[:10] for r in rows if r.get("ts_il")), None)
+        today = datetime.now(tz=IL)
+        eval_now = today if day == today.strftime("%Y-%m-%d") else (
+            datetime.fromisoformat(f"{day}T23:59:59+03:00") if day else today)
+        pw = place_watch(rows, eval_now, place_lock_dir=AUDIT_DIR / "place_locks")
+    except Exception as e:  # never break feedback
+        pw = {"alert": False, "alerts": [], "error": str(e)}
+    pw_alerts = {(a["code"], a["screener_run_id"]) for a in pw.get("alerts", [])}
+    pw_alerts |= {(r.get("reason"), r.get("screener_run_id")) for r in pw_rows}
+    report["counts"]["eod_ownership_codes"] = dict(codes)
+    report["counts"]["backup_takeover"] = len(takeovers)
+    report["counts"]["primary_deferred"] = len(deferred)
+    report["counts"]["primary_proceeds"] = len(proceeds)
+    report["counts"]["eod_owner_stale_steals"] = len(steals)
+    report["counts"]["eod_owner_conflicts"] = len(conflicts)
+    report["counts"]["screener_locks"] = len(scr_rows)
+    report["counts"]["screener_lock_conflicts"] = len(scr_conflicts)
+    report["counts"]["eod_place_watch_alerts"] = len(pw_alerts)
+    report["eod_ownership"] = {
+        "rows": [{k: r.get(k) for k in ("ts_il", "event", "caller", "reason", "lock_result", "primary_last_seen",
+                                        "owner_caller", "pm_first_ts", "stale_steal") if k in r} for r in own],
+        "codes": dict(codes),
+        "unmapped": unmapped,
+        "stale_steals": [{"ts_il": r.get("ts_il"), "caller": r.get("caller"), **(r.get("stale_steal") or {})}
+                         for r in steals],
+        "conflicts": [{"ts_il": r.get("ts_il"), "event": r.get("event"), "caller": r.get("caller"),
+                       "run_tag": r.get("run_tag")} for r in conflicts],
+        "screener_lock_conflicts": [{"ts_il": r.get("ts_il"), "caller": r.get("caller"), "run_tag": r.get("run_tag")}
+                                    for r in scr_conflicts],
+        "place_watch": {"alerts": sorted([{"code": c, "screener_run_id": rid} for c, rid in pw_alerts],
+                                         key=lambda x: (str(x["code"]), str(x["screener_run_id"]))),
+                        "runs": pw.get("runs", []), "error": pw.get("error")},
+        "known_codes": sorted(f"{e}:{c}" for e, m in OWNERSHIP_CODES.items() for c in m),
+    }
+    for r in steals:
+        ss = r.get("stale_steal") or {}
+        report["lessons"].append({"tag": "WATCH", "text": (
+            f"EOD_OWNER_STALE_STEAL: {r.get('caller')} took the owner lock of {ss.get('from_caller')} at "
+            f"{r.get('ts_il')} (no owner PM RUN_START within TTL; lock age {ss.get('age_s')}s).")})
+    if scr_conflicts:
+        report["lessons"].append({"tag": "WATCH", "text": (
+            f"SCREENER_LOCK_CONFLICT: {len(scr_rows)} screener-lock takers tonight without a recorded stale steal — "
+            "check for a double screener run.")})
+    for code, rid in sorted(pw_alerts, key=lambda x: (str(x[0]), str(x[1]))):
+        report["lessons"].append({"tag": "WATCH", "text": (
+            f"{code}: screener run {rid} — {OWNERSHIP_CODES['EOD_PLACE_WATCH'].get(code, 'unmapped')}. "
+            "Alert Ofer + QA Bot; never re-place without a fresh QA Bot place-QA.")})
+    if conflicts:
+        report["lessons"].append({"tag": "WATCH", "text": (
+            f"EOD_OWNER_CONFLICT: {len(conflicts) + 1} owner rows tonight without a recorded stale steal ("
+            + ", ".join(f"{r.get('event')}:{r.get('caller')}" for r in owner_rows) + ") — check for a double chain.")})
+    if takeovers:
+        t = takeovers[0]
+        report["lessons"].append({
+            "tag": "WATCH",
+            "text": (f"BACKUP_TAKEOVER:{t.get('reason')} by {t.get('caller')} at {t.get('ts_il')} "
+                     f"(primary_last_seen={t.get('primary_last_seen')}) — 22:40 primary had not started PM; "
+                     "check scheduler lateness. Failover, not a deviation."),
+        })
+    if unmapped:
+        report["lessons"].append({"tag": "WATCH", "text": f"{len(unmapped)} EOD ownership row(s) with unmapped reason: "
+                                  + ", ".join(sorted({str(u['reason']) for u in unmapped}))})
+    return report["eod_ownership"]
 
 
 def build_report(day: str) -> dict:
@@ -614,6 +711,7 @@ def build_report(day: str) -> dict:
         [x for x in report["deviations_clear"] if x.get("tag") == "AVOID"]
     )
     report["counts"]["deviations"] = len(report["deviations_clear"])
+    eod_ownership_report(rows, report)
     try:
         report["vcp_rvol_outcomes"] = rvol_outcome_scoring(rows, _all_rows())
     except Exception as e:  # aggregate only; never break feedback

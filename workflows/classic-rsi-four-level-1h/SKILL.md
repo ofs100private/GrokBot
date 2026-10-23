@@ -5,10 +5,22 @@ description: >-
   Buy/Resistance/Support/Over Sold) with ATR equity stops, long-only remap,
   confirmed close, cash-floor sizing (cut size or fewer symbols),
   sell-before-buy check, cost/benefit gate, and FULL AUTO place after run-QA +
-  order-QA PASS on OfersClaw5-PRIYN (no Ofer chat auth, max 4 new trades/day since 2026-10-16,
-  no new-name cap) — 24x5 equities only (crypto removed 2026-10-17), SL 2.5×ATR / TP 2R, TP+SL required; Fear is a dip window, never Momentum
+  order-QA PASS on OfersClaw5-PRIYN (no Ofer chat auth, no daily trade cap since
+  fix14 2026-10-23, no new-name cap, cash floor 1% of equity, after the SPY+QQQ
+  55% core) — 24x5 equities only (crypto removed 2026-10-17), SL 2.5×ATR / TP
+  2R, TP+SL required; Fear is a dip window, never Momentum
 ---
 # Classic RSI four-level entries (1H)
+
+## Standing rules update — fix14, Ofer 2026-10-23 13:01 / 13:03 / 13:09 / 13:21 / 13:53 / 13:55 IDT (live engine via QA package `fix14b-live-rule-release-20261023`; supersedes ANY conflicting text below)
+- **Cash floor = 1% of total agent equity** (`classic_rsi.floor.CASH_FLOOR_PCT = 0.01`, ≈$72 at equity $7.2k; config sha pin kept; the old $1,500 copy-mirror floor is retired, mirror $ figures are reporting only). Deployable = cash − floor; no extra $110 core buffer.
+- **No daily trade cap.** The trade count comes only from the strategy plan (targets, caps, floor, cost gate, QA). `trade_counter` still records every new open (audit/log only) and never blocks; no `DAILY_TRADE_LIMIT` / `DAILY_BUDGET_USED`.
+- **XLE no-add block lifted** (no `NO_XLE_ADDS`). The ONLY symbol hard block is the cross-book overlap with Momentum (`CROSS_BOOK_OVERLAP`, unchanged): never hold/buy the same symbol in Classic and Momentum ("don't trade double between the accounts").
+- **Core = SPY + QQQ at 55% of total equity COMBINED — a TARGET, not binding** (Ofer 13:53 IDT; each ETF ≤ 35%, that cap is unchanged and binding), **SL and TP on every core lot**: SL −11% / TP +25% from entry (`classic_rsi.levels.CORE_SL_PCT` / `CORE_TP_PCT`; **confirmed by Ofer 2026-10-23 13:55 IDT**). Core buys are sized toward 55% and sized DOWN to it, never blocked; above 55% is only a soft flag (`CORE_WEIGHT_ABOVE_55PCT` in the run / card / pack), never a blocker and never a forced trim. The same combined-core soft flag is computed on EVERY SPY/QQQ buy path (RSI, rebalance, rotation, core). SL/TP on existing core lots (SPY 3609495243 / 3611616761) are never removed or loosened.
+- **QQQ core re-buy released:** the daily rebalance re-buys QQQ up to 55% − SPY (minus a 0.25 pp cost buffer) after cost gate + order-QA. Trigger #3 (close < 50DMA with RS3M < 0) only FLAGS a core leg (`TRIGGER3_50DMA_NEG_RS3M`), never blocks it and **never sells a SPY/QQQ core lot**: execute_pass hard-refuses any trigger-3 sell of a core lot (`CORE_TRIGGER3_FLAG_ONLY`); trigger 3 exits apply to non-core holdings only.
+- **GO version:** `classic_rsi/execute_pass.py` **v16.12 fix14** (`execute-pass-v16.12-rule-release-20261023-fix14`), sha256 `1fa6ffdd75c3a8699c99d8997bf61bd5d8a00c30bfb832cff6bf105700230bc5`.
+
+- **This skill (fix14):** auto_1h has no daily-limit soft gate; RSI satellites use only cash left above the 1% floor after the 55% core. Satellite levels stay SL 2.5×ATR / TP 2R.
 
 ## Standing rules update — Ofer 2026-10-17 18:44 IDT (supersedes the 2026-10-16 crypto text and any conflicting text below)
 
@@ -28,24 +40,24 @@ Implements the four-level RSI zone model on **1-hour** bars with **ATR equity st
 
 **Activation status:** APPROVED by Ofer 2026-10-12 06:17 IDT; code gate PASSED QA (fix3, 2026-10-12) — auto-place ON — Ofer accepted QA's residual risks 2026-10-16 01:27 IDT (see standing rules update).
 
-- **Every `classic-rsi-1h-auto` run (every 3 hours weekdays) searches for a new opportunity.** If a valid buy pack exists, passes [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) and [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate), passes the **cost/benefit gate**, and free cash after the buy stays ≥ the agent floor (≈$854; $1,500 mirror) (cut size or the number of names rather than breach), **Trader_Classic places it automatically** — no chat authorization from Ofer or CoS.
+- **Every `classic-rsi-1h-auto` run (every 3 hours weekdays) searches for a new opportunity.** If a valid buy pack exists, passes [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) and [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate), passes the **cost/benefit gate**, and free cash after the buy stays ≥ the agent floor (1% of equity) (cut size or the number of names rather than breach), **Trader_Classic places it automatically** — no chat authorization from Ofer or CoS.
 - **No opportunity → do nothing** (the run is still logged and run-QA'd).
-- **Max 4 NEW trades per IDT calendar day**; **no monthly new-name cap**.
+- **No daily trade cap** (fix14: the strategy plan sets the trade count; the counter is audit only); **no monthly new-name cap**.
 - An explicit Ofer/CoS hold still blocks.
 
 ## Mandate locks (confirmed Ofer 2026-10-16 01:27 IDT; was pending since 2026-10-11)
 
 - Long-only ×1; **no shorts** from Sell triangles
 - Crypto opens only BTC/ETH/SOL ×1 (crypto sleeve ≤ 15% of total equity)
-- **Cash ≥ agent floor after adds**: cash floor = $1,500 in Ofer's copy mirror (agent floor from the config-pinned `python -m classic_rsi.floor`, ≈$854 at ratio ~1.756; fail closed if the config is stale/invalid) (see sizing rule below); equities 24x5 (extended hours), crypto 24/7; max 4 new trades/day
+- **Cash ≥ agent floor after adds**: cash floor = 1% of total agent equity (config-pinned `python -m classic_rsi.floor`; fail closed if equity is unavailable or the config sha is wrong) (see sizing rule below); equities 24x5 (extended hours); no daily trade cap
 - **Classic account truth:** Classic account (OfersClaw5-PRIYN) via `user-OfersClaw5` (execution + reporting). Parent SSO mirror `11368142` is optional copy/UI corroboration only — never required, never the rejection reason
 - **QA Bot PASS** (run-QA, then order-QA) required before any place ([Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) or standing Classic order gate)
 - **Fear is the dip window (Ofer 2026-10-04):** CNN Fear or Extreme Fear is when Support / Over Sold longs are most in play. Do **not** block a pack only because F&G is Fear or the brief says No Buy for that reason. Still block on cash floor, weekend, explicit Ofer/CoS hold, and risk-off (no add) on that same name.
-- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. Existing overlap XLE: Ofer decided 2026-10-13 to keep it held in both books; never add to it in either.
+- **Cross-book no-overlap (Ofer 2026-10-13 01:44 IDT):** never buy a symbol in Classic (OfersClaw5-PRIYN) that is held in Momentum (mirror 11630170), or vice versa. Before any buy or buy proposal, live-read the other book; overlap = blocked. QA gates hard-FAIL `CROSS_BOOK_OVERLAP`. This is the only symbol hard block (fix14 lifted the XLE no-add rule).
 
 ## Cash floor sizing (Ofer 2026-10-07)
 
-If a buy pack would leave Classic cash **under the agent floor (≈$854; $1,500 mirror)**:
+If a buy pack would leave Classic cash **under the agent floor (1% of equity)**:
 1. **Lower** notional per name, and/or
 2. **Trade fewer symbols** (keep best sleeve-fit / conviction),
 3. Re-check cash-after ≥ floor before prepare / order-QA.
@@ -122,25 +134,25 @@ Routine **classic-rsi-1h-auto**: weekdays every 3 hours `CRON_TZ=Asia/Jerusalem 
 
 - **Universe (no fixed symbol list):** S&P pool (`/workspace/sp500_symbols.json`) → liquid ADV$ (SMA20 close×volume ≥ ~$100M, price ≥ $10) → rising confirmed 1H volume (last vol > SMA20 × 1.2) → top ~50 ∪ live Classic book. Screener: `classic_rsi/universe.py`. Envelope carries `universe_meta` (pool/liquid/rising counts, thresholds, fallback flag). Cache fallback: `audit/universe-latest.json` — never silently use the old fixed 6-name list as primary.
 - The `auto_1h` **script** proposes only (envelope keeps `do_not_place=true` / `place=false`: the script itself never calls eToro). **Trader_Classic** places via `user-OfersClaw5` after the gates below — that is the FULL AUTO path, not the script
-- Soft gates: equity window closed (weekend/holiday outside 24x5; crypto still scanned) / daily 4-trade limit / cash floor → `GATED` (buys suppressed). Fear / brief No-Buy-from-Fear is **not** a soft gate.
+- Soft gates: equity window closed (weekend/holiday outside 24x5) / cash floor → `GATED` (buys suppressed). No daily trade-limit gate (fix14). Fear / brief No-Buy-from-Fear is **not** a soft gate.
 - **Every run** → QA Bot [Classic RSI 1H run QA](sand-workflow:classic-rsi-1h-run-qa) citing `run_id` (0 packs and GATED still validated). A slot the pre-check SKIPs (exit 10) produces no run, so it has no run-QA; its audit line is the record.
 - On run-QA **FAIL** → QA messages Trader_Classic to **rerun** `auto_1h` (max 2/hour) → re-validate new `run_id`
-- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/sell-first check/explicit hold; Fear = dip, not a block; cut size or drop names to keep cash ≥ agent floor ≈$854) → prepare → cost/benefit gate → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → **auto place on PASS** (no Ofer chat auth) → fill audit
+- On run-QA **PASS** with packs → Trader_Classic (cash/sleeve/sell-first check/explicit hold; Fear = dip, not a block; cut size or drop names to keep cash ≥ agent floor = 1% of equity) → prepare → cost/benefit gate → [Classic real-money order QA gate](sand-workflow:classic-real-money-order-qa-gate) → **auto place on PASS** (no Ofer chat auth) → fill audit
 - On run-QA **PASS** with 0 packs → do nothing; the run log is the record
 
 ## Automation flow (manual or auto)
 
 1. `auto_1h` or `propose` on confirmed 1H bars
 2. Mandate filter — RSI cannot override cash, weekend, or an explicit hold. It **should** be used in Fear.
-3. Sell/rotate check + size so cash-after ≥ agent floor (≈$854)
+3. Sell/rotate check + size so cash-after ≥ agent floor (1% of equity)
 4. QA Bot **run QA** with `run_id` (FAIL → Classic rerun → re-QA)
-5. If packs remain after run PASS → pre-buy refresh → prepare → `prepare_token split` → cost/benefit gate → order QA → **auto place after PASS** → `prepare_token wipe` (no Ofer chat auth; max 4 new trades/IDT day; no monthly new-name cap)
+5. If packs remain after run PASS → pre-buy refresh → prepare → `prepare_token split` → cost/benefit gate → order QA → **auto place after PASS** → `prepare_token wipe` (no Ofer chat auth; no daily trade cap; no monthly new-name cap)
 6. Post-fill audit
 
-## execute_pass GO pin + prepare/place token handling (fix11, deployed 2026-10-21 19:17 IDT)
+## execute_pass GO pin + prepare/place token handling (fix11, deployed 2026-10-21 19:17 IDT; pin updated by fix14)
 
-- **GO version:** `classic_rsi/execute_pass.py` **v16.11 fix11** (`execute-pass-v16.11-token-sleeves-20261021-fix11`, package 1.1.7), sha256 `394e53a769e93f8ddf26f152e87c3d1351549e56d1c49c9e69700a6762dfdeb8`. Any other sha is not the QA GO version → NO-GO. The daily `build_daily.py` `EP_OK` pins the same sha.
-- **Cash floor:** always the config-pinned floor (`python -m classic_rsi.floor`, or `resolve(expected_sha256=<pinned config sha>)`; a bare `resolve()` is not config-pinned) (= execute_pass `cash_floor.agent_floor_usd`, ≈$854 = $1,500 mirror); never `floor_now()` or a hard-coded number.
+- **GO version:** `classic_rsi/execute_pass.py` **v16.12 fix14** (`execute-pass-v16.12-rule-release-20261023-fix14`, package 1.1.7), sha256 `1fa6ffdd75c3a8699c99d8997bf61bd5d8a00c30bfb832cff6bf105700230bc5`. Any other sha is not the QA GO version → NO-GO. The daily `build_daily.py` `EP_OK` pins the same sha.
+- **Cash floor:** always the config-pinned floor (`python -m classic_rsi.floor`, or `resolve(expected_sha256=<pinned config sha>)`; a bare `resolve()` is not config-pinned) (= execute_pass `cash_floor.agent_floor_usd` = 1% of total equity); never `floor_now()` or a hard-coded number.
 - **After every `prepare-trade` / `prepare-close`** (saved with write_to_file): `cd /workspace && ./screener-venv/bin/python -m classic_rsi.prepare_token split --response <raw> --stripped-out <pack-dir>/prepare-tokenstripped.json --token-out /tmp/<unique>-token`. It accepts `token` or `confirmationToken`, writes the token-free copy to disk first, writes the token ONLY to a 0600 file, deletes the raw read and prints metadata only. Exit 2 (`PREPARE_TOKEN_MISSING` / `AMBIGUOUS` / `INVALID` / `NOT_READY` / `VALUE_LEAK`) = do not place; re-prepare. Never read the token field by hand and never print it. Build live.json / execute_pass inputs from the stripped copy only.
 - **Place:** one `place-trade` / `place-close` call with `token = "$file:/tmp/<unique>-token"`. Then ALWAYS `./screener-venv/bin/python -m classic_rsi.prepare_token wipe --token-out /tmp/<unique>-token` (after a fill, a failure or an abandon), and save the place result with `prepare_token strip --response <raw> --out <pack-dir>/place-result.json`. Before any re-place, live-read to check whether the first place already went through.
 - **Deploy / rollback of classic_rsi packages:** `apply_fixNN.sh` (check only) → `--apply --external`; roll back ALWAYS with `--rollback <backup-dir> --external` (without `--external` the external scripts stay on the new code and fail on import).
@@ -163,4 +175,3 @@ Routine **classic-rsi-1h-auto**: weekdays every 3 hours `CRON_TZ=Asia/Jerusalem 
 ## Book refresh = one script (2026-10-18e; Ofer rule 2026-10-18: anything deterministic runs in code; the LLM does judgement + prose only; no trading-rule change)
 
 > **Shared text — canonical copy:** [Trader Classic strategy](sand-workflow:trader-classic-strategy) → section "Book refresh = one script (2026-10-18e; Ofer rule 2026-10-18: anything deterministic runs in code; the LLM does judgement + prose only; no trading-rule change)". The identical lines were removed here on 2026-10-18 (dedup); read that section — it applies here unchanged. Lines below are specific to this skill.
-

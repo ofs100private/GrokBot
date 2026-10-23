@@ -14,7 +14,7 @@
     "longOnly": true,
     "sellMeansRiskOffOnly": true,
     "atrSlMult": 1.5,
-    "atrTpMult": 2.0,
+    "atrTpMult": 2,
     "qaBeforePlace": true,
     "weekendGate": true,
     "doNotPlaceFromThisUi": true,
@@ -57,7 +57,7 @@
     "book_summary": {
       "equity": 12733.77,
       "availableCash": 7438.61,
-      "totalInvested": 15000.0,
+      "totalInvested": 15000,
       "profitLoss": -1847.93,
       "profitLossPercent": -12.32,
       "closedPnl": -2019.54,
@@ -71,7 +71,7 @@
       "weekend": true,
       "us_rth": false,
       "available_cash": 7438.61,
-      "cash_floor_usd": 2500.0,
+      "cash_floor_usd": 2500,
       "blocks": [
         "weekend_no_new_opens"
       ],
@@ -489,5 +489,144 @@
     "latestBacktest": "/workspace/classic_rsi/audit/latest-backtest.json",
     "backtestSummary": "/workspace/classic_rsi/backtest-summary-1h.json",
     "auditIndex": "/workspace/classic_rsi/audit/index.jsonl"
+  },
+  "classicRules": {
+    "updatedAtIDT": "2026-10-23 13:35 IDT",
+    "pending": {
+      "id": "fix14",
+      "status": "PENDING_QA",
+      "label": "pending QA (fix14)",
+      "live": false,
+      "via": "Trader_Classic fix14",
+      "effectiveWhen": "LIVE changes come through Trader_Classic fix14 and take effect ONLY after QA PASS. Until then the current rules (left column) are what the live engine enforces.",
+      "decidedBy": "Ofer",
+      "decidedAtIDT": "2026-10-23 13:11 IDT",
+      "relayedBy": "Chief of Staff",
+      "stagingPackage": "/workspace/staging/fix14-live-rule-release-20261023",
+      "cashFloorPctOfEquity": 1,
+      "cashFloorRounding": "ceil_cent (same as fix14 floor.py)",
+      "maxNewTradesPerDay": null,
+      "switchOverNote": "Single source: /classic-portfolio.json. When fix14 is applied, Trader_Classic updates its floor, trade-cap and blocked fields; the tab then drops the pending tags on its own. `live` here is never flipped by hand.",
+      "hardBlocks": [
+        "CROSS_BOOK_OVERLAP: no symbol held in both Classic and Momentum"
+      ],
+      "rows": [
+        {
+          "rule": "XLE adds",
+          "current": "blocked (XLE NO_XLE_ADDS)",
+          "pending": "allowed (no-add block lifted)"
+        },
+        {
+          "rule": "QQQ core rebuy",
+          "current": "on hold (core re-buy pending Ofer)",
+          "pending": "released (SL + TP required; levels pending Ofer — Trader_Classic default SL -11% / TP +25%)"
+        }
+      ],
+      "notes": [
+        "Not changed by the 13:11 rule text: sizing caps (ETF 35% / stock 20% / sleeve 45% of equity, min position $400.00) and the crypto exclusion. The fix14 staging code keeps both, so a cap can still stop a buy.",
+        "The fixed mirror floor and the agent-floor ratio become reporting only once fix14 is live."
+      ],
+      "momentumBlocked": {
+        "symbols": [
+          "USO",
+          "XOM",
+          "WST",
+          "AAPL",
+          "VTRS",
+          "TRGP",
+          "RVTY",
+          "CRL",
+          "DVN"
+        ],
+        "source": "/momentum-portfolio.json",
+        "sourceAsOf": "2026-10-23T05:26:00+03:00",
+        "sourceSha256": "0062771729be30ec2af95ea7493ca3e4023c69bd2065ec31ae077b5f016f76c8",
+        "liveCrossCheck": {
+          "source": "user-Momentum-HHHGDTJ get-my-positions-and-orders (real, direct)",
+          "readAtIDT": "2026-10-23 13:13:41 IDT",
+          "symbols": [
+            "AAPL",
+            "CRL",
+            "DVN",
+            "RVTY",
+            "TRGP",
+            "USO",
+            "VTRS",
+            "WST",
+            "XOM"
+          ],
+          "match": true,
+          "parentMirror": {
+            "source": "user-etoro mirror 11630170",
+            "symbols": [
+              "AAPL",
+              "CRL",
+              "DVN",
+              "RVTY",
+              "TRGP",
+              "USO",
+              "VTRS",
+              "WST",
+              "XOM"
+            ],
+            "match": true
+          }
+        }
+      },
+      "snapshot": {
+        "source": "/classic-portfolio.json",
+        "sourceAsOf": "2026-10-23T06:26:25+03:00",
+        "sourceSha256": "4fab4a242ed9c41a1e04d1dc8d064c1fa0ddab436674f82f428260c2212bd7bb",
+        "equity": 7228.06,
+        "cash": 3382.93,
+        "currentFloorAgent": 853.73,
+        "currentFloorMirror": 1500,
+        "currentDeployable": 2529.2,
+        "currentMaxNewTradesPerDay": 4,
+        "currentBlocked": [
+          "AAPL CROSS_BOOK_OVERLAP",
+          "CRL CROSS_BOOK_OVERLAP",
+          "DVN CROSS_BOOK_OVERLAP",
+          "RVTY CROSS_BOOK_OVERLAP",
+          "TRGP CROSS_BOOK_OVERLAP",
+          "USO CROSS_BOOK_OVERLAP",
+          "VTRS CROSS_BOOK_OVERLAP",
+          "WST CROSS_BOOK_OVERLAP",
+          "XOM CROSS_BOOK_OVERLAP",
+          "XLE NO_XLE_ADDS",
+          "*crypto* CRYPTO_BLOCKED",
+          "SPY CAP_NO_HEADROOM",
+          "any buy leaving cash < ≈$853.73 agent floor ($1,500 in the copy mirror, ratio 1.757)"
+        ],
+        "pendingFloor": 72.29,
+        "pendingDeployable": 3310.64
+      }
+    },
+    "rulesetV2": {
+      "status": "STAGING",
+      "label": "Ruleset v2: STAGING, not live",
+      "live": false,
+      "summary": [
+        "Core 55%: SPY + QQQ combined 55% of equity, WITH stop-loss and take-profit on the core lots (levels pending Ofer; Trader_Classic's proposed default SL -11% / TP +25%). QA fails any package that removes SL/TP from the core.",
+        "Satellite: the remaining equity after the core and 0–3% cash; S&P 500 names ranked by 6-1M momentum and above their 200-day MA. Slots: set by Trader_Classic's re-package.",
+        "Satellite exit: 3×ATR20 trailing stop on the daily close; no take-profit.",
+        "No RSI engine: RSI is not an entry trigger.",
+        "Cash 0–3% (fix14 floor: 1% of equity once fix14 is live; pending QA)."
+      ],
+      "specNotes": [
+        "Amendment 2026-10-23 13:21 IDT (Ofer, confirmed via QA Bot) supersedes R1 and the core deletions: approved for staging, then QA, then the paper week, then cutover.",
+        "R3: pool excludes ETFs, crypto, CFDs, non-US names and anything Momentum holds; ADV20 ≥ $100M, price ≥ $10, close > SMA200.",
+        "R5: eToro native SL only as a disaster stop at entry × 0.75; trailing stop evaluated on the regular-session close.",
+        "R10: max 8 orders on rebalance days, 4 on other days (stops only); min order $400 agent.",
+        "R11: pause new satellite buys if drawdown from peak > 20% or the satellite trails SPY by > 10 pp over 6 months.",
+        "XLV and XLE: sell both at cutover stage 1 (via order-QA) and move the proceeds into the momentum satellite. Ofer decided 13:34 IDT.",
+        "Caps (20% stock / 35% ETF / 45% sleeve) and the crypto block stay unchanged until Ofer says otherwise."
+      ],
+      "paperWeekStart": "2026-10-26",
+      "paperWeekEnd": "2026-11-02",
+      "cutoverTarget": "~2026-11-03",
+      "spec": "/workspace/analysis/classic-leak-20261023/strategic_plan_ruleset.md",
+      "planPage": "https://cursor.com/canvas/store-f9f48114-505f-45df-8287-98f6e7a6184c/415f1c1e-eded-419e-b3d4-eb29e0b0ed9d"
+    }
   }
 }

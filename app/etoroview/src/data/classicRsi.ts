@@ -164,6 +164,82 @@ export interface ClassicRsiSourcePaths {
   [key: string]: string | null | undefined
 }
 
+/** Momentum symbols that form the cross-book hard block (read-only provenance). */
+export interface ClassicRulesMomentumBlock {
+  symbols: string[]
+  source?: string | null
+  sourceAsOf?: string | null
+  sourceSha256?: string | null
+  liveCrossCheck?: Record<string, unknown> | null
+}
+
+/** Numbers computed from the live data files when classicRules was written (fallback only). */
+export interface ClassicRulesSnapshot {
+  source?: string | null
+  sourceAsOf?: string | null
+  sourceSha256?: string | null
+  equity?: number | null
+  cash?: number | null
+  currentFloorAgent?: number | null
+  currentFloorMirror?: number | null
+  currentDeployable?: number | null
+  currentMaxNewTradesPerDay?: number | null
+  currentBlocked?: string[]
+  pendingFloor?: number | null
+  pendingDeployable?: number | null
+}
+
+export interface ClassicRulesRow {
+  rule: string
+  current: string
+  pending: string
+}
+
+/** Live-rule change set that is NOT live until QA PASS (Trader_Classic fix14). */
+export interface ClassicRulesPending {
+  id: string
+  status: string
+  label: string
+  live: boolean
+  via?: string | null
+  effectiveWhen?: string | null
+  decidedBy?: string | null
+  decidedAtIDT?: string | null
+  relayedBy?: string | null
+  stagingPackage?: string | null
+  /** Where the switch-over is detected: classic-portfolio.json is the single source. */
+  switchOverNote?: string | null
+  cashFloorPctOfEquity: number | null
+  cashFloorRounding?: string | null
+  maxNewTradesPerDay: number | null
+  hardBlocks: string[]
+  /** Text-only rule rows (current vs pending), e.g. XLE adds, QQQ core rebuy. */
+  rows: ClassicRulesRow[]
+  notes: string[]
+  momentumBlocked: ClassicRulesMomentumBlock | null
+  snapshot: ClassicRulesSnapshot | null
+}
+
+/** Next ruleset, staging only (never live from this feed). */
+export interface ClassicRulesetV2 {
+  status: string
+  label: string
+  live: boolean
+  summary: string[]
+  specNotes: string[]
+  paperWeekStart?: string | null
+  paperWeekEnd?: string | null
+  cutoverTarget?: string | null
+  spec?: string | null
+  planPage?: string | null
+}
+
+export interface ClassicRules {
+  updatedAtIDT?: string | null
+  pending: ClassicRulesPending | null
+  rulesetV2: ClassicRulesetV2 | null
+}
+
 export interface ClassicRsiPayload {
   schemaVersion: string
   asOf?: string | null
@@ -175,6 +251,8 @@ export interface ClassicRsiPayload {
   backtestSummary: ClassicRsiBacktestSummary | null
   auditIndex: ClassicRsiAuditRow[]
   sourcePaths?: ClassicRsiSourcePaths | null
+  /** Classic rule status (pending fix14 + staging v2). Optional; absent = not shown. */
+  classicRules: ClassicRules | null
 }
 
 export type ClassicRsiLoadState =
@@ -443,6 +521,95 @@ function parseAuditRow(raw: unknown): ClassicRsiAuditRow | null {
   }
 }
 
+function asNumberOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function parseRulesSnapshot(raw: unknown): ClassicRulesSnapshot | null {
+  if (!isRecord(raw)) return null
+  return {
+    source: asString(raw.source),
+    sourceAsOf: asString(raw.sourceAsOf),
+    sourceSha256: asString(raw.sourceSha256),
+    equity: asNumberOrNull(raw.equity),
+    cash: asNumberOrNull(raw.cash),
+    currentFloorAgent: asNumberOrNull(raw.currentFloorAgent),
+    currentFloorMirror: asNumberOrNull(raw.currentFloorMirror),
+    currentDeployable: asNumberOrNull(raw.currentDeployable),
+    currentMaxNewTradesPerDay: asNumberOrNull(raw.currentMaxNewTradesPerDay),
+    currentBlocked: asStringArray(raw.currentBlocked),
+    pendingFloor: asNumberOrNull(raw.pendingFloor),
+    pendingDeployable: asNumberOrNull(raw.pendingDeployable),
+  }
+}
+
+function parseRulesPending(raw: unknown): ClassicRulesPending | null {
+  if (!isRecord(raw)) return null
+  const mb = isRecord(raw.momentumBlocked) ? raw.momentumBlocked : null
+  return {
+    id: asString(raw.id) ?? 'fix14',
+    status: asString(raw.status) ?? 'PENDING_QA',
+    label: asString(raw.label) ?? 'pending QA (fix14)',
+    // Fail safe: anything other than an explicit `true` is treated as NOT live.
+    live: raw.live === true,
+    via: asString(raw.via),
+    effectiveWhen: asString(raw.effectiveWhen),
+    decidedBy: asString(raw.decidedBy),
+    decidedAtIDT: asString(raw.decidedAtIDT),
+    relayedBy: asString(raw.relayedBy),
+    stagingPackage: asString(raw.stagingPackage),
+    switchOverNote: asString(raw.switchOverNote),
+    cashFloorPctOfEquity: asNumberOrNull(raw.cashFloorPctOfEquity),
+    cashFloorRounding: asString(raw.cashFloorRounding),
+    maxNewTradesPerDay: asNumberOrNull(raw.maxNewTradesPerDay),
+    hardBlocks: asStringArray(raw.hardBlocks),
+    rows: Array.isArray(raw.rows)
+      ? raw.rows.flatMap((r): ClassicRulesRow[] => {
+          if (!isRecord(r)) return []
+          const rule = asString(r.rule)
+          if (!rule) return []
+          return [{ rule, current: asString(r.current) ?? '—', pending: asString(r.pending) ?? '—' }]
+        })
+      : [],
+    notes: asStringArray(raw.notes),
+    momentumBlocked: mb
+      ? {
+          symbols: asStringArray(mb.symbols),
+          source: asString(mb.source),
+          sourceAsOf: asString(mb.sourceAsOf),
+          sourceSha256: asString(mb.sourceSha256),
+          liveCrossCheck: isRecord(mb.liveCrossCheck) ? mb.liveCrossCheck : null,
+        }
+      : null,
+    snapshot: parseRulesSnapshot(raw.snapshot),
+  }
+}
+
+function parseRulesetV2(raw: unknown): ClassicRulesetV2 | null {
+  if (!isRecord(raw)) return null
+  return {
+    status: asString(raw.status) ?? 'STAGING',
+    label: asString(raw.label) ?? 'Ruleset v2: STAGING, not live',
+    live: raw.live === true,
+    summary: asStringArray(raw.summary),
+    specNotes: asStringArray(raw.specNotes),
+    paperWeekStart: asString(raw.paperWeekStart),
+    paperWeekEnd: asString(raw.paperWeekEnd),
+    cutoverTarget: asString(raw.cutoverTarget),
+    spec: asString(raw.spec),
+    planPage: asString(raw.planPage),
+  }
+}
+
+function parseClassicRules(raw: unknown): ClassicRules | null {
+  if (!isRecord(raw)) return null
+  return {
+    updatedAtIDT: asString(raw.updatedAtIDT),
+    pending: parseRulesPending(raw.pending),
+    rulesetV2: parseRulesetV2(raw.rulesetV2),
+  }
+}
+
 export function parseClassicRsiPayload(json: unknown): ClassicRsiPayload {
   if (!isRecord(json)) {
     throw new Error('classic-rsi: payload is not an object')
@@ -475,6 +642,7 @@ export function parseClassicRsiPayload(json: unknown): ClassicRsiPayload {
     backtestSummary: parseBacktestSummary(json.backtestSummary),
     auditIndex,
     sourcePaths,
+    classicRules: parseClassicRules(json.classicRules),
   }
 }
 

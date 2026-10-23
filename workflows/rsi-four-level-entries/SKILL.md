@@ -7,6 +7,11 @@ description: >-
 ---
 # RSI four-level entries (adapted for Ofer books)
 
+## Classic rules this skill defers to — fix14, Ofer 2026-10-23 (supersedes any conflicting text below)
+- Classic cash floor = **1% of total equity** (config-pinned `classic_rsi.floor`). **No daily trade cap** (the trade count comes from the strategy plan; the counter is audit only). **No XLE no-add block**; the only symbol hard block is the cross-book overlap with Momentum (`CROSS_BOOK_OVERLAP`).
+- Classic core = **SPY + QQQ at 55% of total equity combined, a target (not binding)** (each ≤ 35%) with **SL −11% / TP +25% on every core lot** (confirmed by Ofer 2026-10-23 13:55 IDT). RSI Buy tags only time satellite entries with the cash left above the floor after the core; they never size or block the core.
+- Crypto is removed from Classic (2026-10-17); the BTC/ETH/SOL text below is historical.
+
 Reusable recipe for the **four-level RSI zone + strong-candle** signal model (levels Over Buy / Resistance / Support / Over Sold). Use when evaluating RSI Signals Entries–style logic for Classic or Momentum, wiring alerts, or coding an equivalent filter in Python — **not** as a standalone short-selling system.
 
 **Strength % is a fixed rule label (80 = extreme touch, 70 = zone + strong candle), not a measured win rate.**
@@ -66,7 +71,7 @@ Default pip SL/TP (70/80 pips) and 1m/5m tuning are for FX. Our books are **US s
 3. **Timeframe:** prefer **daily** (or 1H for Classic discretionary timing). Retune strong-candle multiplier on that TF  
 4. **Stops/targets:** replace pip engine with **ATR or %** (e.g. SL 1.5–2×ATR, TP ≥1.5R) aligned with Classic/Momentum risk rules  
 5. **Confirm on close:** keep ON for any automation  
-6. **Regime gates still win:** Momentum EVENT_VOL_FREEZE / HARD_HALT / SOFT; Classic Fear/cash floor / equities outside 24x5 (crypto 24/7) / max 4 new trades/IDT day  
+6. **Regime gates still win:** Momentum EVENT_VOL_FREEZE / HARD_HALT / SOFT; Classic cash floor (1% of equity) / equities outside 24x5 / cross-book overlap (no daily trade cap since fix14; Fear is the dip window, not a gate)  
 7. **No alert→place bypass:** TradingView alert ≠ order; still prepare → QA → place  
 8. **Backtest first:** measure expectancy on the actual symbols/TF before FULL AUTO attachment  
 9. **IP:** third-party Pine remains the author’s; we store **logic parameters + adaptation rules** here, not a redistributed copy of their script
@@ -75,7 +80,7 @@ Default pip SL/TP (70/80 pips) and 1m/5m tuning are for FX. Our books are **US s
 
 1. Paper or offline: compute RSI(14) + zones + strong candle on daily bars for Classic watchlist / Momentum pack candidates  
 2. Log signals with rule tag (`EXTREME_80` / `ZONE_70`) and whether mandate gates would allow a long  
-3. Classic: only act on Buy tags when cash floor OK and name fits sleeve; Sell tags = hold/no-add notes  
+3. Classic: only act on Buy tags when cash floor (1% of equity) OK, the name fits its sleeve/caps and is not held in Momentum; Sell tags = hold/no-add notes  
 4. Momentum: wire Sell tags into position_manager notes; keep Buy tags out of screener pack unless a future playbook explicitly adds an RSI mean-reversion sleeve  
 5. QA pack must name the RSI rule + TF + ATR stops if any place is proposed
 
