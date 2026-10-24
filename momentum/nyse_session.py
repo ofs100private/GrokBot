@@ -1,7 +1,7 @@
 """NYSE session helpers for Momentum EOD bots."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -27,8 +27,13 @@ def nyse_today_is_open(now: datetime | None = None) -> bool:
 
 
 def in_intraday_ban(now: datetime | None = None) -> bool:
-    """First ~2h of US RTH in Israel clock: 16:30–18:30 (EDT-aligned playbook)."""
+    """First 2h of US RTH on the New York clock: 09:30-11:30 ET (2026-10-24 DST fix).
+
+    = 16:30-18:30 IL when IL and US are on the same DST state; 15:30-17:30 IL on 2026-10-26..30
+    (IL already on winter time, US still on EDT). Was a fixed 16:30-18:30 IL window."""
     now = now or datetime.now(tz=IL)
-    local = now.astimezone(IL)
-    mins = local.hour * 60 + local.minute
-    return (16 * 60 + 30) <= mins < (18 * 60 + 30)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=IL)
+    t = now.astimezone(NY)
+    start = t.replace(hour=9, minute=30, second=0, microsecond=0)
+    return start <= t < start + timedelta(hours=2)

@@ -1,4 +1,5 @@
-"""Momentum open-gap risk check — 16:45 IL weekdays, shortly after the US open (Ofer 2026-10-19).
+"""Momentum open-gap risk check — 09:45 New York (NYSE open+15m) on weekdays, shortly after the US open
+(Ofer 2026-10-19). = 16:45 IL normally, 15:45 IL on 2026-10-26..30 (DST gap week).
 
 SELL ONLY. Fixed, checked-in script; read-only: never calls eToro / MCP, never places or closes anything.
 It only emits CLOSE / HOLD rows for the routine, which then runs QA Bot place-QA (PASS) + place_lock before
@@ -399,7 +400,7 @@ def run(raw: Optional[str], positions_file: Optional[str], now: datetime, md: Ma
 
 def main(argv: Optional[list[str]] = None, now: Optional[datetime] = None, md: Optional[MarketData] = None) -> int:
     ap = argparse.ArgumentParser(prog="momentum_qa.open_gap_check",
-                                 description="Momentum 16:45 IL open-gap check (SELL only). Exit 10 = silent skip.")
+                                 description="Momentum open-gap check, NYSE open+15m (09:45 NY) (SELL only). Exit 10 = silent skip.")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--raw", help="saved keys get-my-positions-and-orders MCP output (wrapper text ok)")
     g.add_argument("--positions-file", help="momentum_qa.precheck summary JSON (momentum.precheck.v1)")

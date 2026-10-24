@@ -14,8 +14,43 @@ CLI:
         [--instrument-id N]   (held = id match OR base-ticker match; A.US/A.RTH == A;
                               an id known as another ticker -> ID_SYMBOL_MISMATCH exit 5, no lock)
   python -m momentum_qa.place_lock mark --lock <path> --status PLACED --order-id 123 --position-id 456
-Exit codes: 0 OK, 2 LOCK_HELD, 3 ALREADY_HELD, 4 RETRY_NOT_ALLOWED / POSITIONS_STALE / bad input,
-            5 ID_SYMBOL_MISMATCH.
+Exit codes: 0 OK, 2 LOCK_HELD, 3 ALREADY_HELD, 4 RETRY_NOT_ALLOWED / POSITIONS_STALE / bad input /
+            MANUAL_REF_REQUIRED / MANUAL_FROM_ROUTINE_REFUSED / AUDIT_WRITE_FAILED, 5 ID_SYMBOL_MISMATCH,
+            6 buy guard, no lock written: SCHEDULE_MISALIGNED / EARLY_CLOSE_DAY (automatic) or
+              MARKET_CLOSED / INTRADAY_BAN (manual).
+
+Buy schedule guard (DST-M1 / DST-M2, 2026-10-24b). A BUY = an acquire without --allow-held (PM
+trail/close and the open-gap CLOSE pass --allow-held and are never blocked). Against the actual NYSE
+close of the current NY session (momentum_qa.market_clock, exchange_calendars or the 2026 table):
+  * NYSE closed today                      -> SCHEDULE_MISALIGNED (exit 6)
+  * early-close session (13:00 NY)         -> EARLY_CLOSE_DAY     (exit 6), all day
+  * now < close-90m or now >= close-1m     -> SCHEDULE_MISALIGNED (exit 6)
+  2026-10-24d (Ofer 2026-10-24 00:53 IDT: routines stay at 21:40-21:58 IL permanently; widen so the 21:40 run can
+  buy): window close-90m..close-1m (was -60m). Close 22:00 IL (gap weeks): 20:30:00-21:58:59 IL; close 23:00 IL
+  (from 2026-11-02): 21:30:00-22:58:59 IL. The window (>= 14:30 NY) never overlaps the 09:30-11:30 NY INTRADAY_BAN.
+  So a missed / early DST cron move can no longer place buys ~1h early or after the close.
+
+Manual path (Ofer 2026-10-24 00:24 IDT: "Block only the automatic EOD buys outside the last hour; my own
+requested buys can go any time (still QA-gated, never in the first 2 hours)"):
+  acquire ... --manual-request <ref>   ref = Ofer's chat message (required, non-empty; e.g. "slack:<ts>" or quoted text)
+  Skips only the close-90m..close-1m window and EARLY_CLOSE_DAY. Still refuses (exit 6, no lock):
+    MARKET_CLOSED  no NYSE session today, or outside the regular session open..actual close (early close 13:00 NY)
+    INTRADAY_BAN   first 2h of RTH, 09:30-11:30 New York time
+  and every other check (fresh positions, held, ID match, lock/verdict single-use) as before. QA Bot place-QA
+  is still required by the flow. Empty / blank ref -> MANUAL_REF_REQUIRED (exit 4). The ref is stored in the
+  lock (manual_request, buy_path=manual) and in one PLACE_LOCK_MANUAL audit row (acquired or refused);
+  if that audit row cannot be written the lock is marked FAILED and the acquire fails (exit 4).
+  AUTOMATIC ROUTINES MUST NEVER PASS --manual-request (tests assert no routine paste file contains it).
+  2026-10-24c: --manual-request with a routine caller (--caller starting with "eod-") is refused fail closed:
+  MANUAL_FROM_ROUTINE_REFUSED (exit 4, no lock, PLACE_LOCK_MANUAL REFUSED audit row). An exit 6 inside a
+  routine is final (place_flow.md step 6): no retry, no manual path.
+
+Clock (D-M1, 2026-10-24c): the guards use the real clock only (_guard_now = datetime.now). There is NO
+environment-variable or config override; tests inject time via acquire(now=...) or monkeypatch _guard_now.
+
+Calendar (D-L1, 2026-10-24c): if exchange_calendars is unavailable and the NY year has no fallback table
+(market_clock.FALLBACK_YEARS), automatic buys are refused: SCHEDULE_MISALIGNED, reason_code
+CALENDAR_UNAVAILABLE (exit 6). Every buy lock records schedule_guard.calendar_source.
 """
 from __future__ import annotations
 
@@ -24,9 +59,10 @@ import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from momentum_qa import market_clock as MC
 from momentum_qa.instrument_map import base_symbol, id_symbol_mismatch, instrument_id as mapped_instrument_id, is_held
 
 LOCK_DIR = Path("/workspace/momentum_audit/place_locks")
@@ -35,6 +71,10 @@ STATUSES = ("ACQUIRED", "PLACED", "FAILED", "EXPIRED")
 EXIT_OK, EXIT_LOCK_HELD, EXIT_ALREADY_HELD, EXIT_RETRY_NOT_ALLOWED = 0, 2, 3, 4
 EXIT_ID_SYMBOL_MISMATCH = 5  # --instrument-id is a different instrument than the symbol: never acquire
 POSITIONS_MAX_AGE_S = 120  # live get-my-positions-and-orders must be this fresh
+EXIT_SCHEDULE = 6          # SCHEDULE_MISALIGNED / EARLY_CLOSE_DAY: buy refused, no lock written
+BUY_OPEN_BEFORE_CLOSE = timedelta(minutes=90)  # buys allowed from close-90m (2026-10-24d; was 60m) ...
+BUY_STOP_BEFORE_CLOSE = timedelta(minutes=1)   # ... until (excluding) close-1m
+ROUTINE_CALLER_PREFIX = "eod-"  # every EOD routine caller (eod-pm-2240, eod-pm-2242-backup, eod-screener-*, ...)
 
 
 class PlaceLockError(Exception):
@@ -184,6 +224,73 @@ def require_fresh_positions(positions_obj, *, now: datetime | None = None,
     return age
 
 
+def _guard_now() -> datetime:
+    """Real clock only (D-M1). No env/config override; tests pass now= or monkeypatch this function."""
+    return datetime.now(tz=MC.IL)
+
+
+def is_routine_caller(caller) -> bool:
+    return isinstance(caller, str) and caller.strip().lower().startswith(ROUTINE_CALLER_PREFIX)
+
+
+def manual_buy_guard(now: datetime | None = None) -> dict:
+    """Manual (Ofer-requested) buy guard: regular session open and not in the first 2h. Read-only."""
+    now = now or _guard_now()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=MC.IL)
+    now = now.astimezone(MC.IL)
+    ny_day = now.astimezone(MC.NY).date()
+    info = MC.session_info(ny_day)
+    out = {"now_il": now.isoformat(), "ny_day": ny_day.isoformat(), "session": info,
+           "calendar_source": info.get("source")}
+    if not info["is_session"]:
+        return {**out, "ok": False, "code": "MARKET_CLOSED", "reason": f"no NYSE session on {ny_day} (NY date)"}
+    open_, close = MC.nyse_open_il(ny_day), MC.nyse_close_il(ny_day)
+    out.update(open_il=open_.isoformat(), close_il=close.isoformat())
+    if not (open_ <= now < close):
+        return {**out, "ok": False, "code": "MARKET_CLOSED",
+                "reason": f"{MC.hhmm(now)} IL is outside the regular session {MC.hhmm(open_)}-{MC.hhmm(close)} IL"}
+    if MC.in_intraday_ban(now):
+        return {**out, "ok": False, "code": "INTRADAY_BAN",
+                "reason": f"{MC.hhmm(now)} IL is in the first 2h of NYSE trading (09:30-11:30 New York time)"}
+    return {**out, "ok": True, "code": "OK", "reason": "manual buy: regular session open, after the first 2h"}
+
+
+def _audit_manual(row: dict, audit_dir) -> None:
+    from momentum_qa.audit import append_row, build_record, new_run_id
+    append_row(build_record(new_run_id("placelock"), "momentum_qa/place_lock.py", row), audit_dir)
+
+
+def buy_schedule_guard(now: datetime | None = None) -> dict:
+    """DST-M1/M2 buy guard. {"ok", "code", "reason", "now_il", "close_il", "window_il", ...}. Read-only."""
+    now = now or _guard_now()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=MC.IL)
+    now = now.astimezone(MC.IL)
+    ny_day = now.astimezone(MC.NY).date()
+    info = MC.session_info(ny_day)
+    out = {"now_il": now.isoformat(), "ny_day": ny_day.isoformat(), "session": info,
+           "calendar_source": info.get("source")}
+    if not MC.calendar_covers(ny_day):  # D-L1: no exchange_calendars and no fallback table for this year
+        return {**out, "ok": False, "code": "SCHEDULE_MISALIGNED", "reason_code": "CALENDAR_UNAVAILABLE",
+                "reason": (f"CALENDAR_UNAVAILABLE: exchange_calendars unavailable and no NYSE fallback table for "
+                           f"{ny_day.year}; automatic buys refused")}
+    if not info["is_session"]:
+        return {**out, "ok": False, "code": "SCHEDULE_MISALIGNED",
+                "reason": f"no NYSE session on {ny_day} (NY date); buys only in the last hour before the close"}
+    close = MC.nyse_close_il(ny_day)
+    lo, hi = close - BUY_OPEN_BEFORE_CLOSE, close - BUY_STOP_BEFORE_CLOSE
+    out.update(close_il=close.isoformat(), window_il=[lo.isoformat(), hi.isoformat()])
+    if info["early_close"]:
+        return {**out, "ok": False, "code": "EARLY_CLOSE_DAY",
+                "reason": f"NYSE early close {info['close_ny']} NY ({MC.hhmm(close)} IL) on {ny_day}: no buys today"}
+    if now < lo or now >= hi:
+        return {**out, "ok": False, "code": "SCHEDULE_MISALIGNED",
+                "reason": (f"buy at {MC.hhmm(now)} IL outside {MC.hhmm(lo)}-{MC.hhmm(hi)} IL "
+                           f"(NYSE close {MC.hhmm(close)} IL -90m .. -1m); check the EOD cron schedule")}
+    return {**out, "ok": True, "code": "OK", "reason": "inside the pre-close buy window"}
+
+
 def lock_path_for(sha: str, symbol: str, lock_dir: Path | None = None) -> Path:
     return Path(lock_dir or LOCK_DIR) / f"{sha[:12]}-{_norm(symbol)}.lock"
 
@@ -201,8 +308,24 @@ def _same_symbol_locks(symbol: str, lock_dir: Path) -> list[tuple[Path, dict]]:
 
 def acquire(verdict_path, symbol, account: str = DEFAULT_ACCOUNT, *, caller: str = "unknown",
             positions=None, allow_held: bool = False, retry_after_fail: bool = False,
-            lock_dir: Path | None = None, instrument_id: int | None = None) -> dict:
-    """Atomically take the single-use lock for (verdict sha, symbol). Raises PlaceLockError."""
+            lock_dir: Path | None = None, instrument_id: int | None = None, now: datetime | None = None,
+            manual_request: str | None = None, audit_dir: Path | None = None) -> dict:
+    """Atomically take the single-use lock for (verdict sha, symbol). Raises PlaceLockError.
+    Automatic buys (allow_held=False, no manual_request) must pass buy_schedule_guard(now); manual buys
+    (manual_request=<Ofer's message ref>) pass manual_buy_guard(now) instead (exit 6, no lock written)."""
+    manual = manual_request is not None
+    if manual and is_routine_caller(caller):  # 2026-10-24c: routines never use the manual path; fail closed first
+        reason = (f"--manual-request refused for routine caller {caller!r}: an exit 6 inside a routine is final "
+                  f"(no retry, no manual path); the manual path is only for a buy Ofer requested in chat")
+        _audit_manual_safe({"event": "PLACE_LOCK_MANUAL", "result": "REFUSED", "code": "MANUAL_FROM_ROUTINE_REFUSED",
+                            "symbol": str(symbol).strip().upper(), "caller": caller,
+                            "manual_request": str(manual_request).strip(), "allow_held": bool(allow_held),
+                            "reason": reason, "now_il": (now or _guard_now()).isoformat()}, audit_dir)
+        raise PlaceLockError("MANUAL_FROM_ROUTINE_REFUSED", EXIT_RETRY_NOT_ALLOWED, reason)
+    if manual and (not isinstance(manual_request, str) or not manual_request.strip()):
+        raise PlaceLockError("MANUAL_REF_REQUIRED", EXIT_RETRY_NOT_ALLOWED,
+                             "--manual-request needs a non-empty reference to Ofer's chat message")
+    manual_ref = manual_request.strip() if manual else None
     lock_dir = Path(lock_dir or LOCK_DIR)
     lock_dir.mkdir(parents=True, exist_ok=True)
     sym = _norm(symbol)
@@ -211,6 +334,15 @@ def acquire(verdict_path, symbol, account: str = DEFAULT_ACCOUNT, *, caller: str
     mm = id_symbol_mismatch(sym, instrument_id)
     if mm:  # QA 2026-10-21 HIGH: a mismatched id never overrides the symbol -> refuse, no lock
         raise PlaceLockError("ID_SYMBOL_MISMATCH", EXIT_ID_SYMBOL_MISMATCH, mm)
+    guard = None
+    if not allow_held:  # DST-M1/M2: automatic buys only in the last hour before the actual close
+        guard = manual_buy_guard(now) if manual else buy_schedule_guard(now)
+        if not guard["ok"]:
+            if manual:
+                _audit_manual_safe({"event": "PLACE_LOCK_MANUAL", "result": "REFUSED", "code": guard["code"],
+                                    "symbol": sym, "caller": caller, "manual_request": manual_ref,
+                                    "reason": guard["reason"], "now_il": guard["now_il"]}, audit_dir)
+            raise PlaceLockError(guard["code"], EXIT_SCHEDULE, guard["reason"])
     sha = sha256_file(verdict_path)
     lp = lock_path_for(sha, sym, lock_dir)
 
@@ -244,6 +376,12 @@ def acquire(verdict_path, symbol, account: str = DEFAULT_ACCOUNT, *, caller: str
            "verdict_path": str(Path(verdict_path).resolve()), "verdict_sha256": sha,
            "symbol": sym, "status": "ACQUIRED", "retry_after_fail": bool(retry_after_fail),
            "allow_held": bool(allow_held)}
+    if guard is not None:
+        rec["schedule_guard"] = {k: guard.get(k) for k in ("code", "close_il", "window_il", "open_il", "calendar_source")
+                                 if k in guard}
+        rec["buy_path"] = "manual" if manual else "auto"
+    if manual:
+        rec["manual_request"] = manual_ref
     try:
         fd = os.open(str(lp), os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o644)
     except FileExistsError:
@@ -255,7 +393,23 @@ def acquire(verdict_path, symbol, account: str = DEFAULT_ACCOUNT, *, caller: str
         f.flush()
         os.fsync(f.fileno())
     rec["lock_path"] = str(lp)
+    if manual:  # fail closed: a manual lock without its audit row is unusable
+        try:
+            _audit_manual({"event": "PLACE_LOCK_MANUAL", "result": "ACQUIRED", "symbol": sym, "caller": caller,
+                           "manual_request": manual_ref, "allow_held": bool(allow_held), "lock_path": str(lp),
+                           "verdict_sha256": sha, "now_il": (guard or {}).get("now_il")}, audit_dir)
+        except Exception as e:
+            mark(lp, "FAILED", note=f"manual audit row not written: {e}")
+            raise PlaceLockError("AUDIT_WRITE_FAILED", EXIT_RETRY_NOT_ALLOWED,
+                                 f"manual lock not usable, audit row failed: {e}", str(lp))
     return rec
+
+
+def _audit_manual_safe(row: dict, audit_dir) -> None:
+    try:
+        _audit_manual(row, audit_dir)
+    except Exception as e:  # the refusal stands either way
+        print(f"place_lock: manual refusal audit row failed: {e}", file=sys.stderr)
 
 
 def mark(lock, status: str, *, order_id=None, position_id=None, note: str | None = None) -> dict:
@@ -293,8 +447,13 @@ def main(argv=None) -> int:
     a.add_argument("--account", default=DEFAULT_ACCOUNT)
     a.add_argument("--caller", default="cli")
     a.add_argument("--positions-json", help="file path or '-' for stdin")
-    a.add_argument("--allow-held", action="store_true", help="PM actions only (trail/close)")
+    a.add_argument("--allow-held", action="store_true",
+                   help="PM / risk actions only (trail/close); without it the acquire is a BUY and passes the schedule guard")
     a.add_argument("--retry-after-fail", action="store_true")
+    a.add_argument("--manual-request", metavar="REF",
+                   help="ONLY for a buy Ofer requested in chat: REF names his message (required, non-empty). "
+                        "Skips the close-90m..-1m window; still needs RTH open and not 09:30-11:30 NY. "
+                        "Automatic routines must never pass this; refused (exit 4) when --caller starts with 'eod-'.")
     a.add_argument("--instrument-id", type=int, help="eToro instrumentId of the buy (held = id OR symbol match; an id of another ticker -> exit 5)")
     a.add_argument("--lock-dir")
     m = sub.add_parser("mark")
@@ -310,7 +469,7 @@ def main(argv=None) -> int:
                         positions=args.positions_json, allow_held=args.allow_held,
                         retry_after_fail=args.retry_after_fail,
                         lock_dir=Path(args.lock_dir) if args.lock_dir else None,
-                        instrument_id=args.instrument_id)
+                        instrument_id=args.instrument_id, manual_request=args.manual_request)
         else:
             r = mark(args.lock, args.status, order_id=args.order_id, position_id=args.position_id, note=args.note)
         print(json.dumps({"ok": True, **r}))

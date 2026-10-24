@@ -1,26 +1,82 @@
 {
   "schemaVersion": "1.0",
   "payloadKind": "daily_brief",
-  "slot": "afternoon_1530",
-  "slotBadge": "Good Afternoon",
-  "asOf": "2026-10-23T15:45:00+03:00",
   "timezone": "Asia/Jerusalem",
-  "weekendMode": false,
-  "noNewOpens": false,
-  "nextSession": "2026-10-23 Fri 16:30 IDT (US cash open)",
+  "classicRules": {
+    "fix14Live": true,
+    "fix14Source": "/workspace/classic_rsi/audit/fix14b-live-rule-release-20261023/proof/verify-live-postdeploy.json (ok, package listed)",
+    "label": "",
+    "v2": {
+      "ruleset": "v2",
+      "stage": "staging",
+      "stages": [
+        "staging",
+        "QA",
+        "paper",
+        "live"
+      ],
+      "summary": "core SPY+QQQ 55% combined, with SL -11% / TP +25% on core lots; satellite = the remaining ~42–45% after core and 0–3% cash (slot count/size set by Trader_Classic), S&P 500 names by 6-1M momentum above 200DMA; 3xATR20 trailing stop on regular closes; no RSI entry engine",
+      "corePct": 55.0,
+      "coreSlPct": -11.0,
+      "coreTpPct": 25.0,
+      "satellitePct": [
+        42.0,
+        45.0
+      ],
+      "cashPct": [
+        0.0,
+        3.0
+      ],
+      "amendment": "2026-10-23 13:21 IDT (Ofer)",
+      "approvedFor": "STAGING only",
+      "paperWeek": "10-26 to 11-02",
+      "cutover": "~11-03",
+      "spec": "/workspace/analysis/classic-leak-20261023/strategic_plan_ruleset.md"
+    },
+    "crossBook": {
+      "code": "CROSS_BOOK_OVERLAP",
+      "overlap": [],
+      "planned_conflict": [],
+      "classic_may_not_buy": [
+        "AAPL",
+        "CRL",
+        "DVN",
+        "RVTY",
+        "TRGP",
+        "USO",
+        "VTRS",
+        "WST",
+        "XOM"
+      ],
+      "momentum_may_not_buy": [
+        "QQQ",
+        "SPY",
+        "XLE",
+        "XLV"
+      ],
+      "ok": true
+    }
+  },
+  "slot": "morning_0530",
+  "slotBadge": "Weekend Short",
+  "asOf": "2026-10-24T05:24:30+03:00",
+  "weekendMode": true,
+  "noNewOpens": true,
+  "nextSession": "Mon 2026-10-26 US session",
   "placeNone": true,
   "ordersPlaced": 0,
-  "materialChange": "yes",
-  "materialChangeVs": "morning_0530_2026-10-23",
+  "materialChange": true,
+  "materialChangeLevel": "minor",
+  "materialChangeVs": "afternoon_1530 2026-10-23",
   "fearAndGreed": {
-    "score": 24,
-    "scoreRaw": 23.62,
+    "score": 21,
+    "scoreRaw": 20.98,
     "rating": "extreme fear",
     "previous_close": 19.81,
     "previous_1_week": 22.07,
     "previous_1_month": 32.54,
     "previous_1_year": 27.57,
-    "timestamp": "2026-10-23T12:23:55+00:00",
+    "timestamp": "2026-10-23T23:59:44+00:00",
     "previousClose": 19.81,
     "previous1Week": 22.07,
     "previous1Month": 32.54,
@@ -30,43 +86,43 @@
     {
       "id": "market_momentum_sp500",
       "label": "Market Momentum (S&P 500)",
-      "score": 22.6,
+      "score": 17.6,
       "rating": "extreme fear"
     },
     {
       "id": "stock_price_strength",
       "label": "Stock Price Strength",
-      "score": 18.8,
+      "score": 18.6,
       "rating": "extreme fear"
     },
     {
       "id": "stock_price_breadth",
       "label": "Stock Price Breadth",
-      "score": 26.0,
-      "rating": "fear"
+      "score": 23.4,
+      "rating": "extreme fear"
     },
     {
       "id": "put_call_options",
       "label": "Put and Call Options",
-      "score": 41.0,
-      "rating": "fear"
+      "score": 21.2,
+      "rating": "extreme fear"
     },
     {
       "id": "market_volatility_vix",
       "label": "Market Volatility (VIX)",
-      "score": 15.2,
+      "score": 16.7,
       "rating": "extreme fear"
     },
     {
       "id": "junk_bond_demand",
       "label": "Junk Bond Demand",
-      "score": 32.2,
+      "score": 40.2,
       "rating": "fear"
     },
     {
       "id": "safe_haven_demand",
       "label": "Safe Haven Demand",
-      "score": 9.6,
+      "score": 9.2,
       "rating": "extreme fear"
     }
   ],
@@ -74,107 +130,124 @@
     "futures": {
       "ES=F": {
         "symbol": "ES=F",
-        "last": 7673.5,
+        "last": 7672.5,
         "prevClose": 7704.5,
-        "dayPct": -0.4,
-        "marketTime": "2026-10-23T12:33:40+00:00",
+        "dayPct": -0.42,
+        "marketTime": "2026-10-23T21:00:00+00:00",
         "src": "yahoo chart"
       },
       "NQ=F": {
         "symbol": "NQ=F",
-        "last": 29070.0,
+        "last": 29175.0,
         "prevClose": 29142.0,
-        "dayPct": -0.25,
-        "marketTime": "2026-10-23T12:33:39+00:00",
+        "dayPct": 0.11,
+        "marketTime": "2026-10-23T20:59:59+00:00",
         "src": "yahoo chart"
       },
       "VIX": {
         "symbol": "^VIX",
-        "last": 19.8,
+        "last": 19.45,
         "prevClose": 19.03,
-        "dayPct": 4.05,
-        "marketTime": "2026-10-23T12:28:31+00:00",
+        "dayPct": 2.21,
+        "marketTime": "2026-10-23T20:15:01+00:00",
         "src": "yahoo chart"
       }
     },
-    "events": [
-      "Fri 10-23: US cash open 16:30 IDT after Thursday's tech rout; futures only slightly red.",
-      "Iran headlines drive oil; reported US strike window opens after the Nov 3 midterms."
-    ]
+    "quotes": {
+      "SPY": {
+        "symbol": "SPY",
+        "last": 759.97,
+        "prevClose": 763.96,
+        "dayPct": -0.52,
+        "marketTime": "2026-10-23T20:00:00+00:00",
+        "src": "yahoo chart"
+      },
+      "QQQ": {
+        "symbol": "QQQ",
+        "last": 704.4,
+        "prevClose": 704.47,
+        "dayPct": -0.01,
+        "marketTime": "2026-10-23T20:00:00+00:00",
+        "src": "yahoo chart"
+      }
+    }
   },
   "commodities": {
     "oil": {
       "symbol": "CL=F",
-      "last": 101.27,
+      "last": 103.44,
       "prevClose": 99.47,
-      "dayPct": 1.81,
-      "call": "WAIT",
+      "dayPct": 3.99,
+      "marketTime": "2026-10-23T20:59:58+00:00",
+      "src": "yahoo chart",
+      "call": "wait",
       "stance": "wait"
     },
     "gold": {
       "symbol": "GC=F",
-      "last": 4043.3,
+      "last": 4010.0,
       "prevClose": 4060.3999,
-      "dayPct": -0.42,
-      "call": "WAIT",
+      "dayPct": -1.24,
+      "marketTime": "2026-10-23T20:59:58+00:00",
+      "src": "yahoo chart",
+      "call": "wait",
       "stance": "wait"
     },
     "silver": {
       "symbol": "SI=F",
-      "last": 53.905,
+      "last": 53.96,
       "prevClose": 54.764,
-      "dayPct": -1.57,
-      "call": "WAIT",
+      "dayPct": -1.47,
+      "marketTime": "2026-10-23T20:59:52+00:00",
+      "src": "yahoo chart",
+      "call": "wait",
       "stance": "wait"
     }
   },
   "crypto": {
     "btc": {
-      "price": 81722.0,
-      "pct24h": 0.05,
+      "price": 80809.0,
+      "pct24h": -0.8,
       "src": "CoinGecko"
     },
     "eth": {
-      "price": 2401.57,
-      "pct24h": 0.05,
+      "price": 2377.9,
+      "pct24h": -0.94,
       "src": "CoinGecko"
     },
     "sol": {
-      "price": 104.44,
-      "pct24h": 0.1,
+      "price": 102.42,
+      "pct24h": -1.73,
       "src": "CoinGecko"
     },
+    "stance": "don't chase",
     "coin": {
       "symbol": "COIN",
-      "last": 169.09,
-      "prevClose": 177.08,
-      "dayPct": -4.51,
-      "marketTime": "2026-10-22T20:00:00+00:00",
+      "last": 164.45,
+      "prevClose": 169.09,
+      "dayPct": -2.74,
+      "marketTime": "2026-10-23T20:00:01+00:00",
       "src": "yahoo chart"
     },
     "hood": {
       "symbol": "HOOD",
-      "last": 96.58,
-      "prevClose": 101.93,
-      "dayPct": -5.25,
-      "marketTime": "2026-10-22T20:00:01+00:00",
+      "last": 95.07,
+      "prevClose": 96.58,
+      "dayPct": -1.56,
+      "marketTime": "2026-10-23T20:00:01+00:00",
       "src": "yahoo chart"
     },
-    "stance": "don't chase",
     "classicNote": "crypto removed from Classic 2026-10-17"
   },
-  "trump": {
-    "freshest": {
-      "timeET": "Thu 10-22 19:59 ET",
-      "timeIDT": "Fri 10-23 02:59",
-      "url": "https://x.com/realDonaldTrump/status/2113419957891719444",
-      "topic": "Alabama midterm endorsement slate, the last text post in an overnight state-by-state early-voting burst (only a bare link followed at 20:03 ET)."
-    },
-    "prior": {
-      "topic": "X news summaries say Trump accused Iran of staging attacks to lift oil before the midterms, invoked the Defense Production Act ($150M) to boost US refining, and is weighing several days of strikes on Iran right after Nov 3 (White House: no attacks before the vote).",
-      "url": "https://x.com/realDonaldTrump/status/2113419957891719444"
-    },
-    "relevance": "His own posts are election-only; the Iran strike talk and the refining order are the live market risk via oil."
+  "analystScore": {
+    "bullets": [
+      "Wall St closed the week lower: Dow −1.23% (52,215), S&P 500 −0.52% (7,624), Nasdaq −0.21%; SPY $759.97 (−0.52%), QQQ $704.40 (flat), VIX 19.45 (+2.2%).",
+      "Oil spike: Brent settled ~$116.7, then traded above $117 (highest since March) after Trump warned of possible US strikes on Iran at a Florida rally; WTI $103.44.",
+      "Iran's IRGC Navy claims two supertankers hit mines near the Strait of Hormuz (unverified by owners or the US military).",
+      "Counterpoint: Bessent says Gulf oil exports (17–18M bpd) are above pre-conflict levels; US SPR at its lowest since 1982 (282.7M bbl).",
+      "Friday's tech selloff hit hedge funds hard while retail bought ~$550M of tech; Apple back to the world's most valuable company."
+    ],
+    "nothingSpecial": false
   },
   "portfolios": [
     {
@@ -184,9 +257,9 @@
       "mirrorId": 11368142,
       "ledger": "user-OfersClaw5",
       "agentPortfolioId": "90db6cc2-57e3-48e0-9a12-3cbe82ac49ed",
-      "equity": 7211.77,
+      "equity": 7219.32,
       "cash": 1830.74,
-      "cashPct": 25.39,
+      "cashPct": 25.36,
       "symbols": [
         "SPY",
         "QQQ",
@@ -195,10 +268,10 @@
       ],
       "recommendation": {
         "buy": [
-          "XLP via today's 16:35–22:35 IDT runs — each ≥$400.00, auto after QA PASS + cost gate. Deployable $1,758.62 above the current floor (F&G 24 Extreme Fear). SPY is 33.26% of equity — $125.48 room under its 35% cap (< min order; a limit, not a block). Core (SPY+QQQ) ~54.69% vs 55–55% target; QQQ core held. This brief places none."
+          "No Buy Today (weekend; equities closed until Monday)."
         ],
         "sell": [
-          "No Sale — stops are the exit; per-lot SL/TP: SPY per lot: lot 3609495243 2.464545u SL 682.16 / TP 958.09; lot 3611616761 0.688784u SL 687.54 / TP 965.65 · QQQ SL 627.22 / TP 880.92 · XLV SL 169.5 / TP none · XLE SL 63.5 / TP none. Tightest cushion: XLE (~6.02% above SL 63.5)."
+          "No Sale; stops are the exit (tightest cushion XLV ~5.4% above SL)."
         ],
         "hold": [
           "SPY",
@@ -207,37 +280,81 @@
           "XLE"
         ],
         "blocked": [
-          "AAPL CROSS_BOOK_OVERLAP",
-          "CRL CROSS_BOOK_OVERLAP",
-          "DVN CROSS_BOOK_OVERLAP",
-          "RVTY CROSS_BOOK_OVERLAP",
-          "TRGP CROSS_BOOK_OVERLAP",
           "USO CROSS_BOOK_OVERLAP",
-          "VTRS CROSS_BOOK_OVERLAP",
+          "XOM CROSS_BOOK_OVERLAP",
+          "TRGP CROSS_BOOK_OVERLAP",
           "WST CROSS_BOOK_OVERLAP",
-          "XOM CROSS_BOOK_OVERLAP"
+          "AAPL CROSS_BOOK_OVERLAP",
+          "RVTY CROSS_BOOK_OVERLAP",
+          "DVN CROSS_BOOK_OVERLAP",
+          "CRL CROSS_BOOK_OVERLAP",
+          "VTRS CROSS_BOOK_OVERLAP"
+        ]
+      },
+      "card": {
+        "positionCount": 4,
+        "equity": 7219.32,
+        "cash": 1830.74,
+        "cashPct": 25.36,
+        "deploymentPct": 74.64,
+        "invested": 5281.39,
+        "investedMarketValue": 5388.58,
+        "openPnl": 107.19,
+        "closedPnl": null,
+        "symbols": [
+          "SPY",
+          "QQQ",
+          "XLV",
+          "XLE"
         ],
-        "diversificationNote": "Classic FULL AUTO — auto after QA PASS + cost gate (run-QA + order-QA), no chat auth; trade count set by the strategy plan (no daily cap); cash floor 1% of total equity; only hard block = no symbol in both Classic and Momentum (approved Ofer 2026-10-23 13:01-13:21 IDT; live via fix14). v2 status: Ruleset v2 (core SPY+QQQ 55% combined, with SL -11% / TP +25% on core lots; satellite = the remaining ~42–45% after core and 0–3% cash (slot count/size set by Trader_Classic), S&P 500 names by 6-1M momentum above 200DMA; 3xATR20 trailing stop on regular closes; no RSI entry engine) is approved for STAGING only. Stage: **staging** → QA → paper → live. Paper week 10-26 to 11-02, cutover ~11-03."
+        "positions": [
+          {
+            "symbol": "SPY",
+            "value": 2395.96,
+            "uPnl": -25.78,
+            "pctOfEquity": 33.19
+          },
+          {
+            "symbol": "QQQ",
+            "value": 1548.91,
+            "uPnl": -0.96,
+            "pctOfEquity": 21.46
+          },
+          {
+            "symbol": "XLV",
+            "value": 813.23,
+            "uPnl": 103.45,
+            "pctOfEquity": 11.26
+          },
+          {
+            "symbol": "XLE",
+            "value": 630.48,
+            "uPnl": 30.48,
+            "pctOfEquity": 8.73
+          }
+        ],
+        "asOf": "2026-10-24T05:24:24+03:00",
+        "source": "books.snapshot classic (user-OfersClaw5)"
       },
       "cardFacts": {
-        "read_at_idt": "2026-10-23T15:44:24+03:00",
+        "read_at_idt": "2026-10-24T05:24:24+03:00",
         "source": "user-OfersClaw5",
         "cash_rules": {
-          "floor": 72.12,
-          "deployable_above_floor": 1758.62,
+          "floor": 72.2,
+          "deployable_above_floor": 1758.54,
           "core_cash_buffer": 0.0,
-          "deployable_after_core_buffer": 1758.62,
+          "deployable_after_core_buffer": 1758.54,
           "min_order": 400.0,
-          "floor_live_engine": 72.17,
-          "deployable_live_engine": 1758.57,
-          "floor_fix14": 72.12,
-          "deployable_fix14": 1758.62,
+          "floor_live_engine": 72.24,
+          "deployable_live_engine": 1758.5,
+          "floor_fix14": 72.2,
+          "deployable_fix14": 1758.54,
           "floor_fix14_pct": 1.0,
           "fix14_live": true,
           "can_fund_min_order": true,
           "drift_trigger": false,
           "drift_reason": null,
-          "floor_rule": "cash floor 1% of total equity = $72.12 agent → deployable $1,758.62 ($1,758.62 after the core plan's $0.00 buffer) (v2 range 0–3%)"
+          "floor_rule": "cash floor 1% of total equity = $72.20 agent → deployable $1,758.54 ($1,758.54 after the core plan's $0.00 buffer) (v2 range 0–3%)"
         },
         "core": {
           "symbols": [
@@ -248,29 +365,29 @@
             55.00000000000001,
             55.00000000000001
           ],
-          "current_pct": 54.69,
+          "current_pct": 54.64,
           "target_label": "55 (target)",
           "target_binding": false,
           "soft_flags": [],
           "each": {
             "SPY": {
-              "mv": 2398.64,
-              "pct_equity": 33.26,
+              "mv": 2395.96,
+              "pct_equity": 33.19,
               "cap_pct": 35.0,
               "ok": true
             },
             "QQQ": {
-              "mv": 1545.3,
-              "pct_equity": 21.43,
+              "mv": 1548.91,
+              "pct_equity": 21.46,
               "cap_pct": 35.0,
               "ok": true
             }
           },
           "status": "below",
-          "drift_pp_vs_band": 0.31,
+          "drift_pp_vs_band": 0.36,
           "combined_target_pct": 55.0,
-          "gap_to_mid_usd": 22.53,
-          "drift_pp_from_mid": 0.31,
+          "gap_to_mid_usd": 25.76,
+          "drift_pp_from_mid": 0.36,
           "drift_trigger_gt_5pp": false,
           "note": "core adds/trims run on the classic-rebalance core path (core gain gate + order-QA)",
           "symbols_held": [
@@ -278,16 +395,16 @@
             "QQQ"
           ],
           "qqq_rebuy": "released (daily rebalance after order-QA)",
-          "line": "Core (SPY+QQQ) ~54.69% vs 55–55% target; QQQ core held"
+          "line": "Core (SPY+QQQ) ~54.64% vs 55–55% target; QQQ core held"
         },
         "caps": {
           "stock_pct": 20.0,
           "etf_pct": 35.0,
           "sleeve_pct": 45.0,
-          "cash_floor": 72.12,
+          "cash_floor": 72.2,
           "cash_floor_basis": "1% of total equity (agent)",
-          "cash_floor_mirror": 126.64,
-          "cash_floor_fix14": 72.12,
+          "cash_floor_mirror": 126.78,
+          "cash_floor_fix14": 72.2,
           "min_order": 400.0,
           "trade_count": "set by the strategy plan (no daily cap)",
           "denominator": "total equity",
@@ -296,39 +413,39 @@
         "sleeves": [
           {
             "sleeve": "broad_core",
-            "mv": 2398.64,
-            "pct_equity": 33.26,
+            "mv": 2395.96,
+            "pct_equity": 33.19,
             "cap_pct": 45.0,
             "ok": true,
-            "headroom_usd": 846.66
+            "headroom_usd": 852.73
           },
           {
             "sleeve": "energy_hard_assets",
-            "mv": 614.65,
-            "pct_equity": 8.52,
+            "mv": 630.48,
+            "pct_equity": 8.73,
             "cap_pct": 45.0,
             "ok": true,
-            "headroom_usd": 2630.65
+            "headroom_usd": 2618.21
           },
           {
             "sleeve": "growth_tech",
-            "mv": 1545.3,
-            "pct_equity": 21.43,
+            "mv": 1548.91,
+            "pct_equity": 21.46,
             "cap_pct": 45.0,
             "ok": true,
-            "headroom_usd": 1700.0
+            "headroom_usd": 1699.78
           },
           {
             "sleeve": "healthcare",
-            "mv": 822.44,
-            "pct_equity": 11.4,
+            "mv": 813.23,
+            "pct_equity": 11.26,
             "cap_pct": 45.0,
             "ok": true,
-            "headroom_usd": 2422.86
+            "headroom_usd": 2435.46
           }
         ],
         "changes": {
-          "vs_read_at_idt": "2026-10-23T15:28:50+03:00",
+          "vs_read_at_idt": "2026-10-23T23:27:34+03:00",
           "new_names": [],
           "closed_names": [],
           "lot_changes": [
@@ -372,7 +489,7 @@
           ],
           "stop_changes": [],
           "cash_delta": 0.0,
-          "equity_delta": -4.71,
+          "equity_delta": -4.62,
           "unchanged": false
         },
         "limits": [
@@ -384,7 +501,7 @@
           {
             "symbol": "SPY",
             "code": "CAP_NO_HEADROOM",
-            "headroom_usd": 125.48
+            "headroom_usd": 130.8
           }
         ],
         "rules": {
@@ -485,52 +602,7 @@
           }
         ]
       },
-      "cardSource": "books.cards",
-      "card": {
-        "positionCount": 4,
-        "equity": 7211.77,
-        "cash": 1830.74,
-        "cashPct": 25.39,
-        "deploymentPct": 74.61,
-        "invested": 5281.39,
-        "investedMarketValue": 5381.03,
-        "openPnl": 99.64,
-        "closedPnl": null,
-        "symbols": [
-          "SPY",
-          "QQQ",
-          "XLV",
-          "XLE"
-        ],
-        "positions": [
-          {
-            "symbol": "SPY",
-            "value": 2398.64,
-            "uPnl": -23.1,
-            "pctOfEquity": 33.26
-          },
-          {
-            "symbol": "QQQ",
-            "value": 1545.3,
-            "uPnl": -4.57,
-            "pctOfEquity": 21.43
-          },
-          {
-            "symbol": "XLV",
-            "value": 822.44,
-            "uPnl": 112.66,
-            "pctOfEquity": 11.4
-          },
-          {
-            "symbol": "XLE",
-            "value": 614.65,
-            "uPnl": 14.65,
-            "pctOfEquity": 8.52
-          }
-        ],
-        "asOf": "2026-10-23T15:44:24+03:00",
-        "source": "books.snapshot classic (user-OfersClaw5)"
-      }
+      "cardSource": "books.cards"
     },
     {
       "key": "Momentum",
@@ -538,43 +610,43 @@
       "username": "Momentum-HHHGDTJ",
       "mirrorId": 11630170,
       "ledgerKeys": "user-Momentum-HHHGDTJ",
-      "equity": 7441.91,
+      "equity": 7602.8,
       "cash": 206.53,
-      "cashPct": 2.78,
+      "cashPct": 2.72,
       "symbols": [
         "USO",
         "XOM",
-        "AAPL",
-        "WST",
-        "VTRS",
         "TRGP",
+        "WST",
+        "AAPL",
         "RVTY",
         "DVN",
-        "CRL"
+        "CRL",
+        "VTRS"
       ],
       "recommendation": {
         "buy": [
-          "No new Momentum buy — $206.53 cash (2.78%), below one ~$827.00 slot."
+          "No Buy Today (weekend; $206.53 cash is below one slot)."
         ],
         "sell": [
-          "No Sale — 97.22% deployed; closest stops: DVN (~3.16% above SL), RVTY (~3.97% above SL); stops are the exit."
+          "No Sale; VTRS closest (~3.0% above SL); stops are the exit."
         ],
         "hold": [
           "USO",
           "XOM",
-          "AAPL",
-          "WST",
-          "VTRS",
           "TRGP",
+          "WST",
+          "AAPL",
           "RVTY",
           "DVN",
-          "CRL"
+          "CRL",
+          "VTRS"
         ],
         "blocked": [
-          "QQQ CROSS_BOOK_OVERLAP",
           "SPY CROSS_BOOK_OVERLAP",
-          "XLE CROSS_BOOK_OVERLAP",
-          "XLV CROSS_BOOK_OVERLAP"
+          "QQQ CROSS_BOOK_OVERLAP",
+          "XLV CROSS_BOOK_OVERLAP",
+          "XLE CROSS_BOOK_OVERLAP"
         ]
       },
       "mirrorKeysDivergence": {
@@ -591,63 +663,143 @@
         ],
         "keysNote": "execution book larger than $8k mirror; reporting uses mirror 11630170"
       },
-      "cardFacts": {
-        "read_at_idt": "2026-10-23T15:44:04+03:00",
-        "source": "user-etoro",
-        "stop_proximity": [
+      "card": {
+        "positionCount": 9,
+        "equity": 7602.8,
+        "cash": 206.53,
+        "cashPct": 2.72,
+        "deploymentPct": 97.28,
+        "invested": 7224.39,
+        "investedMarketValue": 7396.23,
+        "openPnl": -323.38,
+        "closedPnl": -495.26,
+        "symbols": [
+          "USO",
+          "XOM",
+          "TRGP",
+          "WST",
+          "AAPL",
+          "RVTY",
+          "DVN",
+          "CRL",
+          "VTRS"
+        ],
+        "positions": [
           {
-            "symbol": "DVN",
-            "sl_distance_pct": 3.16
-          },
-          {
-            "symbol": "RVTY",
-            "sl_distance_pct": 3.97
-          },
-          {
-            "symbol": "TRGP",
-            "sl_distance_pct": 4.26
-          },
-          {
-            "symbol": "VTRS",
-            "sl_distance_pct": 4.64
-          },
-          {
-            "symbol": "CRL",
-            "sl_distance_pct": 4.78
-          },
-          {
-            "symbol": "WST",
-            "sl_distance_pct": 7.17
-          },
-          {
-            "symbol": "AAPL",
-            "sl_distance_pct": 7.34
+            "symbol": "USO",
+            "value": 864.36,
+            "uPnl": 61.54,
+            "pctOfEquity": 11.37
           },
           {
             "symbol": "XOM",
-            "sl_distance_pct": 7.82
+            "value": 847.0,
+            "uPnl": 52.38,
+            "pctOfEquity": 11.14
+          },
+          {
+            "symbol": "TRGP",
+            "value": 831.16,
+            "uPnl": 27.14,
+            "pctOfEquity": 10.93
+          },
+          {
+            "symbol": "WST",
+            "value": 820.44,
+            "uPnl": 16.42,
+            "pctOfEquity": 10.79
+          },
+          {
+            "symbol": "AAPL",
+            "value": 815.54,
+            "uPnl": 11.52,
+            "pctOfEquity": 10.73
+          },
+          {
+            "symbol": "RVTY",
+            "value": 812.33,
+            "uPnl": 8.3,
+            "pctOfEquity": 10.68
+          },
+          {
+            "symbol": "DVN",
+            "value": 811.45,
+            "uPnl": 7.43,
+            "pctOfEquity": 10.67
+          },
+          {
+            "symbol": "CRL",
+            "value": 799.52,
+            "uPnl": -4.5,
+            "pctOfEquity": 10.52
+          },
+          {
+            "symbol": "VTRS",
+            "value": 794.43,
+            "uPnl": -8.39,
+            "pctOfEquity": 10.45
+          }
+        ],
+        "asOf": "2026-10-24T05:24:26+03:00",
+        "source": "books.snapshot momentum_mirror (user-etoro)"
+      },
+      "cardFacts": {
+        "read_at_idt": "2026-10-24T05:24:26+03:00",
+        "source": "user-etoro",
+        "stop_proximity": [
+          {
+            "symbol": "VTRS",
+            "sl_distance_pct": 3.0
+          },
+          {
+            "symbol": "XOM",
+            "sl_distance_pct": 6.66
+          },
+          {
+            "symbol": "DVN",
+            "sl_distance_pct": 6.89
+          },
+          {
+            "symbol": "RVTY",
+            "sl_distance_pct": 7.19
+          },
+          {
+            "symbol": "AAPL",
+            "sl_distance_pct": 7.31
+          },
+          {
+            "symbol": "WST",
+            "sl_distance_pct": 7.87
+          },
+          {
+            "symbol": "CRL",
+            "sl_distance_pct": 8.21
+          },
+          {
+            "symbol": "TRGP",
+            "sl_distance_pct": 9.06
           },
           {
             "symbol": "USO",
-            "sl_distance_pct": 8.72
+            "sl_distance_pct": 10.84
           }
         ],
         "keys_vs_mirror": {
-          "keys_read_at_idt": "2026-10-23T15:44:06+03:00",
+          "keys_read_at_idt": "2026-10-24T05:24:28+03:00",
           "only_in_keys": [],
           "only_in_mirror": [],
           "divergent": false,
-          "keys_equity": 9255.8,
+          "keys_equity": 9456.2,
           "keys_cash": 241.57
         },
         "changes": {
-          "vs_read_at_idt": "2026-10-23T14:47:27+03:00",
+          "vs_read_at_idt": "2026-10-23T23:15:47+03:00",
           "new_names": [],
           "closed_names": [],
           "lot_changes": [],
           "stop_changes": [],
           "cash_delta": 0.0,
-          "equity_delta": -12.08,
+          "equity_delta": -5.98,
           "unchanged": true
         },
         "blocked": [
@@ -681,223 +833,18 @@
           }
         ]
       },
-      "cardSource": "books.cards",
-      "card": {
-        "positionCount": 9,
-        "equity": 7441.91,
-        "cash": 206.53,
-        "cashPct": 2.78,
-        "deploymentPct": 97.22,
-        "invested": 7224.39,
-        "investedMarketValue": 7235.34,
-        "openPnl": -484.27,
-        "closedPnl": -495.26,
-        "symbols": [
-          "USO",
-          "XOM",
-          "AAPL",
-          "WST",
-          "VTRS",
-          "TRGP",
-          "RVTY",
-          "DVN",
-          "CRL"
-        ],
-        "positions": [
-          {
-            "symbol": "USO",
-            "value": 844.32,
-            "uPnl": 41.5,
-            "pctOfEquity": 11.35
-          },
-          {
-            "symbol": "XOM",
-            "value": 827.49,
-            "uPnl": 32.87,
-            "pctOfEquity": 11.12
-          },
-          {
-            "symbol": "AAPL",
-            "value": 815.8,
-            "uPnl": 11.78,
-            "pctOfEquity": 10.96
-          },
-          {
-            "symbol": "WST",
-            "value": 814.25,
-            "uPnl": 10.23,
-            "pctOfEquity": 10.94
-          },
-          {
-            "symbol": "VTRS",
-            "value": 808.12,
-            "uPnl": 5.3,
-            "pctOfEquity": 10.86
-          },
-          {
-            "symbol": "TRGP",
-            "value": 789.48,
-            "uPnl": -14.54,
-            "pctOfEquity": 10.61
-          },
-          {
-            "symbol": "RVTY",
-            "value": 785.03,
-            "uPnl": -19.0,
-            "pctOfEquity": 10.55
-          },
-          {
-            "symbol": "DVN",
-            "value": 780.16,
-            "uPnl": -23.86,
-            "pctOfEquity": 10.48
-          },
-          {
-            "symbol": "CRL",
-            "value": 770.69,
-            "uPnl": -33.33,
-            "pctOfEquity": 10.36
-          }
-        ],
-        "asOf": "2026-10-23T15:44:04+03:00",
-        "source": "books.snapshot momentum_mirror (user-etoro)"
-      }
+      "cardSource": "books.cards"
     }
   ],
-  "briefPath": "/workspace/daily-brief/brief-afternoon-1530-2026-10-23.md",
-  "briefSha256": "0e13146c5dad88066f6aad299736fe9619b59b8f72f3eb8d5c55bb81eccbcecd",
-  "metaLine": "META: material_change=yes | slot=afternoon_1530 | date=2026-10-23 (Fri) | vs morning_0530 2026-10-23 — CNN F&G 24 Extreme Fear (prev close 20); Classic vs 2026-10-23T05:26:00+03:00: added QQQ; cash $3,382.93 -> $1,830.74; equity $7,225.54 -> $7,211.77; Momentum vs 2026-10-23T05:26:00+03:00: cash $206.53 -> $206.53; equity $7,435.41 -> $7,441.91; Classic re-bought QQQ core 14:56 IDT; Classic rules updated (Ofer 13:01–13:21 IDT); NQ futures -0.25%; WTI $101.27 (+1.81%); PLACE NONE",
-  "briefMarkdownPath": "/workspace/daily-brief-1530-2026-10-23/brief-afternoon-1530-2026-10-23.md",
-  "classicRules": {
-    "fix14Live": true,
-    "fix14Source": "/workspace/classic_rsi/audit/fix14b-live-rule-release-20261023/proof/verify-live-postdeploy.json (ok, package listed)",
-    "label": "",
-    "v2": {
-      "ruleset": "v2",
-      "stage": "staging",
-      "stages": [
-        "staging",
-        "QA",
-        "paper",
-        "live"
-      ],
-      "summary": "core SPY+QQQ 55% combined, with SL -11% / TP +25% on core lots; satellite = the remaining ~42–45% after core and 0–3% cash (slot count/size set by Trader_Classic), S&P 500 names by 6-1M momentum above 200DMA; 3xATR20 trailing stop on regular closes; no RSI entry engine",
-      "corePct": 55.0,
-      "coreSlPct": -11.0,
-      "coreTpPct": 25.0,
-      "satellitePct": [
-        42.0,
-        45.0
-      ],
-      "cashPct": [
-        0.0,
-        3.0
-      ],
-      "amendment": "2026-10-23 13:21 IDT (Ofer)",
-      "approvedFor": "STAGING only",
-      "paperWeek": "10-26 to 11-02",
-      "cutover": "~11-03",
-      "spec": "/workspace/analysis/classic-leak-20261023/strategic_plan_ruleset.md"
-    },
-    "crossBook": {
-      "code": "CROSS_BOOK_OVERLAP",
-      "overlap": [],
-      "planned_conflict": [],
-      "classic_may_not_buy": [
-        "AAPL",
-        "CRL",
-        "DVN",
-        "RVTY",
-        "TRGP",
-        "USO",
-        "VTRS",
-        "WST",
-        "XOM"
-      ],
-      "momentum_may_not_buy": [
-        "QQQ",
-        "SPY",
-        "XLE",
-        "XLV"
-      ],
-      "ok": true
-    }
-  },
+  "briefPath": "/workspace/daily-brief/brief-weekend-short-0530-2026-10-24.md",
+  "briefMarkdownPath": "/workspace/daily-brief/brief-weekend-short-0530-2026-10-24.md",
+  "metaLine": "META: materialChange=yes (minor) | slot=morning_0530 weekend SHORT | date=2026-10-24 (Sat) | vs afternoon_1530 2026-10-23 — no trades in either book; Classic XLE SL raised 63.50 -> 64.44; F&G 24 -> 21 (still Extreme Fear); WTI $101.27 -> $103.44 (+2.1%); Momentum equity $7,441.91 -> $7,602.80; PLACE NONE",
   "dailySignals": {
-    "buys": [
-      {
-        "symbol": "XLP",
-        "side": "buy",
-        "open": 87.98,
-        "prevClose": 87.11,
-        "last": 89.99,
-        "current": 89.99,
-        "dayPct": 3.31,
-        "rationale": "Defensive staples leg Classic lacks, a hedge if the oil shock keeps hitting growth; not held in either book.",
-        "extra": null
-      }
-    ],
-    "sells": [
-      {
-        "symbol": "NVDA",
-        "side": "sell",
-        "open": 217.13,
-        "prevClose": 221.97,
-        "last": 212.21,
-        "current": 212.21,
-        "dayPct": -4.4,
-        "rationale": "Fell more than 4% in Thursday's AI-capex selloff; let it base before buying.",
-        "extra": null
-      },
-      {
-        "symbol": "META",
-        "side": "sell",
-        "open": 676.35,
-        "prevClose": 697.52,
-        "last": 648.85,
-        "current": 648.85,
-        "dayPct": -6.98,
-        "rationale": "Fell about 7% despite an earnings beat on raised capex and negative free cash flow; don't chase a bounce.",
-        "extra": null
-      },
-      {
-        "symbol": "SOXL",
-        "side": "sell",
-        "open": 90.59,
-        "prevClose": 103.24,
-        "last": 82.11,
-        "current": 82.11,
-        "dayPct": -20.47,
-        "rationale": "3x semis ETF; avoid leveraged chip exposure in Extreme Fear.",
-        "extra": null
-      }
-    ],
-    "unpriced": [],
-    "framing": "Opening = Thu 10-22 open; Prev Close = Wed 10-21 close; Current = Thu 10-22 close (Yahoo); US cash opens Fri 16:30 IDT; PLACE NONE from this brief"
+    "buys": [],
+    "sells": [],
+    "note": "weekend SHORT mode: Daily Signals skipped"
   },
-  "expectedDailyImpact": [
-    "Futures ES -0.40%, NQ -0.25% into the open; SPY last $763.96.",
-    "Classic stops (per lot): SPY lot 3609495243 ~10.32% above SL 682.16; lot 3611616761 ~9.61% above SL 687.54 · QQQ ~10.73% above SL 627.22 · XLV ~6.49% above SL 169.5 · XLE ~6.02% above SL 63.5.",
-    "Classic core: Core (SPY+QQQ) ~54.69% vs 55–55% target; QQQ core held.",
-    "WTI +1.81% to $101.27 — read-through to Momentum's energy names.",
-    "Momentum: closest stops DVN (~3.16%), RVTY (~3.97%)."
-  ],
-  "analystScore": {
-    "bullets": [
-      "Brent above $114, a high not seen since May, on US–Iran threats; Iran warns it would hit Gulf oil sites, airports and pipelines if strikes resume.",
-      "Thursday tech rout follow-through: Nasdaq −2.6% (biggest drop since June), S&P −1.2%, NVDA −4%, AMD −8%, META −7% on capex and free-cash-flow worries.",
-      "Flight to safety: Treasury yields fell below 5% in the sharpest drop since the 2023 SVB scare; Tom Lee (Fundstrat) calls a near-term tech bottom.",
-      "US envoy Waltz says the naval blockade of Iran can run indefinitely; the standoff could last a year or more."
-    ],
-    "nothingSpecial": false
-  },
-  "source": "Live CNN graphdata + Yahoo chart (futures/commodities/ETFs) + CoinGecko + eToro MCP (`user-OfersClaw5`, `user-Momentum-HHHGDTJ`, `user-etoro` mirrors 11630170/11368142) + X search_news + X @realDonaldTrump timeline · updated 2026-10-23 15:45 Asia/Jerusalem (IDT) · PLACE NONE (0 orders)",
-  "appCompat": {
-    "briefSha256": "0e13146c5dad88066f6aad299736fe9619b59b8f72f3eb8d5c55bb81eccbcecd",
-    "derived": [
-      "analystScore",
-      "dailySignals",
-      "expectedDailyImpact"
-    ]
-  }
+  "shortMode": true,
+  "source": "Source: CNN graphdata, Yahoo Finance chart (futures/ETFs), CoinGecko, X news, live eToro reads user-OfersClaw5 + user-etoro mirror 11630170 — updated 2026-10-24 05:24 IDT",
+  "briefSha256": "bfbef76b6c92fac7663fb1740690f93f0ef826cc54f0c336def459fddbfbc279"
 }

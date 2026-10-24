@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
 """Detect EOD screener / position_manager misses and optionally require catch-up.
 
-SCREENER MISS = NYSE session day, after 22:46 IL, and no screener ACTION/HALT/BUY/SKIP
-in audit with ts_il hour>=22 after 22:40 (excluding morning smoke).
+EOD reference times come from momentum_qa.market_clock.eod_clock. Since 2026-10-24d they are anchored to the
+fixed IL routine schedule (from 2026-10-26: PM 21:40, backup 21:42, screener 21:45, watchdog 21:50, feedback 22:05):
+watch 21:46 (PM+6m), late cron 21:47 (PM+7m), screener deadline 21:50 (PM+10m), window from min(close-2h, PM-40m)
+(20:00 IL when the close is 22:00, 21:00 IL when it is 23:00). Days before 2026-10-26 keep the legacy close-20m
+anchor (close 23:00: 21:00 / 22:46 / 22:50). Early-close days keep the fixed schedule (the crons don't move;
+schedule_alignment flags after_close). NYSE holidays are not misses (reason nyse_closed).
 
-PM MISS = NYSE session day, after 22:46 IL, and no position_manager RUN_START/ACTION/RUN_END
-in the EOD window (T22/T23 IL).
+SCHEDULE (DST-M1, 2026-10-24b): night_status["schedule"] flags SCHEDULE_MISALIGNED when tonight's first
+position_manager RUN_START is more than 30m before the scheduled PM time (before 21:10 IL on the fixed
+schedule) or at/after the NYSE close. Alert only: exit codes are unchanged; feedback_daily maps it to WATCH.
+
+SCREENER MISS = weekday, now >= watch_start (scheduled PM+6m), and no screener ACTION/HALT/BUY/SKIP/ERROR
+in tonight's EOD window (>= eod_window_start, same IL date).
+
+PM MISS = weekday, now >= watch_start, and no position_manager ACTION/RUN_END in the EOD window.
 
 Ownership (2026-10-22, QA F1–F4): per-night owner lock + rows. --defer-reason (primary) ->
 PRIMARY_PROCEEDS | PRIMARY_DEFERRED; --takeover-reason (backup) -> BACKUP_TAKEOVER;
---screener-gate (22:45 cron), --screener-lock (every screener run), --place-watch (watchdog).
+--screener-gate (scheduled screener cron, PM+5m), --screener-lock (every screener run), --place-watch (watchdog).
 Ownership is per run (--run-tag). Exit 3 = do not run, 4 = place-watch alert. See place_flow.md step 0.
 """
 from __future__ import annotations
@@ -22,6 +32,11 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 IL = ZoneInfo("Asia/Jerusalem")
+try:
+    from momentum_qa import market_clock as MC
+except ImportError:  # run as a plain script
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from momentum_qa import market_clock as MC
 AUDIT = Path(os.environ.get("MOMENTUM_AUDIT_DIR", "/workspace/momentum_audit"))
 
 
@@ -50,26 +65,25 @@ def _day_rows(day: str) -> list[dict]:
 
 
 def _eod_rows(day: str) -> list[dict]:
-    """Evening window rows: T21–T23 IL (manual early EOD + scheduled + catch-up).
-
-    T21 included so early/manual EOD (e.g. ~21:52) counts toward operational
-    'screener already ran' and toward the ≤22:50 miss gate (QA Bot 2026-09-23).
+    """Evening window rows: from NYSE close-2h to the end of the IL day (manual early EOD + scheduled +
+    catch-up). = T21–T23 IL in normal alignment, T20–T23 on 2026-10-26..30 (2026-10-24 DST fix).
+    Early/manual EOD counts toward 'screener already ran' and the miss gate (QA Bot 2026-09-23).
     """
-    rows: list[dict] = []
-    for r in _day_rows(day):
-        ts = r.get("ts_il") or ""
-        if "T21:" in ts or "T22:" in ts or "T23:" in ts:
-            rows.append(r)
-    return rows
+    return [r for r in _day_rows(day) if MC.in_eod_window(r.get("ts_il"), day)]
 
 
-def screener_actions_by_deadline(day: str, hour: int = 22, minute: int = 50) -> list[dict]:
+def screener_actions_by_deadline(day: str, hour: int | None = None, minute: int | None = None) -> list[dict]:
     """Screener ACTION BUY/HALT/SKIP/ERROR with ts_il ≤ deadline that calendar day.
 
-    Standing gate (2026-09-11 / QA 2026-09-23): EOD_SCREENER_MISSED iff none by 22:50 IL.
-    Early/manual EOD counts.
+    Standing gate (2026-09-11 / QA 2026-09-23): EOD_SCREENER_MISSED iff none by the screener deadline
+    (scheduled PM+10m: 21:50 IL from 2026-10-26; legacy close-10m before). Early/manual EOD counts. An explicit
+    hour/minute (IL) overrides the derived deadline (legacy callers / tests).
     """
-    deadline_min = hour * 60 + minute
+    if hour is None and minute is None:
+        dl = MC.eod_clock(day)["screener_deadline"]
+        deadline_min = dl.hour * 60 + dl.minute
+    else:
+        deadline_min = (22 if hour is None else hour) * 60 + (50 if minute is None else minute)
     out: list[dict] = []
     for r in _day_rows(day):
         if r.get("script") != "momentum_screener.py":
@@ -140,14 +154,22 @@ def pm_ran_tonight(now: datetime | None = None) -> dict:
     }
 
 
+def _nyse_closed(day: str) -> bool:
+    try:
+        return not MC.session_info(day)["is_session"]
+    except Exception:  # never break the miss check on a calendar problem: treat as a session
+        return False
+
+
 def is_miss(now: datetime | None = None) -> tuple[bool, dict]:
     """Backward-compatible: True only for screener miss (exit code / old callers). """
     now = now or datetime.now(tz=IL)
     status = screener_ran_tonight(now)
     if now.weekday() >= 5:
         return False, {**status, "reason": "weekend"}
-    mins = now.hour * 60 + now.minute
-    if mins < 22 * 60 + 46:
+    if _nyse_closed(status["day"]):
+        return False, {**status, "reason": "nyse_closed"}
+    if now < MC.eod_clock(status["day"])["watch_start"]:
         return False, {**status, "reason": "before_watch_window"}
     if status["has_eod_screener_action"]:
         return False, {**status, "reason": "screener_already_ran"}
@@ -159,12 +181,55 @@ def is_pm_miss(now: datetime | None = None) -> tuple[bool, dict]:
     status = pm_ran_tonight(now)
     if now.weekday() >= 5:
         return False, {**status, "reason": "weekend"}
-    mins = now.hour * 60 + now.minute
-    if mins < 22 * 60 + 46:
+    if _nyse_closed(status["day"]):
+        return False, {**status, "reason": "nyse_closed"}
+    if now < MC.eod_clock(status["day"])["watch_start"]:
         return False, {**status, "reason": "before_watch_window"}
     if status["has_eod_pm_action"]:
         return False, {**status, "reason": "pm_already_ran"}
     return True, {**status, "reason": "EOD_PM_MISSED", "deviation_code": "EOD_PM_MISSED"}
+
+
+SCHEDULE_EARLY_SLACK = timedelta(minutes=30)     # alert when PM RUN_START < pm_scheduled - 30m
+SCHEDULE_LOOKBACK = timedelta(hours=4)           # PM RUN_STARTs considered: from close-4h
+
+
+def schedule_alignment(day: str, rows: list[dict] | None = None) -> dict:
+    """DST-M1: is tonight's PM run aligned with the actual NYSE close? Read-only, never raises.
+    misaligned when the first position_manager RUN_START in [close-4h, day end] is before
+    pm_scheduled-30m [direction early] or at/after the close [direction after_close]."""
+    try:
+        clk = MC.eod_clock(day)
+        rows = _day_rows(day) if rows is None else rows
+        lo = clk["nyse_close_il"] - SCHEDULE_LOOKBACK
+        starts = sorted(dt for dt in (MC.parse_il(r.get("ts_il")) for r in rows
+                                      if r.get("script") == "position_manager.py" and r.get("event") == "RUN_START")
+                        if dt is not None and dt.date().isoformat() == day and dt >= lo)
+        out = {"day": day, "pm_first_run_start": starts[0].isoformat() if starts else None,
+               "pm_scheduled": clk["pm_scheduled"].isoformat(), "nyse_close_il": clk["nyse_close_il"].isoformat(),
+               "early_limit": (clk["pm_scheduled"] - SCHEDULE_EARLY_SLACK).isoformat(),
+               "early_close": clk.get("early_close", False), "misaligned": False, "alerts": []}
+        if not starts or not clk.get("is_session", True):
+            return out
+        first = starts[0]
+        direction = None
+        if first < clk["pm_scheduled"] - SCHEDULE_EARLY_SLACK:
+            direction = "early"
+        elif first >= clk["nyse_close_il"]:
+            direction = "after_close"
+        if direction:
+            mins = round((clk["nyse_close_il"] - first).total_seconds() / 60)
+            out["misaligned"] = True
+            out["alerts"].append({
+                "code": "SCHEDULE_MISALIGNED", "direction": direction, "pm_run_start": first.isoformat(),
+                "minutes_before_close": mins,
+                "text": (f"PM RUN_START {MC.hhmm(first)} IL is {mins}m before the NYSE close {MC.hhmm(clk['nyse_close_il'])} IL"
+                         if direction == "early" else
+                         f"PM RUN_START {MC.hhmm(first)} IL is at/after the NYSE close {MC.hhmm(clk['nyse_close_il'])} IL")
+                        + f" (expected ~{MC.hhmm(clk['pm_scheduled'])} IL = scheduled PM cron); check the EOD crons / early close."})
+        return out
+    except Exception as e:  # alert-only helper: never break callers
+        return {"day": day, "misaligned": False, "alerts": [], "error": f"{type(e).__name__}: {e}"}
 
 
 def night_status(now: datetime | None = None) -> dict:
@@ -180,6 +245,8 @@ def night_status(now: datetime | None = None) -> dict:
         "pm_miss": pm_miss,
         "any_miss": scr_miss or pm_miss,
         "next_job": next_job,
+        "eod_clock": MC.eod_clock_json(now.strftime("%Y-%m-%d")),
+        "schedule": schedule_alignment(now.strftime("%Y-%m-%d")),
         "chain_owner": chain_owner(now.strftime("%Y-%m-%d"), pm, now),
         "screener": scr,
         "position_manager": pm,
@@ -200,8 +267,7 @@ def soft_nudge_after_pm(now: datetime | None = None) -> dict:
             r = json.loads(line)
         except json.JSONDecodeError:
             continue
-        ts = r.get("ts_il") or ""
-        if "T22:" not in ts and "T23:" not in ts:
+        if not MC.in_eod_window(r.get("ts_il"), day):  # was T22/T23 only (missed 21:4x PM ends)
             continue
         if r.get("script") == "position_manager.py" and r.get("event") == "RUN_END":
             pm_end = r.get("ts_il")
@@ -262,6 +328,10 @@ def audit_row(status: dict, caller: str = "unknown") -> dict:
         **({"screener_gate": (status.get("screener_gate") or {}).get("decision"),
             "screener_gate_reason": (status.get("screener_gate") or {}).get("reason")}
            if status.get("screener_gate") else {}),
+        **({"schedule_misaligned": True,
+            "schedule_alerts": [{k: x.get(k) for k in ("code", "direction", "pm_run_start", "minutes_before_close")}
+                                for x in (status.get("schedule") or {}).get("alerts", [])]}
+           if (status.get("schedule") or {}).get("misaligned") else {}),
     }
 
 
@@ -281,7 +351,7 @@ def write_audit(status: dict, caller: str = "unknown", audit_dir: Path | None = 
 #
 # OWNER LOCK  <AUDIT>/locks/eod-owner-YYYYMMDD.lock  — one chain (PM -> screener -> place) per night.
 # SCREENER LOCK <AUDIT>/locks/eod-screener-YYYYMMDD.lock — one momentum_screener.py run per night,
-#   taken by EVERY screener invocation (primary chain, backup chain, 22:45 cron, watchdog). Separate
+#   taken by EVERY screener invocation (primary chain, backup chain, screener cron, watchdog). Separate
 #   from the owner lock so a screener-only caller never blocks the PM risk pass.
 # Both: created with O_CREAT|O_EXCL; every decide+write runs under fcntl.flock on the sibling .guard.
 # Identity is the RUN (run_tag), not the routine name (N1): the first call returns run_tag; only a
@@ -298,6 +368,7 @@ BACKUP_CALLER = "eod-pm-2242-backup"
 SCREENER_CALLER = "eod-screener-2245"
 WATCHDOG_CALLER = "eod-watchdog-2250"
 OWNER_TTL_S = 180          # F2: owner's PM RUN_START must appear within ~3 min of the last refresh
+OWNER_TTL_MIN_S, OWNER_TTL_MAX_S = 30, 900  # L2 2026-10-23: --owner-ttl outside this range = BAD_ARGS (exit 3)
 SCREENER_TTL_S = 180       # N2: screener RUN_START must appear within ~3 min of taking the screener lock
 CHAIN_STALL_S = 300        # F3: chain/screener with no new activity for 5 min no longer blocks others
 CLOCK_SKEW_S = 5           # N4: lock timestamps further than this in the future = corrupt
@@ -306,7 +377,7 @@ RC_STOP = 3
 RC_ALERT = 4
 
 TAKEOVER_REASONS = {
-    "PRIMARY_NO_RUN_START": "backup took over: no live owner lock and no position_manager RUN_START tonight",
+    "PRIMARY_NO_RUN_START": "took over tonight's chain: no live owner lock and no position_manager RUN_START tonight",
 }
 DEFER_REASONS = {
     "BACKUP_OWNS": "primary deferred: another routine's run holds tonight's live owner lock",
@@ -403,6 +474,16 @@ def _age_s(ts: str | None, now: datetime) -> float | None:
     return (now - dt).total_seconds()
 
 
+def _lock_age_s(ts, now: datetime) -> float | None:
+    """L1 2026-10-23: a lock timestamp must be an ISO string WITH a timezone; else None (= corrupt)."""
+    if not isinstance(ts, str):
+        return None
+    dt = _parse_ts_il(ts)
+    if dt is None or dt.tzinfo is None:
+        return None
+    return (now - dt).total_seconds()
+
+
 def lock_state(day: str, now: datetime, lock: dict | None = None, ttl_s: int | None = None,
                kind: str = "owner", stall_s: int = CHAIN_STALL_S) -> dict:
     """Evaluate tonight's lock of the given kind (read-only)."""
@@ -415,10 +496,13 @@ def lock_state(day: str, now: datetime, lock: dict | None = None, ttl_s: int | N
             "corrupt": False, "future_dated": False, "lock": lock}
     if not lock:
         return {**base, "pm_started": bool(starts) if kind == "owner" else None, "owner_pm_started": False}
-    acq_age = _age_s(lock.get("acquired_ts"), now)
-    age = _age_s(lock.get("refreshed_ts") or lock.get("acquired_ts"), now)
+    acq_age = _lock_age_s(lock.get("acquired_ts"), now)
+    ref = lock.get("refreshed_ts")
+    age = _lock_age_s(lock.get("acquired_ts") if ref is None else ref, now)
     future = any(a is not None and a < -CLOCK_SKEW_S for a in (acq_age, age))
-    corrupt = bool(lock.get("corrupt")) or acq_age is None or age is None or future or not lock.get("run_tag")
+    corrupt = bool(lock.get("corrupt")) or acq_age is None or age is None or future \
+        or not isinstance(lock.get("run_tag"), str) or not lock.get("run_tag") \
+        or (lock.get("caller") is not None and not isinstance(lock.get("caller"), str))
     owner_started = []
     if not corrupt:
         acq = _parse_ts_il(lock["acquired_ts"])
@@ -540,8 +624,11 @@ def claim_owner(caller: str, day: str, now: datetime, ttl_s: int = OWNER_TTL_S, 
 
     result: ACQUIRED | REFRESHED | STOLE_STALE           (this run owns the chain)
             HELD_BY_OTHER | CHAIN_ALREADY_STARTED          (this run must not run)
+            LOCK_LOST                                      (tagged re-check, lock no longer this run's)
     Only the run whose --run-tag matches the lock refreshes it (N1); after its own PM RUN_START even
     that run gets CHAIN_ALREADY_STARTED (a re-run after PM never starts a second chain).
+    M2 2026-10-23: a call WITH --run-tag is a verify-only re-check right before PM: it never acquires or
+    steals. If the lock is gone, stolen (stale takeover victim) or anyone else's, it gets LOCK_LOST -> exit 3.
     """
     st = lock_state(day, now, ttl_s=ttl_s)
     if _is_mine(st, caller, run_tag):
@@ -554,6 +641,8 @@ def claim_owner(caller: str, day: str, now: datetime, ttl_s: int = OWNER_TTL_S, 
     if st["pm_started"]:
         return {"result": "HELD_BY_OTHER" if st["owner_pm_started"] else "CHAIN_ALREADY_STARTED",
                 "owner": False, "state": st}
+    if run_tag:  # M2: verify-only re-check that is not (any longer) the holder
+        return {"result": "LOCK_LOST", "owner": False, "state": st}
     if st["exists"] and st["live"]:
         return {"result": "HELD_BY_OTHER", "owner": False, "state": st}
     if st["exists"]:  # stale / corrupt / future-dated -> steal, recorded
@@ -599,6 +688,7 @@ def backup_takeover(status: dict, caller: str, reason: str, primary_caller: str 
 
     TAKEOVER_RECORDED (new owner) / ALREADY_RECORDED (same --run-tag; refresh) -> proceed.
     TAKEOVER_REFUSED_LOCK_HELD (any other run, incl. a duplicate backup) /
+    TAKEOVER_LOCK_LOST (M2: --run-tag re-check, but the lock was stolen/lost: do NOT start PM) /
     TAKEOVER_REFUSED_PM_ALREADY_STARTED -> exit 3, no row.
     """
     now = now or datetime.now(tz=IL)
@@ -610,7 +700,8 @@ def backup_takeover(status: dict, caller: str, reason: str, primary_caller: str 
         c = claim_owner(caller, day, now, ttl_s, run_tag)
         st = c["state"]
         if not c["owner"]:
-            res = "TAKEOVER_REFUSED_PM_ALREADY_STARTED" if st["pm_started"] else "TAKEOVER_REFUSED_LOCK_HELD"
+            res = "TAKEOVER_REFUSED_PM_ALREADY_STARTED" if st["pm_started"] else \
+                ("TAKEOVER_LOCK_LOST" if c["result"] == "LOCK_LOST" else "TAKEOVER_REFUSED_LOCK_HELD")
             return {"ok": False, "result": res, "proceed": False, "written": False, "run_tag": None,
                     "lock_holder": st["holder"], "lock_holder_run_tag": st["holder_run_tag"],
                     "lock_age_s": st["age_s"], "pm_first_ts": _first_ts(pm) or (_pm_run_starts(day) or [None])[0]}
@@ -678,6 +769,8 @@ def primary_claim(status: dict, caller: str, backup_caller: str = BACKUP_CALLER,
                 reason = "DUPLICATE_WAKE"
             elif c["result"] == "CHAIN_ALREADY_STARTED":
                 reason = "CHAIN_ALREADY_STARTED"
+            elif c["result"] == "LOCK_LOST" and not (st.get("exists") and st.get("live")):
+                reason = "OWNER_LOCK_LOST"  # M2: tagged re-check, lock gone / not this run's
             else:
                 reason = "BACKUP_OWNS"
             if run_tag:  # same run re-asking: one row per run/reason
@@ -779,7 +872,7 @@ def place_watch(rows: list[dict], now: datetime, grace_s: int = PLACE_GRACE_S,
     except ImportError:
         sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
         from momentum_qa.audit import row_screener_run_id
-    ev_rows = [r for r in rows if any(f"T{h}:" in str(r.get("ts_il") or "") for h in (21, 22, 23))]
+    ev_rows = [r for r in rows if MC.in_eod_window(r.get("ts_il"))]  # NYSE close-2h.. (was T21-T23)
     ends = [r for r in ev_rows if r.get("script") == "momentum_screener.py" and r.get("event") == "RUN_END"]
     lock_mtimes = []
     if place_lock_dir and Path(place_lock_dir).exists():
@@ -838,7 +931,7 @@ def place_watch_cli(caller: str, now: datetime, grace_s: int, write: bool = True
 
 def screener_gate(status: dict, now: datetime | None = None, ttl_s: int = OWNER_TTL_S,
                   stall_s: int = CHAIN_STALL_S) -> dict:
-    """22:45 screener cron gate (F3, read-only).
+    """Scheduled screener cron gate (PM+5m: 21:45 IL fixed schedule; F3, read-only).
 
     STOP_ALREADY_RAN     screener EOD ACTION exists tonight            -> exit 3
     STOP_OWNER_ACTIVE    live owner lock / PM started, chain not stalled, or live screener lock -> exit 3
@@ -871,12 +964,45 @@ def screener_gate(status: dict, now: datetime | None = None, ttl_s: int = OWNER_
     return {"decision": "STOP_OWNER_ACTIVE", "proceed": False, "reason": "OWNER_CHAIN_IN_PROGRESS", **base}
 
 
-def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
-    """Exit codes: 0 no miss, 2 miss (unchanged). Ownership/lock modes: 3 = do NOT run; 0/2 = proceed.
-    --place-watch: 4 = alert (OWNER_DIED_BEFORE_PLACE / PLACE_RUN_INCOMPLETE)."""
+RC_BAD_ARGS = RC_STOP  # argument/parse errors fail closed (argparse's default 2 would read as "miss, proceed")
+
+
+def _arg_parser_cls():
     import argparse
 
-    ap = argparse.ArgumentParser(prog="momentum_qa.eod_miss_check", description="EOD screener/PM miss check")
+    class _FailClosedParser(argparse.ArgumentParser):
+        """argparse exits 2 on bad/missing args; 2 means "miss, proceed" here, so exit 3 (do NOT run) instead."""
+
+        def error(self, message):  # noqa: D401 - argparse hook
+            self.print_usage(sys.stderr)
+            print(f"{self.prog}: error: {message}", file=sys.stderr)
+            print(json.dumps({"result": "BAD_ARGS", "proceed": False, "error": message, "rc": RC_BAD_ARGS}))
+            raise SystemExit(RC_BAD_ARGS)
+
+    return _FailClosedParser
+
+
+def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
+    """Fail-closed wrapper (L1 2026-10-23): any uncaught exception -> {"result": "INTERNAL_ERROR", "proceed":
+    false} on stdout and exit 3 (4 under --place-watch). Bad args stay BAD_ARGS exit 3; --help exits 0."""
+    args = list(sys.argv[1:] if argv is None else argv)
+    try:
+        return _main(args, now)
+    except Exception as e:  # noqa: BLE001 - fail closed on anything unexpected
+        watch = any(x == "--place-watch" for x in args)
+        rc = RC_ALERT if watch else RC_STOP
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        print(json.dumps({"result": "INTERNAL_ERROR", "proceed": False, "error": f"{type(e).__name__}: {e}",
+                          "rc": rc}))
+        return rc
+
+
+def _main(argv: list[str], now: datetime | None = None) -> int:
+    """Exit codes: 0 no miss, 2 miss (unchanged). Ownership/lock modes: 3 = do NOT run; 0/2 = proceed.
+    --place-watch: 4 = alert (OWNER_DIED_BEFORE_PLACE / PLACE_RUN_INCOMPLETE).
+    Bad/missing/unknown arguments or bad values: 3 (fail closed; JSON {"result": "BAD_ARGS"} on stdout)."""
+    ap = _arg_parser_cls()(prog="momentum_qa.eod_miss_check", description="EOD screener/PM miss check")
     ap.add_argument("--caller", required=True,
                     help="routine name logged in audit rows (eod-pm-2240 | eod-pm-2242-backup | eod-screener-2245 | "
                          "eod-watchdog-2250 | ...)")
@@ -888,7 +1014,7 @@ def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
     g.add_argument("--defer-reason", choices=DEFER_TRIGGERS,
                    help="primary: atomic acquire+decide; one PRIMARY_PROCEEDS or PRIMARY_DEFERRED row; exit 3 = defer")
     g.add_argument("--screener-gate", action="store_true",
-                   help="22:45 screener: exit 3 if screener already acted or tonight's chain has a live owner")
+                   help="screener cron: exit 3 if screener already acted or tonight's chain has a live owner")
     g.add_argument("--screener-lock", action="store_true",
                    help="every screener run, right before momentum_screener.py: take the per-night screener lock; "
                         "exit 3 = skip screener and place")
@@ -906,6 +1032,10 @@ def main(argv: list[str] | None = None, now: datetime | None = None) -> int:
         ap.error("--caller must name the routine (not empty / 'unknown')")
     if a.run_tag is not None and not a.run_tag.strip():
         ap.error("--run-tag must not be empty")
+    if not (OWNER_TTL_MIN_S <= a.owner_ttl <= OWNER_TTL_MAX_S):
+        ap.error(f"--owner-ttl must be {OWNER_TTL_MIN_S}..{OWNER_TTL_MAX_S} seconds")
+    if not (0 <= a.place_grace_min <= 24 * 60):  # also rejects nan / inf
+        ap.error("--place-grace-min must be between 0 and 1440")
     now = now or datetime.now(tz=IL)
     status = night_status(now)
     rc = 2 if status["any_miss"] else 0

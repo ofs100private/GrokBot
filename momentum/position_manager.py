@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Momentum EOD position manager — Momentum-HHHGDTJ with QA + audit.
 
-Rules (run ~22:40 Israel / 15:40 NY on NYSE sessions):
+Rules (run at NYSE close-20m = 15:40 New York on NYSE sessions; 22:40 IL normally, 21:40 IL on 2026-10-26..30):
 - If price last below SMA50 → CLOSE (rationale required)
 - If unrealized PnL% <= -4.0 vs avg open → CLOSE LOSS_PCT_GE_4 (hard stop)
 - If unrealized >= 2R vs initial risk → MOVE SL to breakeven (entry)

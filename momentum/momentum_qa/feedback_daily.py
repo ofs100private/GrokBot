@@ -11,7 +11,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from momentum_qa.eod_miss_check import (OWNER_EVENTS, OWNERSHIP_CODES, OWNERSHIP_EVENTS, is_miss, ownership_code,
+                                        schedule_alignment,
                                         place_watch, screener_actions_by_deadline)
+from momentum_qa import market_clock as MC
 from momentum_qa.audit import PROTECTIVE_REJECT_CODES, base_symbol_of, classify_skip_code, placed_symbols, row_screener_run_id
 
 # QA Bot 2026-10-21: from this IL date every pack BUY name needs a FILL/placed row or a SKIP
@@ -301,7 +303,7 @@ def eod_ownership_report(rows: list[dict], report: dict) -> dict:
         day = next((str(r.get("ts_il"))[:10] for r in rows if r.get("ts_il")), None)
         today = datetime.now(tz=IL)
         eval_now = today if day == today.strftime("%Y-%m-%d") else (
-            datetime.fromisoformat(f"{day}T23:59:59+03:00") if day else today)
+            MC.eod_clock(day)["day_end"] if day else today)  # IL end of day (was fixed +03:00)
         pw = place_watch(rows, eval_now, place_lock_dir=AUDIT_DIR / "place_locks")
     except Exception as e:  # never break feedback
         pw = {"alert": False, "alerts": [], "error": str(e)}
@@ -354,13 +356,31 @@ def eod_ownership_report(rows: list[dict], report: dict) -> dict:
         report["lessons"].append({
             "tag": "WATCH",
             "text": (f"BACKUP_TAKEOVER:{t.get('reason')} by {t.get('caller')} at {t.get('ts_il')} "
-                     f"(primary_last_seen={t.get('primary_last_seen')}) — 22:40 primary had not started PM; "
+                     f"(primary_last_seen={t.get('primary_last_seen')}) — the primary (scheduled PM cron) had not started PM; "
                      "check scheduler lateness. Failover, not a deviation."),
         })
     if unmapped:
         report["lessons"].append({"tag": "WATCH", "text": f"{len(unmapped)} EOD ownership row(s) with unmapped reason: "
                                   + ", ".join(sorted({str(u['reason']) for u in unmapped}))})
     return report["eod_ownership"]
+
+
+def schedule_report(day: str, rows: list[dict], report: dict) -> dict:
+    """DST-M1 (2026-10-24b): eod_miss_check.schedule_alignment -> WATCH (MEDIUM, never a hard fail)."""
+    sa = schedule_alignment(day, rows)
+    report["schedule_alignment"] = sa
+    report["counts"]["schedule_misaligned"] = len(sa.get("alerts", []))
+    for a in sa.get("alerts", []):
+        if any(x.get("deviation_code") == "SCHEDULE_MISALIGNED" for x in report["deviations_clear"]):
+            break
+        report["deviations_clear"].append({
+            "tag": "WATCH", "action": "SCHEDULE_MISALIGNED", "deviation_code": "SCHEDULE_MISALIGNED",
+            "severity": "MEDIUM", "direction": a.get("direction"), "rationale": a.get("text")})
+        report["lessons"].append({"tag": "WATCH", "text": (
+            f"SCHEDULE_MISALIGNED ({a.get('direction')}): {a.get('text')} Buys outside close-90m..close-1m are "
+            "refused by place_lock (exit 6).")})
+    report["counts"]["deviations"] = len(report["deviations_clear"])
+    return sa
 
 
 def build_report(day: str) -> dict:
@@ -557,19 +577,24 @@ def build_report(day: str) -> dict:
                 "text": "No audit rows today — confirm EOD routines ran or NYSE holiday skip.",
             }
         )
-    miss, miss_status = is_miss()
-    # Standing gate (QA Bot 2026-09-11/23): HIGH AVOID iff no screener ACTION ≤22:50 IL.
-    # Early/manual EOD counts. Catch-up after 22:50 never clears a true miss.
-    # Late 22:45 cron when an earlier ≤22:50 ACTION exists → soft SCHEDULED_2245_LATE only.
-    by_2250 = screener_actions_by_deadline(day, 22, 50)
+    _now = datetime.now(tz=IL)  # 'tonight' = the report day: live now if today, else that day's IL end
+    miss, miss_status = is_miss(_now if day == _now.strftime("%Y-%m-%d") else MC.eod_clock(day)["day_end"])
+    # Standing gate (QA Bot 2026-09-11/23): HIGH AVOID iff no screener ACTION ≤ screener deadline
+    # (scheduled PM+10m: 21:50 IL from 2026-10-26, any close; legacy close-10m before). Early/manual EOD counts.
+    # Catch-up after the deadline never clears a true miss. A late screener cron when an earlier
+    # in-deadline ACTION exists → soft SCHEDULED_2245_LATE only (stable code ID; name kept).
+    clk = MC.eod_clock(day) if day else MC.eod_clock(datetime.now(tz=IL))  # NYSE-close-derived (DST fix)
+    by_2250 = screener_actions_by_deadline(day)  # deadline = scheduled PM+10m (21:50 IL)
     first_by_2250 = None
     for a in by_2250:
         ts = a.get("ts_il")
         if ts and (first_by_2250 is None or ts < first_by_2250):
             first_by_2250 = ts
-    true_miss = len(by_2250) == 0 and datetime.now(tz=IL).weekday() < 5
+    # NYSE session of the REPORT day (was: today's real weekday, so a weekend re-run of a weekday report
+    # never flagged a miss; 2026-10-24b DST-M2: holidays are not misses either)
+    true_miss = len(by_2250) == 0 and bool(clk.get("is_session", datetime.fromisoformat(clk["day"]).weekday() < 5))
 
-    # First evening ACTION (T21–T23) for hygiene / soft late flag
+    # First evening ACTION (EOD window, close-2h .. day end) for hygiene / soft late flag
     first_action_ts = None
     for a in (miss_status.get("actions") or []):
         ts = a.get("ts_il")
@@ -583,24 +608,22 @@ def build_report(day: str) -> dict:
 
     scheduled_2245_late = False
     if first_by_2250 and first_action_ts:
-        # Soft: early ACTION existed, but first T22:45-window cron action was late —
-        # only flag soft if we also saw a post-22:46 ACTION (catch-up/cron) AND
-        # the ≤22:50 ACTION was before the scheduled window (manual early).
+        # Soft: early ACTION existed, but the first scheduled-window (PM+5m) cron action was late —
+        # only flag soft if we also saw an ACTION after late_cron (PM+7m; catch-up/cron) AND
+        # the in-deadline ACTION was before the scheduled window (scheduled PM; manual early).
         try:
-            fa = datetime.fromisoformat(first_by_2250)
-            if fa.hour < 22 or (fa.hour == 22 and fa.minute < 40):
+            fa = MC.parse_il(first_by_2250)
+            if fa is not None and fa < clk["pm_scheduled"]:  # before the scheduled window (21:40 IL)
                 # Manual/early satisfied gate; check if scheduled window also produced ACTION
                 post = [
                     a for a in (miss_status.get("actions") or [])
-                    if a.get("ts_il") and (
-                        "T22:4" in a["ts_il"] or "T22:5" in a["ts_il"] or "T23:" in a["ts_il"]
-                    )
+                    if a.get("ts_il") and (MC.parse_il(a["ts_il"]) or fa) >= clk["pm_scheduled"]
                 ]
-                # Soft hygiene only when cron/catch-up ran after 22:46 despite early ACTION
+                # Soft hygiene only when cron/catch-up ran at/after late_cron despite an early ACTION
                 for a in post:
                     try:
-                        dt = datetime.fromisoformat(a["ts_il"])
-                        if dt.hour == 22 and dt.minute >= 47 or dt.hour >= 23:
+                        dt = MC.parse_il(a["ts_il"])
+                        if dt is not None and dt >= clk["late_cron"]:  # 21:47 IL
                             scheduled_2245_late = True
                             break
                     except Exception:
@@ -618,7 +641,9 @@ def build_report(day: str) -> dict:
         "true_miss_no_action_by_2250": true_miss,
         "first_action_ts": first_action_ts,
         "scheduled_2245_late": scheduled_2245_late,
-        "gate": "EOD_SCREENER_MISSED iff no screener ACTION ≤22:50 IL; early/manual counts",
+        "gate": f"EOD_SCREENER_MISSED iff no screener ACTION ≤{MC.hhmm(clk['screener_deadline'])} IL "
+                f"(scheduled PM+10m); early/manual counts",
+        "eod_clock": MC.eod_clock_json(clk["day"]),
     }
 
     already_miss = any(
@@ -634,7 +659,7 @@ def build_report(day: str) -> dict:
                 "tag": "AVOID",
                 "action": "EOD_SCREENER_MISSED",
                 "rationale": (
-                    "No momentum_screener ACTION (BUY/HALT/SKIP) by 22:50 IL"
+                    f"No momentum_screener ACTION (BUY/HALT/SKIP) by {MC.hhmm(clk['screener_deadline'])} IL (scheduled PM+10m)"
                     + (f" (first later ACTION {first_action_ts})" if first_action_ts else "")
                     + ". Catch-up does not clear this HIGH AVOID."
                 ),
@@ -645,7 +670,7 @@ def build_report(day: str) -> dict:
         report["lessons"].append(
             {
                 "tag": "AVOID",
-                "text": "EOD_SCREENER_MISSED — no ACTION ≤22:50 IL; catch up immediately; catch-up never clears this AVOID.",
+                "text": f"EOD_SCREENER_MISSED — no ACTION ≤{MC.hhmm(clk['screener_deadline'])} IL (scheduled PM+10m); catch up immediately; catch-up never clears this AVOID.",
             }
         )
         report["counts"]["deviations"] = report["counts"].get("deviations", 0) + 1
@@ -657,8 +682,9 @@ def build_report(day: str) -> dict:
                 "tag": "WATCH",
                 "action": "SCHEDULED_2245_LATE",
                 "rationale": (
-                    "22:45 cron/catch-up ran after 22:46 IL but an earlier ≤22:50 ACTION already "
-                    f"satisfied the miss gate (first ≤22:50: {first_by_2250}). Soft hygiene only."
+                    f"Screener cron/catch-up ran at/after {MC.hhmm(clk['late_cron'])} IL (scheduled PM+7m) but an earlier "
+                    f"ACTION ≤{MC.hhmm(clk['screener_deadline'])} IL already satisfied the miss gate "
+                    f"(first in-deadline ACTION: {first_by_2250}). Soft hygiene only."
                 ),
                 "deviation_code": "SCHEDULED_2245_LATE",
                 "severity": "LOW",
@@ -667,7 +693,8 @@ def build_report(day: str) -> dict:
         report["lessons"].append(
             {
                 "tag": "WATCH",
-                "text": "SCHEDULED_2245_LATE — cron late but early/manual ACTION ≤22:50 already cleared miss gate.",
+                "text": (f"SCHEDULED_2245_LATE — screener cron late but an early/manual ACTION "
+                         f"≤{MC.hhmm(clk['screener_deadline'])} IL (scheduled PM+10m) already cleared the miss gate."),
             }
         )
         # Soft WATCH does not bump HIGH avoid counts the same way; still list under deviations_clear
@@ -712,6 +739,7 @@ def build_report(day: str) -> dict:
     )
     report["counts"]["deviations"] = len(report["deviations_clear"])
     eod_ownership_report(rows, report)
+    schedule_report(day, rows, report)
     try:
         report["vcp_rvol_outcomes"] = rvol_outcome_scoring(rows, _all_rows())
     except Exception as e:  # aggregate only; never break feedback
