@@ -27,7 +27,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - **ofersGrokBot** (`ea5eed38-4dec-4587-a8c5-68c397b50b90`)
 - **QA Bot** (`498c78db-a027-4f2c-8126-3c2be6f0a4bb`)
 - **Trader_Classic** (`17bca140-8156-4306-944e-27264c7e1524`)
-- **Trader_momentum** (`a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3`)
+- **Trader_momentum · Research Market trends and look for momentum** (`a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3`)
 - **X** (`4fb6dd40-86cb-43b3-b5be-16ad1fbc00b3`)
 
 ## Workflows (21)
@@ -55,12 +55,12 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 
 Restored by importing profiles/skills into Grok Bot; this is a backup, not a live sync.
 
-## App + Daily Brief (2026-10-26)
+## App + Daily Brief (2026-10-27)
 - `app/etoroview/` — eToroView UI (Classic/Momentum + daily_brief bind)
 - `app/etoroview/dist/` — useful JSON copies from dist when present
 - `daily-brief/` — latest + morning/afternoon stash from `/workspace/daily-brief` (dual-write with etoroview public)
 
-## Momentum (326 files)
+## Momentum (331 files)
 - `momentum/momentum_screener.py`, `position_manager.py`, `nyse_session.py`
 - `momentum/momentum_qa/`, `momentum/momentum_audit/` (incl. playbook-2026-09-16-full-fix)
 - `momentum/sp500_symbols.json` when present
