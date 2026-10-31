@@ -63,12 +63,12 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 
 Restored by importing profiles/skills into Grok Bot; this is a backup, not a live sync.
 
-## App + Daily Brief (2026-10-30)
+## App + Daily Brief (2026-10-31)
 - `app/etoroview/` — eToroView UI (Classic/Momentum + daily_brief bind)
 - `app/etoroview/dist/` — useful JSON copies from dist when present
 - `daily-brief/` — latest + morning/afternoon stash from `/workspace/daily-brief` (dual-write with etoroview public)
 
-## Momentum (346 files)
+## Momentum (351 files)
 - `momentum/momentum_screener.py`, `position_manager.py`, `nyse_session.py`
 - `momentum/momentum_qa/`, `momentum/momentum_audit/` (incl. playbook-2026-09-16-full-fix)
 - `momentum/sp500_symbols.json` when present

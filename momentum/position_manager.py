@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from datetime import datetime, timedelta
 
@@ -112,6 +113,36 @@ def normalize_positions(raw) -> list:
             out.append(q)
         else:
             out.append(p)
+    return out
+
+
+def _position_ids(p: dict) -> list[int]:
+    """positionId(s) of one PM input row: positionId and / or positionIds[] (precheck rows carry positionIds),
+    ints only, sorted, de-duplicated (2026-10-30d QA30C-01: place_lock fingerprints the book by positionId)."""
+    out = set()
+    for v in [p.get("positionId")] + (p.get("positionIds") if isinstance(p.get("positionIds"), list) else []):
+        if isinstance(v, bool):
+            continue
+        try:
+            f = float(v)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if not math.isfinite(f):  # 2026-10-30e QA30D-04: inf / nan / 1e400 -> skipped id, never a crashed run
+            continue
+        if f == int(f) and f > 0:
+            out.add(int(f))
+    return sorted(out)
+
+
+def _rejected_position_ids(p: dict) -> list[str]:
+    """repr of every positionId / positionIds[] value _position_ids skipped (non-int, non-finite, <= 0, bool)."""
+    vals = [p.get("positionId")] if p.get("positionId") is not None else []
+    vals += p.get("positionIds") if isinstance(p.get("positionIds"), list) else []
+    ok = set(_position_ids(p))
+    out = []
+    for v in vals:
+        if _position_ids({"positionId": v}) == [] or _position_ids({"positionId": v})[0] not in ok:
+            out.append(repr(v)[:40])
     return out
 
 
@@ -281,6 +312,14 @@ def manage(positions, log: AuditLogger | None = None) -> list[dict]:
                 "r_multiple": round(r_multiple, 2),
             }
 
+        pids = _position_ids(p)  # 2026-10-30d QA30C-01: every ACTION row names its positionId(s)
+        bad_ids = _rejected_position_ids(p)  # 2026-10-30e QA30D-04: refused per row, recorded, never a crash
+        if bad_ids:
+            row["positionIds_rejected"] = bad_ids
+        if pids:
+            row["positionIds"] = pids
+            if len(pids) == 1:
+                row["positionId"] = pids[0]
         verdict = validate_position_action(row)
         row["qa"] = verdict.to_dict()
         if log:
