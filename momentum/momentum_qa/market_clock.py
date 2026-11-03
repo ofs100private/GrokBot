@@ -1,6 +1,18 @@
 """EOD clock: NYSE session/close from the calendar, routine times from the routine schedule.
 
-2026-10-24d (Ofer 2026-10-24 00:53-00:54 IDT): from Mon 2026-10-26 the Momentum EOD routines run at FIXED
+2026-11-03 (staged-20261103a; Ofer 2026-11-03 06:36 IL, "Move Momentum's end-of-day jobs back to 22:40"): the fixed
+IL crons moved back to PM 22:40, backup 22:42, screener 22:45, watchdog 22:50, feedback 23:05 (open-gap 16:45
+unchanged). The fixed schedule is now effective-dated (EOD_SCHEDULE_HISTORY):
+  2026-10-26 .. 2026-11-02  EOD_SCHEDULE_IL_2140 (PM 21:40 ...)  -> watch 21:46, late 21:47, deadline 21:50
+  from 2026-11-03           EOD_SCHEDULE_IL      (PM 22:40 ...)  -> watch 22:46, late 22:47, deadline 22:50,
+                                                                    window from min(close-2h, 22:00) = 21:00 IL
+Mon 2026-11-02 stays on 21:40 because the crons actually fired at 21:4x that night (the move was made on
+2026-11-03 ~06:37 IL), so past audits for 2026-10-26..11-02 evaluate exactly as before. On a 23:00 IL close the
+22:40 table gives the same times as the legacy close-20m rule. On a 22:00 IL close (e.g. a DST gap week such as
+2027-03-15..25) the 22:40 PM runs after the close (schedule_alignment after_close; place_lock refuses buys) unless
+a schedule row / EOD_SCHEDULE_OVERRIDES entry is added for those days.
+
+2026-10-24d (history; superseded from 2026-11-03 by the 22:40 table above) (Ofer 2026-10-24 00:53-00:54 IDT): from Mon 2026-10-26 the Momentum EOD routines run at FIXED
 Israel times, permanently (PM 21:40, backup 21:42, screener 21:45, watchdog 21:50, feedback 22:05,
 CRON_TZ=Asia/Jerusalem). The routine-relative reference times are therefore anchored to the scheduled PM
 time, not to the close:
@@ -58,8 +70,13 @@ EOD_WINDOW_BEFORE_CLOSE = timedelta(hours=2)            # 21:00 evening window s
 # Routine schedule anchor (2026-10-24d). Offsets after the scheduled PM time keep the old relationships
 # (watch = PM+6m, late = PM+7m, deadline = PM+10m) in every regime.
 EOD_SCHEDULE_FIXED_FROM = date(2026, 10, 26)            # first IL date on the fixed IL crons
-EOD_SCHEDULE_IL = {"pm": time(21, 40), "backup": time(21, 42), "screener": time(21, 45),
-                   "watchdog": time(21, 50), "feedback": time(22, 5)}
+EOD_SCHEDULE_IL_2140 = {"pm": time(21, 40), "backup": time(21, 42), "screener": time(21, 45),
+                        "watchdog": time(21, 50), "feedback": time(22, 5)}      # 2026-10-26 .. 2026-11-02
+EOD_SCHEDULE_2240_FROM = date(2026, 11, 3)              # first IL date on the 22:40 crons (staged-20261103a)
+EOD_SCHEDULE_IL = {"pm": time(22, 40), "backup": time(22, 42), "screener": time(22, 45),
+                   "watchdog": time(22, 50), "feedback": time(23, 5)}           # current, from 2026-11-03
+EOD_SCHEDULE_HISTORY = ((EOD_SCHEDULE_FIXED_FROM, EOD_SCHEDULE_IL_2140),     # (first IL date, table), ascending
+                        (EOD_SCHEDULE_2240_FROM, EOD_SCHEDULE_IL))
 EOD_SCHEDULE_OVERRIDES: dict = {}                       # {date: {"pm": time, ...}} one-off cron days; empty
 WATCH_START_AFTER_PM = timedelta(minutes=6)
 LATE_CRON_AFTER_PM = timedelta(minutes=7)
@@ -174,6 +191,17 @@ def schedule_mode(day) -> str:
     return "fixed_il" if d >= EOD_SCHEDULE_FIXED_FROM else "legacy_close_minus_20m"
 
 
+def fixed_schedule_table(day) -> dict:
+    """The fixed IL cron table in force on IL date `day` (latest EOD_SCHEDULE_HISTORY entry with from <= day).
+    Only meaningful from EOD_SCHEDULE_FIXED_FROM; earlier days use the legacy close-20m rule."""
+    d = _as_date(day)
+    table = EOD_SCHEDULE_HISTORY[0][1]
+    for start, t in EOD_SCHEDULE_HISTORY:
+        if d >= start:
+            table = t
+    return table
+
+
 def routine_schedule_il(day) -> dict:
     """Scheduled IL datetimes of the EOD routines on IL date `day` {pm, backup, screener, watchdog, feedback}."""
     d = _as_date(day)
@@ -181,7 +209,7 @@ def routine_schedule_il(day) -> dict:
     if mode == "legacy_close_minus_20m":
         pm = nyse_close_il(d) - PM_SCHEDULED_BEFORE_CLOSE
         return {k: pm + off for k, off in _LEGACY_AFTER_PM.items()}
-    table = {**EOD_SCHEDULE_IL, **(EOD_SCHEDULE_OVERRIDES.get(d) or {})}
+    table = {**fixed_schedule_table(d), **(EOD_SCHEDULE_OVERRIDES.get(d) or {})}
     return {k: datetime.combine(d, t, tzinfo=IL) for k, t in table.items()}
 
 

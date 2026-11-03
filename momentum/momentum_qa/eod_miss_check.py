@@ -2,15 +2,16 @@
 """Detect EOD screener / position_manager misses and optionally require catch-up.
 
 EOD reference times come from momentum_qa.market_clock.eod_clock. Since 2026-10-24d they are anchored to the
-fixed IL routine schedule (from 2026-10-26: PM 21:40, backup 21:42, screener 21:45, watchdog 21:50, feedback 22:05):
-watch 21:46 (PM+6m), late cron 21:47 (PM+7m), screener deadline 21:50 (PM+10m), window from min(close-2h, PM-40m)
-(20:00 IL when the close is 22:00, 21:00 IL when it is 23:00). Days before 2026-10-26 keep the legacy close-20m
+fixed IL routine schedule, effective-dated in market_clock.EOD_SCHEDULE_HISTORY (from 2026-11-03: PM 22:40, backup 22:42,
+screener 22:45, watchdog 22:50, feedback 23:05 -> watch 22:46 (PM+6m), late cron 22:47 (PM+7m), screener deadline 22:50
+(PM+10m); 2026-10-26..11-02: PM 21:40 / 21:42 / 21:45 / 21:50 / 22:05 -> 21:46 / 21:47 / 21:50), window from
+min(close-2h, PM-40m) (20:00 IL when the close is 22:00, 21:00 IL when it is 23:00). Days before 2026-10-26 keep the legacy close-20m
 anchor (close 23:00: 21:00 / 22:46 / 22:50). Early-close days keep the fixed schedule (the crons don't move;
 schedule_alignment flags after_close). NYSE holidays are not misses (reason nyse_closed).
 
 SCHEDULE (DST-M1, 2026-10-24b): night_status["schedule"] flags SCHEDULE_MISALIGNED when tonight's first
-position_manager RUN_START is more than 30m before the scheduled PM time (before 21:10 IL on the fixed
-schedule) or at/after the NYSE close. Alert only: exit codes are unchanged; feedback_daily maps it to WATCH.
+position_manager RUN_START is more than 30m before the scheduled PM time (before 22:10 IL on the 22:40
+schedule from 2026-11-03; 21:10 IL on 2026-10-26..11-02) or at/after the NYSE close. Alert only: exit codes are unchanged; feedback_daily maps it to WATCH.
 
 SCREENER MISS = weekday, now >= watch_start (scheduled PM+6m), and no screener ACTION/HALT/BUY/SKIP/ERROR
 in tonight's EOD window (>= eod_window_start, same IL date).
@@ -76,7 +77,7 @@ def screener_actions_by_deadline(day: str, hour: int | None = None, minute: int 
     """Screener ACTION BUY/HALT/SKIP/ERROR with ts_il ≤ deadline that calendar day.
 
     Standing gate (2026-09-11 / QA 2026-09-23): EOD_SCREENER_MISSED iff none by the screener deadline
-    (scheduled PM+10m: 21:50 IL from 2026-10-26; legacy close-10m before). Early/manual EOD counts. An explicit
+    (scheduled PM+10m: 22:50 IL from 2026-11-03, 21:50 IL on 2026-10-26..11-02; legacy close-10m before). Early/manual EOD counts. An explicit
     hour/minute (IL) overrides the derived deadline (legacy callers / tests).
     """
     if hour is None and minute is None:
@@ -931,7 +932,7 @@ def place_watch_cli(caller: str, now: datetime, grace_s: int, write: bool = True
 
 def screener_gate(status: dict, now: datetime | None = None, ttl_s: int = OWNER_TTL_S,
                   stall_s: int = CHAIN_STALL_S) -> dict:
-    """Scheduled screener cron gate (PM+5m: 21:45 IL fixed schedule; F3, read-only).
+    """Scheduled screener cron gate (PM+5m: 22:45 IL fixed schedule from 2026-11-03; F3, read-only).
 
     STOP_ALREADY_RAN     screener EOD ACTION exists tonight            -> exit 3
     STOP_OWNER_ACTIVE    live owner lock / PM started, chain not stalled, or live screener lock -> exit 3

@@ -27,7 +27,7 @@
     or invalid -> today's IL day (fail closed). protective_actions.ack_strict_from_source reports where it came from.
   * Auth (QA-08): only eToro connector signals count (connector_auth.ETORO_CONNECTORS); RUNTIME_ERROR is suppressed
     only for a row whose own text is an eToro auth refusal, or a connector-read script row on an auth-blocked night.
-  * Alert (QA-11): the feedback run never records the alert as sent; the 22:05 routine runs
+  * Alert (QA-11): the feedback run never records the alert as sent; the 23:05 routine (22:05 before 2026-11-03) runs
     `python -m momentum_qa.connector_auth mark-alert-sent --day <D>` only after SendToUser succeeded.
 
 2026-10-30d (QA Bot FAIL 3 on 30c, QA30C-02; Ofer t287s1451): on days >= ACK_STRICT_FROM only a provenance-checked
@@ -1235,11 +1235,11 @@ def build_report(day: str) -> dict:
     _now = datetime.now(tz=IL)  # 'tonight' = the report day: live now if today, else that day's IL end
     miss, miss_status = is_miss(_now if day == _now.strftime("%Y-%m-%d") else MC.eod_clock(day)["day_end"])
     # Standing gate (QA Bot 2026-09-11/23): HIGH AVOID iff no screener ACTION ≤ screener deadline
-    # (scheduled PM+10m: 21:50 IL from 2026-10-26, any close; legacy close-10m before). Early/manual EOD counts.
+    # (scheduled PM+10m: 22:50 IL from 2026-11-03, 21:50 IL on 2026-10-26..11-02, any close; legacy close-10m before). Early/manual EOD counts.
     # Catch-up after the deadline never clears a true miss. A late screener cron when an earlier
     # in-deadline ACTION exists → soft SCHEDULED_2245_LATE only (stable code ID; name kept).
     clk = MC.eod_clock(day) if day else MC.eod_clock(datetime.now(tz=IL))  # NYSE-close-derived (DST fix)
-    by_2250 = screener_actions_by_deadline(day)  # deadline = scheduled PM+10m (21:50 IL)
+    by_2250 = screener_actions_by_deadline(day)  # deadline = scheduled PM+10m (22:50 IL from 2026-11-03)
     first_by_2250 = None
     for a in by_2250:
         ts = a.get("ts_il")
@@ -1268,7 +1268,7 @@ def build_report(day: str) -> dict:
         # the in-deadline ACTION was before the scheduled window (scheduled PM; manual early).
         try:
             fa = MC.parse_il(first_by_2250)
-            if fa is not None and fa < clk["pm_scheduled"]:  # before the scheduled window (21:40 IL)
+            if fa is not None and fa < clk["pm_scheduled"]:  # before the scheduled window (22:40 IL from 2026-11-03)
                 # Manual/early satisfied gate; check if scheduled window also produced ACTION
                 post = [
                     a for a in (miss_status.get("actions") or [])
@@ -1278,7 +1278,7 @@ def build_report(day: str) -> dict:
                 for a in post:
                     try:
                         dt = MC.parse_il(a["ts_il"])
-                        if dt is not None and dt >= clk["late_cron"]:  # 21:47 IL
+                        if dt is not None and dt >= clk["late_cron"]:  # 22:47 IL from 2026-11-03
                             scheduled_2245_late = True
                             break
                     except Exception:
@@ -1378,7 +1378,7 @@ def build_report(day: str) -> dict:
     # QA Bot ruling 4 (2026-10-30a): CONNECTOR_AUTH_BLOCKED = ops HIGH, never a trading FAIL
     report["connector_auth"] = {k: v for k, v in auth.items() if k != "next_state"}
     report["alert_ofer"] = bool(auth["alert_ofer"])
-    if report["alert_ofer"]:  # one short English line for the 22:05 routine to send verbatim (QA-11)
+    if report["alert_ofer"]:  # one short English line for the 23:05 routine to send verbatim (QA-11)
         report["connector_auth"]["alert_message"] = (
             f"Momentum {day}: eToro connector auth blocked ({', '.join(auth['connectors']) or 'eToro'}); "
             "reads refused, runs failed closed, no orders. Please fix the connector auth (one method per connector). "
