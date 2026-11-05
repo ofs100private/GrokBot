@@ -17,7 +17,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - Audit lines matching token/secret patterns
 - `.env` files
 
-## Agents (20)
+## Agents (22)
 - **Ad Spend Watch** (`697e3d09-625d-4308-9376-ed3c719269f7`)
 - **App** (`64d1617f-e42c-4a90-a0e9-3463ae5f0187`)
 - **Chief of Staff** (`b66054dc-f163-418d-a43c-59faef4ea103`)
@@ -30,6 +30,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - **Marketing Analyst** (`bafe12d2-81f3-4530-99f6-6297ef3b24c0`)
 - **Marketing Expert** (`fe2b9f93-9f28-4d21-87f1-4929af034a72`)
 - **ofersGrokBot** (`ea5eed38-4dec-4587-a8c5-68c397b50b90`)
+- **OnCall** (`52559aa1-62c3-46f0-9729-2c0fc735e77e`)
 - **Plugin Setup** (`069b413c-5cb1-440e-b71e-80aff928c778`)
 - **QA Bot** (`498c78db-a027-4f2c-8126-3c2be6f0a4bb`)
 - **Research Expert** (`af1f81ab-8cf1-4787-b30e-e3fe18c7ebdc`)
@@ -37,6 +38,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - **Retention Marketing Manager** (`8f0b7a8b-b4aa-40b8-bbe6-91df97894f77`)
 - **Trader_Classic** (`17bca140-8156-4306-944e-27264c7e1524`)
 - **Trader_momentum · Research Market trends and look for momentum** (`a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3`)
+- **Trading Desk** (`444fcb24-158a-45a1-967e-37beefe88a4d`)
 - **X** (`4fb6dd40-86cb-43b3-b5be-16ad1fbc00b3`)
 
 ## Workflows (21)
@@ -64,7 +66,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 
 Restored by importing profiles/skills into Grok Bot; this is a backup, not a live sync.
 
-## App + Daily Brief (2026-11-04)
+## App + Daily Brief (2026-11-05)
 - `app/etoroview/` — eToroView UI (Classic/Momentum + daily_brief bind)
 - `app/etoroview/dist/` — useful JSON copies from dist when present
 - `daily-brief/` — latest + morning/afternoon stash from `/workspace/daily-brief` (dual-write with etoroview public)
