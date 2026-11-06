@@ -17,7 +17,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - Audit lines matching token/secret patterns
 - `.env` files
 
-## Agents (22)
+## Agents (29)
 - **Ad Spend Watch** (`697e3d09-625d-4308-9376-ed3c719269f7`)
 - **App** (`64d1617f-e42c-4a90-a0e9-3463ae5f0187`)
 - **Chief of Staff** (`b66054dc-f163-418d-a43c-59faef4ea103`)
@@ -25,6 +25,10 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - **Daily Trader** (`8064c9a6-a0f7-4e52-8f7d-4cd4288b7256`)
 - **daily_brief** (`415a6f9a-2638-4735-b33b-6a6b14ba09ac`)
 - **databricks_cost_plan** (`224f6ab2-8801-40af-bdac-30fb58709805`)
+- **Demo Executor** (`e2e543e8-e84d-41fe-a7f1-fbe466180156`)
+- **Demo Risk Manager** (`a4b3446d-ff22-4e27-a0ba-9bf4956a6202`)
+- **Desk Brief** (`da62354b-ece8-451f-8d53-396d03ae3673`)
+- **Desk Monitor** (`6aae03a0-3783-418f-851b-c31399add8be`)
 - **eToro Account** (`7b604913-c0fd-49bc-897a-c9ce38589c63`)
 - **Grok Bot** (`92d5edcf-d7aa-4e0b-bc1a-7fc83c47bc82`)
 - **Marketing Analyst** (`bafe12d2-81f3-4530-99f6-6297ef3b24c0`)
@@ -36,9 +40,12 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - **Research Expert** (`af1f81ab-8cf1-4787-b30e-e3fe18c7ebdc`)
 - **Researchy** (`c7cc7a20-fa20-4299-8ead-0866a56a78fc`)
 - **Retention Marketing Manager** (`8f0b7a8b-b4aa-40b8-bbe6-91df97894f77`)
+- **Strategy Engine** (`ab14cd89-191d-4c3e-8323-7f80155a6cee`)
 - **Trader_Classic** (`17bca140-8156-4306-944e-27264c7e1524`)
 - **Trader_momentum · Research Market trends and look for momentum** (`a84f2ec3-c6b6-48c8-9dac-89afe4f5efc3`)
 - **Trading Desk** (`444fcb24-158a-45a1-967e-37beefe88a4d`)
+- **trading_strategy_pick** (`99879252-e097-4b0a-9edc-28f85fc7e48f`)
+- **UX Designer** (`f1b2314b-b695-4d6a-97d9-ec59d9c41788`)
 - **X** (`4fb6dd40-86cb-43b3-b5be-16ad1fbc00b3`)
 
 ## Workflows (21)
@@ -66,7 +73,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 
 Restored by importing profiles/skills into Grok Bot; this is a backup, not a live sync.
 
-## App + Daily Brief (2026-11-05)
+## App + Daily Brief (2026-11-06)
 - `app/etoroview/` — eToroView UI (Classic/Momentum + daily_brief bind)
 - `app/etoroview/dist/` — useful JSON copies from dist when present
 - `daily-brief/` — latest + morning/afternoon stash from `/workspace/daily-brief` (dual-write with etoroview public)

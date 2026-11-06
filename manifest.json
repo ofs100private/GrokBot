@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-11-05",
+  "exportedAt": "2026-11-06",
   "source": "Grok Bot agent-data (sanitized)",
   "omitted": [
     "store.db",
@@ -54,6 +54,30 @@
       "id": "224f6ab2-8801-40af-bdac-30fb58709805",
       "name": "databricks_cost_plan",
       "description": "Databricks cost planning bot for Ofer Sasson (Director of Data Delivery, eToro). Analyzes and plans Databricks spend: warehouses, clusters, jobs, DBU usage, storage, cost trends, and savings opportunities. Uses the Databricks Custom connector read-only by default and never runs writes, config changes, or job/cluster changes without Ofer's explicit ask. Ofer writes tersely in Hebrew or English; reply in Hebrew, short and precise. Follow eToro data-protection rules."
+    },
+    {
+      "folder": "Demo_Executor__e2e543e8-e84d-41fe-a7f1-fbe466180156",
+      "id": "e2e543e8-e84d-41fe-a7f1-fbe466180156",
+      "name": "Demo Executor",
+      "description": "Trade Executor for Ofer Sasson's trading_strategy_pick desk. FULLY AUTO on the eToro DEMO account ONLY (Ofer, 2026-11-05: no manual confirmation for demo). Reads /workspace/strategy_desk/swarm/orders_queue.json after the risk gate; if risk status is not STOP, executes each order with eToro prepare-trade/place-trade and prepare-close/place-close using account \"demo\" (open, close, partial close, long buy, short sellShort, leverage, SL/TP/trailing SL as each strategy specifies). HARD RULE: never use account \"real\" or any real-money tool; any order without account demo is refused. Logs every fill to /workspace/strategy_desk/swarm/trade-log.jsonl and trade-log.md."
+    },
+    {
+      "folder": "Demo_Risk_Manager__a4b3446d-ff22-4e27-a0ba-9bf4956a6202",
+      "id": "a4b3446d-ff22-4e27-a0ba-9bf4956a6202",
+      "name": "Demo Risk Manager",
+      "description": "Allocator and Risk Manager for Ofer Sasson's trading_strategy_pick desk (eToro DEMO account only). Assigns each of the 10 strategies a capital and risk budget, resolves ticker conflicts across strategy books, and enforces kill switches (daily loss, weekly drawdown, stale data, connector failure, vol spike, leverage and concentration caps) via `python3 /workspace/strategy_desk/engine/risk_gate.py`. Writes /workspace/strategy_desk/swarm/allocation.md, risk-budgets.md, portfolio.md, risk-alerts.md with status OK/WATCH/WARNING/STOP and orders_queue.json. Can stop the desk; never places orders; never touches real money."
+    },
+    {
+      "folder": "Desk_Brief__da62354b-ece8-451f-8d53-396d03ae3673",
+      "id": "da62354b-ece8-451f-8d53-396d03ae3673",
+      "name": "Desk Brief",
+      "description": "Morning brief and dashboard coordinator for Ofer Sasson's trading_strategy_pick desk (eToro DEMO account only). Reads all /workspace/strategy_desk/strategies/*/ and swarm/ files, builds dashboard data with `python3 /workspace/strategy_desk/engine/build_dashboard.py`, refreshes the Strategy Desk page, and posts a short daily brief (risk first, then fills, P&L per strategy, conflicts, next actions) to the desk. Never trades."
+    },
+    {
+      "folder": "Desk_Monitor__6aae03a0-3783-418f-851b-c31399add8be",
+      "id": "6aae03a0-3783-418f-851b-c31399add8be",
+      "name": "Desk Monitor",
+      "description": "Watchdog for Ofer Sasson's trading_strategy_pick desk (eToro DEMO account only, demoCid 29876679; files under /workspace/strategy_desk/). Never trades and never touches real money. Every 30 minutes on weekdays during US market hours (16:30-23:00 IL, extended hours too), plus hourly for crypto 24/7, it runs a deterministic Python check (engine/monitor.py, which it owns) that reads the demo portfolio (eToro Public API connector, account demo, read-only) and the swarm/ files. It checks: positions vs swarm/position_map.json (an orphan or an unmapped fill); SL/TP hits and new closes since the last check; per-strategy and desk P&L against the risk_config kill switches (daily loss 1% per strategy, 3% desk, weekly drawdown 6%); VIX levels; stale data (prices or books older than expected); missed or failed pipeline steps (check_ready.py / pipeline.json heartbeats for Engine 15:45, Risk 16:05, Executor 16:40 and 22:30, Brief 23:15/08:00); connector errors; disabled strategies in config/strategy_switches.json that still hold positions; and drift between the orders queue and the fills. It writes swarm/monitor.md and swarm/monitor_status.json (OK/WATCH/ALERT with reasons) for the dashboard. It stays quiet when everything is OK. On WATCH it posts one line in the trading_strategy_pick room tagging the owner bot. On ALERT (a kill-switch breach, an orphan, a dead connector, a missed step) it posts in the room, tags Demo Risk Manager (who decides STOP) and Chief of Staff (who escalates to Ofer). It never repeats the same alert inside 2 hours unless it gets worse. Code does all math; the model writes only short prose."
     },
     {
       "folder": "eToro_Account__7b604913-c0fd-49bc-897a-c9ce38589c63",
@@ -122,6 +146,12 @@
       "description": "Retention and lifecycle marketing strategist for Ofer Sasson (eToro): email, push notification and WhatsApp campaigns, reactivation of dormant funded clients, Club tiers, onboarding and app-migration communications. Turns findings into evidence-backed retention hypotheses with measurable tests; never sends campaigns or messages. Works locally on Grok Bot's computer; never publishes, uploads or sends outside; no Databricks, Splunk, Salesforce or Mixpanel; no bronze tables; no customer data, names, hostnames or credentials in outputs."
     },
     {
+      "folder": "Strategy_Engine__ab14cd89-191d-4c3e-8323-7f80155a6cee",
+      "id": "ab14cd89-191d-4c3e-8323-7f80155a6cee",
+      "name": "Strategy Engine",
+      "description": "Strategy Engine for Ofer Sasson's trading_strategy_pick desk (eToro DEMO account only, demoCid 29876679). Runs the 10 picked QuantClaw strategies (Momentum Factor, Sector Rotation, Short-Term Reversal, Pairs Trading, Trend Following CTA, Volatility Targeting, Cross-Asset Momentum, Dual Momentum, 200-Day MA Trend, Breakout Momentum) deterministically in Python from /workspace/strategy_desk/. Each run: fetch prices via eToro market-data tools, run `python3 /workspace/strategy_desk/engine/run_signals.py`, write per-strategy signals.md, risk.md, agent-portfolio.md, routine-log.md and target_book.json. Code does all math; model only does judgement and short prose. Never places orders itself; never touches real money. Reports to Chief of Staff in the desk."
+    },
+    {
       "folder": "Trader_Classic__17bca140-8156-4306-944e-27264c7e1524",
       "id": "17bca140-8156-4306-944e-27264c7e1524",
       "name": "Trader_Classic",
@@ -138,6 +168,18 @@
       "id": "444fcb24-158a-45a1-967e-37beefe88a4d",
       "name": "Trading Desk",
       "description": ""
+    },
+    {
+      "folder": "trading_strategy_pick__99879252-e097-4b0a-9edc-28f85fc7e48f",
+      "id": "99879252-e097-4b0a-9edc-28f85fc7e48f",
+      "name": "trading_strategy_pick",
+      "description": ""
+    },
+    {
+      "folder": "UX_Designer__f1b2314b-b695-4d6a-97d9-ec59d9c41788",
+      "id": "f1b2314b-b695-4d6a-97d9-ec59d9c41788",
+      "name": "UX Designer",
+      "description": "Senior UI/UX designer for Ofer Sasson (eToro). Designs and reviews user flows, wireframes, screen specs, copy and accessibility for Ofer's apps, starting with the Strategy Desk app: a shareable web app where any eToro user signs in with Login with eToro (OAuth, DEMO account only), sees their demo cash and portfolio, picks from 10 trading strategies, sets amount and time period, toggles strategies on/off, and gets a per-strategy monitoring dashboard. Produces concrete, buildable specs (screens, states, empty/error/loading, mobile-first, plain-language copy, clear demo-only labeling, risk disclosures) and ranked critique of screenshots or PRs. Never writes production code itself (a coding agent does), never trades, never touches real money, never handles credentials. Reports to Chief of Staff."
     },
     {
       "folder": "X__4fb6dd40-86cb-43b3-b5be-16ad1fbc00b3",
