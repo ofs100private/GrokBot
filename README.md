@@ -17,7 +17,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - Audit lines matching token/secret patterns
 - `.env` files
 
-## Agents (29)
+## Agents (31)
 - **Ad Spend Watch** (`697e3d09-625d-4308-9376-ed3c719269f7`)
 - **App** (`64d1617f-e42c-4a90-a0e9-3463ae5f0187`)
 - **Chief of Staff** (`b66054dc-f163-418d-a43c-59faef4ea103`)
@@ -25,6 +25,8 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 - **Daily Trader** (`8064c9a6-a0f7-4e52-8f7d-4cd4288b7256`)
 - **daily_brief** (`415a6f9a-2638-4735-b33b-6a6b14ba09ac`)
 - **databricks_cost_plan** (`224f6ab2-8801-40af-bdac-30fb58709805`)
+- **DBX_Cost** (`303543a3-a115-44b5-8937-ee6cc3cdd085`)
+- **dbx_usage** (`f724f82c-1fad-4d8b-9bbc-dc6d41bb6fd2`)
 - **Demo Executor** (`e2e543e8-e84d-41fe-a7f1-fbe466180156`)
 - **Demo Risk Manager** (`a4b3446d-ff22-4e27-a0ba-9bf4956a6202`)
 - **Desk Brief** (`da62354b-ece8-451f-8d53-396d03ae3673`)
@@ -73,7 +75,7 @@ Sanitized snapshot of Ofer's Grok Bot agents and shared workflows.
 
 Restored by importing profiles/skills into Grok Bot; this is a backup, not a live sync.
 
-## App + Daily Brief (2026-11-09)
+## App + Daily Brief (2026-11-10)
 - `app/etoroview/` — eToroView UI (Classic/Momentum + daily_brief bind)
 - `app/etoroview/dist/` — useful JSON copies from dist when present
 - `daily-brief/` — latest + morning/afternoon stash from `/workspace/daily-brief` (dual-write with etoroview public)
